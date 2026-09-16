@@ -290,10 +290,10 @@ def record_manual_verification(
     issue_number: str | None = None,
     note: str = "",
 ) -> None:
-    """Post a PR comment that manual UAT passed (after user confirms in agent chat)."""
+    """Post a PR comment that manual UAT passed (user or agent, per work-on-issue.md)."""
     extra = note.strip()
     issue_bit = f" (issue #{issue_number})" if issue_number else ""
-    text = f"**Manual verification:** passed (user confirmed in agent chat){issue_bit}."
+    text = f"**Manual verification:** passed{issue_bit}."
     if extra:
         text = f"{text}\n\n{extra}"
     gh.comment_on_pr(pr_url, text)
@@ -342,7 +342,11 @@ def format_bug_work_prompt(entry: dict) -> str:
         "**Ship:**",
         f"- PR title should reference the bug (e.g. `fix: … (#{eid})`).",
         f"- PR body must include `Closes #{eid}`.",
-        "- Fill **Manual verification** in the PR template; echo steps for the user.",
+        "- Fill **Manual verification** in the PR template.",
+        "- Non-UI fix: run pytest/CLI smoke yourself, set sign-off to agent-verified, "
+        f"run `record-manual-verification {eid}` with `--note` (do not ask the user to repeat).",
+        "- UI fix: echo verification steps for the user; after they confirm, "
+        f"run `record-manual-verification {eid}`.",
         "",
         "More: .cursor/commands/work-on-issue.md",
     ]
@@ -396,11 +400,11 @@ def format_agent_prompt(entry: dict) -> str:
         f"- PR title: `uv run python -m src.grocery_wizard dev enhancement-pr-title {eid}`",
         "- Push; create or update the PR using the repo PR template (**Manual verification**).",
         f"- PR body must include `Closes #{eid}` (GitHub closes the issue on merge).",
-        "- Tell the user to run **Manual verification** from the PR; echo that section.",
-        (
-            "- When the user confirms manual passed, post sign-off on the PR: "
-            f"`uv run python -m src.grocery_wizard dev record-manual-verification {eid}`"
-        ),
+        "- Non-UI (CLI, library, tests, refactors): you run verification, document it in the PR, "
+        f"then post sign-off: `dev record-manual-verification {eid}` with `--note` — "
+        "do not ask the user to repeat steps you already ran.",
+        "- Streamlit / UI: echo **Manual verification** for the user; after they confirm, "
+        f"run `dev record-manual-verification {eid}`.",
         "",
         "More: .cursor/commands/work-on-issue.md",
     ]

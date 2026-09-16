@@ -38,12 +38,16 @@ PR_TITLE="$(uv run python -m src.grocery_wizard dev enhancement-pr-title <issue-
 
 - PR body: repo template, **Manual verification**, `Closes #<issue-number>`.
 
-### 5. Manual verification handoff
+### 5. Manual verification
 
-Echo **Manual verification** from the PR for the user. When they confirm:
+Fill the PR template **Manual verification** section in every case.
+
+**No UI (CLI, library, tests, refactors, dev tooling):** You run the steps yourself (`pytest`, `ruff check`, CLI smoke, etc.), put what you ran in the PR table, set **Manual sign-off** to agent-verified, and post sign-off without asking the user to repeat work you already did:
 
 ```bash
-uv run python -m src.grocery_wizard dev record-manual-verification <issue-number>
+uv run python -m src.grocery_wizard dev record-manual-verification <issue-number> --note "<what you ran>"
 ```
+
+**Streamlit / UI:** Echo **Manual verification** from the PR for the user. When they confirm in chat, run the same `record-manual-verification` command (optional `--note`).
 
 Summarize changes and share the PR link.

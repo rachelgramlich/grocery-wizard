@@ -63,8 +63,8 @@ def test_cmd_grocery_passes_new_flags() -> None:
         no_recurring_weekly_items=True,
     )
     with (
-        patch("src.grocery_wizard.cli.main.load_config"),
-        patch("src.grocery_wizard.cli.main.NotionRecipesDB"),
+        patch("src.grocery_wizard.cli.prod_commands.load_config"),
+        patch("src.grocery_wizard.cli.prod_commands.NotionRecipesDB"),
         patch("src.grocery_wizard.shopping.grocery_list.run_grocery_list") as run_mock,
     ):
         run_mock.return_value = 0
@@ -81,7 +81,7 @@ def test_cmd_grocery_passes_new_flags() -> None:
 
 def test_main_prompts_feedback_after_successful_prod_command() -> None:
     with (
-        patch("src.grocery_wizard.cli.main.cmd_plan", return_value=0),
+        patch("src.grocery_wizard.cli.prod_commands.cmd_plan", return_value=0),
         patch("src.grocery_wizard.cli.main.prompt_for_feedback") as prompt_mock,
     ):
         code = main(["plan-recipes"])
@@ -92,7 +92,7 @@ def test_main_prompts_feedback_after_successful_prod_command() -> None:
 
 def test_main_skips_feedback_on_failure() -> None:
     with (
-        patch("src.grocery_wizard.cli.main.cmd_plan", return_value=1),
+        patch("src.grocery_wizard.cli.prod_commands.cmd_plan", return_value=1),
         patch("src.grocery_wizard.cli.main.prompt_for_feedback") as prompt_mock,
     ):
         code = main(["plan-recipes"])
@@ -103,7 +103,7 @@ def test_main_skips_feedback_on_failure() -> None:
 
 def test_main_skips_feedback_for_dev_commands() -> None:
     with (
-        patch("src.grocery_wizard.cli.main.cmd_dev_list_feedback", return_value=0),
+        patch("src.grocery_wizard.cli.dev_commands.cmd_dev_list_feedback", return_value=0),
         patch("src.grocery_wizard.cli.main.prompt_for_feedback") as prompt_mock,
     ):
         code = main(["dev", "list-feedback"])
