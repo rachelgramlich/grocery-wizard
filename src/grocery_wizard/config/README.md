@@ -23,7 +23,7 @@ Pantry staples, recurring weekly items, and saved weekly meal plans live in **No
 
 Plan **Name** is the sole identifier (e.g. `2026-09-13_plan_v1`); no slug column.
 
-Current-week session state may still use `.local/grocery_wizard/week_plan.json` (gitignored) until fully Notion-backed for “this session” if needed.
+**Current week vs saved plans:** Notion holds versioned saved plans; `.local/grocery_wizard/week_plan.json` is the CLI-facing snapshot and UI mirror after save (see `planning/week_plan_store.py`). Streamlit session state is live authority while the wizard is open.
 
 ### Recurring items: template vs one run
 
@@ -43,6 +43,8 @@ Required for Grocery Wizard:
 - `NOTION_WEEKLY_MEAL_PLANS_DATABASE_ID`
 
 Cloud agents use the same names as Secrets.
+
+Optional: `NOTION_DATA_SOURCE_ID` — force a specific data source when a Notion database exposes multiple sources (see `integrations/notion_data_source.py`). Recipes DB resolution prefers the source whose schema includes **Link** when unset.
 
 ### Pantry `Aisle` select options
 

@@ -32,13 +32,12 @@ __all__ = [
 ]
 
 import difflib
-import json
 import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from src.grocery_wizard.config import LEGACY_WEEK_PLAN_PATH, WEEK_PLAN_PATH
+from src.grocery_wizard.config import WEEK_PLAN_PATH
 from src.grocery_wizard.ingredients.normalize import (
     aggregate_amounts,
     expand_ingredient_line,
@@ -58,6 +57,7 @@ from src.grocery_wizard.ingredients.sync import (
     run_sync_recipes,
 )
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
+from src.grocery_wizard.planning.week_plan_store import load_week_plan_names
 from src.grocery_wizard.shopping.line_items import (
     parse_line_items,
     strip_checklist_prefix,
@@ -208,7 +208,7 @@ def run_grocery_list(
     exclude_pantry: bool = True,
 ) -> int:
     """Generate a merged grocery list from week plan or explicit recipe names."""
-    names = recipe_names or _load_week_plan_names(week_plan_path)
+    names = recipe_names or load_week_plan_names(week_plan_path)
     if not names:
         print(
             "No recipes to build a list from.\n"
@@ -436,28 +436,6 @@ def build_grocery_list(
 
 def format_sync_message(summary: SyncSummary) -> str:
     return format_sync_summary(summary)
-
-
-def _load_week_plan_names(path: Path) -> list[str]:
-    resolved = path
-    if not resolved.exists():
-        if path == WEEK_PLAN_PATH and LEGACY_WEEK_PLAN_PATH.exists():
-            resolved = LEGACY_WEEK_PLAN_PATH
-        else:
-            return []
-
-    try:
-        data = json.loads(resolved.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError) as exc:
-        print(f"Warning: could not read week plan ({resolved}): {exc}", file=sys.stderr)
-        return []
-    if isinstance(data, dict):
-        recipes = data.get("recipes", [])
-        if isinstance(recipes, list):
-            return [str(name).strip() for name in recipes if str(name).strip()]
-    if isinstance(data, list):
-        return [str(name).strip() for name in data if str(name).strip()]
-    return []
 
 
 def _get_ingredient_lines(recipe: Recipe) -> list[str]:

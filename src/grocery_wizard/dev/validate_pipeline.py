@@ -17,10 +17,8 @@ from src.grocery_wizard.ingredients.normalize import (
 from src.grocery_wizard.ingredients.sync import parse_ingredients_text
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 from src.grocery_wizard.planning.meal_planner import default_filters, suggest_meals
-from src.grocery_wizard.shopping.grocery_list import (
-    _load_week_plan_names,
-    build_grocery_list,
-)
+from src.grocery_wizard.planning.week_plan_store import load_current_week_plan_from_file
+from src.grocery_wizard.shopping.grocery_list import build_grocery_list
 
 _SUSPICIOUS_NORMALIZED_RE = re.compile(
     r"\[x\]|</?br|▢|recipe serves|heat the|stir to combine",
@@ -59,9 +57,9 @@ def _resolve_plan_names(
     use_saved_week_plan: bool = True,
 ) -> tuple[list[str], str]:
     if use_saved_week_plan:
-        saved = _load_week_plan_names(week_plan_path)
-        if saved:
-            return saved, f"week plan ({week_plan_path})"
+        loaded = load_current_week_plan_from_file(week_plan_path)
+        if loaded is not None:
+            return list(loaded.recipe_names), loaded.source_label
 
     if seed is not None:
         random.seed(seed)

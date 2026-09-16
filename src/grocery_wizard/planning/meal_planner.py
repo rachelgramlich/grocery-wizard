@@ -33,6 +33,7 @@ from src.grocery_wizard.integrations.notion import (
     Recipe,
 )
 from src.grocery_wizard.lib.prompts import confirm_yes_default, parse_yes_no
+from src.grocery_wizard.planning.week_plan_store import load_week_plan_names
 
 DIVERSITY_COLUMNS = ("Protein", "Dinner Category", "Cuisine")
 
@@ -335,16 +336,7 @@ def _resolve_locked_by_names(
 
 def load_recent_plan_names(path: Path = WEEK_PLAN_PATH) -> set[str]:
     """Recipe names from the saved week plan (last week's picks)."""
-    if not path.exists():
-        return set()
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return set()
-    recipes = payload.get("recipes")
-    if not isinstance(recipes, list):
-        return set()
-    return {name.strip() for name in recipes if isinstance(name, str) and name.strip()}
+    return set(load_week_plan_names(path))
 
 
 def suggest_meals(

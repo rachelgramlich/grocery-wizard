@@ -236,6 +236,20 @@ Default filters (override with **Change filters? [y/N]**):
 
 Suggestions maximize variety across **Protein**, **Dinner Category**, and **Cuisine**. Saved plan: `{"recipes": ["Name1", "Name2", ...]}` in `.local/grocery_wizard/week_plan.json`.
 
+### Which plan is authoritative?
+
+See `planning/week_plan_store.py` (module docstring) for the full rules. Short version:
+
+| Context | Authoritative plan |
+|---------|-------------------|
+| Streamlit wizard (in session) | `plan_meals_text` in session state |
+| CLI grocery / validate-pipeline | `.local/grocery_wizard/week_plan.json` (unless you pass recipe names explicitly) |
+| Saved history / reuse | Notion **Weekly meal plans** database (UI **Saved plan** mode) |
+
+The UI mirrors commits to Notion into `week_plan.json` so CLI and meal diversity hints stay aligned. Loading a saved Notion plan in the UI does not update `week_plan.json` until you save or enter the grocery flow.
+
+Shared loaders: `load_week_plan_names()` and `load_current_week_plan_from_file()` in `planning/week_plan_store.py`.
+
 ## Configuration vs local data
 
 Committed config lives in the package; per-week data stays local:
