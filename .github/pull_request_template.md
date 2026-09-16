@@ -8,7 +8,7 @@
 
 ## Manual verification
 
-Fill this before asking the user to verify in agent chat. They should be able to follow it without reading the diff.
+Document steps and expected results. For **non-UI** changes (CLI, library, tests), the agent runs these steps and sets sign-off below; only **Streamlit / UI** changes need the user to verify in agent chat.
 
 | Field | Detail |
 | --- | --- |
@@ -18,7 +18,7 @@ Fill this before asking the user to verify in agent chat. They should be able to
 | **Expected behavior** | <!-- what should happen --> |
 | **Regression** | <!-- nearby flows to spot-check --> |
 
-**Manual sign-off:** pending user verification in agent chat.
+**Manual sign-off:** agent-verified (non-UI) / pending user verification in agent chat (UI).
 
 ## Issue
 
