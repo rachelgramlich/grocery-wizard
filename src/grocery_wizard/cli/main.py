@@ -34,7 +34,7 @@ from src.grocery_wizard.cli.nyt_commands import (
     cmd_nyt_sync,
 )
 from src.grocery_wizard.cli.parser import build_parser
-from src.grocery_wizard.cli.prod_commands import cmd_add, cmd_grocery, cmd_pantry, cmd_plan
+from src.grocery_wizard.cli.prod_commands import cmd_add, cmd_pantry
 from src.grocery_wizard.lib.feedback import PROD_COMMANDS, prompt_for_feedback
 
 __all__ = [
@@ -57,7 +57,6 @@ __all__ = [
     "cmd_dev_sync_notion_pantry_sections",
     "cmd_dev_validate_pipeline",
     "cmd_dev_work_on_issue",
-    "cmd_grocery",
     "cmd_nyt_apply_metadata",
     "cmd_nyt_auth_status",
     "cmd_nyt_reclassify",
@@ -65,7 +64,6 @@ __all__ = [
     "cmd_nyt_saved",
     "cmd_nyt_sync",
     "cmd_pantry",
-    "cmd_plan",
     "main",
 ]
 

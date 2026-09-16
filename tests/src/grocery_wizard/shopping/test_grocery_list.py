@@ -12,8 +12,6 @@ from src.grocery_wizard.integrations.notion import Recipe
 from src.grocery_wizard.shopping.grocery_list import (
     _append_unique_items,
     _normalized_item_key,
-    _print_excluded_summary,
-    _recipes_needing_backfill,
     align_item_provenance_with_items,
     build_grocery_list,
     detect_name_link_mismatch,
@@ -21,12 +19,9 @@ from src.grocery_wizard.shopping.grocery_list import (
     format_item_provenance,
     format_meals_and_grocery_list,
     format_name_link_mismatch_warning,
-    match_excluded_items,
     merge_grocery_items,
     normalize_grocery_list_item,
-    parse_readd_excluded,
     recipe_title_from_url,
-    run_grocery_list,
 )
 
 
@@ -267,52 +262,6 @@ def test_build_grocery_list_keeps_named_beans_when_pantry_has_modifier_or_generi
     assert f"{variety} beans" not in excluded
 
 
-def test_run_grocery_list_interactive_flow_order(
-    pantry_file: Path,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    db = MagicMock()
-    db.query_recipes.return_value = [
-        _recipe(
-            "Test Recipe",
-            "2 tbsp olive oil\n1 lb chicken breast",
-        )
-    ]
-    week_plan = pantry_file.parent / "week_plan.json"
-    week_plan.write_text('{"recipes": ["Test Recipe"]}', encoding="utf-8")
-
-    inputs = iter(["", "eggs", "", ""])
-    with (
-        patch("src.grocery_wizard.shopping.grocery_list.input", side_effect=inputs),
-        patch(
-            "src.grocery_wizard.shopping.grocery_list.prompt_recurring_weekly_items",
-            return_value=[],
-        ),
-        patch("src.grocery_wizard.shopping.grocery_list._prompt_staples", return_value=["eggs"]),
-        patch(
-            "src.grocery_wizard.shopping.grocery_list._prompt_accept_or_edit",
-            side_effect=lambda items: items,
-        ),
-    ):
-        code = run_grocery_list(
-            db,
-            week_plan_path=week_plan,
-            pantry_path=pantry_file,
-        )
-
-    assert code == 0
-    output = capsys.readouterr().out
-    excluded_pos = output.find("Excluded staples")
-    draft_pos = output.find("Draft grocery list")
-    grocery_pos = output.find("Grocery list")
-    final_pos = output.find("Final grocery list")
-    assert excluded_pos != -1
-    assert draft_pos != -1
-    assert grocery_pos != -1
-    assert final_pos != -1
-    assert excluded_pos < draft_pos < grocery_pos < final_pos
-    assert "eggs" in output
-    assert "chicken breast" in output
 
 
 def test_sync_writes_prepared_ingredients() -> None:
@@ -341,116 +290,18 @@ def test_sync_writes_prepared_ingredients() -> None:
     assert "half-moons" not in written
 
 
-def test_match_excluded_items_substring() -> None:
-    excluded = ["garlic", "olive oil", "kosher salt"]
-    assert match_excluded_items("garlic", excluded) == ["garlic"]
-    assert match_excluded_items("oil", excluded) == ["olive oil"]
 
 
-def test_parse_readd_excluded_by_number_and_name() -> None:
-    excluded = ["garlic", "olive oil", "kosher salt"]
-    assert parse_readd_excluded("1, oil", excluded) == ["garlic", "olive oil"]
-    assert parse_readd_excluded("", excluded) == []
 
 
-def test_print_excluded_summary_always_numbered(capsys: pytest.CaptureFixture[str]) -> None:
-    _print_excluded_summary(["garlic", "olive oil"])
-    output = capsys.readouterr().out
-    assert "Excluded staples" in output
-    assert "1. garlic" in output
-    assert "2. olive oil" in output
 
 
-def test_recipes_needing_backfill_detects_empty_ingredients() -> None:
-    recipes_by_name = {
-        "soup": _recipe("Soup", ""),
-        "salad": _recipe("Salad", "lettuce"),
-    }
-    recipes_by_name["soup"].ingredients = None
-    needs = _recipes_needing_backfill(["Soup", "Salad"], recipes_by_name)
-    assert [recipe.name for recipe in needs] == ["Soup"]
 
 
-def test_run_grocery_list_quiet_skips_excluded_display(
-    pantry_file: Path,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    db = MagicMock()
-    db.query_recipes.return_value = [
-        _recipe(
-            "Test Recipe",
-            "2 tbsp olive oil\n1 lb chicken breast",
-        )
-    ]
-    week_plan = pantry_file.parent / "week_plan.json"
-    week_plan.write_text('{"recipes": ["Test Recipe"]}', encoding="utf-8")
-
-    with (
-        patch("src.grocery_wizard.shopping.grocery_list._prompt_staples", return_value=[]),
-        patch(
-            "src.grocery_wizard.shopping.grocery_list.prompt_recurring_weekly_items",
-            return_value=[],
-        ),
-    ):
-        code = run_grocery_list(
-            db,
-            quiet=True,
-            week_plan_path=week_plan,
-            pantry_path=pantry_file,
-        )
-
-    assert code == 0
-    output = capsys.readouterr().out
-    assert "Excluded staples" not in output
 
 
-def test_run_grocery_list_quiet_includes_recurring_weekly_items_by_default(
-    pantry_file: Path,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    db = MagicMock()
-    db.query_recipes.return_value = [
-        _recipe("Test Recipe", "1 lb chicken breast"),
-    ]
-    week_plan = pantry_file.parent / "week_plan.json"
-    week_plan.write_text('{"recipes": ["Test Recipe"]}', encoding="utf-8")
-
-    with patch("src.grocery_wizard.shopping.grocery_list._prompt_staples", return_value=[]):
-        code = run_grocery_list(
-            db,
-            quiet=True,
-            week_plan_path=week_plan,
-            pantry_path=pantry_file,
-            recurring_weekly_items=["milk"],
-        )
-
-    assert code == 0
-    assert "milk" in capsys.readouterr().out
 
 
-def test_run_grocery_list_quiet_can_skip_recurring_weekly_items(
-    pantry_file: Path,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    db = MagicMock()
-    db.query_recipes.return_value = [
-        _recipe("Test Recipe", "1 lb chicken breast"),
-    ]
-    week_plan = pantry_file.parent / "week_plan.json"
-    week_plan.write_text('{"recipes": ["Test Recipe"]}', encoding="utf-8")
-
-    with patch("src.grocery_wizard.shopping.grocery_list._prompt_staples", return_value=[]):
-        code = run_grocery_list(
-            db,
-            quiet=True,
-            include_recurring_weekly_items=False,
-            recurring_weekly_items=["milk"],
-            week_plan_path=week_plan,
-            pantry_path=pantry_file,
-        )
-
-    assert code == 0
-    assert "milk" not in capsys.readouterr().out
 
 
 def test_load_week_plan_names_falls_back_to_legacy_path(tmp_path: Path, monkeypatch) -> None:
@@ -589,53 +440,6 @@ def test_build_grocery_list_override_can_supply_ingredients_when_notion_empty(
     assert any("lime" in item.lower() for item in items)
 
 
-def test_run_grocery_list_backfill_missing_only_syncs_empty_recipes(tmp_path: Path) -> None:
-    """--backfill-missing on CLI only syncs recipes that actually lack ingredients."""
-    from src.grocery_wizard.ingredients.sync import SyncSummary
-
-    pantry_path = tmp_path / "pantry.txt"
-    pantry_path.write_text("salt\n", encoding="utf-8")
-
-    populated = _recipe("Populated", "1 cup flour\n2 eggs")
-    empty = _recipe("Empty", "")
-    empty.ingredients = None
-
-    db = MagicMock()
-    db.query_recipes.side_effect = [
-        [populated, empty],
-        [populated, empty],
-    ]
-
-    week_plan = pantry_path.parent / "week_plan.json"
-    week_plan.write_text('{"recipes": ["Populated", "Empty"]}', encoding="utf-8")
-
-    captured: list = []
-
-    def fake_run_sync_recipes(db_arg, recipes, **kwargs):
-        captured.extend(recipes)
-        return SyncSummary()
-
-    with (
-        patch(
-            "src.grocery_wizard.shopping.grocery_list.run_sync_recipes",
-            side_effect=fake_run_sync_recipes,
-        ),
-        patch(
-            "src.grocery_wizard.shopping.grocery_list.prompt_recurring_weekly_items",
-            return_value=[],
-        ),
-    ):
-        code = run_grocery_list(
-            db,
-            backfill_missing=True,
-            quiet=True,
-            week_plan_path=week_plan,
-            pantry_path=pantry_path,
-        )
-
-    assert code == 0
-    assert len(captured) == 1
-    assert captured[0].name == "Empty"
 
 
 def test_build_grocery_list_splits_title_bleed(tmp_path: Path) -> None:
@@ -914,17 +718,6 @@ def test_build_grocery_list_skips_duplicate_recurring_banana_plural(tmp_path: Pa
     assert len([item for item in items if "banana" in item.lower()]) == 1
 
 
-def test_print_grocery_list_has_no_aisle_headers(capsys: pytest.CaptureFixture[str]) -> None:
-    from src.grocery_wizard.shopping.grocery_list import _print_grocery_list
-
-    _print_grocery_list(["eggs", "onions", "bananas"], heading=None)
-
-    output = capsys.readouterr().out
-    assert "Fruit" not in output
-    assert "Vegetables" not in output
-    assert "====" not in output
-    assert "----" not in output
-    assert output.strip().splitlines() == ["bananas", "onions", "eggs"]
 
 
 def test_build_grocery_list_consolidates_lemon_variants(tmp_path: Path) -> None:
@@ -1267,43 +1060,3 @@ def test_format_meals_and_grocery_list_excludes_provenance() -> None:
     assert "peas" in text
 
 
-def test_run_grocery_list_warns_about_name_link_mismatch(
-    pantry_file: Path,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    db = MagicMock()
-    db.query_recipes.return_value = [
-        Recipe(
-            page_id="p1",
-            name="Crispy Potato Tacos",
-            link="https://cooking.nytimes.com/recipes/1026918-crispy-potato-quesadillas",
-            ingredients="peas",
-            properties={},
-        ),
-    ]
-    week_plan = pantry_file.parent / "week_plan.json"
-    week_plan.write_text('{"recipes": ["Crispy Potato Tacos"]}', encoding="utf-8")
-
-    with (
-        patch("src.grocery_wizard.shopping.grocery_list.input", side_effect=EOFError),
-        patch(
-            "src.grocery_wizard.shopping.grocery_list.prompt_recurring_weekly_items",
-            return_value=[],
-        ),
-        patch("src.grocery_wizard.shopping.grocery_list._prompt_staples", return_value=[]),
-        patch(
-            "src.grocery_wizard.shopping.grocery_list._prompt_accept_or_edit",
-            side_effect=lambda items: items,
-        ),
-    ):
-        code = run_grocery_list(
-            db,
-            quiet=True,
-            week_plan_path=week_plan,
-            pantry_path=pantry_file,
-        )
-
-    assert code == 0
-    err = capsys.readouterr().err
-    assert "Name/link mismatch" in err
-    assert "Crispy Potato Quesadillas" in err

@@ -4,10 +4,14 @@ from __future__ import annotations
 
 import sys
 
+_STREAMLIT_HINT = "Use the Streamlit app (`just grocery-ui`) for meal planning and grocery lists."
+
 DEPRECATED_COMMANDS: dict[str, str] = {
     "add": "Use `add-recipe` instead.",
-    "plan": "Use `plan-recipes` instead.",
-    "grocery": "Use `create-grocery-list` instead.",
+    "plan": _STREAMLIT_HINT,
+    "plan-recipes": _STREAMLIT_HINT,
+    "grocery": _STREAMLIT_HINT,
+    "create-grocery-list": _STREAMLIT_HINT,
     "pantry": "Use `edit-pantry` instead.",
     "sync": "Use `dev backfill-ingredients` or `dev reconcile-ingredients`.",
     "refresh-ingredients": "Use `dev refresh-all-ingredients` instead.",
