@@ -431,8 +431,8 @@ def test_cmd_nyt_sync_interactive_picks_folder(capsys: pytest.CaptureFixture[str
     from src.grocery_wizard.cli.main import cmd_nyt_sync
 
     with (
-        patch("src.grocery_wizard.cli.main.load_config"),
-        patch("src.grocery_wizard.cli.main.NotionRecipesDB"),
+        patch("src.grocery_wizard.cli.nyt_commands.load_config"),
+        patch("src.grocery_wizard.cli.nyt_commands.NotionRecipesDB"),
         patch("src.grocery_wizard.integrations.nyt_cooking.NYTCookingClient"),
         patch(
             "src.grocery_wizard.integrations.nyt_cooking.prompt_collection_choice",
@@ -632,8 +632,8 @@ def test_cli_nyt_reclassify_dry_run(capsys: pytest.CaptureFixture[str]) -> None:
     from src.grocery_wizard.cli.main import cmd_nyt_reclassify
 
     with (
-        patch("src.grocery_wizard.cli.main.load_config"),
-        patch("src.grocery_wizard.cli.main.NotionRecipesDB"),
+        patch("src.grocery_wizard.cli.nyt_commands.load_config"),
+        patch("src.grocery_wizard.cli.nyt_commands.NotionRecipesDB"),
         patch("src.grocery_wizard.integrations.nyt_cooking.NYTCookingClient"),
         patch(
             "src.grocery_wizard.integrations.nyt_cooking.reclassify_nyt_synced_recipes"
