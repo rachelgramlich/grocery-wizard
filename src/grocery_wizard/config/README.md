@@ -44,6 +44,8 @@ Required for Grocery Wizard:
 
 Cloud agents use the same names as Secrets.
 
+Optional: `NOTION_DATA_SOURCE_ID` — force a specific data source when a Notion database exposes multiple sources (see `integrations/notion_data_source.py`). Recipes DB resolution prefers the source whose schema includes **Link** when unset.
+
 ### Pantry `Aisle` select options
 
 After creating the pantry database (with an **Aisle** column — legacy **Section** still works), sync select options from the committed aisle config:
