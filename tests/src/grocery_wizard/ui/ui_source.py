@@ -9,7 +9,11 @@ UI_ROOT = Path(__file__).resolve().parents[4] / "src" / "grocery_wizard" / "ui"
 _UI_MODULE_PATHS = (
     "app.py",
     "tabs.py",
-    "sections/weekly_plan.py",
+    "sections/weekly_plan/state.py",
+    "sections/weekly_plan/plan_entry.py",
+    "sections/weekly_plan/recipe_review.py",
+    "sections/weekly_plan/flow.py",
+    "sections/weekly_plan/grocery_wizard.py",
     "sections/add_recipe.py",
     "sections/pantry_recurring.py",
     "grocery_helpers.py",
