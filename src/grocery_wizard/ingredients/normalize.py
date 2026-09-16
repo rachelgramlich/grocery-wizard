@@ -1,4 +1,9 @@
-"""Rule-based ingredient normalization for grocery lists."""
+"""Grocery-list pipeline: normalize Notion ingredient lines for shopping.
+
+Turns stored (or raw) lines into canonical item names, amounts, and merged
+quantities. Notion write paths use ``parsed.py`` + ``sync.py`` instead — see
+``ARCHITECTURE.md`` and ``public.py``.
+"""
 
 from __future__ import annotations
 
@@ -7,7 +12,6 @@ __all__ = [
     "count_grocery_nouns",
     "drop_junk_ingredient_lines",
     "expand_ingredient_line",
-    "ingredient_name",
     "is_instruction_line",
     "is_junk_ingredient",
     "is_metadata_line",
@@ -556,7 +560,3 @@ def parse_amount(line: str) -> tuple[str, str | None]:
                 return name, f"clove:{_format_qty(clove_count)}"
         return name, amount
     return _parse_stored_ingredient(text)
-
-
-def ingredient_name(line: str) -> str:
-    return normalize_ingredient(line)
