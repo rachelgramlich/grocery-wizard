@@ -32,5 +32,5 @@ From the repository root (so `.streamlit/config.toml` theme applies):
 
 ```shell
 just grocery-ui
-# or: uv run streamlit run src/grocery_wizard/ui/app.py
+# or: uv run python -m streamlit run src/grocery_wizard/ui/app.py
 ```

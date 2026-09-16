@@ -189,7 +189,7 @@ uv run python -m src.grocery_wizard.cli <command>
 
 # Streamlit (secondary) — run from repository root so .streamlit/config.toml loads
 just grocery-ui
-# or: uv run streamlit run src/grocery_wizard/ui/app.py
+# or: uv run python -m streamlit run src/grocery_wizard/ui/app.py
 ```
 
 ```
@@ -285,7 +285,7 @@ Unmatched items land in **Other** (always last). Longer keyword phrases win over
 
 ```shell
 just grocery-ui
-# or: uv run streamlit run src/grocery_wizard/ui/app.py
+# or: uv run python -m streamlit run src/grocery_wizard/ui/app.py
 ```
 
 Tabs: Add Recipe, Plan Meals, Grocery List.

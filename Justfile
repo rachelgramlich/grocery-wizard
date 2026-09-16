@@ -9,7 +9,7 @@ default:
 # Setup: Install Python dependencies and Streamlit agent skills (for Cursor / UI work)
 setup:
     uv sync --all-extras
-    uv run streamlit skills --yes
+    uv run python -m streamlit skills --yes
     mkdir -p .cursor/skills
     ln -sfn "$(readlink .agents/skills/developing-with-streamlit)" .cursor/skills/developing-with-streamlit
 
@@ -39,7 +39,7 @@ test-cov:
 
 # Run Grocery Wizard Streamlit UI (laptop / same-WiFi phone)
 grocery-ui *ARGS:
-    uv run streamlit run src/grocery_wizard/ui/app.py {{ARGS}}
+    uv run python -m streamlit run src/grocery_wizard/ui/app.py {{ARGS}}
 
 # Clean up Python cache files
 clean:
