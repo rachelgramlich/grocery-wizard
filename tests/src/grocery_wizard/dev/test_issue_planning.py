@@ -2,6 +2,8 @@ from src.grocery_wizard.dev.issue_planning import (
     classify_kind,
     infer_area,
     plan_from_items,
+    planned_issue_from_dict,
+    planned_issue_to_dict,
 )
 
 
@@ -51,3 +53,12 @@ def test_plan_splits_bug_and_enhancement() -> None:
     kinds = {p.kind for p in planned}
     assert kinds == {"enhancement", "bug"}
     assert len(planned) == 2
+
+
+def test_planned_issue_audit_flag_roundtrip() -> None:
+    planned = plan_from_items(["CLI: add dry-run flag"])
+    assert planned[0].audit is False
+    data = planned_issue_to_dict(planned[0])
+    data["audit"] = True
+    restored = planned_issue_from_dict(data)
+    assert restored.audit is True
