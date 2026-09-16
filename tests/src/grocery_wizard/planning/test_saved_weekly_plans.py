@@ -10,7 +10,9 @@ from src.grocery_wizard.planning.saved_weekly_plans import (
     format_plan_name,
     list_saved_plans,
     load_plan_recipes,
+    needs_save_week_choice,
     next_plan_version,
+    saved_plan_week_start,
     week_start_sunday,
 )
 
@@ -29,6 +31,25 @@ def test_today_and_yesterday_share_week_start() -> None:
     monday = date(2026, 9, 14)
     sunday = date(2026, 9, 13)
     assert week_start_sunday(monday) == week_start_sunday(sunday)
+
+
+def test_needs_save_week_choice_tuesday_wednesday_only() -> None:
+    assert needs_save_week_choice(date(2026, 9, 15)) is True  # Tue
+    assert needs_save_week_choice(date(2026, 9, 16)) is True  # Wed
+    assert needs_save_week_choice(date(2026, 9, 14)) is False  # Mon
+    assert needs_save_week_choice(date(2026, 9, 17)) is False  # Thu
+
+
+def test_saved_plan_week_start_thu_through_mon() -> None:
+    assert saved_plan_week_start(date(2026, 9, 17)) == date(2026, 9, 20)  # Thu → upcoming Sun
+    assert saved_plan_week_start(date(2026, 9, 14)) == date(2026, 9, 13)  # Mon → current Sun
+    assert saved_plan_week_start(date(2026, 9, 13)) == date(2026, 9, 13)  # Sun
+
+
+def test_saved_plan_week_start_tuesday_requires_choice() -> None:
+    tuesday = date(2026, 9, 15)
+    assert saved_plan_week_start(tuesday, week_choice="this_week") == date(2026, 9, 13)
+    assert saved_plan_week_start(tuesday, week_choice="next_week") == date(2026, 9, 20)
 
 
 def test_ensure_saved_plan_uses_week_start_in_csv(tmp_path: Path) -> None:
@@ -55,6 +76,7 @@ def test_ensure_saved_plan_dedupes_same_week_and_recipes(tmp_path: Path) -> None
     second, created_second = ensure_saved_weekly_plan(
         ["A"],
         reference_date=date(2026, 9, 15),
+        week_choice="this_week",
         path=path,
     )
 
@@ -86,8 +108,19 @@ def test_next_plan_version_on_empty_file(tmp_path: Path) -> None:
 
 def test_list_saved_plans_newest_first(tmp_path: Path) -> None:
     path = tmp_path / "saved_weekly_plans.csv"
-    ensure_saved_weekly_plan(["Old"], reference_date=date(2026, 9, 1), path=path)
+    ensure_saved_weekly_plan(["Old"], reference_date=date(2026, 8, 31), path=path)
     ensure_saved_weekly_plan(["New"], reference_date=date(2026, 9, 14), path=path)
 
     names = [plan.name for plan in list_saved_plans(path=path)]
     assert names == ["2026-09-13_plan_v1", "2026-08-30_plan_v1"]
+
+
+def test_ensure_saved_plan_thursday_uses_upcoming_week(tmp_path: Path) -> None:
+    path = tmp_path / "saved_weekly_plans.csv"
+    plan, created = ensure_saved_weekly_plan(
+        ["Soup"],
+        reference_date=date(2026, 9, 17),
+        path=path,
+    )
+    assert created is True
+    assert plan.week_start == date(2026, 9, 20)

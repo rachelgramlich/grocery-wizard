@@ -7,13 +7,14 @@ from dataclasses import dataclass
 from datetime import date
 
 from src.grocery_wizard.config import Config, load_config
-from src.grocery_wizard.integrations.notion import NotionRecipesDB
+from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 from src.grocery_wizard.integrations.notion_table import NotionDatabase, NotionPageRow
 from src.grocery_wizard.planning.saved_weekly_plans import (
     SavedWeeklyPlan,
+    SaveWeekChoice,
     format_plan_name,
     normalize_recipe_names,
-    week_start_sunday,
+    saved_plan_week_start,
 )
 from src.grocery_wizard.shopping.pantry import PantrySection, parse_pantry_file_from_lines
 from src.grocery_wizard.shopping.store_aisles import (
@@ -286,13 +287,8 @@ class NotionWeeklyPlansDB:
         self._recipes_db = recipes_db or NotionRecipesDB(cfg)
 
     def list_plans(self) -> list[SavedWeeklyPlan]:
-        rows = self._db.query_all_pages()
-        plans: list[SavedWeeklyPlan] = []
         recipe_names_by_id = self._recipe_names_by_page_id()
-        for row in rows:
-            plan = self._row_to_plan(row, recipe_names_by_id)
-            if plan is not None:
-                plans.append(plan)
+        plans = self._plans_from_rows(self._db.query_all_pages(), recipe_names_by_id)
         plans.sort(key=lambda plan: (plan.week_start, plan.version), reverse=True)
         return plans
 
@@ -321,22 +317,44 @@ class NotionWeeklyPlansDB:
         recipe_names: list[str],
         *,
         reference_date: date | None = None,
+        week_choice: SaveWeekChoice | None = None,
+        cached_recipes: list[Recipe] | None = None,
     ) -> tuple[SavedWeeklyPlan, bool]:
         from datetime import UTC, datetime
 
         when = reference_date or datetime.now(tz=UTC).date()
-        week_start = week_start_sunday(when)
+        week_start = saved_plan_week_start(when, week_choice=week_choice)
         recipes = normalize_recipe_names(recipe_names)
         if not recipes:
             raise ValueError("recipe_names must not be empty")
 
-        existing = self.find_matching_plan(week_start, recipes)
-        if existing is not None:
-            return existing, False
+        if cached_recipes is not None:
+            recipe_rows = cached_recipes
+        else:
+            recipe_rows = self._recipes_db.query_recipes()
+        recipe_names_by_id = {recipe.page_id: recipe.name for recipe in recipe_rows}
+        page_id_by_name = {recipe.name.lower(): recipe.page_id for recipe in recipe_rows}
 
-        version = self.next_plan_version(week_start)
+        week_filter = {
+            "property": PLAN_WEEK_START_COLUMN,
+            "date": {"equals": week_start.isoformat()},
+        }
+        plans = self._plans_from_rows(
+            self._db.query_all_pages(filter=week_filter),
+            recipe_names_by_id,
+        )
+        for plan in plans:
+            if plan.week_start == week_start and plan.recipes == recipes:
+                return plan, False
+
+        existing_for_week = [plan for plan in plans if plan.week_start == week_start]
+        version = max((plan.version for plan in existing_for_week), default=0) + 1
         name = format_plan_name(week_start, version)
-        relation_ids = self._recipe_page_ids_for_names(recipes)
+        relation_ids: list[str] = []
+        for recipe_name in recipes:
+            page_id = page_id_by_name.get(recipe_name.lower())
+            if page_id:
+                relation_ids.append(page_id)
         props = {
             **self._db.property_payload(PLAN_NAME_COLUMN, name),
             **self._db.property_payload(PLAN_WEEK_START_COLUMN, week_start.isoformat()),
@@ -344,11 +362,22 @@ class NotionWeeklyPlansDB:
             **self._db.property_payload(PLAN_RECIPES_COLUMN, relation_ids),
         }
         row = self._db.create_page(props)
-        recipe_names_by_id = self._recipe_names_by_page_id()
         plan = self._row_to_plan(row, recipe_names_by_id)
         if plan is None:
             raise RuntimeError("Failed to read plan after Notion create")
         return plan, True
+
+    def _plans_from_rows(
+        self,
+        rows: list[NotionPageRow],
+        recipe_names_by_id: dict[str, str],
+    ) -> list[SavedWeeklyPlan]:
+        plans: list[SavedWeeklyPlan] = []
+        for row in rows:
+            plan = self._row_to_plan(row, recipe_names_by_id)
+            if plan is not None:
+                plans.append(plan)
+        return plans
 
     def _row_to_plan(
         self,

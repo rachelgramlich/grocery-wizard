@@ -22,7 +22,8 @@ def test_weekly_plan_entry_modes_in_app() -> None:
     assert "ensure_saved_weekly_plan" in source
     assert "_render_save_plan_controls" in source
     assert "_ensure_weekly_plan_saved_before_grocery" in source
-    assert "week_start_sunday" in source
+    assert "saved_plan_week_start" in source
+    assert "_render_save_week_choice_buttons" in source
     assert "Dev mode (nothing saved)" in source
 
 
@@ -35,7 +36,7 @@ def test_create_grocery_auto_saves_plan_if_missing() -> None:
 def test_explicit_save_plan_button_after_meals() -> None:
     source = ui_source()
     assert 'key="save_weekly_plan"' in source
-    assert "_render_save_plan_controls(_current_plan_names())" in source
+    assert "_render_save_plan_controls(_current_plan_names(), cached_recipes=all_recipes)" in source
 
 
 def test_weekly_plan_entry_app_test_smoke() -> None:

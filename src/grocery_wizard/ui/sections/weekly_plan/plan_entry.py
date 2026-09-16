@@ -275,7 +275,10 @@ def _render_weekly_plan_entry() -> bool:
             def _saved_plan_label(plan_name: str) -> str:
                 for plan in saved_plans:
                     if plan.name == plan_name:
-                        return f"{plan.name} ({len(plan.recipes)} meals)"
+                        return (
+                            f"{plan.name} — w/o {plan.week_start.isoformat()} "
+                            f"({len(plan.recipes)} meals)"
+                        )
                 return plan_name
 
             selected_plan_name = st.selectbox(
@@ -458,6 +461,6 @@ def render_meals_section(db: NotionRecipesDB, *, all_recipes: list) -> list[str]
             _clear_grocery_result()
             st.rerun()
 
-        _render_save_plan_controls(_current_plan_names())
+        _render_save_plan_controls(_current_plan_names(), cached_recipes=all_recipes)
 
     return _current_plan_names()

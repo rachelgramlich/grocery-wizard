@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from src.grocery_wizard.integrations.notion_household import PantryEntry
 
 _GENERATION_KEY = "notion_cache_generation"
+_SAVED_PLANS_GENERATION_KEY = "notion_saved_plans_generation"
 _LAST_RECIPE_LOAD_KEY = "_notion_cache_last_recipe_load_s"
 
 
@@ -23,9 +24,21 @@ def notion_cache_generation() -> int:
     return int(st.session_state[_GENERATION_KEY])
 
 
+def saved_plans_cache_generation() -> int:
+    if _SAVED_PLANS_GENERATION_KEY not in st.session_state:
+        st.session_state[_SAVED_PLANS_GENERATION_KEY] = 0
+    return int(st.session_state[_SAVED_PLANS_GENERATION_KEY])
+
+
+def invalidate_saved_plans_cache() -> None:
+    """Refresh cached weekly-plan reads without reloading recipes/pantry."""
+    st.session_state[_SAVED_PLANS_GENERATION_KEY] = saved_plans_cache_generation() + 1
+
+
 def invalidate_notion_cache() -> None:
     """Drop cached Notion reads after a write or when the user requests refresh."""
     st.session_state[_GENERATION_KEY] = notion_cache_generation() + 1
+    invalidate_saved_plans_cache()
     st.cache_data.clear()
 
 
@@ -52,10 +65,10 @@ def _load_pantry_cached(generation: int, _household_db_id: str) -> list[PantryEn
 @st.cache_data(show_spinner=False)
 def _load_saved_plans_cached(
     weekly_plans_database_id: str,
-    generation: int,
+    saved_plans_generation: int,
     _recipes_db: NotionRecipesDB,
 ) -> list[SavedWeeklyPlan]:
-    del generation
+    del saved_plans_generation
     del weekly_plans_database_id
     return list_saved_plans(recipes_db=_recipes_db)
 
@@ -80,6 +93,6 @@ def cached_saved_plans(
 ) -> list[SavedWeeklyPlan]:
     return _load_saved_plans_cached(
         weekly_plans_database_id,
-        notion_cache_generation(),
+        saved_plans_cache_generation(),
         db,
     )
