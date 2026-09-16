@@ -28,6 +28,7 @@ class NotionDatabase:
     """Minimal wrapper around a Notion database / data source."""
 
     def __init__(self, config: Config, database_id: str) -> None:
+        self._config = config
         self._client = Client(auth=config.notion_api_key)
         self._database_id = database_id
         self._data_source_id = self._resolve_data_source_id()
