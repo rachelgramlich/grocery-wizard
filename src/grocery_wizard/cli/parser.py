@@ -12,7 +12,7 @@ from src.grocery_wizard.cli.prod_commands import register_prod_commands
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="grocery-wizard",
-        description="Plan meals from Notion recipes and build grocery lists.",
+        description="Add recipes, edit pantry, and dev maintenance (Streamlit for planning).",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 

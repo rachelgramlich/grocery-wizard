@@ -148,15 +148,13 @@ class NytSyncCancelledError(Exception): ...
 When a function takes more than 5 positional arguments, or when argument order is not obvious from names alone, make the extra arguments keyword-only with `*`:
 
 ```python
-def _resolve_slot_interactive(
-    pool: list[Recipe],
-    plan_recipes: list[Recipe],
+def build_grocery_list(
+    db: NotionRecipesDB,
     *,
-    accepted_names: set[str],
-    rejected_names: set[str],
-    schema,
-    prompt_fn: Callable[[str], str],
-) -> Recipe | None: ...
+    recipe_names: list[str],
+    exclude_pantry: bool = True,
+) -> tuple[list[str], list[str], None, list[str], dict[str, list[str]], list[NameLinkMismatch]]:
+    ...
 ```
 
 ### Boolean arguments
@@ -165,10 +163,10 @@ Prefer keyword-only boolean flags to avoid call-site ambiguity:
 
 ```python
 # Bad
-run_grocery_list(db, True, False)
+build_grocery_list(db, ["Soup"], True)
 
 # Good
-run_grocery_list(db, quiet=True, exclude_pantry=False)
+build_grocery_list(db, recipe_names=["Soup"], exclude_pantry=True)
 ```
 
 ---

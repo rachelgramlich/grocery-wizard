@@ -18,36 +18,15 @@ uv run python -m src.grocery_wizard.cli add-recipe https://example.com/my-recipe
 
 Saves the recipe to Notion and scrapes ingredients from the page.
 
-### I need to plan dinners for the week
+### I need to plan dinners or build a grocery list
+
+Use the **Streamlit app** (primary workflow):
 
 ```shell
-uv run python -m src.grocery_wizard.cli plan-recipes
+just grocery-ui
 ```
 
-Picks dinners interactively and saves your choices to `.local/grocery_wizard/week_plan.json`.
-
-### I want my shopping list
-
-```shell
-uv run python -m src.grocery_wizard.cli create-grocery-list
-```
-
-Uses your saved week plan. No flags needed — it walks you through:
-
-1. Backfill prompt if any planned recipes are missing ingredients
-2. Shows pantry staples it left off (numbered)
-3. Lets you paste extra items
-4. Lets you add staples back if you need them
-5. Prints the final list
-
-**Optional flags** (most people never need these):
-
-| Flag | When to use it |
-|------|----------------|
-| `--recipes "A,B"` | Skip the week plan and use specific recipe names |
-| `--include-staples` | Keep salt, oil, etc. on the list instead of excluding them |
-| `--backfill-missing` | Scrape missing ingredients without asking first |
-| `--quiet` | Just the list — no excluded-staples display or re-add prompt |
+Plan meals, adjust pantry exclusions, add recurring items, and export your list from the browser. The app persists plans in Notion and keeps a local `.local/grocery_wizard/week_plan.json` cache for diversity hints.
 
 ### My pantry staples changed
 
@@ -113,8 +92,6 @@ Other NYT commands: `nyt auth-status`, `nyt review-metadata`, `nyt apply-metadat
 | Command | What it does |
 |---------|--------------|
 | `add-recipe` | Save a new recipe from a URL into Notion |
-| `plan-recipes` | Pick dinners for the week (saves week_plan.json) |
-| `create-grocery-list` | Build your shopping list from this week's plan |
 | `edit-pantry` | Edit what's always in your kitchen (won't appear on shopping list) |
 | `nyt auth-status` | Check NYT Cooking env credentials and verify session |
 | `nyt saved` | List recipes in your NYT recipe box |
@@ -159,13 +136,13 @@ Grocery Wizard is a package under `src/grocery_wizard/`. Folders group code by *
 
 | Folder | Key files | Responsibility |
 |--------|-----------|----------------|
-| `cli/` | `main.py` | Command-line entry (`add-recipe`, `plan-recipes`, `create-grocery-list`, `edit-pantry`, `dev …`) |
+| `cli/` | `main.py` | Command-line entry (`add-recipe`, `edit-pantry`, `dev …`; Streamlit for planning) |
 | `ui/` | `app.py`, `sections/`, `notion_cache.py` | Streamlit app: segmented sections (weekly plan, add recipe, pantry & recurring) |
 | `config/` | `__init__.py`, `store_aisles.txt` | Env settings and committed store walk order |
 | `integrations/` | `notion.py`, `notion_household.py`, `nyt_cooking.py` | Notion API; pantry/recurring/plans DBs; NYT sync |
 | `recipes/` | `scraper.py`, `classify.py`, `add_recipe.py` | Scrape URLs, classify metadata, save new recipes |
 | `ingredients/` | `public.py`, `ARCHITECTURE.md` | Two pipelines: storage (`parsed`/`sync`) vs grocery list (`normalize`); see doc |
-| `planning/` | `meal_planner.py` | Interactive weeknight dinner planner |
+| `planning/` | `meal_planner.py` | Meal suggestion and filter logic (Streamlit + dev validation) |
 | `shopping/` | `grocery_list.py`, `pantry.py` | Build shopping list; pantry load/match/edit |
 | `dev/` | `audit.py` | Recipe health checks |
 | `lib/` | `prompts.py` | Shared interactive prompts |
@@ -227,16 +204,14 @@ Normalization and pantry exclusion happen at grocery-list time only — not when
 
 ## Meal planning
 
-`plan-recipes` asks how many meals you want (default 7, or `--meals` / `GROCERY_WIZARD_DEFAULT_MEALS`). You can optionally name specific meals first; those are fuzzy-matched and locked in before filters run.
-
-Default filters (override with **Change filters? [y/N]**):
+Use **`just grocery-ui`** for weekly planning. Default filters in the UI match the former CLI defaults:
 
 | Filter | Default |
 |--------|---------|
 | Meal | Dinner |
 | Dinner: Weeknight Friendly | yes |
 
-Suggestions maximize variety across **Protein**, **Dinner Category**, and **Cuisine**. Saved plan: `{"recipes": ["Name1", "Name2", ...]}` in `.local/grocery_wizard/week_plan.json`.
+Suggestions maximize variety across **Protein**, **Dinner Category**, and **Cuisine**. Plans are stored in Notion; the app also writes `{"recipes": ["Name1", ...]}` to `.local/grocery_wizard/week_plan.json` for session hints and `dev validate-pipeline`.
 
 ## Configuration vs local data
 
@@ -262,11 +237,11 @@ Matching uses phrase boundaries: `kosher salt` matches pantry item `salt`, but `
 
 ## Recurring weekly items
 
-The **Notion recurring weekly items** database lists defaults added every week (berries, milk, etc.). During `create-grocery-list`, you can accept, edit, or skip them for the current week — and optionally save edits back to Notion for future weeks.
+The **Notion recurring weekly items** database lists defaults added every week (berries, milk, etc.). In the Streamlit grocery flow you can accept, edit, or skip them for the current week — and optionally save edits back to Notion for future weeks.
 
 ## Grocery list aisle order
 
-`create-grocery-list` sorts items by store walk order and prints aisle section headers. Edit `src/grocery_wizard/config/store_aisles.txt` to change walk order, labels, or keywords:
+The app sorts items by store walk order using aisle section headers. Edit `src/grocery_wizard/config/store_aisles.txt` to change walk order, labels, or keywords:
 
 ```text
 # --- fruit: Fruit ---

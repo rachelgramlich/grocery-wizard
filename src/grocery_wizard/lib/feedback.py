@@ -31,8 +31,6 @@ class FeedbackEntry(TypedDict):
 PROD_COMMANDS = frozenset(
     {
         "add-recipe",
-        "plan-recipes",
-        "create-grocery-list",
         "edit-pantry",
     }
 )

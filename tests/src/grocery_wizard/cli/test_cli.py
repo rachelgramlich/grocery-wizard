@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import argparse
 from io import StringIO
 from unittest.mock import patch
 
@@ -14,8 +13,10 @@ from src.grocery_wizard.cli.main import main
 @pytest.mark.parametrize(
     ("argv", "replacement"),
     [
-        (["plan"], "plan-recipes"),
-        (["grocery"], "create-grocery-list"),
+        (["plan"], "grocery-ui"),
+        (["plan-recipes"], "grocery-ui"),
+        (["grocery"], "grocery-ui"),
+        (["create-grocery-list"], "grocery-ui"),
         (["add"], "add-recipe"),
         (["pantry"], "edit-pantry"),
         (["dev", "backfill"], "backfill-ingredients"),
@@ -39,63 +40,23 @@ def test_deprecated_commands_print_replacement(argv: list[str], replacement: str
     assert "was removed" in output
 
 
-def test_create_grocery_list_help_lists_new_flags(capsys: pytest.CaptureFixture[str]) -> None:
-    with pytest.raises(SystemExit):
-        main(["create-grocery-list", "--help"])
-    output = capsys.readouterr().out
-    assert "--quiet" in output
-    assert "--backfill-missing" in output
-    assert "--include-staples" in output
-    assert "--no-recurring-weekly-items" in output
-    assert "--verbose" not in output
-    assert "--sync-first" not in output
-    assert "--include-pantry" not in output
-
-
-def test_cmd_grocery_passes_new_flags() -> None:
-    from src.grocery_wizard.cli.main import cmd_grocery
-
-    args = argparse.Namespace(
-        recipes="Soup,Salad",
-        quiet=True,
-        backfill_missing=True,
-        include_staples=True,
-        no_recurring_weekly_items=True,
-    )
-    with (
-        patch("src.grocery_wizard.cli.prod_commands.load_config"),
-        patch("src.grocery_wizard.cli.prod_commands.NotionRecipesDB"),
-        patch("src.grocery_wizard.shopping.grocery_list.run_grocery_list") as run_mock,
-    ):
-        run_mock.return_value = 0
-        assert cmd_grocery(args) == 0
-
-    run_mock.assert_called_once()
-    kwargs = run_mock.call_args.kwargs
-    assert kwargs["recipe_names"] == ["Soup", "Salad"]
-    assert kwargs["quiet"] is True
-    assert kwargs["backfill_missing"] is True
-    assert kwargs["exclude_pantry"] is False
-    assert kwargs["include_recurring_weekly_items"] is False
-
-
 def test_main_prompts_feedback_after_successful_prod_command() -> None:
     with (
-        patch("src.grocery_wizard.cli.prod_commands.cmd_plan", return_value=0),
+        patch("src.grocery_wizard.cli.prod_commands.cmd_add", return_value=0),
         patch("src.grocery_wizard.cli.main.prompt_for_feedback") as prompt_mock,
     ):
-        code = main(["plan-recipes"])
+        code = main(["add-recipe", "https://example.com/r"])
 
     assert code == 0
-    prompt_mock.assert_called_once_with("plan-recipes")
+    prompt_mock.assert_called_once_with("add-recipe")
 
 
 def test_main_skips_feedback_on_failure() -> None:
     with (
-        patch("src.grocery_wizard.cli.prod_commands.cmd_plan", return_value=1),
+        patch("src.grocery_wizard.cli.prod_commands.cmd_add", return_value=1),
         patch("src.grocery_wizard.cli.main.prompt_for_feedback") as prompt_mock,
     ):
-        code = main(["plan-recipes"])
+        code = main(["add-recipe"])
 
     assert code == 1
     prompt_mock.assert_not_called()

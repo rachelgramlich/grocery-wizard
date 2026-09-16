@@ -8,22 +8,17 @@ from pathlib import Path
 from src.grocery_wizard.integrations.notion import ColumnInfo, DatabaseSchema, Recipe
 from src.grocery_wizard.planning.meal_planner import (
     MealPlanFilters,
-    _build_plan_interactive,
     _effective_top_k,
     _pick_weight,
     _recipe_normalized_ingredient_set,
-    _review_plan_interactive,
     build_ingredient_index,
     default_filters,
     eligible_suggestion_pool,
     filter_recipes,
-    fuzzy_match_recipes,
     load_recent_plan_names,
-    parse_meal_requests,
     pick_diverse_recipe,
     recipe_matches_column_filter,
     replace_meals_in_plan,
-    run_meal_planner,
     save_week_plan,
     select_diverse_meals,
     suggest_meals,
@@ -403,110 +398,18 @@ def test_eligible_suggestion_pool_excludes_accepted_and_rejected() -> None:
     assert [recipe.name for recipe in eligible] == ["Bean Bowl"]
 
 
-def test_fuzzy_match_recipes_exact_case_insensitive() -> None:
-    recipes = [_recipe("Chicken Curry"), _recipe("Fish Tacos")]
-    assert [r.name for r in fuzzy_match_recipes("chicken curry", recipes)] == ["Chicken Curry"]
 
 
-def test_fuzzy_match_recipes_substring() -> None:
-    recipes = [_recipe("Chicken Curry"), _recipe("Fish Tacos")]
-    assert {r.name for r in fuzzy_match_recipes("curry", recipes)} == {"Chicken Curry"}
 
 
-def test_parse_meal_requests_splits_and_trims() -> None:
-    assert parse_meal_requests("  Pasta ,  Curry  ,,") == ["Pasta", "Curry"]
 
 
-def test_reject_suggests_different_recipe_same_slot(monkeypatch) -> None:
-    monkeypatch.setattr(
-        "src.grocery_wizard.planning.meal_planner.pick_diverse_recipe",
-        lambda candidates, selected, **kwargs: candidates[0],
-    )
-    pool = DIVERSITY_RECIPES[:3]
-    prompts = iter(["r", "a"])
-    plan = _build_plan_interactive(
-        pool,
-        1,
-        schema=None,
-        prompt_fn=lambda _: next(prompts),
-    )
-    assert plan == ["Fish Pasta"]
-    assert plan[0] != "Chicken Curry"
 
 
-def test_global_reject_excludes_from_later_slots(monkeypatch) -> None:
-    def deterministic_pick(candidates, selected, **kwargs):
-        order = ["Chicken Curry", "Fish Pasta", "Bean Bowl"]
-        for name in order:
-            for recipe in candidates:
-                if recipe.name == name:
-                    return recipe
-        return candidates[0]
-
-    monkeypatch.setattr(
-        "src.grocery_wizard.planning.meal_planner.pick_diverse_recipe",
-        deterministic_pick,
-    )
-    pool = DIVERSITY_RECIPES[:3]
-    prompts = iter(["r", "a", "a"])
-    plan = _build_plan_interactive(
-        pool,
-        2,
-        schema=None,
-        prompt_fn=lambda _: next(prompts),
-    )
-    assert plan == ["Fish Pasta", "Bean Bowl"]
-    assert "Chicken Curry" not in plan
 
 
-def test_review_plan_regenerates_single_slot(monkeypatch) -> None:
-    monkeypatch.setattr(
-        "src.grocery_wizard.planning.meal_planner.pick_diverse_recipe",
-        lambda candidates, selected, **kwargs: candidates[0],
-    )
-    pool = DIVERSITY_RECIPES[:4]
-    rejected: set[str] = set()
-    prompts = iter(["2", "a", ""])
-    plan = _review_plan_interactive(
-        ["Chicken Curry", "Fish Pasta", "Bean Bowl"],
-        pool,
-        all_recipes=pool,
-        rejected_names=rejected,
-        schema=None,
-        prompt_fn=lambda _: next(prompts),
-    )
-    assert plan[0] == "Chicken Curry"
-    assert plan[1] == "Tofu Sheet Pan"
-    assert plan[2] == "Bean Bowl"
 
 
-def test_review_plan_old_slot_not_auto_rejected(monkeypatch) -> None:
-    """Regenerating a slot frees the old recipe unless user rejects it."""
-    pool = DIVERSITY_RECIPES[:3]
-    recipe_by_name = {recipe.name: recipe for recipe in pool}
-    picks = iter([recipe_by_name["Bean Bowl"], recipe_by_name["Fish Pasta"]])
-
-    def next_pick(candidates, selected, **kwargs):
-        return next(picks)
-
-    monkeypatch.setattr(
-        "src.grocery_wizard.planning.meal_planner.pick_diverse_recipe",
-        next_pick,
-    )
-    rejected: set[str] = set()
-    prompts = iter(["1", "a", "2", "a", ""])
-    plan = _review_plan_interactive(
-        ["Chicken Curry", "Fish Pasta"],
-        pool,
-        all_recipes=pool,
-        rejected_names=rejected,
-        schema=None,
-        prompt_fn=lambda _: next(prompts),
-    )
-    assert plan[0] == "Bean Bowl"
-    assert plan[1] == "Fish Pasta"
-    assert "Chicken Curry" not in rejected
-    assert "Fish Pasta" not in rejected
 
 
 def test_pick_diverse_recipe_samples_from_top_scorers() -> None:
@@ -699,29 +602,3 @@ def test_ingredient_filter_without_precomputed_index() -> None:
     assert "Chicken Curry" not in result_names
 
 
-def test_run_meal_planner_with_requested_meals(tmp_path, monkeypatch) -> None:
-    monkeypatch.setattr(
-        "src.grocery_wizard.planning.meal_planner.pick_diverse_recipe",
-        lambda candidates, selected, **kwargs: candidates[0],
-    )
-    db = _FakeDB(_dinner_recipes(DIVERSITY_RECIPES))
-    prompts = iter(
-        [
-            "5",
-            "chicken curry, bean bowl",
-            "",
-            "a",
-            "a",
-            "a",
-            "",
-        ]
-    )
-    plan = run_meal_planner(
-        db,
-        meals=7,
-        week_plan_path=tmp_path / "week_plan.json",
-        prompt=lambda _: next(prompts),
-        confirm=lambda _: True,
-    )
-    assert plan[:2] == ["Chicken Curry", "Bean Bowl"]
-    assert len(plan) == 5
