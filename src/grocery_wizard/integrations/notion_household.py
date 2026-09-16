@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from datetime import date
 
 from src.grocery_wizard.config import Config, load_config
-from src.grocery_wizard.integrations.notion import NotionRecipesDB
+from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 from src.grocery_wizard.integrations.notion_table import NotionDatabase, NotionPageRow
 from src.grocery_wizard.planning.saved_weekly_plans import (
     SavedWeeklyPlan,
@@ -318,6 +318,7 @@ class NotionWeeklyPlansDB:
         *,
         reference_date: date | None = None,
         week_choice: SaveWeekChoice | None = None,
+        cached_recipes: list[Recipe] | None = None,
     ) -> tuple[SavedWeeklyPlan, bool]:
         from datetime import UTC, datetime
 
@@ -327,12 +328,19 @@ class NotionWeeklyPlansDB:
         if not recipes:
             raise ValueError("recipe_names must not be empty")
 
-        recipe_rows = self._recipes_db.query_recipes()
+        if cached_recipes is not None:
+            recipe_rows = cached_recipes
+        else:
+            recipe_rows = self._recipes_db.query_recipes()
         recipe_names_by_id = {recipe.page_id: recipe.name for recipe in recipe_rows}
         page_id_by_name = {recipe.name.lower(): recipe.page_id for recipe in recipe_rows}
 
+        week_filter = {
+            "property": PLAN_WEEK_START_COLUMN,
+            "date": {"equals": week_start.isoformat()},
+        }
         plans = self._plans_from_rows(
-            self._db.query_all_pages(),
+            self._db.query_all_pages(filter=week_filter),
             recipe_names_by_id,
         )
         for plan in plans:

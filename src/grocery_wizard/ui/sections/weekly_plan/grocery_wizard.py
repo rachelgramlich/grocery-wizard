@@ -183,7 +183,7 @@ def render_grocery_list_section(
         )
 
     if st.button("Create grocery list", type="primary", key="create_grocery"):
-        _ensure_weekly_plan_saved_before_grocery(current_plan)
+        _ensure_weekly_plan_saved_before_grocery(current_plan, cached_recipes=all_recipes)
         _clear_grocery_result(clear_pre_extra_items=False)
         _start_recipe_review(
             current_plan,

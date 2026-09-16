@@ -51,14 +51,16 @@ class NotionDatabase:
         properties = ds.get("properties", {})
         return {name: prop.get("type", "") for name, prop in properties.items()}
 
-    def query_all_pages(self) -> list[NotionPageRow]:
+    def query_all_pages(self, *, filter: dict[str, Any] | None = None) -> list[NotionPageRow]:
         pages: list[dict[str, Any]] = []
         cursor: str | None = None
         while True:
-            response = self._client.data_sources.query(
-                data_source_id=self._data_source_id,
-                start_cursor=cursor,
-            )
+            query_kwargs: dict[str, Any] = {"data_source_id": self._data_source_id}
+            if filter is not None:
+                query_kwargs["filter"] = filter
+            if cursor is not None:
+                query_kwargs["start_cursor"] = cursor
+            response = self._client.data_sources.query(**query_kwargs)
             pages.extend(response.get("results", []))
             if not response.get("has_more"):
                 break

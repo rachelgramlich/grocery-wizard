@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 __all__ = [
-    "SavedWeeklyPlan",
     "SaveWeekChoice",
+    "SavedWeeklyPlan",
     "ensure_saved_weekly_plan",
     "find_matching_plan",
     "format_plan_name",
@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
-    from src.grocery_wizard.integrations.notion import NotionRecipesDB
+    from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 
 SaveWeekChoice = Literal["this_week", "next_week"]
 
@@ -212,6 +212,7 @@ def ensure_saved_weekly_plan(
     *,
     reference_date: date | None = None,
     week_choice: SaveWeekChoice | None = None,
+    cached_recipes: list[Recipe] | None = None,
     path: Path | None = None,
     recipes_db: NotionRecipesDB | None = None,
 ) -> tuple[SavedWeeklyPlan, bool]:
@@ -223,6 +224,7 @@ def ensure_saved_weekly_plan(
             recipe_names,
             reference_date=reference_date,
             week_choice=week_choice,
+            cached_recipes=cached_recipes,
         )
 
     when = reference_date or datetime.now(tz=UTC).date()

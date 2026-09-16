@@ -23,7 +23,7 @@ def test_weekly_plan_entry_modes_in_app() -> None:
     assert "_render_save_plan_controls" in source
     assert "_ensure_weekly_plan_saved_before_grocery" in source
     assert "saved_plan_week_start" in source
-    assert "_render_save_week_choice" in source
+    assert "_render_save_week_choice_buttons" in source
     assert "Dev mode (nothing saved)" in source
 
 
