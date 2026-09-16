@@ -37,6 +37,7 @@ PR_TITLE="$(uv run python -m src.grocery_wizard dev enhancement-pr-title <issue-
 (Use a sensible `fix: …` title for bugs if `enhancement-pr-title` does not apply.)
 
 - PR body: repo template, **Manual verification**, `Closes #<issue-number>`.
+- Open the PR **ready for review** (not draft) unless the user asks otherwise.
 
 ### 5. Manual verification
 
