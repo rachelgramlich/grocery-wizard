@@ -23,7 +23,8 @@ Agents run the matching CLI when structured output or `gh` is needed:
 
 1. PR title: `dev enhancement-pr-title <issue-number>`
 2. PR template **Manual verification** + `Closes #<issue-number>`
-3. Manual UAT: non-UI → agent runs checks and `dev record-manual-verification`; UI → user confirms in chat, then `record-manual-verification`
+3. Create PRs **ready for review** (not draft) unless the user asks for a draft.
+4. Manual UAT: non-UI → agent runs checks and `dev record-manual-verification`; UI → user confirms in chat, then `record-manual-verification`
 
 Do not close backlog issues by hand — merge with `Closes #N`.
 
