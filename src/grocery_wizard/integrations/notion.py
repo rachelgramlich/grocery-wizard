@@ -10,6 +10,7 @@ from typing import Any
 from notion_client import Client
 
 from src.grocery_wizard.config import Config
+from src.grocery_wizard.integrations.notion_data_source import resolve_notion_data_source_id
 
 # Values accepted by ``create_recipe`` / ``update_recipe`` keyed by Notion column name.
 # Strings map to title/url/text/select/status; lists to multi_select; bool to checkbox;
@@ -61,18 +62,13 @@ class NotionRecipesDB:
 
     def _resolve_data_source_id(self) -> str:
         """Resolve the data source that holds column schema (Notion API 2025+)."""
-        db = self._client.databases.retrieve(database_id=self._database_id)
-        data_sources = db.get("data_sources", [])
-        if not data_sources:
-            raise ValueError(f"No data sources found for Notion database {self._database_id}")
-        if len(data_sources) == 1:
-            return data_sources[0]["id"]
-
-        for ds in data_sources:
-            detail = self._client.data_sources.retrieve(data_source_id=ds["id"])
-            if "Link" in detail.get("properties", {}):
-                return ds["id"]
-        return data_sources[0]["id"]
+        return resolve_notion_data_source_id(
+            self._client.databases,
+            self._client.data_sources,
+            self._database_id,
+            configured_id=self._config.notion_data_source_id,
+            prefer_property="Link",
+        )
 
     def _load_schema(self) -> DatabaseSchema:
         ds = self._client.data_sources.retrieve(data_source_id=self._data_source_id)

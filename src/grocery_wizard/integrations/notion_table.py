@@ -8,6 +8,7 @@ from typing import Any
 from notion_client import Client
 
 from src.grocery_wizard.config import Config
+from src.grocery_wizard.integrations.notion_data_source import resolve_notion_data_source_id
 
 __all__ = [
     "NotionDatabase",
@@ -37,13 +38,12 @@ class NotionDatabase:
         return self._data_source_id
 
     def _resolve_data_source_id(self) -> str:
-        db = self._client.databases.retrieve(database_id=self._database_id)
-        data_sources = db.get("data_sources", [])
-        if not data_sources:
-            raise ValueError(f"No data sources found for Notion database {self._database_id}")
-        if len(data_sources) == 1:
-            return data_sources[0]["id"]
-        return data_sources[0]["id"]
+        return resolve_notion_data_source_id(
+            self._client.databases,
+            self._client.data_sources,
+            self._database_id,
+            configured_id=self._config.notion_data_source_id,
+        )
 
     def _load_column_types(self) -> dict[str, str]:
         ds = self._client.data_sources.retrieve(data_source_id=self._data_source_id)
