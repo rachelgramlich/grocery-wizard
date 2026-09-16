@@ -2,8 +2,71 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
+from unittest.mock import MagicMock
+
+import pytest
+
+# Dummy Notion settings so CI and fresh clones can run tests without a real `.env`.
+# Real credentials from the environment or `.env` take precedence (`setdefault`).
+_PYTEST_NOTION_ENV: dict[str, str] = {
+    "NOTION_API_KEY": "pytest-notion-integration-test-key",
+    "NOTION_RECIPE_DATABASE_ID": "00000000-0000-4000-8000-000000000001",
+    "NOTION_PANTRY_DATABASE_ID": "00000000-0000-4000-8000-000000000002",
+    "NOTION_RECURRING_WEEKLY_DATABASE_ID": "00000000-0000-4000-8000-000000000003",
+    "NOTION_WEEKLY_MEAL_PLANS_DATABASE_ID": "00000000-0000-4000-8000-000000000004",
+}
+
+
+def pytest_configure(config: object) -> None:
+    del config
+    for key, value in _PYTEST_NOTION_ENV.items():
+        os.environ.setdefault(key, value)
+
+
+@pytest.fixture(autouse=True)
+def _notion_test_doubles(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Avoid live Notion API calls during tests (CI has no integration secrets)."""
+    from src.grocery_wizard import shopping
+    from src.grocery_wizard.integrations.notion import Recipe
+
+    recurring_mod = shopping.recurring_weekly_items
+
+    def load_recurring(path: Path | None = None) -> list[str]:
+        if path is not None:
+            return recurring_mod._load_recurring_from_file(path)
+        return []
+
+    monkeypatch.setattr(recurring_mod, "load_recurring_weekly_items", load_recurring)
+    monkeypatch.setattr(
+        "src.grocery_wizard.ui.grocery_flow.load_recurring_weekly_items",
+        load_recurring,
+    )
+
+    fake_db = MagicMock()
+    fake_db.schema.all_columns = {}
+    fake_db.query_recipes.return_value = [
+        Recipe(
+            page_id="pytest-recipe-1",
+            name="Test Soup",
+            link=None,
+            ingredients="1 cup flour",
+            properties={},
+        ),
+    ]
+
+    monkeypatch.setattr("src.grocery_wizard.ui.db_access.get_db", lambda: fake_db)
+    monkeypatch.setattr(
+        "src.grocery_wizard.ui.notion_cache._load_pantry_cached",
+        lambda _generation, _household_db_id: [],
+    )
+    monkeypatch.setattr(
+        "src.grocery_wizard.ui.notion_cache._load_saved_plans_cached",
+        lambda _weekly_plans_database_id, _generation, _recipes_db: [],
+    )
+
 
 _UI_TEST_HELPERS = Path(__file__).resolve().parent / "src" / "grocery_wizard" / "ui"
 if str(_UI_TEST_HELPERS) not in sys.path:
