@@ -427,39 +427,75 @@ def test_prompt_collection_choice_cancelled(credentials: NytCredentials) -> None
         prompt_collection_choice(client, prompt_fn=lambda _msg: "")
 
 
-def test_cmd_nyt_sync_interactive_picks_folder(capsys: pytest.CaptureFixture[str]) -> None:
-    from src.grocery_wizard.cli.main import cmd_nyt_sync
+def test_run_recipe_box_sync_passes_folder_and_saves_report() -> None:
+    from src.grocery_wizard.integrations.nyt_cooking import (
+        NytCreatedRecipe,
+        NytSyncSummary,
+        run_recipe_box_sync,
+    )
+
+    summary = NytSyncSummary(
+        total=2,
+        created=1,
+        collection_label="Weeknight",
+        created_recipes=[
+            NytCreatedRecipe(
+                page_id="p1",
+                name="Pasta",
+                url="https://cooking.nytimes.com/recipes/1",
+                metadata={"Meal": "Dinner"},
+                flags=[],
+            )
+        ],
+    )
+    db = MagicMock()
+    client = MagicMock()
 
     with (
-        patch("src.grocery_wizard.cli.nyt_commands.load_config"),
-        patch("src.grocery_wizard.cli.nyt_commands.NotionRecipesDB"),
-        patch("src.grocery_wizard.integrations.nyt_cooking.NYTCookingClient"),
-        patch(
-            "src.grocery_wizard.integrations.nyt_cooking.prompt_collection_choice",
-            return_value=("10", "Weeknight"),
-        ) as prompt_mock,
         patch(
             "src.grocery_wizard.integrations.nyt_cooking.sync_saved_recipes_to_notion",
-            return_value=MagicMock(
-                total=2,
-                skipped_existing=0,
-                created=2,
-                dry_run=0,
-                failed=0,
-                collection_label="Weeknight",
-                created_recipes=[],
-            ),
+            return_value=summary,
         ) as sync_mock,
+        patch("src.grocery_wizard.integrations.nyt_cooking.save_sync_report") as save_mock,
     ):
-        code = cmd_nyt_sync(argparse_namespace(collection=None, dry_run=False, confirm=False))
+        result = run_recipe_box_sync(
+            db,
+            client,
+            collection_id="10",
+            collection_label="Weeknight",
+            dry_run=False,
+        )
 
-    assert code == 0
-    prompt_mock.assert_called_once()
     sync_mock.assert_called_once()
     kwargs = sync_mock.call_args.kwargs
     assert kwargs["collection_id"] == "10"
     assert kwargs["collection_label"] == "Weeknight"
-    assert kwargs["collection_name"] is None
+    save_mock.assert_called_once_with(summary)
+    assert result.review_report is not None
+    assert result.review_report["created"][0]["name"] == "Pasta"
+
+
+def test_list_recipe_box_folders_includes_all_and_collections() -> None:
+    from src.grocery_wizard.integrations.nyt_cooking import (
+        NytCollection,
+        list_recipe_box_folders,
+    )
+
+    client = MagicMock()
+    client.list_collections.return_value = [
+        NytCollection(id="c1", name="Weeknight", recipe_count=5),
+    ]
+    with patch(
+        "src.grocery_wizard.integrations.nyt_cooking._recipe_box_total_count",
+        return_value=12,
+    ):
+        folders = list_recipe_box_folders(client)
+
+    assert folders[0].collection_id is None
+    assert folders[0].label == "All saved recipes"
+    assert folders[0].recipe_count == 12
+    assert folders[1].collection_id == "c1"
+    assert folders[1].label == "Weeknight"
 
 
 def test_flag_metadata_issues_detects_dessert_mismatch() -> None:
@@ -488,46 +524,12 @@ def test_format_metadata_review_lists_recipes() -> None:
     assert "Meal: Dinner" in text
 
 
-def test_cli_nyt_auth_status_not_configured(capsys: pytest.CaptureFixture[str]) -> None:
-    from src.grocery_wizard.cli.main import cmd_nyt_auth_status
+def test_verify_nyt_credentials_raises_when_not_configured() -> None:
+    from src.grocery_wizard.integrations.nyt_cooking import NytAuthError, verify_nyt_credentials
 
-    with patch(
-        "src.grocery_wizard.integrations.nyt_cooking.credentials_status",
-        return_value={"configured": False, "regi_id": None},
-    ):
-        code = cmd_nyt_auth_status(argparse_namespace())
-
-    assert code == 1
-    assert "not configured" in capsys.readouterr().out
-
-
-def argparse_namespace(**kwargs: object) -> MagicMock:
-    ns = MagicMock()
-    for key, value in kwargs.items():
-        setattr(ns, key, value)
-    return ns
-
-
-def test_cli_nyt_saved_lists_recipes(capsys: pytest.CaptureFixture[str]) -> None:
-    from src.grocery_wizard.cli.main import cmd_nyt_saved
-    from src.grocery_wizard.integrations.nyt_cooking import NytSavedRecipe
-
-    saved = [
-        NytSavedRecipe(
-            id="1",
-            name="Pasta",
-            url="https://cooking.nytimes.com/recipes/1-pasta",
-            author="Chef",
-        )
-    ]
-    with patch("src.grocery_wizard.integrations.nyt_cooking.NYTCookingClient") as client_cls:
-        client_cls.return_value.iter_all_saved_recipes.return_value = iter(saved)
-        code = cmd_nyt_saved(argparse_namespace(collection=None))
-
-    assert code == 0
-    output = capsys.readouterr().out
-    assert "Pasta" in output
-    assert "Total: 1" in output
+    with patch("src.grocery_wizard.integrations.nyt_cooking.load_credentials", return_value=None):
+        with pytest.raises(NytAuthError, match="not configured"):
+            verify_nyt_credentials()
 
 
 def test_reclassify_updates_meal_and_weeknight() -> None:
@@ -628,24 +630,12 @@ def test_reclassify_updates_meal_and_weeknight() -> None:
     db.update_recipe.assert_any_call("page-2", {"Meal": "Lunch"})
 
 
-def test_cli_nyt_reclassify_dry_run(capsys: pytest.CaptureFixture[str]) -> None:
-    from src.grocery_wizard.cli.main import cmd_nyt_reclassify
+def test_format_sync_summary_includes_counts() -> None:
+    from src.grocery_wizard.integrations.nyt_cooking import NytSyncSummary, format_sync_summary
 
-    with (
-        patch("src.grocery_wizard.cli.nyt_commands.load_config"),
-        patch("src.grocery_wizard.cli.nyt_commands.NotionRecipesDB"),
-        patch("src.grocery_wizard.integrations.nyt_cooking.NYTCookingClient"),
-        patch(
-            "src.grocery_wizard.integrations.nyt_cooking.reclassify_nyt_synced_recipes"
-        ) as reclassify_mock,
-        patch(
-            "src.grocery_wizard.integrations.nyt_cooking.format_reclassify_summary",
-            return_value="summary",
-        ),
-    ):
-        reclassify_mock.return_value = MagicMock()
-        code = cmd_nyt_reclassify(argparse_namespace(dry_run=True))
-
-    assert code == 0
-    assert "Dry run" in capsys.readouterr().out
-    assert reclassify_mock.call_args.kwargs["dry_run"] is True
+    text = format_sync_summary(
+        NytSyncSummary(total=10, skipped_existing=3, created=2, dry_run=0, failed=1)
+    )
+    assert "10 in NYT" in text
+    assert "3 already in Notion" in text
+    assert "2 created" in text

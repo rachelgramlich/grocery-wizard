@@ -81,18 +81,11 @@ def test_dev_list_feedback_prints_entries(capsys: pytest.CaptureFixture[str]) ->
     assert "[ts] plan: ok" in capsys.readouterr().out
 
 
-def test_nyt_help_lists_subcommands(capsys: pytest.CaptureFixture[str]) -> None:
-    with pytest.raises(SystemExit):
-        main(["nyt", "--help"])
-    output = capsys.readouterr().out
-    assert "auth-status" in output
-    assert "sync" in output
-
-
-def test_nyt_sync_help_lists_flags(capsys: pytest.CaptureFixture[str]) -> None:
-    with pytest.raises(SystemExit):
-        main(["nyt", "sync", "--help"])
-    output = capsys.readouterr().out
-    assert "--collection" in output
-    assert "--dry-run" in output
-    assert "--confirm" in output
+def test_nyt_command_removed(capsys: pytest.CaptureFixture[str]) -> None:
+    stderr = StringIO()
+    with patch("sys.stderr", stderr):
+        code = main(["nyt", "sync"])
+    assert code == 1
+    output = stderr.getvalue()
+    assert "was removed" in output
+    assert "Sync from NYT Cooking" in output

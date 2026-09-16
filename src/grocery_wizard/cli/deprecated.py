@@ -6,8 +6,14 @@ import sys
 
 _STREAMLIT_HINT = "Use the Streamlit app (`just grocery-ui`) for meal planning and grocery lists."
 
+_NYT_SYNC_HINT = (
+    "Use the Streamlit app (`just grocery-ui`) — expand **Sync from NYT Cooking** "
+    "under the title bar."
+)
+
 DEPRECATED_COMMANDS: dict[str, str] = {
     "add": "Use `add-recipe` instead.",
+    "nyt": _NYT_SYNC_HINT,
     "plan": _STREAMLIT_HINT,
     "plan-recipes": _STREAMLIT_HINT,
     "grocery": _STREAMLIT_HINT,
