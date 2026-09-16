@@ -38,7 +38,9 @@ from src.grocery_wizard.ui.sections.weekly_plan.state import (
     _current_plan_names,
     _invalidate_weekly_plan_save_state,
     _render_save_plan_controls,
+    _render_save_week_choice,
     _reset_weekly_plan_workflow,
+    _save_week_choice_label,
     _weekly_plan_mode,
     _write_plan_names,
 )
@@ -461,6 +463,11 @@ def render_meals_section(db: NotionRecipesDB, *, all_recipes: list) -> list[str]
             _clear_grocery_result()
             st.rerun()
 
+        if _weekly_plan_mode() != "dev":
+            _render_save_week_choice()
+            week_label = _save_week_choice_label()
+            if week_label:
+                st.caption(f"Meal plan saves to **{week_label}**.")
         _render_save_plan_controls(_current_plan_names())
 
     return _current_plan_names()

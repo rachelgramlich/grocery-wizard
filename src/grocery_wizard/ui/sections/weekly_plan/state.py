@@ -35,6 +35,7 @@ from src.grocery_wizard.ui.notion_cache import cached_saved_plans, invalidate_sa
 
 _WEEKLY_PLAN_MODES = ("new", "saved", "dev")
 _SAVE_WEEK_CHOICE_KEY = "weekly_plan_save_week_choice"
+_SAVE_WEEK_CHOICE_RENDERED_RUN_KEY = "_weekly_plan_save_week_choice_rendered_run"
 
 
 def _current_plan_names() -> list[str]:
@@ -132,6 +133,15 @@ def _weekly_plan_reference_date() -> date:
     return datetime.now(tz=UTC).date()
 
 
+def _script_run_id() -> str:
+    from streamlit.runtime.scriptrunner import get_script_run_ctx
+
+    ctx = get_script_run_ctx()
+    if ctx is None:
+        return "0"
+    return str(ctx.script_run_id)
+
+
 def _save_week_choice() -> SaveWeekChoice | None:
     when = _weekly_plan_reference_date()
     if not needs_save_week_choice(when):
@@ -139,7 +149,7 @@ def _save_week_choice() -> SaveWeekChoice | None:
     choice = st.session_state.get(_SAVE_WEEK_CHOICE_KEY)
     if choice in ("this_week", "next_week"):
         return choice
-    return None
+    return "this_week"
 
 
 def _resolve_save_week_start() -> date:
@@ -161,10 +171,15 @@ def _save_week_choice_label() -> str | None:
 
 
 def _render_save_week_choice() -> None:
-    """On Tue/Wed, let the user pick which Sun-start week to save under."""
+    """On Tue/Wed, let the user pick which Sun-start week to save under (once per script run)."""
     when = _weekly_plan_reference_date()
     if not needs_save_week_choice(when):
         return
+    run_id = _script_run_id()
+    if st.session_state.get(_SAVE_WEEK_CHOICE_RENDERED_RUN_KEY) == run_id:
+        return
+    if _SAVE_WEEK_CHOICE_KEY not in st.session_state:
+        st.session_state[_SAVE_WEEK_CHOICE_KEY] = "this_week"
     st.radio(
         "Save this plan to",
         options=["this_week", "next_week"],
@@ -172,6 +187,7 @@ def _render_save_week_choice() -> None:
         key=_SAVE_WEEK_CHOICE_KEY,
         horizontal=True,
     )
+    st.session_state[_SAVE_WEEK_CHOICE_RENDERED_RUN_KEY] = run_id
 
 
 def _weekly_plan_fingerprint(recipe_names: list[str], week_start: date) -> tuple[str, ...]:
@@ -179,9 +195,6 @@ def _weekly_plan_fingerprint(recipe_names: list[str], week_start: date) -> tuple
 
 
 def _matching_saved_plan(recipe_names: list[str]) -> SavedWeeklyPlan | None:
-    when = _weekly_plan_reference_date()
-    if needs_save_week_choice(when) and _save_week_choice() is None:
-        return None
     week_start = _resolve_save_week_start()
     recipes = normalize_recipe_names(recipe_names)
     if not recipes:

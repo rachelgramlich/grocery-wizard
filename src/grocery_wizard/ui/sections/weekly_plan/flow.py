@@ -11,12 +11,7 @@ from src.grocery_wizard.ui.sections.weekly_plan.plan_entry import (
     _render_weekly_plan_entry,
     render_meals_section,
 )
-from src.grocery_wizard.ui.sections.weekly_plan.state import (
-    _invalidate_stale_grocery_result,
-    _render_save_week_choice,
-    _save_week_choice_label,
-    _weekly_plan_mode,
-)
+from src.grocery_wizard.ui.sections.weekly_plan.state import _invalidate_stale_grocery_result
 
 
 def render_create_weekly_plan() -> None:
@@ -32,12 +27,6 @@ def render_create_weekly_plan() -> None:
     all_recipes = cached_query_recipes(db)
 
     current_plan = render_meals_section(db, all_recipes=all_recipes)
-
-    if current_plan and _weekly_plan_mode() != "dev":
-        _render_save_week_choice()
-        week_label = _save_week_choice_label()
-        if week_label:
-            st.caption(f"Meal plan saves to **{week_label}**.")
 
     render_grocery_list_section(
         db,
