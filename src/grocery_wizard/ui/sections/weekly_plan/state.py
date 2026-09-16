@@ -6,13 +6,12 @@ from datetime import UTC, date, datetime
 
 import streamlit as st
 
-from src.grocery_wizard.config import WEEK_PLAN_PATH
+from src.grocery_wizard.config import WEEK_PLAN_PATH, load_config
 from src.grocery_wizard.planning.meal_planner import save_week_plan
 from src.grocery_wizard.planning.saved_weekly_plans import (
     SavedWeeklyPlan,
     SaveWeekChoice,
     ensure_saved_weekly_plan,
-    find_matching_plan,
     needs_save_week_choice,
     normalize_recipe_names,
     saved_plan_week_start,
@@ -32,7 +31,7 @@ from src.grocery_wizard.ui.grocery_flow import (
     session_pantry_extra as _session_pantry_extra_state,
 )
 from src.grocery_wizard.ui.grocery_helpers import parse_line_items_text
-from src.grocery_wizard.ui.notion_cache import invalidate_notion_cache
+from src.grocery_wizard.ui.notion_cache import cached_saved_plans, invalidate_saved_plans_cache
 
 _WEEKLY_PLAN_MODES = ("new", "saved", "dev")
 _SAVE_WEEK_CHOICE_KEY = "weekly_plan_save_week_choice"
@@ -187,7 +186,27 @@ def _matching_saved_plan(recipe_names: list[str]) -> SavedWeeklyPlan | None:
     recipes = normalize_recipe_names(recipe_names)
     if not recipes:
         return None
-    return find_matching_plan(week_start, recipes, recipes_db=get_db())
+
+    fingerprint = _weekly_plan_fingerprint(recipe_names, week_start)
+    if st.session_state.get("weekly_plan_saved_fingerprint") == fingerprint:
+        saved_name = st.session_state.get("weekly_plan_last_saved_name")
+        if saved_name:
+            return SavedWeeklyPlan(
+                week_start=week_start,
+                version=0,
+                name=str(saved_name),
+                recipes=recipes,
+            )
+
+    config = load_config()
+    db = get_db()
+    for plan in cached_saved_plans(
+        db,
+        weekly_plans_database_id=config.notion_weekly_meal_plans_database_id,
+    ):
+        if plan.week_start == week_start and plan.recipes == recipes:
+            return plan
+    return None
 
 
 def _invalidate_weekly_plan_save_state() -> None:
@@ -212,7 +231,7 @@ def _commit_weekly_plan_to_notion(recipe_names: list[str]) -> SavedWeeklyPlan:
     save_week_plan(recipe_names, WEEK_PLAN_PATH)
     _sync_weekly_plan_save_state(recipe_names, plan)
     if created:
-        invalidate_notion_cache()
+        invalidate_saved_plans_cache()
     return plan
 
 
@@ -228,7 +247,7 @@ def _ensure_weekly_plan_saved_before_grocery(recipe_names: list[str]) -> None:
     save_week_plan(recipe_names, WEEK_PLAN_PATH)
     _sync_weekly_plan_save_state(recipe_names, plan)
     if created:
-        invalidate_notion_cache()
+        invalidate_saved_plans_cache()
 
 
 def _render_save_plan_controls(recipe_names: list[str]) -> None:
@@ -236,8 +255,6 @@ def _render_save_plan_controls(recipe_names: list[str]) -> None:
     mode = _weekly_plan_mode()
     if mode == "dev" or not recipe_names:
         return
-
-    _render_save_week_choice()
 
     existing = _matching_saved_plan(recipe_names)
     if existing is not None:

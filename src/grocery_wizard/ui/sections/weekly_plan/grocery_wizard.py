@@ -28,7 +28,6 @@ from src.grocery_wizard.ui.sections.weekly_plan.state import (
     _clear_grocery_result,
     _ensure_weekly_plan_saved_before_grocery,
     _grocery_pre_extra_items_widget_key,
-    _save_week_choice_label,
 )
 
 
@@ -182,10 +181,6 @@ def render_grocery_list_section(
             key=_grocery_pre_extra_items_widget_key(),
             label_visibility="collapsed",
         )
-
-    week_label = _save_week_choice_label()
-    if week_label:
-        st.caption(f"Meal plan saves to **{week_label}** (change above in your meal list).")
 
     if st.button("Create grocery list", type="primary", key="create_grocery"):
         _ensure_weekly_plan_saved_before_grocery(current_plan)
