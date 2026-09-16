@@ -148,6 +148,19 @@ def _resolve_save_week_start() -> date:
     return saved_plan_week_start(when, week_choice=_save_week_choice())
 
 
+def _save_week_choice_label() -> str | None:
+    """Human label for the Tue/Wed week choice, if applicable."""
+    when = _weekly_plan_reference_date()
+    if not needs_save_week_choice(when):
+        return None
+    choice = _save_week_choice()
+    if choice == "this_week":
+        return "This week"
+    if choice == "next_week":
+        return "Next week"
+    return None
+
+
 def _render_save_week_choice() -> None:
     """On Tue/Wed, let the user pick which Sun-start week to save under."""
     when = _weekly_plan_reference_date()
