@@ -1,4 +1,8 @@
-"""Scrape recipe links and persist or merge raw ingredients in Notion."""
+"""Notion ingredient sync: scrape, clean, format for storage, merge, refresh.
+
+Orchestrates the **storage pipeline** (``parsed.py`` + line filters from
+``normalize.py``). See ``ARCHITECTURE.md`` and ``public.py``.
+"""
 
 from __future__ import annotations
 
@@ -20,9 +24,9 @@ from src.grocery_wizard.ingredients.normalize import (
 from src.grocery_wizard.ingredients.parsed import (
     format_ingredient_for_storage,
     format_stored_line_for_display,
-    ingredient_name,
     is_nyt_cooking_url,
     minimal_clean_for_storage,
+    name_from_stored_line,
 )
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 from src.grocery_wizard.recipes.scraper import (
@@ -472,19 +476,19 @@ def parse_ingredients_text(text: str) -> tuple[list[str], list[str]]:
 
 
 def _normalized_set(lines: list[str]) -> set[str]:
-    return {norm for line in lines if (norm := ingredient_name(line))}
+    return {norm for line in lines if (norm := name_from_stored_line(line))}
 
 
 def _line_represented(line: str, normalized_names: set[str]) -> bool:
-    norm = ingredient_name(line)
+    norm = name_from_stored_line(line)
     if not norm:
         return False
     return norm in normalized_names
 
 
 def _matches_removal(line: str, removal_target: str) -> bool:
-    normalized = ingredient_name(line)
-    target_norm = ingredient_name(removal_target)
+    normalized = name_from_stored_line(line)
+    target_norm = name_from_stored_line(removal_target)
     if not normalized or not target_norm:
         return False
     return target_norm in normalized or normalized in target_norm
@@ -511,7 +515,7 @@ def merge_ingredients(existing: str, scraped: str) -> str:
     for line in existing_lines:
         if _line_represented(line, merged_norms):
             continue
-        norm = ingredient_name(line)
+        norm = name_from_stored_line(line)
         if not norm:
             continue
         merged.append(line)

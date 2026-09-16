@@ -331,7 +331,7 @@ src/grocery_wizard/
 ├── cli/          # argparse entry points only — no business logic
 ├── config/       # Config dataclass + data files (pantry, aisles, recurring)
 ├── dev/          # Developer/maintenance commands (audit, validate)
-├── ingredients/  # Ingredient parsing, normalization, Notion sync
+├── ingredients/  # Storage (parsed/sync) vs grocery (normalize); see ingredients/ARCHITECTURE.md
 ├── integrations/ # External API clients (Notion, NYT Cooking)
 ├── lib/          # Shared utilities (prompts, feedback)
 ├── planning/     # Meal planning flows

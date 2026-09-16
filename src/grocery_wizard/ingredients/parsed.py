@@ -1,11 +1,17 @@
-"""Ingredient-parser integration for cleaned grocery-ingredient lines."""
+"""Parse and format ingredient lines for Notion storage (qty + name strings).
+
+Grocery-list naming and aggregation live in ``normalize.py`` — see
+``ARCHITECTURE.md`` and ``public.py`` for which entry points to use.
+"""
 
 from __future__ import annotations
 
 __all__ = [
     "aggregate_amounts",
+    "format_ingredient_for_storage",
     "ingredient_name",
-    "parse_amount",
+    "minimal_clean_for_storage",
+    "name_from_stored_line",
     "parse_stored_ingredient",
     "should_show_amount",
 ]
@@ -956,10 +962,19 @@ def minimal_clean_for_storage(line: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
-def ingredient_name(line: str) -> str:
-    """Return the canonical grocery item name from a stored or raw ingredient line."""
+def name_from_stored_line(line: str) -> str:
+    """Return the item name embedded in a Notion storage line (``{qty} {name}``)."""
     name, _ = parse_stored_ingredient(line)
     return name
+
+
+def ingredient_name(line: str) -> str:
+    """Alias for :func:`name_from_stored_line` (storage pipeline only).
+
+    For grocery-list keys and display names, use
+    :func:`src.grocery_wizard.ingredients.normalize.normalize_ingredient`.
+    """
+    return name_from_stored_line(line)
 
 
 def _strip_parenthetical_notes(text: str) -> str:
@@ -1326,8 +1341,3 @@ def _canonical_unit(unit: str | None) -> str | None:
     if unit is None:
         return None
     return _UNIT_CANONICAL.get(unit.lower(), unit.lower())
-
-
-normalize_ingredient = ingredient_name
-parse_amount = parse_stored_ingredient
-clean_ingredient_line_for_storage = format_ingredient_for_storage
