@@ -46,6 +46,15 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
         ids = [f"{case['recipe']}|{case['raw_line'][:40].replace(chr(10), ' ')}" for case in cases]
         metafunc.parametrize("notion_case", cases, ids=ids)
 
+    if "notion_removal_case" in metafunc.fixturenames:
+        cases = [
+            case
+            for case in load_notion_ingredient_cases()
+            if case.get("notes") == "removal directive"
+        ]
+        ids = [f"{case['recipe']}|{case['raw_line']}" for case in cases]
+        metafunc.parametrize("notion_removal_case", cases, ids=ids)
+
     if "single_line_pipeline_case" in metafunc.fixturenames:
         cases = [
             case

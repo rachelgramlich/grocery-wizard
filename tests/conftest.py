@@ -29,10 +29,8 @@ def pytest_configure(config: object) -> None:
 @pytest.fixture(autouse=True)
 def _notion_test_doubles(monkeypatch: pytest.MonkeyPatch) -> None:
     """Avoid live Notion API calls during tests (CI has no integration secrets)."""
-    from src.grocery_wizard import shopping
+    import src.grocery_wizard.shopping.recurring_weekly_items as recurring_mod
     from src.grocery_wizard.integrations.notion import Recipe
-
-    recurring_mod = shopping.recurring_weekly_items
 
     def load_recurring(path: Path | None = None) -> list[str]:
         if path is not None:

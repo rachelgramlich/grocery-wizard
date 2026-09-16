@@ -229,10 +229,8 @@ def test_notion_fixture_prepare(notion_case: dict) -> None:
         assert result == expected
 
 
-def test_notion_fixture_preserves_removal_directives(notion_case: dict) -> None:
-    if notion_case.get("notes") != "removal directive":
-        pytest.skip("removal directive case only")
-    prepared = prepare_ingredients_for_notion(notion_case["raw_line"])
+def test_notion_fixture_preserves_removal_directives(notion_removal_case: dict) -> None:
+    prepared = prepare_ingredients_for_notion(notion_removal_case["raw_line"])
     assert "remove: garlic" in prepared.splitlines()
 
 
