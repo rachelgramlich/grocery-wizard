@@ -160,7 +160,7 @@ Grocery Wizard is a package under `src/grocery_wizard/`. Folders group code by *
 | Folder | Key files | Responsibility |
 |--------|-----------|----------------|
 | `cli/` | `main.py` | Command-line entry (`add-recipe`, `plan-recipes`, `create-grocery-list`, `edit-pantry`, `dev …`) |
-| `ui/` | `app.py` | Streamlit app (partial — Plan Meals tab is still a stub) |
+| `ui/` | `app.py`, `sections/`, `notion_cache.py` | Streamlit app: segmented sections (weekly plan, add recipe, pantry & recurring) |
 | `config/` | `__init__.py`, `store_aisles.txt` | Env settings and committed store walk order |
 | `integrations/` | `notion.py`, `notion_household.py`, `nyt_cooking.py` | Notion API; pantry/recurring/plans DBs; NYT sync |
 | `recipes/` | `scraper.py`, `classify.py`, `add_recipe.py` | Scrape URLs, classify metadata, save new recipes |
@@ -288,7 +288,7 @@ just grocery-ui
 # or: uv run streamlit run src/grocery_wizard/ui/app.py
 ```
 
-Tabs: Add Recipe, Plan Meals, Grocery List.
+Sections (segmented control): **Create weekly plan** (meal planning, ingredient review, grocery list), **Add recipe**, **Pantry & recurring**.
 
 **Phone / remote access:** see [docs/remote-access.md](docs/remote-access.md) (local Wi‑Fi + CLI by default; always-on host only if we implement #138).
 
