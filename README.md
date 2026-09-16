@@ -34,3 +34,12 @@ From the repository root (so `.streamlit/config.toml` theme applies):
 just grocery-ui
 # or: uv run python -m streamlit run src/grocery_wizard/ui/app.py
 ```
+
+If you see `error: Failed to spawn: streamlit` even after `just setup`, the project `.venv` is usually stale (common after moving or cloning into a new path). Recreate it and start Streamlit as a module:
+
+```shell
+just refresh-venv
+just grocery-ui
+# or, on older main before Justfile uses -m streamlit:
+uv run python -m streamlit run src/grocery_wizard/ui/app.py
+```

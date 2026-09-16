@@ -21,6 +21,11 @@ setup-upgrade:
 sync:
     uv sync --all-extras
 
+# Recreate .venv when `uv run streamlit` fails with "Failed to spawn" (moved repo / stale shebang)
+refresh-venv:
+    rm -rf .venv
+    uv sync --all-extras
+
 # Run linting checks
 lint:
     uv run ruff check --fix
