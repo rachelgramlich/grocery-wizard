@@ -11,9 +11,10 @@ from src.grocery_wizard.integrations.notion import NotionRecipesDB
 from src.grocery_wizard.integrations.notion_table import NotionDatabase, NotionPageRow
 from src.grocery_wizard.planning.saved_weekly_plans import (
     SavedWeeklyPlan,
+    SaveWeekChoice,
     format_plan_name,
     normalize_recipe_names,
-    week_start_sunday,
+    saved_plan_week_start,
 )
 from src.grocery_wizard.shopping.pantry import PantrySection, parse_pantry_file_from_lines
 from src.grocery_wizard.shopping.store_aisles import (
@@ -321,11 +322,12 @@ class NotionWeeklyPlansDB:
         recipe_names: list[str],
         *,
         reference_date: date | None = None,
+        week_choice: SaveWeekChoice | None = None,
     ) -> tuple[SavedWeeklyPlan, bool]:
         from datetime import UTC, datetime
 
         when = reference_date or datetime.now(tz=UTC).date()
-        week_start = week_start_sunday(when)
+        week_start = saved_plan_week_start(when, week_choice=week_choice)
         recipes = normalize_recipe_names(recipe_names)
         if not recipes:
             raise ValueError("recipe_names must not be empty")

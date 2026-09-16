@@ -10,10 +10,12 @@ from src.grocery_wizard.config import WEEK_PLAN_PATH
 from src.grocery_wizard.planning.meal_planner import save_week_plan
 from src.grocery_wizard.planning.saved_weekly_plans import (
     SavedWeeklyPlan,
+    SaveWeekChoice,
     ensure_saved_weekly_plan,
     find_matching_plan,
+    needs_save_week_choice,
     normalize_recipe_names,
-    week_start_sunday,
+    saved_plan_week_start,
 )
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.grocery_flow import (
@@ -33,6 +35,7 @@ from src.grocery_wizard.ui.grocery_helpers import parse_line_items_text
 from src.grocery_wizard.ui.notion_cache import invalidate_notion_cache
 
 _WEEKLY_PLAN_MODES = ("new", "saved", "dev")
+_SAVE_WEEK_CHOICE_KEY = "weekly_plan_save_week_choice"
 
 
 def _current_plan_names() -> list[str]:
@@ -130,13 +133,44 @@ def _weekly_plan_reference_date() -> date:
     return datetime.now(tz=UTC).date()
 
 
-def _weekly_plan_fingerprint(recipe_names: list[str]) -> tuple[str, ...]:
-    week_start = week_start_sunday(_weekly_plan_reference_date())
+def _save_week_choice() -> SaveWeekChoice | None:
+    when = _weekly_plan_reference_date()
+    if not needs_save_week_choice(when):
+        return None
+    choice = st.session_state.get(_SAVE_WEEK_CHOICE_KEY)
+    if choice in ("this_week", "next_week"):
+        return choice
+    return None
+
+
+def _resolve_save_week_start() -> date:
+    when = _weekly_plan_reference_date()
+    return saved_plan_week_start(when, week_choice=_save_week_choice())
+
+
+def _render_save_week_choice() -> None:
+    """On Tue/Wed, let the user pick which Sun-start week to save under."""
+    when = _weekly_plan_reference_date()
+    if not needs_save_week_choice(when):
+        return
+    st.radio(
+        "Save this plan to",
+        options=["this_week", "next_week"],
+        format_func=lambda choice: "This week" if choice == "this_week" else "Next week",
+        key=_SAVE_WEEK_CHOICE_KEY,
+        horizontal=True,
+    )
+
+
+def _weekly_plan_fingerprint(recipe_names: list[str], week_start: date) -> tuple[str, ...]:
     return (week_start.isoformat(), *normalize_recipe_names(recipe_names))
 
 
 def _matching_saved_plan(recipe_names: list[str]) -> SavedWeeklyPlan | None:
-    week_start = week_start_sunday(_weekly_plan_reference_date())
+    when = _weekly_plan_reference_date()
+    if needs_save_week_choice(when) and _save_week_choice() is None:
+        return None
+    week_start = _resolve_save_week_start()
     recipes = normalize_recipe_names(recipe_names)
     if not recipes:
         return None
@@ -150,12 +184,18 @@ def _invalidate_weekly_plan_save_state() -> None:
 
 def _sync_weekly_plan_save_state(recipe_names: list[str], plan: SavedWeeklyPlan) -> None:
     st.session_state.weekly_plan_last_saved_name = plan.name
-    st.session_state.weekly_plan_saved_fingerprint = _weekly_plan_fingerprint(recipe_names)
+    st.session_state.weekly_plan_saved_fingerprint = _weekly_plan_fingerprint(
+        recipe_names, plan.week_start
+    )
 
 
 def _commit_weekly_plan_to_notion(recipe_names: list[str]) -> SavedWeeklyPlan:
     """Ensure plan exists in Notion and refresh local week_plan.json for diversity hints."""
-    plan, created = ensure_saved_weekly_plan(recipe_names, recipes_db=get_db())
+    plan, created = ensure_saved_weekly_plan(
+        recipe_names,
+        recipes_db=get_db(),
+        week_choice=_save_week_choice(),
+    )
     save_week_plan(recipe_names, WEEK_PLAN_PATH)
     _sync_weekly_plan_save_state(recipe_names, plan)
     if created:
@@ -167,7 +207,11 @@ def _ensure_weekly_plan_saved_before_grocery(recipe_names: list[str]) -> None:
     """Auto-save meal plan when entering grocery flow if not already stored for this week."""
     if _weekly_plan_mode() == "dev" or not recipe_names:
         return
-    plan, created = ensure_saved_weekly_plan(recipe_names, recipes_db=get_db())
+    plan, created = ensure_saved_weekly_plan(
+        recipe_names,
+        recipes_db=get_db(),
+        week_choice=_save_week_choice(),
+    )
     save_week_plan(recipe_names, WEEK_PLAN_PATH)
     _sync_weekly_plan_save_state(recipe_names, plan)
     if created:
@@ -179,6 +223,8 @@ def _render_save_plan_controls(recipe_names: list[str]) -> None:
     mode = _weekly_plan_mode()
     if mode == "dev" or not recipe_names:
         return
+
+    _render_save_week_choice()
 
     existing = _matching_saved_plan(recipe_names)
     if existing is not None:

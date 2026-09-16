@@ -275,7 +275,10 @@ def _render_weekly_plan_entry() -> bool:
             def _saved_plan_label(plan_name: str) -> str:
                 for plan in saved_plans:
                     if plan.name == plan_name:
-                        return f"{plan.name} ({len(plan.recipes)} meals)"
+                        return (
+                            f"{plan.name} — w/o {plan.week_start.isoformat()} "
+                            f"({len(plan.recipes)} meals)"
+                        )
                 return plan_name
 
             selected_plan_name = st.selectbox(
