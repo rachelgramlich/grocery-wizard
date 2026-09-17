@@ -45,11 +45,6 @@ def render_add_recipe() -> None:
                 st.session_state["preview_recipes"] = _previews_for_ui(db, urls)
 
     with st.container(border=True):
-        st.markdown("**Sync from NYT Cooking**")
-        st.caption("Sync all saved recipes from your NYT Cooking recipe-box folder.")
-        render_nyt_sync_controls()
-
-    with st.container(border=True):
         st.markdown("**Type it in myself**")
         st.caption("Start from a blank recipe and fill in the details.")
         if st.button("Start blank recipe", key="add_recipe_manual_start"):
@@ -62,6 +57,11 @@ def render_add_recipe() -> None:
                     )
                 )
             ]
+
+    with st.container(border=True):
+        st.markdown("**Sync from NYT Cooking**")
+        st.caption("Sync all saved recipes from your NYT Cooking recipe-box folder.")
+        render_nyt_sync_controls()
 
     previews = st.session_state.get("preview_recipes", [])
     for index, preview in enumerate(previews):
