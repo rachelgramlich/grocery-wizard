@@ -17,7 +17,6 @@ from src.grocery_wizard.ui.notion_cache import (
     invalidate_notion_cache,
     last_recipe_cache_load_seconds,
 )
-from src.grocery_wizard.ui.nyt_sync import render_nyt_sync_controls
 from src.grocery_wizard.ui.sections.add_recipe import render_add_recipe
 from src.grocery_wizard.ui.sections.pantry_recurring import render_pantry_and_recurring
 from src.grocery_wizard.ui.sections.weekly_plan import render_create_weekly_plan
@@ -61,7 +60,6 @@ def main() -> None:
     inject_app_styles()
     st.title("Grocery Wizard")
     _render_notion_cache_controls()
-    render_nyt_sync_controls()
 
     active_tab = st.segmented_control(
         "Section",

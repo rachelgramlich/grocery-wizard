@@ -18,11 +18,13 @@ from src.grocery_wizard.recipes.add_recipe import (
 )
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.notion_cache import invalidate_notion_cache
+from src.grocery_wizard.ui.nyt_sync import render_nyt_sync_controls
 
 
 def render_add_recipe() -> None:
     st.subheader("Add Recipe")
     st.caption("Paste a link to pull in name and ingredients, then save to Notion.")
+    render_nyt_sync_controls()
 
     db = get_db()
     schema = db.schema
