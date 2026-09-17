@@ -33,8 +33,6 @@ def _weekly_plan_grocery_fragment(db: NotionRecipesDB, all_recipes: list[Recipe]
 
 
 def render_create_weekly_plan() -> None:
-    st.subheader("Create weekly plan")
-    st.caption("Pick your meals, then get a grocery list.")
     st.markdown("**Steps:** 1. Meals → 2. Grocery list")
 
     _invalidate_stale_grocery_result()

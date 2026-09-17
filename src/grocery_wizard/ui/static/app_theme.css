@@ -13,9 +13,7 @@
             --gw-blue: #b8d9f0;
             --gw-blue-strong: #6baee0;
             --gw-blue-text: #1a4a6e;
-            /* Typography scale — each level same or smaller/lighter than the one above (#222). */
-            --gw-heading-page-size: 2rem;
-            --gw-heading-page-weight: 700;
+            /* Typography scale — tab subheader down (#222). Page title uses Streamlit defaults. */
             --gw-heading-section-size: 1.38rem;
             --gw-heading-section-weight: 600;
             --gw-heading-step-size: 1.2rem;
@@ -50,30 +48,21 @@
             color: var(--gw-text);
         }
 
-        /* Page and tab section titles (st.title / st.subheader). */
-        .stApp [data-testid="stTitle"],
+        /* Native heading widgets first (color only here; sizes restored after markdown rules). */
         .stApp [data-testid="stTitle"] h1,
-        .stApp [data-testid="stHeader"],
+        .stApp [data-testid="stTitle"] [data-testid="stMarkdownContainer"] h1,
         .stApp [data-testid="stHeader"] h1,
-        .stApp [data-testid="stHeader"] h2 {
-            color: var(--gw-text);
-            font-size: var(--gw-heading-page-size);
-            font-weight: var(--gw-heading-page-weight);
-            line-height: 1.25;
-        }
-
-        .stApp [data-testid="stSubheader"],
+        .stApp [data-testid="stHeader"] h2,
+        .stApp [data-testid="stHeader"] [data-testid="stMarkdownContainer"] h1,
+        .stApp [data-testid="stHeader"] [data-testid="stMarkdownContainer"] h2,
         .stApp [data-testid="stSubheader"] h2,
-        .stApp [data-testid="stSubheader"] h3 {
+        .stApp [data-testid="stSubheader"] h3,
+        .stApp [data-testid="stSubheader"] [data-testid="stMarkdownContainer"] h2,
+        .stApp [data-testid="stSubheader"] [data-testid="stMarkdownContainer"] h3 {
             color: var(--gw-text);
-            font-size: var(--gw-heading-section-size);
-            font-weight: var(--gw-heading-section-weight);
-            line-height: 1.3;
         }
 
-        /* Markdown step headings (### / ####) under a tab subheader. */
-        .stApp [data-testid="stMarkdownContainer"] h1,
-        .stApp [data-testid="stMarkdownContainer"] h2,
+        /* Markdown step headings (### / ####) — not st.title / st.subheader (nested markdown). */
         .stApp [data-testid="stMarkdownContainer"] h3 {
             color: var(--gw-text);
             font-size: var(--gw-heading-step-size);
@@ -88,6 +77,32 @@
             font-size: var(--gw-heading-subsection-size);
             font-weight: var(--gw-heading-subsection-weight);
             line-height: 1.35;
+        }
+
+        /* Restore Streamlit heading sizes for widgets (must win over markdown h3/h4 rules). */
+        .stApp [data-testid="stTitle"] h1,
+        .stApp [data-testid="stTitle"] [data-testid="stMarkdownContainer"] h1 {
+            font-size: revert;
+            font-weight: revert;
+            line-height: revert;
+        }
+
+        .stApp [data-testid="stHeader"] h1,
+        .stApp [data-testid="stHeader"] h2,
+        .stApp [data-testid="stHeader"] [data-testid="stMarkdownContainer"] h1,
+        .stApp [data-testid="stHeader"] [data-testid="stMarkdownContainer"] h2 {
+            font-size: var(--gw-heading-section-size);
+            font-weight: var(--gw-heading-section-weight);
+            line-height: 1.3;
+        }
+
+        .stApp [data-testid="stSubheader"] h2,
+        .stApp [data-testid="stSubheader"] h3,
+        .stApp [data-testid="stSubheader"] [data-testid="stMarkdownContainer"] h2,
+        .stApp [data-testid="stSubheader"] [data-testid="stMarkdownContainer"] h3 {
+            font-size: var(--gw-heading-section-size);
+            font-weight: var(--gw-heading-section-weight);
+            line-height: 1.3;
         }
 
         /* Single-line bold markdown used as a card/section label (Add recipe cards, etc.). */
