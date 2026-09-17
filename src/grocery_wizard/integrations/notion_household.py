@@ -38,7 +38,10 @@ _PANTRY_AISLE_COLUMN_CANDIDATES = (
 
 
 def resolve_pantry_aisle_column(column_types: dict[str, str]) -> str:
-    """Return the pantry store-aisle property (``Store Aisle``, ``Aisle``, or legacy ``Section``)."""
+    """Return the pantry store-aisle property.
+
+    Accepts ``Store Aisle``, ``Aisle``, or legacy ``Section``.
+    """
     for name in _PANTRY_AISLE_COLUMN_CANDIDATES:
         if name in column_types:
             return name
