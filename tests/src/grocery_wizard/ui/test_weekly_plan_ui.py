@@ -225,3 +225,11 @@ def test_grocery_list_extra_items_before_create_button() -> None:
         'with st.expander("Add extra items"', 1
     )[0]
     assert "_grocery_pre_extra_items_widget_key()" not in pantry_block
+
+
+def test_cached_plan_ingredient_index_rebuilds_when_value_missing() -> None:
+    """Avoid KeyError when cache key exists but _ingredient_index was cleared."""
+    source = ui_source()
+    fn = source.split("def _cached_plan_ingredient_index", 1)[1].split("\ndef ", 1)[0]
+    assert 'st.session_state.get("_ingredient_index")' in fn
+    assert "cached_index is None" in fn
