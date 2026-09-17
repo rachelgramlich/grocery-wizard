@@ -60,7 +60,7 @@ def _normalize_stored_lines(text: str) -> list[str]:
         line = re.sub(r"^[▢•*]\s*", "", line)
         line = re.sub(r"^\\[ \\]\s*▢?", "", line).strip()
         line = re.sub(r"^\d+\.\s*(?:\[\s*\]\s*)", "", line).strip()
-        if line.startswith(("- ", "* ")):
+        if line.startswith(("- ", "* ")) and not is_removal_directive(line):
             line = line[2:].strip()
         elif len(line) > 1 and line[0] == "-" and line[1].isdigit():
             line = line[1:].strip()
@@ -109,19 +109,26 @@ def _merge_continuation_lines(lines: list[str]) -> list[str]:
 def _is_ingredient_continuation(previous: str, current: str) -> bool:
     if looks_like_merged_ingredient_line(previous):
         return False
-    if previous.count("(") > previous.count(")"):
-        return True
     stripped = current.strip()
     if not stripped:
         return False
-    if len(stripped.split()) == 1 and not is_junk_ingredient(stripped):
-        return False
-    prev_words = previous.split()
-    if len(prev_words) == 1 and prev_words[0][0].isupper():
-        return False
-    if looks_like_merged_ingredient_line(stripped) is False and len(stripped.split()) <= 4:
-        return False
-    return stripped[0].islower() and not re.match(r"^\d", stripped)
+    if re.match(r"^and\b", stripped, re.IGNORECASE):
+        return True
+    if previous.count("(") > previous.count(")"):
+        return True
+    if previous.rstrip().endswith(","):
+        return True
+    return (
+        "," in previous
+        and stripped[0].islower()
+        and not re.match(r"^\d", stripped)
+        and not looks_like_merged_ingredient_line(stripped)
+    )
+
+
+def _stored_ingredient_lines(text: str) -> list[str]:
+    """Normalize Notion ingredient text and join wrapped continuation rows."""
+    return _merge_continuation_lines(_normalize_stored_lines(text))
 
 
 def _truncate_at_instructions(lines: list[str]) -> list[str]:
@@ -189,15 +196,14 @@ def format_ingredients_for_review(text: str) -> str:
     if not text.strip():
         return text
     formatted: list[str] = []
-    for raw_line in text.splitlines():
-        stripped = raw_line.strip()
+    for line in _stored_ingredient_lines(text):
+        stripped = line.strip()
         if not stripped:
-            formatted.append(raw_line)
             continue
         if is_directive(stripped):
-            formatted.append(raw_line)
+            formatted.append(stripped)
             continue
-        formatted.append(format_stored_line_for_display(raw_line))
+        formatted.append(format_stored_line_for_display(line))
     return "\n".join(formatted)
 
 
@@ -241,17 +247,17 @@ def parse_ingredients_text(text: str) -> tuple[list[str], list[str]]:
     if not text or not text.strip():
         return ingredients, removals
 
-    for raw_line in text.splitlines():
-        line = raw_line.strip()
-        if not line:
+    for line in _stored_ingredient_lines(text):
+        stripped = line.strip()
+        if not stripped:
             continue
-        if is_directive(line):
-            if is_removal_directive(line):
-                target = parse_removal_target(line)
+        if is_directive(stripped):
+            if is_removal_directive(stripped):
+                target = parse_removal_target(stripped)
                 if target:
                     removals.append(target)
             continue
-        ingredients.append(line)
+        ingredients.append(stripped)
 
     return ingredients, removals
 
