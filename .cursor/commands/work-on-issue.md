@@ -15,7 +15,7 @@ Pick up **one GitHub issue** (backlog enhancement or bug) and implement end-to-e
 | **parser** | `src/grocery_wizard/ingredients/normalize.py`, `src/grocery_wizard/ingredients/_patterns.py` |
 | **shopping** | `src/grocery_wizard/shopping/grocery_list.py`, `src/grocery_wizard/shopping/pantry.py` |
 | **recipes** | `src/grocery_wizard/recipes/add_recipe.py`, `src/grocery_wizard/recipes/scraper.py` |
-| **cli** | `src/grocery_wizard/cli/` (NYT CLI only until #180; primary UX is Streamlit) |
+| **cli** | `src/grocery_wizard/cli/` (deprecation shims; product is Streamlit) |
 | **other** | *(no default file map — skim issue + grep)* |
 
 Area usually comes from label `gw-area-<name>` or `### Area` in the issue body.

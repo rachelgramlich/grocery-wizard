@@ -21,13 +21,7 @@ just grocery-ui
 
 Use the UI to create a weekly plan, review ingredients, and generate your grocery list.
 
-**Optional CLI (NYT only until [#180](https://github.com/rachelgramlich/grocery-wizard/issues/180)):**
-
-| Task | Command |
-|------|---------|
-| Import NYT recipe box | `uv run python -m src.grocery_wizard nyt sync` |
-
-Add recipes and edit pantry in the **Streamlit app** (`just grocery-ui`).
+**NYT recipe box:** use the Streamlit app (`just grocery-ui`) → expand **Sync from NYT Cooking** under the title bar.
 
 Full command reference, NYT credentials, meal-planning defaults, aisle config, and Notion schema: **[`src/grocery_wizard/README.md`](src/grocery_wizard/README.md)**.
 
@@ -35,7 +29,7 @@ Full command reference, NYT credentials, meal-planning defaults, aisle config, a
 
 | Doc | Contents |
 |-----|----------|
-| [`src/grocery_wizard/README.md`](src/grocery_wizard/README.md) | Day-to-day usage (Streamlit + NYT CLI), one-time Notion setup, project layout |
+| [`src/grocery_wizard/README.md`](src/grocery_wizard/README.md) | Day-to-day usage (Streamlit), one-time Notion setup, project layout |
 | [`src/grocery_wizard/config/README.md`](src/grocery_wizard/config/README.md) | Pantry / recurring / weekly-plan Notion databases |
 | [`src/grocery_wizard/docs/remote-access.md`](src/grocery_wizard/docs/remote-access.md) | Phone access (local Wi‑Fi vs hosted) |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Lint, tests, and code review standards |

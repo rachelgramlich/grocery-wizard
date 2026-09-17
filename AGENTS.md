@@ -24,12 +24,6 @@ Do not close backlog issues by hand — merge with `Closes #N`.
 
 ## User workflow
 
-**Streamlit + Notion only.** Run `just grocery-ui` for recipes, meal planning, pantry, and grocery lists.
-
-**Temporary CLI (until [#180](https://github.com/rachelgramlich/grocery-wizard/issues/180)):** NYT Cooking sync only:
-
-```bash
-uv run python -m src.grocery_wizard nyt sync
-```
+**Streamlit + Notion only.** Run `just grocery-ui` for recipes, meal planning, pantry, NYT recipe-box sync, and grocery lists.
 
 After `just setup`, Streamlit’s `developing-with-streamlit` skill is under `.cursor/skills/` for UI work.

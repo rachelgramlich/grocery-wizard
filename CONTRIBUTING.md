@@ -326,7 +326,7 @@ text = "line one\nline two\nline three"
 
 ```
 src/grocery_wizard/
-├── cli/          # NYT argparse entry only (temporary until #180) — no business logic
+├── cli/          # removed-command hints only — no business logic
 ├── config/       # Config dataclass + data files (pantry, aisles, recurring)
 ├── dev/          # Developer/maintenance commands (audit, validate)
 ├── ingredients/  # Storage (parsed/sync) vs grocery (normalize); see ingredients/ARCHITECTURE.md

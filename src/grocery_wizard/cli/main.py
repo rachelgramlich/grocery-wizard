@@ -1,35 +1,26 @@
-"""NYT Cooking CLI only (temporary until Streamlit NYT sync in #180)."""
+"""Grocery Wizard CLI — removed commands only (Streamlit + Notion is the product)."""
 
 from __future__ import annotations
 
 import sys
 
-from src.grocery_wizard.cli.nyt_commands import (
-    cmd_nyt_apply_metadata,
-    cmd_nyt_auth_status,
-    cmd_nyt_reclassify,
-    cmd_nyt_review_metadata,
-    cmd_nyt_saved,
-    cmd_nyt_sync,
-)
-from src.grocery_wizard.cli.parser import build_parser
+from src.grocery_wizard.cli.deprecated import deprecated_exit_code
 
-__all__ = [
-    "cmd_nyt_apply_metadata",
-    "cmd_nyt_auth_status",
-    "cmd_nyt_reclassify",
-    "cmd_nyt_review_metadata",
-    "cmd_nyt_saved",
-    "cmd_nyt_sync",
-    "main",
-]
+__all__ = ["main"]
 
 
 def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
-    parser = build_parser()
-    args = parser.parse_args(argv)
-    return args.func(args)
+
+    deprecated_code = deprecated_exit_code(argv)
+    if deprecated_code is not None:
+        return deprecated_code
+
+    print(
+        "No CLI commands remain. Use `just grocery-ui` for Grocery Wizard.",
+        file=sys.stderr,
+    )
+    return 1
 
 
 if __name__ == "__main__":
