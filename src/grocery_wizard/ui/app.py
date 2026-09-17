@@ -14,7 +14,6 @@ import streamlit as st
 
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.notion_cache import (
-    cached_query_recipes,
     invalidate_notion_cache,
     last_recipe_cache_load_seconds,
 )
@@ -69,7 +68,6 @@ def _refresh_notion_cache_from_ui() -> None:
     st.session_state[_SKIP_PICKER_RENDER_SYNC] = True
     with st.spinner("Refreshing from Notion…"):
         invalidate_notion_cache()
-        cached_query_recipes(get_db())
     # Keep picker state aligned with the section we are actually rendering.
     st.session_state["gw_active_tab"] = st.session_state[_GW_RENDER_SECTION]
 
