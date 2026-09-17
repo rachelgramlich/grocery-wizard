@@ -4,6 +4,7 @@ from src.grocery_wizard.ingredients.normalize import (
     aggregate_amounts,
     clean_ingredient_line_for_storage,
     expand_ingredient_line,
+    filter_ingredient_key,
     is_instruction_line,
     is_junk_ingredient,
     is_metadata_line,
@@ -706,3 +707,33 @@ def test_corn_tortillas_not_split_by_title_bleed() -> None:
 
 def test_cilantro_sprigs_normalized_to_lowercase() -> None:
     assert normalize_ingredient("Cilantro sprigs") == "cilantro sprigs"
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected_key"),
+    [
+        ("2 red or russet potatoes", "potatoes"),
+        ("1 lb Yukon Gold potatoes", "potatoes"),
+        ("1/2 teaspoon turmeric", "turmeric"),
+        ("1 lb chicken breast", "chicken"),
+        ("boneless skinless chicken breasts", "chicken"),
+        ("2 cans white beans", "white beans"),
+        ("butter beans", "butter beans"),
+        ("2 tablespoons olive oil", "olive oil"),
+        ("balsamic vinegar", "balsamic vinegar"),
+        ("red or yellow onions", "onions"),
+        ("low-sodium chicken or vegetable stock", "stock"),
+    ],
+)
+def test_filter_ingredient_key_staple_granularity(raw: str, expected_key: str) -> None:
+    assert filter_ingredient_key(raw) == expected_key
+
+
+def test_filter_ingredient_key_does_not_change_grocery_normalize() -> None:
+    """Grocery-list names stay line-specific while filter keys stay coarse."""
+    russet = normalize_ingredient("2 red or russet potatoes")
+    yukon = normalize_ingredient("1 lb Yukon Gold potatoes")
+    assert russet != yukon
+    assert filter_ingredient_key("2 red or russet potatoes") == filter_ingredient_key(
+        "1 lb Yukon Gold potatoes"
+    )

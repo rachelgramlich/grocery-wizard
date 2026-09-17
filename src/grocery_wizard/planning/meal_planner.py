@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any
 
 from src.grocery_wizard.config import WEEK_PLAN_PATH
-from src.grocery_wizard.ingredients.normalize import normalize_ingredient
+from src.grocery_wizard.ingredients.normalize import filter_ingredient_key
 from src.grocery_wizard.ingredients.sync import parse_ingredients_text
 from src.grocery_wizard.integrations.notion import (
     ColumnInfo,
@@ -46,21 +46,21 @@ class MealPlanFilters:
 
 
 def _recipe_normalized_ingredient_set(recipe: Recipe) -> set[str]:
-    """Return the set of normalized ingredient names for a recipe."""
+    """Return canonical filter keys for a recipe's ingredients (meal-plan picker)."""
     raw = recipe.ingredients or ""
     if not raw.strip():
         return set()
     lines, _ = parse_ingredients_text(raw)
     result: set[str] = set()
     for line in lines:
-        name = normalize_ingredient(line)
-        if name:
-            result.add(name)
+        key = filter_ingredient_key(line)
+        if key:
+            result.add(key)
     return result
 
 
 def build_ingredient_index(recipes: list[Recipe]) -> dict[str, set[str]]:
-    """Return a mapping of recipe page_id → normalized ingredient name set."""
+    """Return a mapping of recipe page_id → canonical meal-plan ingredient filter keys."""
     return {recipe.page_id: _recipe_normalized_ingredient_set(recipe) for recipe in recipes}
 
 

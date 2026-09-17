@@ -475,7 +475,35 @@ _INGREDIENT_RECIPES = [_CHICKEN_RECIPE, _FISH_RECIPE, _TOFU_RECIPE, _EMPTY_RECIP
 
 def test_recipe_normalized_ingredient_set_parses_lines() -> None:
     result = _recipe_normalized_ingredient_set(_CHICKEN_RECIPE)
-    assert "chicken breast" in result or any("chicken" in name for name in result)
+    assert "chicken" in result
+
+
+def test_ingredient_filter_potato_variants_share_canonical_key() -> None:
+    russet_recipe = _recipe(
+        "Russet Hash",
+        page_id="id-rh",
+        ingredients="2 red or russet potatoes\n1 onion",
+        properties={"Meal": "Dinner"},
+    )
+    yukon_recipe = _recipe(
+        "Yukon Gratin",
+        page_id="id-yg",
+        ingredients="1 lb Yukon Gold potatoes\n2 cups cream",
+        properties={"Meal": "Dinner"},
+    )
+    index = build_ingredient_index([russet_recipe, yukon_recipe])
+    assert "potatoes" in index["id-rh"]
+    assert "potatoes" in index["id-yg"]
+
+    filters = MealPlanFilters(
+        values={},
+        ingredient_names=["potatoes"],
+        ingredient_mode="include",
+    )
+    matched = filter_recipes(
+        [russet_recipe, yukon_recipe], filters, SCHEMA_COLUMNS, ingredient_index=index
+    )
+    assert {recipe.name for recipe in matched} == {"Russet Hash", "Yukon Gratin"}
 
 
 def test_recipe_normalized_ingredient_set_empty_ingredients() -> None:

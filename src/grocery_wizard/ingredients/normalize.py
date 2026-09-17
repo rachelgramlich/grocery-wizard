@@ -12,6 +12,7 @@ __all__ = [
     "count_grocery_nouns",
     "drop_junk_ingredient_lines",
     "expand_ingredient_line",
+    "filter_ingredient_key",
     "is_instruction_line",
     "is_junk_ingredient",
     "is_metadata_line",
@@ -325,6 +326,59 @@ def count_grocery_nouns(text: str) -> int:
     _, rest = _strip_leading_amount_prefix(text.strip())
     words = rest.lower().split()
     return len(_find_grocery_noun_positions(words))
+
+
+def _compound_filter_key_start(words: list[str], pos: int) -> int:
+    """Index where a compound grocery phrase begins (meal-plan filter keys only)."""
+    word = words[pos]
+    if word == "oil" and pos > 0:
+        start = pos
+        while start > 0 and words[start - 1] not in _GROCERY_NOUNS:
+            if words[start - 1] in {"or", "and"}:
+                break
+            start -= 1
+        return start
+    if word == "vinegar" and pos > 0 and words[pos - 1] in _VINEGAR_PREFIXES:
+        start = pos - 1
+        if start > 0 and words[start - 1] == "wine":
+            start -= 1
+        return start
+    if word == "cream" and pos > 0 and words[pos - 1] in _CREAM_PREFIXES:
+        return pos - 1
+    if word in {"tortilla", "tortillas"} and pos > 0 and words[pos - 1] in _TORTILLA_PREFIXES:
+        return pos - 1
+    if word in {"bean", "beans"} and pos > 0:
+        prev = words[pos - 1]
+        if prev in _BEANS_PREFIXES:
+            return pos - 1
+        if prev == "northern" and pos > 1 and words[pos - 2] == "great":
+            return pos - 2
+    return pos
+
+
+def _filter_key_from_normalized_name(name: str) -> str:
+    """Coarse staple key for meal-plan filters; grocery list uses ``normalize_ingredient``."""
+    from src.grocery_wizard.ingredients.parsed import _prefer_plural_form
+
+    stripped = name.strip()
+    if not stripped:
+        return ""
+    words = stripped.lower().split()
+    positions = _find_grocery_noun_positions(words)
+    if not positions:
+        return _prefer_plural_form(stripped)
+    pos = positions[-1]
+    start = _compound_filter_key_start(words, pos)
+    chunk = " ".join(words[start : pos + 1])
+    return _prefer_plural_form(chunk)
+
+
+def filter_ingredient_key(line: str) -> str:
+    """Return a canonical staple key for meal-plan ingredient filters."""
+    normalized = normalize_ingredient(line)
+    if not normalized:
+        return ""
+    return _filter_key_from_normalized_name(normalized)
 
 
 def looks_like_merged_ingredient_line(text: str) -> bool:
