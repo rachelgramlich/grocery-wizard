@@ -11,6 +11,7 @@ _REQUIRED_TYPOGRAPHY_FRAGMENTS = (
     "--gw-heading-subsection-color",
     "--gw-heading-expander-color",
     "--gw-heading-expander-weight",
+    '[data-testid="stTitle"] h1',
     '[data-testid="stSubheader"]',
     '[data-testid="stMarkdownContainer"] h3',
     '[data-testid="stMarkdownContainer"] h4',
@@ -41,3 +42,4 @@ def test_heading_size_tokens_are_monotonic() -> None:
     subsection = _rem("--gw-heading-subsection-size")
     expander = _rem("--gw-heading-expander-size")
     assert page >= section >= step >= subsection >= expander
+    assert page >= 2.7, "page title should stay at Streamlit-scale, not shrink for hierarchy"
