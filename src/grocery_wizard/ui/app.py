@@ -21,7 +21,16 @@ from src.grocery_wizard.ui.sections.add_recipe import render_add_recipe
 from src.grocery_wizard.ui.sections.pantry_recurring import render_pantry_and_recurring
 from src.grocery_wizard.ui.sections.weekly_plan import render_create_weekly_plan
 from src.grocery_wizard.ui.styles import inject_app_styles
-from src.grocery_wizard.ui.tabs import _TAB_ADD, _TAB_WEEKLY, _UI_TABS
+from src.grocery_wizard.ui.tabs import (
+    _TAB_ADD,
+    _TAB_CONTAINER_KEYS,
+    _TAB_PANTRY,
+    _TAB_WEEKLY,
+    _UI_TABS,
+)
+
+_GW_RENDER_SECTION = "gw_render_section"
+_SKIP_PICKER_RENDER_SYNC = "gw_skip_picker_render_sync"
 
 # Re-export for tests and AppTest entry points that import from app.
 __all__ = [
@@ -40,18 +49,47 @@ def _notion_load_caption() -> str:
     return f"Last full recipe load: {load_seconds:.2f}s"
 
 
+def _init_section_navigation_state() -> None:
+    if "gw_active_tab" not in st.session_state:
+        st.session_state["gw_active_tab"] = _TAB_WEEKLY
+    if _GW_RENDER_SECTION not in st.session_state:
+        st.session_state[_GW_RENDER_SECTION] = st.session_state["gw_active_tab"]
+
+
+def _on_active_tab_change() -> None:
+    st.session_state[_GW_RENDER_SECTION] = st.session_state["gw_active_tab"]
+
+
+def _sync_render_section_from_picker() -> None:
+    """Keep body section aligned when the picker changes without on_change."""
+    if st.session_state.get(_SKIP_PICKER_RENDER_SYNC):
+        st.session_state[_SKIP_PICKER_RENDER_SYNC] = False
+        return
+    picker_tab = st.session_state.get("gw_active_tab")
+    if picker_tab and picker_tab != st.session_state.get(_GW_RENDER_SECTION):
+        st.session_state[_GW_RENDER_SECTION] = picker_tab
+
+
+def _refresh_notion_cache_from_ui() -> None:
+    """Invalidate Notion caches; Streamlit reruns after the button callback."""
+    st.session_state[_SKIP_PICKER_RENDER_SYNC] = True
+    with st.spinner("Refreshing from Notion…"):
+        invalidate_notion_cache()
+    # Keep picker state aligned with the section we are actually rendering.
+    st.session_state["gw_active_tab"] = st.session_state[_GW_RENDER_SECTION]
+
+
 def _render_notion_cache_controls() -> None:
     _, refresh_col = st.columns([2, 1])
     with refresh_col:
-        if st.button(
+        st.button(
             "Refresh from Notion",
             key="notion_cache_refresh",
             type="secondary",
             use_container_width=True,
             help="Reload recipes, pantry, and saved plans from Notion",
-        ):
-            invalidate_notion_cache()
-            st.rerun()
+            on_click=_refresh_notion_cache_from_ui,
+        )
         st.caption(_notion_load_caption())
 
 
@@ -63,22 +101,31 @@ def main() -> None:
     )
     inject_app_styles()
     st.title("Grocery Wizard")
+
+    _init_section_navigation_state()
+
     _render_notion_cache_controls()
 
-    active_tab = st.segmented_control(
+    st.segmented_control(
         "Section",
         _UI_TABS,
-        default=_TAB_WEEKLY,
         key="gw_active_tab",
         label_visibility="collapsed",
+        persist_state="session",
+        on_change=_on_active_tab_change,
     )
+    _sync_render_section_from_picker()
 
-    if active_tab == _TAB_WEEKLY:
-        render_create_weekly_plan()
-    elif active_tab == _TAB_ADD:
-        render_add_recipe()
-    else:
-        render_pantry_and_recurring()
+    active_tab = st.session_state[_GW_RENDER_SECTION]
+    section_key = _TAB_CONTAINER_KEYS.get(active_tab, "unknown")
+
+    with st.container(key=f"gw_section_{section_key}"):
+        if active_tab == _TAB_WEEKLY:
+            render_create_weekly_plan()
+        elif active_tab == _TAB_ADD:
+            render_add_recipe()
+        elif active_tab == _TAB_PANTRY:
+            render_pantry_and_recurring()
 
 
 if __name__ == "__main__":

@@ -77,6 +77,7 @@ def _render_nyt_sync_actions() -> tuple[bool, bool]:
         "Dry run (preview only — no Notion writes)",
         value=False,
         key="nyt_sync_dry_run",
+        help="Leave unchecked to write new recipes to Notion. Preview shows counts only.",
     )
 
     last_report = load_sync_report()
@@ -144,16 +145,21 @@ def _execute_nyt_recipe_box_sync(
             st.write(line)
 
         summary = result.summary
-        sync_status.update(
-            label=format_sync_summary(summary),
-            state="complete",
-        )
+        outcome_label = format_sync_summary(summary)
+        if dry_run:
+            outcome_label = outcome_label.replace("Sync complete:", "Preview complete:", 1)
+        sync_status.update(label=outcome_label, state="complete")
 
     if dry_run:
-        st.info("Dry run — no recipes were written to Notion.")
+        st.info(
+            "Dry run finished — Notion was not updated. "
+            "Uncheck dry run and choose Sync to Notion to write new recipes."
+        )
     elif summary.created:
         invalidate_notion_cache()
-        st.success(f"Added {summary.created} recipe(s) to Notion.")
+        st.success(f"Notion updated — added {summary.created} new recipe(s).")
+    else:
+        st.success("Notion updated — no new recipes were needed (already up to date).")
 
     if result.review_report:
         with st.expander("Metadata review", expanded=bool(result.review_report.get("created"))):

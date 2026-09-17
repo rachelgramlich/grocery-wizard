@@ -5,6 +5,13 @@ from __future__ import annotations
 from ui_source import pantry_tab_source, ui_source
 
 
+def test_build_final_list_clears_stale_removal_widget_state() -> None:
+    source = ui_source()
+    after_result = source.split("st.session_state.grocery_result = result_payload", 1)[1]
+    assert 'st.session_state.pop("grocery_remove_once"' in after_result
+    assert 'st.session_state.pop("grocery_readd"' in after_result
+
+
 def test_build_final_list_does_not_auto_persist_recurring_template() -> None:
     source = ui_source()
     review_block = source.split("def _render_per_recipe_review", 1)[1].split(

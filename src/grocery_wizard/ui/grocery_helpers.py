@@ -5,7 +5,7 @@ from __future__ import annotations
 import streamlit as st
 
 from src.grocery_wizard.integrations.notion import Recipe
-from src.grocery_wizard.shopping.grocery_list import merge_grocery_items
+from src.grocery_wizard.shopping.grocery_list import _normalized_item_key, merge_grocery_items
 from src.grocery_wizard.shopping.line_items import parse_line_items
 
 
@@ -50,31 +50,40 @@ def compute_grocery_drafts(
     readd: list[str],
     additional_text: str,
     *,
+    recurring_items: list[str] | None = None,
     run_removals: set[str] | None = None,
 ) -> tuple[list[str], list[str]]:
+    extras = parse_line_items_text(additional_text)
+    recurring = list(recurring_items or [])
     draft_items = merge_grocery_items(items, readd)
-    final_items = merge_grocery_items(items, readd, parse_line_items_text(additional_text))
+    final_items = merge_grocery_items(items, readd, recurring, extras)
     if run_removals:
         final_items = apply_run_removals(final_items, run_removals)
     return draft_items, final_items
 
 
+def removal_matches_grocery_line(line: str, removal: str) -> bool:
+    """True when *removal* targets this buy-list *line* (exact or same normalized item)."""
+    stripped_line = line.strip()
+    stripped_removal = removal.strip()
+    if not stripped_line or not stripped_removal:
+        return False
+    if stripped_line.lower() == stripped_removal.lower():
+        return True
+    return _normalized_item_key(stripped_line) == _normalized_item_key(stripped_removal)
+
+
 def apply_run_removals(items: list[str], removals: set[str]) -> list[str]:
     if not removals:
         return items
-    keys = {name.strip().lower() for name in removals if name.strip()}
+    removal_list = [name for name in removals if name.strip()]
     filtered: list[str] = []
     for line in items:
-        lowered = line.strip().lower()
-        if any(key in lowered or lowered in key for key in keys):
+        if any(removal_matches_grocery_line(line, removal) for removal in removal_list):
             continue
         filtered.append(line)
     return filtered
 
 
 def grocery_line_matches_name(line: str, name: str) -> bool:
-    lowered_line = line.strip().lower()
-    lowered_name = name.strip().lower()
-    if not lowered_line or not lowered_name:
-        return False
-    return lowered_name in lowered_line or lowered_line in lowered_name
+    return removal_matches_grocery_line(line, name)

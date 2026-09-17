@@ -22,7 +22,6 @@ from src.grocery_wizard.ui.nyt_sync import render_nyt_sync_controls
 
 
 def render_add_recipe() -> None:
-    st.subheader("Add Recipe")
     st.caption("Choose one of three ways to add recipes to Notion.")
 
     db = get_db()
@@ -47,7 +46,11 @@ def render_add_recipe() -> None:
     with st.container(border=True):
         st.markdown("**Type it in myself**")
         st.caption("Start from a blank recipe and fill in the details.")
-        if st.button("Start blank recipe", key="add_recipe_manual_start"):
+        if st.button(
+            "Start blank recipe",
+            type="primary",
+            key="add_recipe_manual_start",
+        ):
             st.session_state["preview_recipes"] = [
                 _preview_dict(
                     RecipeUrlPreview(

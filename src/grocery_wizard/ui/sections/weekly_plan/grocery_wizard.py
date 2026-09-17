@@ -17,6 +17,7 @@ from src.grocery_wizard.ui.grocery_helpers import (
     compute_grocery_drafts,
     meal_entries_with_links,
     parse_line_items_text,
+    removal_matches_grocery_line,
     render_copy_download,
 )
 from src.grocery_wizard.ui.notion_cache import cached_query_recipes
@@ -52,6 +53,7 @@ def _buy_list_line_options(result: dict) -> list[str]:
         result["items"],
         readd,
         result.get("additional_text", ""),
+        recurring_items=result.get("recurring_items"),
         run_removals=None,
     )
     return lines
@@ -61,12 +63,11 @@ def _run_removal_defaults(result: dict, buy_lines: list[str]) -> list[str]:
     removal_keys = {name.strip().lower() for name in (result.get("run_removals") or [])}
     if not removal_keys:
         return []
-    defaults: list[str] = []
-    for line in buy_lines:
-        lowered = line.strip().lower()
-        if any(key in lowered or lowered in key for key in removal_keys):
-            defaults.append(line)
-    return defaults
+    return [
+        line
+        for line in buy_lines
+        if any(removal_matches_grocery_line(line, key) for key in removal_keys)
+    ]
 
 
 def _render_build_result_summary(result: dict) -> None:
@@ -183,16 +184,17 @@ def render_grocery_list_section(
         )
 
     if st.button("Create grocery list", type="primary", key="create_grocery"):
-        _ensure_weekly_plan_saved_before_grocery(current_plan, cached_recipes=all_recipes)
-        _clear_grocery_result(clear_pre_extra_items=False)
-        _start_recipe_review(
-            current_plan,
-            all_recipes,
-            exclude_pantry=exclude_pantry,
-            recurring_text=recurring_text,
-            default_recurring=default_recurring,
-            extra_items_text=extra_items_text,
-        )
+        with st.spinner("Preparing ingredient review…"):
+            _ensure_weekly_plan_saved_before_grocery(current_plan, cached_recipes=all_recipes)
+            _clear_grocery_result(clear_pre_extra_items=False)
+            _start_recipe_review(
+                current_plan,
+                all_recipes,
+                exclude_pantry=exclude_pantry,
+                recurring_text=recurring_text,
+                default_recurring=default_recurring,
+                extra_items_text=extra_items_text,
+            )
         st.rerun()
 
 
@@ -231,6 +233,7 @@ def _render_grocery_result() -> None:
         items,
         readd,
         additional_text,
+        recurring_items=result.get("recurring_items"),
         run_removals=run_removals,
     )
 

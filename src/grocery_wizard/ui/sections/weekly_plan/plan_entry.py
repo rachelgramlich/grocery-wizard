@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import streamlit as st
 
 from src.grocery_wizard.config import load_config
@@ -58,6 +60,18 @@ def _locked_recipes_for_plan_build(*, meal_count: int) -> list[str]:
     return locked[: int(meal_count)]
 
 
+def _clamp_prebuild_pinned_recipes(*, max_pins: int) -> None:
+    """Keep pin multiselect state within ``max_selections`` (e.g. after lowering meal count)."""
+    key = "plan_prebuild_pinned_recipes"
+    pinned = list(st.session_state.get(key) or [])
+    if not pinned:
+        return
+    limit = max(1, int(max_pins))
+    if len(pinned) <= limit:
+        return
+    st.session_state[key] = pinned[:limit]
+
+
 def _render_prebuild_recipe_picker(all_recipes: list, *, meal_count: int) -> None:
     """Searchable multiselect to pin recipes before **Build my plan**."""
     all_names = sorted({recipe.name for recipe in all_recipes}, key=str.lower)
@@ -65,11 +79,12 @@ def _render_prebuild_recipe_picker(all_recipes: list, *, meal_count: int) -> Non
         st.caption("No recipes in Notion yet — add recipes to pin meals before building.")
         return
 
+    max_pins = max(1, int(meal_count))
     current = _current_plan_names()
     if "plan_prebuild_pinned_recipes" not in st.session_state and current:
-        st.session_state.plan_prebuild_pinned_recipes = list(current)
+        st.session_state.plan_prebuild_pinned_recipes = list(current)[:max_pins]
+    _clamp_prebuild_pinned_recipes(max_pins=max_pins)
 
-    max_pins = max(1, int(meal_count))
     st.multiselect(
         "Pin recipes before building",
         options=all_names,
@@ -91,18 +106,50 @@ def _set_plan_slot_recipe(plan: list[str], slot_index: int, recipe_name: str) ->
     return updated
 
 
-def _render_slot_manual_picker(
-    *,
+def _slot_manual_picker_fragment(
     slot_index: int,
-    current_name: str,
-    all_recipes: list,
-    filter_columns: list[ColumnInfo],
-    filter_defaults: MealPlanFilters,
-    schema_columns: dict[str, ColumnInfo],
-    ingredient_index: dict[str, set[str]],
-) -> None:
-    with st.expander("Choose recipe manually", expanded=False):
-        st.caption("Filters apply to this meal slot only.")
+) -> Callable[..., None]:
+    @st.fragment(key=f"plan_slot_manual_{slot_index}")
+    def _render(
+        *,
+        all_recipes: list,
+        filter_columns: list[ColumnInfo],
+        filter_defaults: MealPlanFilters,
+        schema_columns: dict[str, ColumnInfo],
+        ingredient_index: dict[str, set[str]],
+    ) -> None:
+
+        def _apply_picked(recipe_name: str) -> None:
+            updated = _set_plan_slot_recipe(_current_plan_names(), slot_index, recipe_name)
+            _write_plan_names(updated)
+            _invalidate_weekly_plan_save_state()
+            _clear_grocery_session_overrides()
+            _clear_grocery_result()
+            st.rerun()
+
+        all_names = sorted({recipe.name for recipe in all_recipes}, key=str.lower)
+
+        st.markdown("**Pick a recipe**")
+        if not all_names:
+            st.warning("No recipes in Notion yet.")
+        else:
+            direct_picked = st.selectbox(
+                "Choose recipe",
+                all_names,
+                index=None,
+                placeholder="Search or pick a recipe…",
+                key=f"plan_slot_direct_pick_{slot_index}",
+                label_visibility="collapsed",
+            )
+            if st.button("Use this recipe", key=f"plan_slot_apply_direct_{slot_index}"):
+                if not direct_picked:
+                    st.warning("Choose a recipe first.")
+                else:
+                    _apply_picked(direct_picked)
+
+        st.divider()
+        st.markdown("**Or filter**")
+        st.caption("Optional — narrow the list using the filters below.")
         slot_filters = render_meal_plan_filters(
             filter_columns,
             filter_defaults,
@@ -116,23 +163,45 @@ def _render_slot_manual_picker(
             ingredient_index=ingredient_index,
         )
         slot_names = [recipe.name for recipe in slot_pool]
-        if not slot_names:
-            st.warning("No recipes match these filters.")
-            return
-        default_index = slot_names.index(current_name) if current_name in slot_names else 0
-        picked = st.selectbox(
-            "Recipe",
-            slot_names,
-            index=default_index,
-            key=f"plan_slot_pick_{slot_index}",
+        with st.container(border=True):
+            st.markdown("**Matching recipes**")
+            st.caption("Recipes that match the filters above.")
+            if not slot_names:
+                st.warning("No recipes match these filters.")
+                return
+            filtered_picked = st.selectbox(
+                "Filtered recipes",
+                slot_names,
+                index=None,
+                placeholder="Pick from filtered recipes…",
+                key=f"plan_slot_pick_{slot_index}",
+            )
+            if st.button("Use this recipe", key=f"plan_slot_apply_{slot_index}"):
+                if not filtered_picked:
+                    st.warning("Choose a recipe from the filtered list first.")
+                else:
+                    _apply_picked(filtered_picked)
+
+    return _render
+
+
+def _render_slot_manual_picker(
+    *,
+    slot_index: int,
+    all_recipes: list,
+    filter_columns: list[ColumnInfo],
+    filter_defaults: MealPlanFilters,
+    schema_columns: dict[str, ColumnInfo],
+    ingredient_index: dict[str, set[str]],
+) -> None:
+    with st.expander("Choose recipe manually", expanded=False):
+        _slot_manual_picker_fragment(slot_index)(
+            all_recipes=all_recipes,
+            filter_columns=filter_columns,
+            filter_defaults=filter_defaults,
+            schema_columns=schema_columns,
+            ingredient_index=ingredient_index,
         )
-        if st.button("Use this recipe", key=f"plan_slot_apply_{slot_index}"):
-            updated = _set_plan_slot_recipe(_current_plan_names(), slot_index, picked)
-            _write_plan_names(updated)
-            _invalidate_weekly_plan_save_state()
-            _clear_grocery_session_overrides()
-            _clear_grocery_result()
-            st.rerun()
 
 
 def _render_dev_jump_tools(db: NotionRecipesDB) -> None:
@@ -378,21 +447,22 @@ def _render_generate_plan_controls(
     _render_prebuild_recipe_picker(all_recipes, meal_count=int(meal_count))
 
     if st.button("Build my plan", type="primary", key="build_plan"):
-        locked_for_build = _locked_recipes_for_plan_build(meal_count=int(meal_count))
-        plan = suggest_meals(
-            all_recipes,
-            meals=int(meal_count),
-            locked_names=locked_for_build,
-            filters=week_filters,
-            schema_columns=schema.all_columns,
-            ingredient_index=ingredient_index,
-        )
-        _write_plan_names(plan)
-        st.session_state.plan_rejected_names = []
-        _invalidate_weekly_plan_save_state()
-        _clear_grocery_session_overrides()
-        _clear_grocery_result()
-        st.session_state.plan_last_week_filters = week_filters
+        with st.spinner("Building your meal plan…"):
+            locked_for_build = _locked_recipes_for_plan_build(meal_count=int(meal_count))
+            plan = suggest_meals(
+                all_recipes,
+                meals=int(meal_count),
+                locked_names=locked_for_build,
+                filters=week_filters,
+                schema_columns=schema.all_columns,
+                ingredient_index=ingredient_index,
+            )
+            _write_plan_names(plan)
+            st.session_state.plan_rejected_names = []
+            _invalidate_weekly_plan_save_state()
+            _clear_grocery_session_overrides()
+            _clear_grocery_result()
+            st.session_state.plan_last_week_filters = week_filters
         st.rerun()
 
     return week_filters
@@ -441,7 +511,6 @@ def _render_built_plan_meals(
             st.write(f"**Meal {index}** — {name}")
             _render_slot_manual_picker(
                 slot_index=index,
-                current_name=name,
                 all_recipes=all_recipes,
                 filter_columns=filter_columns,
                 filter_defaults=filter_defaults,

@@ -78,6 +78,20 @@ def test_format_meals_and_grocery_list_keeps_aisle_sort_without_headers() -> Non
     assert flowers_pos < bananas_pos < onions_pos
 
 
+def test_compute_grocery_drafts_merges_recurring_items_into_final_list() -> None:
+    """Recurring template lines must appear on the export list, not only in the summary."""
+    base_items = ["bananas", "berries", "1 lb chicken"]
+    recurring = ["milk", "fruit"]
+    _, final_items = compute_grocery_drafts(
+        base_items,
+        [],
+        "",
+        recurring_items=recurring,
+    )
+    assert "milk" in final_items
+    assert "fruit" in final_items
+
+
 def test_user_flow_checklist_extras_strip_sort_dedupe() -> None:
     """Simulate pasting Notion checklist extras through the UI display pipeline."""
     extra_items_text = "- [ ] Bananas\n- [ ] Flowers\n- [ ] Bananas"

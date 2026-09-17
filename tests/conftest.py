@@ -42,6 +42,10 @@ def _notion_test_doubles(monkeypatch: pytest.MonkeyPatch) -> None:
         "src.grocery_wizard.ui.grocery_flow.load_recurring_weekly_items",
         load_recurring,
     )
+    monkeypatch.setattr(
+        "src.grocery_wizard.ui.sections.pantry_recurring.load_recurring_weekly_items",
+        load_recurring,
+    )
 
     fake_db = MagicMock()
     fake_db.schema.all_columns = {}

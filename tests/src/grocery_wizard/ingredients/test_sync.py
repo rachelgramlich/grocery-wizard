@@ -45,6 +45,25 @@ def test_parse_removal_target(line: str, expected: str) -> None:
     assert parse_removal_target(line) == expected
 
 
+def test_parse_ingredients_text_merges_wrapped_nyt_lines() -> None:
+    text = "2 medium leeks, light green\nwhite parts only, halved\nSalt\nand pepper, to taste"
+    ingredients, _ = parse_ingredients_text(text)
+    assert ingredients == [
+        "2 medium leeks, light green white parts only, halved",
+        "Salt and pepper, to taste",
+    ]
+
+
+def test_format_ingredients_for_review_merges_wrapped_lines() -> None:
+    stored = "Salt\nand pepper, to taste\n2 medium leeks, light green\nwhite parts only"
+    display = format_ingredients_for_review(stored)
+    lines = display.splitlines()
+    assert lines == [
+        "Salt and pepper, to taste",
+        "2 leeks, light green white parts only",
+    ]
+
+
 def test_parse_ingredients_text_splits_ingredients_and_removals() -> None:
     text = "2 tbsp olive oil\n1 lb chicken\nremove: salt\n- garlic\n# pantry note\nfresh basil"
     ingredients, removals = parse_ingredients_text(text)
@@ -69,6 +88,15 @@ def test_format_ingredients_for_review_expands_storage_encodings() -> None:
     assert "zest of 1 lemon" in lines
     assert "2 cans white beans" in lines
     assert "remove: salt" in lines
+
+
+def test_prepare_ingredients_for_notion_strips_checklist_prefixes() -> None:
+    text = "- [x] Milk\n[x] 2 cups sugar\n- [ ] Flowers"
+    prepared = prepare_ingredients_for_notion(text)
+    lines = prepared.splitlines()
+    assert lines == ["Milk", "sugar", "Flowers"]
+    assert "[x]" not in prepared
+    assert "[ ]" not in prepared
 
 
 def test_prepare_ingredients_for_notion_strips_trailing_prep() -> None:
