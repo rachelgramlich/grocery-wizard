@@ -1,3 +1,8 @@
+---
+name: tidy-project
+description: Repo-wide structure-only tidy PRs (no behavior changes). Slash command only — not a skill.
+---
+
 # Tidy project
 
 **Repo-wide structure-only pass.** Scan the project, apply *Tidy First?* tidyings, and open **one or more PRs** that contain **no behavior changes**.
