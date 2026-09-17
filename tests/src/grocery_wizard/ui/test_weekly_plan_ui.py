@@ -149,6 +149,7 @@ def test_dev_mode_default_meal_count() -> None:
 def test_prebuild_recipe_picker_before_build_my_plan() -> None:
     source = ui_source()
     assert "_render_prebuild_recipe_picker" in source
+    assert "_clamp_prebuild_pinned_recipes" in source
     assert 'key="plan_prebuild_pinned_recipes"' in source
     build_idx = source.index('if st.button("Build my plan"')
     picker_idx = source.index("_render_prebuild_recipe_picker(")

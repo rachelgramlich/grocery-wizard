@@ -59,6 +59,18 @@ def _locked_recipes_for_plan_build(*, meal_count: int) -> list[str]:
     return locked[: int(meal_count)]
 
 
+def _clamp_prebuild_pinned_recipes(*, max_pins: int) -> None:
+    """Keep pin multiselect state within ``max_selections`` (e.g. after lowering meal count)."""
+    key = "plan_prebuild_pinned_recipes"
+    pinned = list(st.session_state.get(key) or [])
+    if not pinned:
+        return
+    limit = max(1, int(max_pins))
+    if len(pinned) <= limit:
+        return
+    st.session_state[key] = pinned[:limit]
+
+
 def _render_prebuild_recipe_picker(all_recipes: list, *, meal_count: int) -> None:
     """Searchable multiselect to pin recipes before **Build my plan**."""
     all_names = sorted({recipe.name for recipe in all_recipes}, key=str.lower)
@@ -66,11 +78,12 @@ def _render_prebuild_recipe_picker(all_recipes: list, *, meal_count: int) -> Non
         st.caption("No recipes in Notion yet — add recipes to pin meals before building.")
         return
 
+    max_pins = max(1, int(meal_count))
     current = _current_plan_names()
     if "plan_prebuild_pinned_recipes" not in st.session_state and current:
-        st.session_state.plan_prebuild_pinned_recipes = list(current)
+        st.session_state.plan_prebuild_pinned_recipes = list(current)[:max_pins]
+    _clamp_prebuild_pinned_recipes(max_pins=max_pins)
 
-    max_pins = max(1, int(meal_count))
     st.multiselect(
         "Pin recipes before building",
         options=all_names,
