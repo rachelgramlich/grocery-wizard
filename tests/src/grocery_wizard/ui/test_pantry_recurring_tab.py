@@ -28,3 +28,7 @@ def test_pantry_and_recurring_share_one_tab() -> None:
     assert "Save recurring template" not in pantry_fn
     assert "load_store_aisles" in pantry_fn
     assert '"Store aisle"' in pantry_fn
+    assert "store_aisles.txt" not in pantry_fn
+    assert "Search pantry" in pantry_fn
+    assert "st.expander" in pantry_fn
+    assert "pantry_tab_remove_pick" not in pantry_fn
