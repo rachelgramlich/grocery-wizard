@@ -63,6 +63,6 @@ Full command reference, NYT credentials, meal-planning defaults, aisle config, a
 
 ### Cursor (optional)
 
-The enhancement backlog lives on **GitHub Issues** (label `grocery-wizard`). Agents should follow [AGENTS.md](AGENTS.md). Slash commands live in **`.cursor/commands/`** (committed). Requires `gh` for backlog commands. Do not commit `.cursor/mcp.json` (tokens).
+The enhancement backlog lives on **GitHub Issues** (label `grocery-wizard`). Agents should follow [AGENTS.md](AGENTS.md). Slash commands live in **`.cursor/commands/`** (committed). Use **`/create-command`** when adding a new command so it does not collide with a skill of the same name. Requires `gh` for backlog commands. Do not commit `.cursor/mcp.json` (tokens).
 
 `just setup` links Streamlit’s skill into `.cursor/skills/developing-with-streamlit` (from `.venv`). **`tidy-first`** (inline while coding) lives under `.cursor/skills/`. Whole-repo tidying is the slash **command** **`.cursor/commands/tidy-project.md`** → type **`/tidy-project`** in **Agent** chat at the repo root (same as `/work-on-issue`). See [AGENTS.md](AGENTS.md) if it does not appear.
