@@ -49,6 +49,7 @@ from src.grocery_wizard.ingredients._patterns import (
     _MERGED_QTY_SPLIT_RE,
     _METADATA_LINE_RE,
     _RECIPE_STEP_RE,
+    _SIZES,
     _TORTILLA_PREFIXES,
     _UNITS,
 )
@@ -380,9 +381,122 @@ def _strip_filter_line_prefix(line: str) -> str:
     return stripped
 
 
+_FILTER_VAGUE_PHRASES = frozenset({"a combination", "a mix", "combination", "mix"})
+_FILTER_DIMENSION_RE = re.compile(
+    r"^-?(\d+(?:\.\d+)?|\d+/\d+)?\s*-?\s*(inch|inches|in)\b",
+    re.IGNORECASE,
+)
+_FILTER_LEADING_NOISE = frozenset(
+    {
+        "about",
+        "approximately",
+        "around",
+        "generous",
+        "heaping",
+        "roughly",
+        "scant",
+    }
+)
+_FILTER_PREP_LEADING = frozenset(
+    {
+        "coarsely",
+        "finely",
+        "fresh",
+        "freshly",
+        "good",
+        "grated",
+        "lightly",
+        "roughly",
+    }
+)
+_FILTER_TRAILING_NOISE = frozenset({"slice", "slices", "thick", "thin", "thickly", "thinly"})
+_FILTER_COMPOUND_TAILS = frozenset(
+    {"extract", "juice", "liqueur", "paste", "powder", "sauce", "zest"}
+)
+
+
+def _strip_filter_leading_noise(words: list[str]) -> list[str]:
+    skip = _FILTER_LEADING_NOISE | _UNITS | _SIZES | _MERGED_LINE_FILLER
+    tokens = list(words)
+    while tokens:
+        if tokens[0] in skip or tokens[0] in _FILTER_PREP_LEADING:
+            tokens.pop(0)
+            continue
+        if tokens[0] in {"a", "an"}:
+            tokens.pop(0)
+            continue
+        if tokens[0] == "few" and len(tokens) > 1 and tokens[1] == "drops":
+            tokens.pop(0)
+            tokens.pop(0)
+            continue
+        break
+    return tokens
+
+
+def _strip_filter_trailing_noise(words: list[str]) -> list[str]:
+    tokens = list(words)
+    while tokens and tokens[-1] in _FILTER_TRAILING_NOISE:
+        tokens.pop()
+    return tokens
+
+
+def _is_non_filterable_segment(segment: str) -> bool:
+    prepared = _strip_filter_line_prefix(segment).strip()
+    if not prepared:
+        return True
+    lowered = prepared.lower()
+    if lowered in _FILTER_VAGUE_PHRASES:
+        return True
+    if re.match(r"^a (combination|mix)\b", lowered):
+        return True
+    if _FILTER_DIMENSION_RE.match(lowered) or lowered.startswith("inch "):
+        return True
+    if re.match(r"^-?inch\b", lowered):
+        return True
+    words = _sanitize_filter_words(lowered)
+    return bool(
+        words
+        and not _find_grocery_noun_positions(words)
+        and all(word in _FILTER_TRAILING_NOISE | {"inch", "inches", "in"} for word in words)
+    )
+
+
+def _is_meaningless_filter_key(key: str) -> bool:
+    lowered = key.lower().strip()
+    if not lowered:
+        return True
+    if lowered in _FILTER_VAGUE_PHRASES:
+        return True
+    return bool(
+        _FILTER_DIMENSION_RE.match(lowered)
+        or re.match(r"^-?inch\b", lowered)
+        or lowered.startswith("inch ")
+    )
+
+
+def _resolve_filter_source_name(prepared: str) -> str:
+    text = _prepare_line_for_parsing(prepared) or prepared
+    stored = format_ingredient_for_storage(text)
+    name = ""
+    if stored:
+        parsed_name, _ = _parse_stored_ingredient(stored)
+        if parsed_name and not parsed_name.lstrip().startswith("-"):
+            name = parsed_name
+    if not name:
+        name = normalize_ingredient(prepared) or prepared
+    if name.startswith(("[x]", "▢", "•", "*")):
+        stripped = _strip_filter_line_prefix(name)
+        name = normalize_ingredient(stripped) or stripped
+    words = _strip_filter_trailing_noise(
+        _strip_filter_leading_noise(_sanitize_filter_words(name)),
+    )
+    return " ".join(words)
+
+
 def _segment_has_filter_noun(segment: str) -> bool:
-    prepared = _strip_filter_line_prefix(segment)
-    source = normalize_ingredient(prepared) or prepared
+    if _is_non_filterable_segment(segment):
+        return False
+    source = _resolve_filter_source_name(_strip_filter_line_prefix(segment))
     return bool(_find_grocery_noun_positions(_sanitize_filter_words(source)))
 
 
@@ -427,7 +541,11 @@ def _filter_key_from_words(words: list[str]) -> str:
         return ""
     positions = _find_grocery_noun_positions(words)
     if not positions:
-        return _prefer_plural_form(" ".join(words))
+        if len(words) >= 2 and words[-1] in _FILTER_COMPOUND_TAILS:
+            return _prefer_plural_form(" ".join(words[-2:]))
+        if len(words) <= 3:
+            return _prefer_plural_form(" ".join(words))
+        return _prefer_plural_form(words[-1])
     pos = positions[-1]
     start = _compound_filter_key_start(words, pos)
     chunk = " ".join(words[start : pos + 1])
@@ -437,11 +555,15 @@ def _filter_key_from_words(words: list[str]) -> str:
 def _filter_key_from_segment(segment: str) -> str:
     """Coarse staple key for one ingredient segment (meal-plan filters only)."""
     prepared = _strip_filter_line_prefix(segment)
-    source = normalize_ingredient(prepared) or prepared
-    if source.startswith(("[x]", "▢", "•", "*")):
-        stripped = _strip_filter_line_prefix(source)
-        source = normalize_ingredient(stripped) or stripped
-    return _filter_key_from_words(_sanitize_filter_words(source))
+    if _is_non_filterable_segment(prepared):
+        return ""
+    source = _resolve_filter_source_name(prepared)
+    if not source:
+        return ""
+    key = _filter_key_from_words(_sanitize_filter_words(source))
+    if _is_meaningless_filter_key(key):
+        return ""
+    return key
 
 
 def filter_ingredient_keys(line: str) -> set[str]:

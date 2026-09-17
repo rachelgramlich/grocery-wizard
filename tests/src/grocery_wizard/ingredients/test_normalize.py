@@ -765,3 +765,18 @@ def test_filter_ingredient_keys_strips_notion_checkbox_prefix() -> None:
         "framboise liqueur",
     }
     assert filter_ingredient_keys("[x] vanilla ice cream, for serving") == {"ice cream"}
+
+
+def test_filter_ingredient_keys_drop_prose_and_dimension_fragments() -> None:
+    assert filter_ingredient_keys("-inch thick") == set()
+    assert filter_ingredient_keys("a combination") == set()
+    assert filter_ingredient_keys("a mix") == set()
+    assert filter_ingredient_keys("1/2-inch thick slices") == set()
+
+
+def test_filter_ingredient_keys_grated_cheese_lines() -> None:
+    fontina = "about 1 heaping cup coarsely grated fontina"
+    parmesan = "about 1 heaping cup coarsely grated parmesan"
+    assert filter_ingredient_keys(fontina) == {"fontina"}
+    assert filter_ingredient_keys(parmesan) == {"parmesan"}
+    assert filter_ingredient_keys("a few drops vanilla extract") == {"vanilla extract"}
