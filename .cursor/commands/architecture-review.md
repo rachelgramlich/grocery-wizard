@@ -38,7 +38,7 @@ Do **not** change production code in Phase A unless the user asked for fixes in 
 Use markdown with these sections:
 
 1. **Executive summary** — 3–5 bullets: overall health, biggest risks, quick wins vs larger refactors.
-2. **Findings by area** — group using `CONTRIBUTING.md` layout (`cli/`, `ingredients/`, `ui/`, etc.) or `AREA_FILES` in `enhancement_log.py`. For each finding:
+2. **Findings by area** — group using `CONTRIBUTING.md` layout (`cli/`, `ingredients/`, `ui/`, etc.) or the area → files table in `.cursor/commands/work-on-issue.md`. For each finding:
    - **What** (file/symbol or pattern)
    - **Why it matters** (maintainability, bugs, consistency)
    - **Priority** (high / medium / low)
@@ -67,29 +67,11 @@ Use markdown with these sections:
 
 ### Create audit-tagged issues
 
-Turn each agreed finding (or merged group) into a `--item` note. Always pass **`--audit`** so issues get the `audit` label (plus normal backlog/area labels for enhancements).
+Turn each agreed finding (or merged group) into one GitHub issue. Follow **`/create-issues`** planning rules and always add the **`audit`** label (plus `grocery-wizard`, `gw-area-<area>` for enhancements, or `bug` for defects).
 
-**Plan first:**
+Include in each issue: problem, suggested fix, and **automation follow-up** (Ruff rule or CONTRIBUTING bullet) when relevant.
 
-```bash
-uv run python -m src.grocery_wizard dev create-issues --dry-run --audit \
-  --item "parser: …" \
-  --item "ui: …"
-```
-
-Include in each item: problem, suggested fix, and **automation follow-up** (Ruff rule or CONTRIBUTING bullet) when relevant.
-
-**Create after user agrees:**
-
-```bash
-uv run python -m src.grocery_wizard dev create-issues --audit --item "…" --item "…"
-```
-
-Or edit JSON from `--dry-run --json` (set `"audit": true` on each row) and:
-
-```bash
-uv run python -m src.grocery_wizard dev create-issues --plan-file /tmp/plan.json
-```
+**Create after user agrees** — use `gh issue create` as documented in `.cursor/commands/create-issues.md` (add `--label audit` on every audit follow-up).
 
 Enhancements get labels: `grocery-wizard`, `gw-area-<area>`, `audit`. Bugs get `bug` + `audit`.
 

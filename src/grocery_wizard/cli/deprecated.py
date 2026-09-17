@@ -11,36 +11,45 @@ _NYT_SYNC_HINT = (
     "under the title bar."
 )
 
+_ADD_RECIPE_HINT = "Use the Streamlit app (`just grocery-ui`) → **Add recipe**."
+
+_EDIT_PANTRY_HINT = "Use the Streamlit app (`just grocery-ui`) → **Pantry & recurring**."
+
+_DEV_HINT = "Agent workflow uses `gh` and `.cursor/commands/` (see AGENTS.md)."
+
+_MAINTENANCE_REMOVED = (
+    "Maintenance CLI was removed; edit ingredients in Notion or the Streamlit review step."
+)
+
 DEPRECATED_COMMANDS: dict[str, str] = {
-    "add": "Use `add-recipe` instead.",
+    "add-recipe": _ADD_RECIPE_HINT,
+    "edit-pantry": _EDIT_PANTRY_HINT,
+    "dev": _DEV_HINT,
+    "add": _ADD_RECIPE_HINT,
     "nyt": _NYT_SYNC_HINT,
     "plan": _STREAMLIT_HINT,
     "plan-recipes": _STREAMLIT_HINT,
     "grocery": _STREAMLIT_HINT,
     "create-grocery-list": _STREAMLIT_HINT,
-    "pantry": "Use the Streamlit app (`just grocery-ui`) — **Pantry & recurring** tab.",
-    "sync": "Use the Streamlit app (`just grocery-ui`) — **Add Recipe** tab.",
-    "refresh-ingredients": "Edit ingredients in Notion or use **Add Recipe** in Streamlit.",
-    "audit": "Use `dev audit-recipes` instead.",
-    "schema": "Use `dev show-schema` instead.",
+    "pantry": _EDIT_PANTRY_HINT,
+    "sync": _MAINTENANCE_REMOVED,
+    "refresh-ingredients": _MAINTENANCE_REMOVED,
+    "audit": "Maintenance CLI was removed.",
+    "schema": "Maintenance CLI was removed.",
 }
 
 DEPRECATED_DEV_COMMANDS: dict[str, str] = {
-    "backfill": "Use `dev backfill-ingredients` instead.",
-    "reconcile": "Use `dev reconcile-ingredients` instead.",
-    "refresh-all": "Use `dev refresh-all-ingredients` instead.",
-    "audit": "Use `dev audit-recipes` instead.",
-    "schema": "Use `dev show-schema` instead.",
-    "show-enhancement": "Use `dev work-on-issue` instead.",
-    "work-on-enhancement": "Use `dev work-on-issue` instead.",
-    "add-enhancement": "Use `dev create-issues` instead.",
-    "report-bug": "Use `dev create-issues` instead.",
-    "close-enhancement": (
-        "Merge a PR whose body includes `Closes #N` (do not close backlog issues by hand)."
-    ),
-    "spawn-enhancement-workers": (
-        "Use `dev list-enhancements` and start one agent per issue."
-    ),
+    "backfill": _DEV_HINT,
+    "reconcile": _DEV_HINT,
+    "refresh-all": _DEV_HINT,
+    "audit": _DEV_HINT,
+    "schema": _DEV_HINT,
+    "show-enhancement": _DEV_HINT,
+    "work-on-enhancement": _DEV_HINT,
+    "add-enhancement": _DEV_HINT,
+    "report-bug": _DEV_HINT,
+    "close-enhancement": _DEV_HINT,
+    "spawn-enhancement-workers": _DEV_HINT,
     "install-cursor-commands": (
         "Slash commands live in `.cursor/commands/` (committed); no install step."
     ),
@@ -49,12 +58,18 @@ DEPRECATED_DEV_COMMANDS: dict[str, str] = {
 
 def deprecated_exit_code(argv: list[str]) -> int | None:
     """Return exit code 1 if argv uses a removed command, else None."""
-    if argv and argv[0] in DEPRECATED_COMMANDS:
+    if not argv:
+        return None
+
+    if argv[0] in DEPRECATED_COMMANDS:
         print_deprecated(argv[0], DEPRECATED_COMMANDS[argv[0]])
         return 1
 
-    if len(argv) >= 2 and argv[0] == "dev" and argv[1] in DEPRECATED_DEV_COMMANDS:
-        print_deprecated(f"dev {argv[1]}", DEPRECATED_DEV_COMMANDS[argv[1]])
+    if argv[0] == "dev":
+        if len(argv) >= 2 and argv[1] in DEPRECATED_DEV_COMMANDS:
+            print_deprecated(f"dev {argv[1]}", DEPRECATED_DEV_COMMANDS[argv[1]])
+        else:
+            print_deprecated("dev", _DEV_HINT)
         return 1
 
     return None
@@ -63,7 +78,4 @@ def deprecated_exit_code(argv: list[str]) -> int | None:
 def print_deprecated(name: str, message: str) -> None:
     print(f"Command '{name}' was removed.", file=sys.stderr)
     print(message, file=sys.stderr)
-    print(
-        "Run: uv run python -m src.grocery_wizard.cli --help",
-        file=sys.stderr,
-    )
+    print("Run: just grocery-ui", file=sys.stderr)

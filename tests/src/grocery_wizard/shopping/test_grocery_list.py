@@ -273,48 +273,6 @@ def test_build_grocery_list_keeps_named_beans_when_pantry_has_modifier_or_generi
 
 
 
-def test_load_week_plan_names_falls_back_to_legacy_path(tmp_path: Path, monkeypatch) -> None:
-    from src.grocery_wizard.config import LEGACY_WEEK_PLAN_PATH, WEEK_PLAN_PATH
-    from src.grocery_wizard.dev.validate_pipeline import _load_week_plan_names
-
-    monkeypatch.chdir(tmp_path)
-    legacy_path = tmp_path / LEGACY_WEEK_PLAN_PATH
-    legacy_path.parent.mkdir(parents=True)
-    legacy_path.write_text('{"recipes": ["Legacy Soup"]}', encoding="utf-8")
-
-    assert not (tmp_path / WEEK_PLAN_PATH).exists()
-    assert _load_week_plan_names(WEEK_PLAN_PATH) == ["Legacy Soup"]
-
-
-def test_load_week_plan_names_invalid_json(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
-) -> None:
-    from src.grocery_wizard.dev.validate_pipeline import _load_week_plan_names
-
-    path = tmp_path / "week_plan.json"
-    path.write_text("{not json", encoding="utf-8")
-    assert _load_week_plan_names(path) == []
-    assert "could not read week plan" in capsys.readouterr().err
-
-
-def test_load_week_plan_names_oserror_returns_empty(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
-) -> None:
-    """Patch read_text to raise OSError and assert _load_week_plan_names returns [] gracefully."""
-    from pathlib import Path as _Path
-
-    from src.grocery_wizard.dev.validate_pipeline import _load_week_plan_names
-
-    path = tmp_path / "week_plan.json"
-    path.write_text('{"recipes": ["Soup"]}', encoding="utf-8")
-
-    with patch.object(_Path, "read_text", side_effect=OSError("permission denied")):
-        result = _load_week_plan_names(path)
-
-    assert result == []
-    assert "could not read week plan" in capsys.readouterr().err
-
-
 def test_build_grocery_list_never_scrapes_with_empty_ingredients(tmp_path: Path) -> None:
     """build_grocery_list must never call scrape_recipe, even when ingredients are empty."""
     pantry_path = tmp_path / "pantry.txt"

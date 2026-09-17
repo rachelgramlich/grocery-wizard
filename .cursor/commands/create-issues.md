@@ -14,48 +14,53 @@
 ## Do not implement in this turn
 
 - Do not open PRs, branches, or code changes unless the user asks **after** issues exist.
-- Do not run `dev work-on-issue` in this turn.
+- Do not run **`/work-on-issue`** in this turn.
+
+## Planning rules (you apply these in chat)
+
+1. **Kind:** **bug** if the note describes broken/incorrect behavior, crashes, or regressions; otherwise **enhancement** backlog.
+2. **Area** (`gw-area-*` label): infer from keywords — **ui** (Streamlit, buttons, layout), **parser** (ingredients, normalize), **shopping** (grocery list, pantry, aisles), **recipes** (Notion recipes, NYT, meal plan), **cli** (terminal, slash commands), **other** when unclear.
+3. **Grouping:** Merge notes that share **kind + area** and can ship in one PR. Split when area differs or bug vs feature differs.
+4. **Architecture audit follow-ups:** Add label **`audit`** (and pass `--label audit` on create) when filing from **`/architecture-review` Phase B**.
+
+Valid areas match the table in `.cursor/commands/work-on-issue.md`.
 
 ## Your task
 
-1. Collect **all** notes the user gave (bullets, paragraphs, voice-dump). Ask for missing detail only if you cannot classify or group.
+1. Collect **all** notes the user gave. Ask for missing detail only if you cannot classify or group.
 
-2. **Plan** (you may skim `src/grocery_wizard/dev/issue_planning.py` and `AREA_FILES` in `enhancement_log.py` to refine areas — optional but helpful for ambiguous notes):
+2. **Explain the plan** in plain language (count, merge/split rationale, bug vs backlog).
 
-```bash
-uv run python -m src.grocery_wizard dev create-issues --dry-run \
-  --item "note one" \
-  --item "note two"
-```
+3. If the user agrees (or gave a clear “create them”), create issues with **`gh`**:
 
-   Or paste notes on stdin (blank line between paragraphs):
+**Enhancement backlog** (use repo template fields; add labels):
 
 ```bash
-printf '%s\n\n%s\n' "first note" "second note" | \
-  uv run python -m src.grocery_wizard dev create-issues --dry-run
+gh issue create \
+  --title "Your short title" \
+  --body "$(cat <<'EOF'
+### Description
+
+…
+
+### Expected behavior & manual test hints
+
+…
+
+### Area
+
+ui
+EOF
+)" \
+  --label grocery-wizard --label gw-area-ui
 ```
 
-3. **Explain the plan** to the user in plain language:
-   - How many issues and why (merge notes that share **kind** + **code area** so they can ship in one PR; split when area or bug vs feature differs).
-   - Which become **enhancement backlog** (`grocery-wizard` label) vs **bug** (`bug` label).
-   - For findings from **`/architecture-review` Phase B**, include **`--audit`** on every create/dry-run (adds the `audit` label).
+Add `--label audit` for architecture audit items.
 
-4. If the user agrees (or gave a clear “create them”), create:
+**Bugs** — prefer the **`bug_report.yml`** template interactively, or mirror its sections in `--body` and add `--label bug` (and `--label audit` when applicable).
 
-```bash
-uv run python -m src.grocery_wizard dev create-issues --item "…" --item "…"
-# Architecture audit follow-ups:
-uv run python -m src.grocery_wizard dev create-issues --audit --item "…" --item "…"
-```
-
-   For a reviewed JSON plan from `--dry-run --json`:
-
-```bash
-uv run python -m src.grocery_wizard dev create-issues --plan-file /tmp/plan.json
-```
-
-5. Reply with issue numbers, URLs, and kind. Note **`/work-on-issue <n>`** for backlog items; bugs use the same command for the fix brief.
+4. Reply with issue numbers, URLs, and kind. Note **`/work-on-issue <n>`** for backlog items; bugs use the same command for the fix brief.
 
 ## Overrides
 
-If auto-planning is wrong, edit the JSON from `--dry-run --json` (set `kind`, `area`, `title`, fields) and use `--plan-file`.
+If auto-planning is wrong, adjust titles/bodies/labels before `gh issue create`, or edit the issue in GitHub after creation.

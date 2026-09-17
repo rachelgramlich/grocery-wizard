@@ -11,7 +11,7 @@ Grocery Wizard treats recipe ingredients in two separate pipelines. They share h
 | Scrape / read URL | `recipes/scraper.py` | raw HTML → line list |
 | Drop junk & split merges | `ingredients/normalize.py` | `drop_junk_ingredient_lines`, `expand_ingredient_line`, `is_instruction_line`, … |
 | Format for Notion | `ingredients/parsed.py` | `format_ingredient_for_storage`, `minimal_clean_for_storage` (NYT) |
-| Orchestration | `ingredients/sync.py` | `prepare_ingredients_for_notion`, `merge_ingredients`, dev backfill/reconcile |
+| Orchestration | `ingredients/sync.py` | `prepare_ingredients_for_notion`, `merge_ingredients` |
 
 **Name for dedup / merge:** `parsed.name_from_stored_line` — parses the qty/name embedded in a storage line. Do **not** use this for grocery-list display keys.
 
@@ -74,4 +74,4 @@ Import from **`ingredients/parsed.py`**, **`ingredients/normalize.py`**, or **`i
 
 - Unit cases: `tests/src/grocery_wizard/ingredients/test_normalize.py`, `test_sync.py`
 - End-to-end storage → grocery: `tests/src/grocery_wizard/ingredients/test_pipeline.py` (via `pipeline_helpers.py`)
-- Full app path: `dev validate-pipeline` (Notion → plan → list)
+- Full app path: Streamlit weekly plan → ingredient review → grocery list (`tests/src/grocery_wizard/ingredients/test_pipeline.py` covers storage → list)
