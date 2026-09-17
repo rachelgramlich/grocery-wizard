@@ -5,8 +5,6 @@ description: Use whenever editing or refactoring application code — Kent Beck 
 
 # Tidy First (inline while you work)
 
-Canonical copy also lives at `.cursor/skills/tidy-first/SKILL.md` (committed). Keep both in sync when editing.
-
 Use this skill during **normal implementation** — features, bugs, refactors the user asked for. Keep **structure (S)** and **behavior (B)** separate.
 
 **Not in scope here:** repo-wide tidying campaigns → **`/tidy-project`** or the **`tidy-project`** skill.
