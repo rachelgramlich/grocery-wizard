@@ -52,16 +52,11 @@ def test_manual_picker_recipe_first_then_or_filter() -> None:
     manual = source.split("def _slot_manual_picker_fragment", 1)[1].split(
         "def _render_slot_manual_picker", 1
     )[0]
-    assert 'st.markdown("**Pick a recipe**")' in manual
-    assert '"Choose recipe"' in manual
     assert "plan_slot_direct_pick_" in manual
-    assert 'placeholder="Search or pick a recipe…"' in manual
     assert 'st.markdown("**Or filter**")' in manual
     assert "_render_filtered_recipe_picker" in manual
     assert "st.divider()" in manual
-    assert manual.index('st.markdown("**Pick a recipe**")') < manual.index(
-        'st.markdown("**Or filter**")'
-    )
+    assert manual.index("_render_direct_recipe_pick") < manual.index('st.markdown("**Or filter**")')
     assert manual.index("_render_filtered_recipe_picker") > manual.index(
         'st.markdown("**Or filter**")'
     )
@@ -71,8 +66,9 @@ def test_meal_plan_ingredient_filter_before_checkboxes() -> None:
     """Ingredients multiselect matches other filters and sits above checkbox toggles."""
     filters_source = (UI_ROOT / "meal_plan_filters.py").read_text(encoding="utf-8")
     filters_source = filters_source.split("def render_meal_plan_filters", 1)[1]
-    assert '"Ingredients"' in filters_source
-    assert 'st.markdown("**Ingredients**")' not in filters_source
+    assert "ingredients in your recipes - search to narrow the list" in filters_source
+    assert "_ingredient_search" not in filters_source
+    assert "Start typing above" not in filters_source
     assert filters_source.index('key=f"{key_prefix}_ingredient_names"') < filters_source.index(
         "for column in checkbox_columns"
     )
@@ -114,7 +110,6 @@ def test_dev_mode_exposes_collapsed_dev_tools_expander() -> None:
     source = ui_source()
     assert "_render_dev_jump_tools(db)" in source
     assert 'st.expander("Dev tools", expanded=False)' in source
-    assert "dev_ui_enabled()" in source
     assert '_weekly_plan_mode() != "dev"' in source
     assert "commit_dev_jump" in source
     assert "pick_default_recipe_names" in source
@@ -154,11 +149,18 @@ def test_dev_mode_auto_continues_without_continue_button() -> None:
     entry = source.split("def _render_weekly_plan_entry", 1)[1].split(
         "def _ensure_plan_session_defaults", 1
     )[0]
-    assert 'if choice == "dev" and dev_ui_enabled():' in entry
+    assert 'if choice == "dev":' in entry
     assert "plan_meal_count = 1" in entry
-    assert entry.index('if choice == "dev" and dev_ui_enabled():') < entry.index(
-        "weekly_plan_mode_continue"
-    )
+    assert entry.index('if choice == "dev":') < entry.index("weekly_plan_mode_continue")
+
+
+def test_weekly_plan_mode_choices_always_includes_dev() -> None:
+    source = (UI_ROOT / "sections" / "weekly_plan" / "state.py").read_text(encoding="utf-8")
+    choices_fn = source.split("def _weekly_plan_mode_choices", 1)[1].split(
+        "def _weekly_plan_mode", 1
+    )[0]
+    assert "return _WEEKLY_PLAN_MODES" in choices_fn
+    assert "dev_ui_enabled" not in choices_fn
 
 
 def test_dev_mode_default_meal_count() -> None:
@@ -188,6 +190,11 @@ def test_prebuild_recipe_picker_before_build_my_plan() -> None:
     picker_idx = generate.index("_render_prebuild_recipe_picker(")
     assert picker_idx < build_idx
     assert 'with st.expander("Choose recipe manually"' in prebuild
+    assert "_render_direct_recipe_pick" in prebuild
+    assert "plan_prebuild_direct_pick" in prebuild
+    assert prebuild.index("_render_direct_recipe_pick") < prebuild.index(
+        "_render_filtered_recipe_picker"
+    )
     assert (
         "plan_prebuild_pinned_recipes" in source.split("def _locked_recipes_for_plan_build", 1)[1]
     )

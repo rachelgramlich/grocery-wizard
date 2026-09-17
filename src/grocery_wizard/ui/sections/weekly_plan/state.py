@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import streamlit as st
 
-from src.grocery_wizard.config import WEEK_PLAN_PATH, load_config
+from src.grocery_wizard.config import WEEK_PLAN_PATH
 from src.grocery_wizard.planning.meal_planner import save_week_plan
 from src.grocery_wizard.planning.saved_weekly_plans import (
     SavedWeeklyPlan,
@@ -129,16 +129,12 @@ def _reset_weekly_plan_workflow(*, clear_mode: bool = False) -> None:
 
 
 def _weekly_plan_mode_choices() -> tuple[str, ...]:
-    if load_config().dev_ui_enabled:
-        return _WEEKLY_PLAN_MODES
-    return tuple(mode for mode in _WEEKLY_PLAN_MODES if mode != "dev")
+    return _WEEKLY_PLAN_MODES
 
 
 def _weekly_plan_mode() -> str | None:
     mode = st.session_state.get("weekly_plan_mode")
     if mode not in _WEEKLY_PLAN_MODES:
-        return None
-    if mode == "dev" and not load_config().dev_ui_enabled:
         return None
     return mode
 

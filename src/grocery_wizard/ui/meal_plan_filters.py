@@ -120,33 +120,16 @@ def render_meal_plan_filters(
     if ingredient_index is not None:
         ingredient_options = ingredient_options_from_index(ingredient_index)
         total = len(ingredient_options)
-        if total:
-            st.caption(
-                f"{total} ingredients in your recipes — search to narrow the list "
-                f"(up to {_INGREDIENT_SEARCH_MAX_MATCHES} matches)."
-            )
-        search_query = st.text_input(
-            "Search ingredients",
-            key=f"{key_prefix}_ingredient_search",
-            placeholder="Type to search ingredients…",
-            label_visibility="collapsed",
+        ingredient_label = (
+            f"Ingredients: {total} ingredients in your recipes - search to narrow the list"
+            if total
+            else "Ingredients"
         )
-        names_key = f"{key_prefix}_ingredient_names"
-        selected_so_far: list[str] = list(st.session_state.get(names_key, []))
-        if total and not search_query.strip() and not selected_so_far:
-            display_options: list[str] = []
-            st.caption("Start typing above to pick ingredients.")
-        else:
-            display_options = scoped_ingredient_multiselect_options(
-                ingredient_options,
-                selected_so_far,
-                search_query,
-            )
         ingredient_names = st.multiselect(
-            "Ingredients",
-            display_options,
+            ingredient_label,
+            ingredient_options,
             key=f"{key_prefix}_ingredient_names",
-            placeholder="Selected ingredients appear here…",
+            placeholder="Search or pick ingredients…",
         )
         if ingredient_names:
             ingredient_mode = st.radio(

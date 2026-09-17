@@ -27,7 +27,6 @@ from src.grocery_wizard.ui.dev_jumps import (
     dev_jump_display_title,
     pick_default_recipe_names,
 )
-from src.grocery_wizard.ui.dev_ui import dev_ui_enabled
 from src.grocery_wizard.ui.meal_plan_filters import (
     recipes_ingredient_cache_key,
     render_meal_plan_filters,
@@ -90,6 +89,33 @@ def _remove_prebuild_pin(recipe_name: str) -> None:
         return
     st.session_state.plan_prebuild_pinned_recipes = [name for name in pinned if name != recipe_name]
     st.rerun()
+
+
+def _render_direct_recipe_pick(
+    all_names: list[str],
+    *,
+    selectbox_key: str,
+    apply_button_key: str,
+    apply_button_label: str,
+    on_apply: Callable[[str], None],
+) -> None:
+    st.markdown("**Pick a recipe**")
+    if not all_names:
+        st.warning("No recipes in Notion yet.")
+        return
+    direct_picked = st.selectbox(
+        "Choose recipe",
+        all_names,
+        index=None,
+        placeholder="Search or pick a recipe…",
+        key=selectbox_key,
+        label_visibility="collapsed",
+    )
+    if st.button(apply_button_label, key=apply_button_key):
+        if not direct_picked:
+            st.warning("Choose a recipe first.")
+        else:
+            on_apply(direct_picked)
 
 
 def _render_filtered_recipe_picker(
@@ -167,9 +193,18 @@ def _render_prebuild_recipe_picker(
 
     with st.expander("Choose recipe manually", expanded=False):
         st.caption(
-            "Set filters, pick a recipe, and pin it. Change filters and pin again until "
+            "Pick a recipe directly or use filters, then pin. Repeat until "
             "you have as many locked meals as you want."
         )
+        _render_direct_recipe_pick(
+            all_names,
+            selectbox_key="plan_prebuild_direct_pick",
+            apply_button_key="plan_prebuild_pin_direct",
+            apply_button_label="Pin this recipe",
+            on_apply=lambda name: _append_prebuild_pin(name, max_pins=max_pins),
+        )
+        st.divider()
+        st.markdown("**Or filter**")
         _render_filtered_recipe_picker(
             all_recipes=all_recipes,
             filter_columns=filter_columns,
@@ -181,6 +216,7 @@ def _render_prebuild_recipe_picker(
             apply_button_key="plan_prebuild_pin_recipe",
             apply_button_label="Pin this recipe",
             on_apply=lambda name: _append_prebuild_pin(name, max_pins=max_pins),
+            filter_caption="Optional — narrow the list using the filters below.",
         )
 
     if pinned:
@@ -228,23 +264,13 @@ def _slot_manual_picker_fragment(
 
         all_names = sorted({recipe.name for recipe in all_recipes}, key=str.lower)
 
-        st.markdown("**Pick a recipe**")
-        if not all_names:
-            st.warning("No recipes in Notion yet.")
-        else:
-            direct_picked = st.selectbox(
-                "Choose recipe",
-                all_names,
-                index=None,
-                placeholder="Search or pick a recipe…",
-                key=f"plan_slot_direct_pick_{slot_index}",
-                label_visibility="collapsed",
-            )
-            if st.button("Use this recipe", key=f"plan_slot_apply_direct_{slot_index}"):
-                if not direct_picked:
-                    st.warning("Choose a recipe first.")
-                else:
-                    _apply_picked(direct_picked)
+        _render_direct_recipe_pick(
+            all_names,
+            selectbox_key=f"plan_slot_direct_pick_{slot_index}",
+            apply_button_key=f"plan_slot_apply_direct_{slot_index}",
+            apply_button_label="Use this recipe",
+            on_apply=_apply_picked,
+        )
 
         st.divider()
         st.markdown("**Or filter**")
@@ -287,7 +313,7 @@ def _render_slot_manual_picker(
 
 def _render_dev_jump_tools(db: NotionRecipesDB) -> None:
     """Collapsed dev-only shortcuts to wizard steps for manual UAT."""
-    if not dev_ui_enabled() or _weekly_plan_mode() != "dev":
+    if _weekly_plan_mode() != "dev":
         return
 
     with st.expander("Dev tools", expanded=False):
@@ -437,7 +463,7 @@ def _render_weekly_plan_entry() -> bool:
                 key="weekly_plan_saved_name_pick",
             )
 
-    if choice == "dev" and dev_ui_enabled():
+    if choice == "dev":
         st.session_state.weekly_plan_mode = "dev"
         _reset_weekly_plan_workflow(clear_mode=False)
         st.session_state.plan_meals_text = ""
