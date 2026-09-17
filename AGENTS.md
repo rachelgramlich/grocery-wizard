@@ -8,8 +8,9 @@
 | **`/architecture-review`** | **Phase A:** standards audit report + Ruff/CI gap analysis; **Phase B:** file **`audit`**-labeled issues (`dev create-issues --audit`) |
 | **`/list-enhancements`** | Open backlog (grocery-wizard label) |
 | **`/work-on-issue N`** | Full implementation brief for backlog **or** bug #N |
+| **`/tidy-project`** | Structure-only tidying (*Tidy First?* workflow; separate S from B) |
 
-Slash files: `.cursor/commands/create-issues.md`, `architecture-review.md`, `list-enhancements.md`, `work-on-issue.md`.
+Slash files: `.cursor/commands/create-issues.md`, `architecture-review.md`, `list-enhancements.md`, `work-on-issue.md`, `tidy-project.md`.
 
 Agents run the matching CLI when structured output or `gh` is needed:
 
