@@ -2,11 +2,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
-from ui_source import ui_source
-
-APP_PATH = Path(__file__).resolve().parents[4] / "src" / "grocery_wizard" / "ui" / "app.py"
+from ui_source import APP_PATH, ui_source
 
 
 def test_saved_plan_build_keeps_loaded_recipes_by_default() -> None:

@@ -13,8 +13,6 @@ from src.grocery_wizard.shopping.grocery_list import (
 )
 from src.grocery_wizard.ui.grocery_helpers import compute_grocery_drafts
 
-APP_PATH = Path(__file__).resolve().parents[4] / "src" / "grocery_wizard" / "ui" / "app.py"
-
 
 def test_grocery_final_list_syncs_session_state_before_keyed_text_area() -> None:
     """Keyed text_area ignores value= on reruns; app must push fresh list_text into session state."""

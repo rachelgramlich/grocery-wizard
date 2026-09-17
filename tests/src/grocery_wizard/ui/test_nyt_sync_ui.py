@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
-APP_PATH = Path(__file__).resolve().parents[4] / "src" / "grocery_wizard" / "ui" / "app.py"
+from ui_source import APP_PATH
 
 
 def test_nyt_sync_expander_renders_when_credentials_missing() -> None:
