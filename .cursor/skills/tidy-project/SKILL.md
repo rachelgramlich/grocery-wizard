@@ -1,8 +1,14 @@
+---
+name: tidy-project
+description: Scan the whole grocery-wizard repo and open one or more structure-only tidy PRs (no behavior changes). Invoke explicitly with /tidy-project in Agent chat.
+disable-model-invocation: true
+---
+
 # Tidy project
 
 **Repo-wide structure-only pass.** Scan the project, apply *Tidy First?* tidyings, and open **one or more PRs** that contain **no behavior changes**.
 
-For tidying **while implementing a feature**, follow the **`tidy-first`** skill (`.cursor/skills/tidy-first/SKILL.md`) — do not use this command for that.
+For tidying **while implementing a feature**, use the **`tidy-first`** skill — not this skill.
 
 ## Outcome
 
@@ -11,11 +17,11 @@ For tidying **while implementing a feature**, follow the **`tidy-first`** skill 
 - Every PR passes `just check` on touched paths.
 - PR description lists: areas scanned, tidyings applied, files touched, explicit **“No behavior change”** statement.
 
-## Rules (same as skill)
+## Rules (same as tidy-first skill)
 
 1. **S only** — no feature fixes, no bug fixes, no test expectation changes unless tests only mirrored dead code removal with identical behavior.
 2. **Separate PRs** from any in-flight feature work; branch from latest `main`.
-3. **Split PRs** when diff grows large or areas are unrelated (e.g. `src/grocery_wizard/ui` vs `src/grocery_wizard/dev`).
+3. **Split PRs** when diff grows large or areas are unrelated (e.g. `src/grocery_wizard/ui` vs other areas).
 4. **Small commits** inside each PR; one theme per commit when practical.
 
 ## Your task
