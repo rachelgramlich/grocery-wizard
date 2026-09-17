@@ -13,7 +13,15 @@
 
 Slash files: `.cursor/commands/create-issues.md`, `architecture-review.md`, `list-enhancements.md`, `work-on-issue.md`, `tidy-project.md`.
 
-Skill: `.agents/skills/tidy-first/SKILL.md` (linked into `.cursor/skills/` by `just setup`).
+Skills (committed): `.cursor/skills/tidy-first/SKILL.md`, `.cursor/skills/tidy-project/SKILL.md` (mirror under `.agents/skills/` where noted).
+
+### Finding `/tidy-project` and `tidy-first` in Cursor
+
+1. Open this **repo root** as the workspace (folder that contains `.cursor/`).
+2. `git pull origin main` so `.cursor/commands/tidy-project.md` and `.cursor/skills/tidy-first/` exist locally.
+3. **Agent** chat (not Ask-only): type `/` and filter `tidy` → **`/tidy-project`** (command) and/or **`/tidy-project`** / **`/tidy-first`** (skills on newer Cursor).
+4. **Cursor Settings → Rules / Skills** (or Customize → Skills): confirm **`tidy-first`** and **`tidy-project`** appear.
+5. If missing after pull: **Developer: Reload Window** or restart Cursor.
 
 **Requires `gh`** authenticated for this repo. **Create issues on This Mac** when possible. Cloud agents should ask the user to switch before running **`/create-issues`**.
 
@@ -30,4 +38,4 @@ Do not close backlog issues by hand — merge with `Closes #N`.
 
 **Streamlit + Notion only.** Run `just grocery-ui` for recipes, meal planning, pantry, NYT recipe-box sync, and grocery lists.
 
-After `just setup`, skills under `.cursor/skills/`: `developing-with-streamlit` (UI), `tidy-first` (structure vs behavior while coding).
+After `just setup`, `.cursor/skills/developing-with-streamlit` (UI, symlink into `.venv`). **`tidy-first`** and **`tidy-project`** skills are committed under `.cursor/skills/` — no setup step.
