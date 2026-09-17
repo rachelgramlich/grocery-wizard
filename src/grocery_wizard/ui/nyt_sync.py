@@ -182,6 +182,12 @@ def render_nyt_sync_controls() -> None:
     folders = _load_nyt_recipe_box_folders()
     if folders is None:
         return
+    if not folders:
+        st.info(
+            "No NYT recipe-box folders found. Create folders in NYT Cooking, "
+            "then choose **Refresh folders**."
+        )
+        return
 
     folder = _render_nyt_folder_picker(folders)
     run_clicked, dry_run = _render_nyt_sync_actions()

@@ -20,12 +20,17 @@ from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.notion_cache import invalidate_notion_cache
 from src.grocery_wizard.ui.nyt_sync import render_nyt_sync_controls
 
+_ENTRY_PATH_URL = "url"
+_ENTRY_PATH_MANUAL = "manual"
+_ENTRY_PATH_NYT = "nyt"
+
 
 def render_add_recipe() -> None:
     st.caption("Choose one of three ways to add recipes to Notion.")
 
     db = get_db()
     schema = db.schema
+    previews = st.session_state.get("preview_recipes", [])
 
     with st.container(border=True):
         st.markdown("**Recipe URL**")
@@ -42,6 +47,8 @@ def render_add_recipe() -> None:
                 st.warning("Paste a recipe URL first.")
             else:
                 st.session_state["preview_recipes"] = _previews_for_ui(db, urls)
+                previews = st.session_state["preview_recipes"]
+        _render_previews_for_entry(db, schema, previews, _ENTRY_PATH_URL)
 
     with st.container(border=True):
         st.markdown("**Type it in myself**")
@@ -57,31 +64,25 @@ def render_add_recipe() -> None:
                         status="manual",
                         url="",
                         fields=base_recipe_field_values(schema),
-                    )
+                    ),
+                    entry_path=_ENTRY_PATH_MANUAL,
                 )
             ]
+            previews = st.session_state["preview_recipes"]
+        _render_previews_for_entry(db, schema, previews, _ENTRY_PATH_MANUAL)
 
     with st.container(border=True):
         st.markdown("**Sync from NYT Cooking**")
-        st.caption("Sync all saved recipes from your NYT Cooking recipe-box folder.")
+        st.caption("Sync a NYT Cooking recipe-box folder.")
         render_nyt_sync_controls()
-
-    previews = st.session_state.get("preview_recipes", [])
-    for index, preview in enumerate(previews):
-        if preview.get("status") == "duplicate":
-            st.info(f"Already in Notion: {preview['name']} ({preview['url']})")
-            continue
-        if preview.get("status") == "saved":
-            st.success(f"Saved to Notion: {preview.get('saved_name', 'Recipe')}")
-            continue
-
-        _render_recipe_review(db, schema, preview, index)
+        _render_previews_for_entry(db, schema, previews, _ENTRY_PATH_NYT)
 
 
-def _preview_dict(preview: RecipeUrlPreview) -> dict[str, object]:
+def _preview_dict(preview: RecipeUrlPreview, *, entry_path: str) -> dict[str, object]:
     data: dict[str, object] = {
         "status": preview.status,
         "url": preview.url,
+        "entry_path": entry_path,
     }
     if preview.fields is not None:
         data["fields"] = preview.fields
@@ -93,7 +94,38 @@ def _preview_dict(preview: RecipeUrlPreview) -> dict[str, object]:
 
 
 def _previews_for_ui(db: NotionRecipesDB, urls: list[str]) -> list[dict[str, object]]:
-    return [_preview_dict(preview) for preview in preview_recipe_urls(db, urls)]
+    return [
+        _preview_dict(preview, entry_path=_ENTRY_PATH_URL)
+        for preview in preview_recipe_urls(db, urls)
+    ]
+
+
+def _resolve_entry_path(preview: dict[str, object]) -> str:
+    path = preview.get("entry_path")
+    if isinstance(path, str) and path:
+        return path
+    if preview.get("status") == "manual":
+        return _ENTRY_PATH_MANUAL
+    return _ENTRY_PATH_URL
+
+
+def _render_previews_for_entry(
+    db: NotionRecipesDB,
+    schema: DatabaseSchema,
+    previews: list[dict[str, object]],
+    entry_path: str,
+) -> None:
+    for index, preview in enumerate(previews):
+        if _resolve_entry_path(preview) != entry_path:
+            continue
+        if preview.get("status") == "duplicate":
+            st.info(f"Already in Notion: {preview['name']} ({preview['url']})")
+            continue
+        if preview.get("status") == "saved":
+            st.success(f"Saved to Notion: {preview.get('saved_name', 'Recipe')}")
+            continue
+
+        _render_recipe_review(db, schema, preview, index)
 
 
 def _render_recipe_review(

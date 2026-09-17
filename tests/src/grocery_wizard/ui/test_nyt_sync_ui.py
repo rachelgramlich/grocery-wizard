@@ -30,9 +30,19 @@ def test_nyt_sync_visible_on_add_recipe_when_credentials_missing() -> None:
     markdown_text = " ".join(m.value for m in at.markdown if m.value)
     caption_text = " ".join(c.value for c in at.caption if c.value)
     assert "Sync from NYT Cooking" in markdown_text
-    assert "Sync all saved recipes from your NYT Cooking recipe-box folder." in caption_text
+    assert "Sync a NYT Cooking recipe-box folder." in caption_text
     assert any("NYT credentials are not set" in w.value for w in at.warning)
     assert not any((expander.label or "") == "Sync from NYT Cooking" for expander in at.expander)
+
+
+def test_list_recipe_box_folders_omits_all_saved_recipes_option() -> None:
+    nyt_sync = (APP_PATH.parent / "nyt_sync.py").read_text(encoding="utf-8")
+    nyt_cooking = (APP_PATH.parent.parent / "integrations" / "nyt_cooking.py").read_text(
+        encoding="utf-8"
+    )
+    assert "All saved recipes" not in nyt_sync
+    assert '_PREFERRED_NYT_FOLDER_LABELS = ("To make", "Favorites")' in nyt_cooking
+    assert 'label="All saved recipes"' not in nyt_cooking
 
 
 def test_nyt_dry_run_defaults_off_and_clarifies_notion_outcome() -> None:
