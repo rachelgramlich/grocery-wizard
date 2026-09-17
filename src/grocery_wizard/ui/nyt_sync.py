@@ -89,7 +89,7 @@ def _render_nyt_sync_actions() -> tuple[bool, bool]:
         if st.button(
             "Refresh folders",
             key="nyt_sync_refresh_folders",
-            use_container_width=True,
+            width="stretch",
         ):
             _cached_recipe_box_folders.clear()
             st.rerun()
@@ -99,7 +99,7 @@ def _render_nyt_sync_actions() -> tuple[bool, bool]:
             "Preview sync" if dry_run else "Sync to Notion",
             key="nyt_sync_run",
             type="primary",
-            use_container_width=True,
+            width="stretch",
         )
 
     return run_clicked, dry_run
@@ -170,17 +170,16 @@ def _execute_nyt_recipe_box_sync(
 
 def render_nyt_sync_controls() -> None:
     """NYT recipe-box sync on the Add Recipe tab (folder picker, dry run, sync)."""
-    with st.expander("Sync from NYT Cooking", expanded=False):
-        if not _render_nyt_credentials_panel():
-            return
+    if not _render_nyt_credentials_panel():
+        return
 
-        folders = _load_nyt_recipe_box_folders()
-        if folders is None:
-            return
+    folders = _load_nyt_recipe_box_folders()
+    if folders is None:
+        return
 
-        folder = _render_nyt_folder_picker(folders)
-        run_clicked, dry_run = _render_nyt_sync_actions()
-        if not run_clicked:
-            return
+    folder = _render_nyt_folder_picker(folders)
+    run_clicked, dry_run = _render_nyt_sync_actions()
+    if not run_clicked:
+        return
 
-        _execute_nyt_recipe_box_sync(folder=folder, dry_run=dry_run)
+    _execute_nyt_recipe_box_sync(folder=folder, dry_run=dry_run)

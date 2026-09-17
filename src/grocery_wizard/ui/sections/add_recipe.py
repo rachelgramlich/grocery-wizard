@@ -23,27 +23,36 @@ from src.grocery_wizard.ui.nyt_sync import render_nyt_sync_controls
 
 def render_add_recipe() -> None:
     st.subheader("Add Recipe")
-    st.caption("Paste a link to pull in name and ingredients, then save to Notion.")
-    render_nyt_sync_controls()
+    st.caption("Choose one of three ways to add recipes to Notion.")
 
     db = get_db()
     schema = db.schema
 
-    urls_text = st.text_area(
-        "Recipe URL",
-        placeholder="https://example.com/my-recipe",
-        height=80,
-        key="add_recipe_urls",
-    )
-    if st.button("Add recipe", type="primary"):
-        urls = [line.strip() for line in urls_text.splitlines() if line.strip()]
-        if not urls:
-            st.warning("Paste a recipe URL first.")
-        else:
-            st.session_state["preview_recipes"] = _previews_for_ui(db, urls)
+    with st.container(border=True):
+        st.markdown("**Recipe URL**")
+        st.caption("Paste a link to pull in name and ingredients, then save to Notion.")
+        urls_text = st.text_area(
+            "Recipe URL",
+            placeholder="https://example.com/my-recipe",
+            height=80,
+            key="add_recipe_urls",
+        )
+        if st.button("Add recipe", type="primary", key="add_recipe_from_url"):
+            urls = [line.strip() for line in urls_text.splitlines() if line.strip()]
+            if not urls:
+                st.warning("Paste a recipe URL first.")
+            else:
+                st.session_state["preview_recipes"] = _previews_for_ui(db, urls)
 
-    with st.expander("Type it in myself", expanded=False):
-        if st.button("Start blank recipe"):
+    with st.container(border=True):
+        st.markdown("**Sync from NYT Cooking**")
+        st.caption("Sync all saved recipes from your NYT Cooking recipe-box folder.")
+        render_nyt_sync_controls()
+
+    with st.container(border=True):
+        st.markdown("**Type it in myself**")
+        st.caption("Start from a blank recipe and fill in the details.")
+        if st.button("Start blank recipe", key="add_recipe_manual_start"):
             st.session_state["preview_recipes"] = [
                 _preview_dict(
                     RecipeUrlPreview(

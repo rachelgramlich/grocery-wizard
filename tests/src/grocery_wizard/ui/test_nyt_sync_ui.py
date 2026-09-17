@@ -14,7 +14,7 @@ def test_nyt_sync_controls_only_on_add_recipe_tab() -> None:
     assert "render_nyt_sync_controls()" in add_recipe
 
 
-def test_nyt_sync_expander_renders_when_credentials_missing() -> None:
+def test_nyt_sync_visible_on_add_recipe_when_credentials_missing() -> None:
     from streamlit.testing.v1 import AppTest
 
     with patch(
@@ -27,5 +27,9 @@ def test_nyt_sync_expander_renders_when_credentials_missing() -> None:
         tab_picker.set_value("Add Recipe").run()
 
     assert not at.exception
-    assert any("Sync from NYT Cooking" in (expander.label or "") for expander in at.expander)
+    markdown_text = " ".join(m.value for m in at.markdown if m.value)
+    caption_text = " ".join(c.value for c in at.caption if c.value)
+    assert "Sync from NYT Cooking" in markdown_text
+    assert "Sync all saved recipes from your NYT Cooking recipe-box folder." in caption_text
     assert any("NYT credentials are not set" in w.value for w in at.warning)
+    assert not any((expander.label or "") == "Sync from NYT Cooking" for expander in at.expander)
