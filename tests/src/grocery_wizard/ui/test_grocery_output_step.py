@@ -12,6 +12,12 @@ def test_apply_run_removals_filters_matching_lines() -> None:
     assert apply_run_removals(items, {"milk"}) == ["eggs", "bread"]
 
 
+def test_apply_run_removals_does_not_drop_unrelated_milk_lines() -> None:
+    """Removing a compound milk line must not remove standalone recurring milk (#204)."""
+    items = ["coconut milk", "milk", "berries"]
+    assert apply_run_removals(items, {"coconut milk"}) == ["milk", "berries"]
+
+
 def test_output_step_shows_added_removed_and_editable_grocery_list() -> None:
     source = ui_source()
     result_block = source.split("def _render_grocery_result", 1)[1].split(
