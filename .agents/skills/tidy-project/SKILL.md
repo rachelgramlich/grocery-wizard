@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Tidy project
 
-Canonical copy also lives at `.agents/skills/tidy-project/SKILL.md` (committed). Keep both in sync when editing.
+Canonical copy also lives at `.cursor/skills/tidy-project/SKILL.md` (committed). Keep both in sync when editing.
 
 **Repo-wide structure-only pass.** Scan the project, apply *Tidy First?* tidyings, and open **one or more PRs** that contain **no behavior changes**.
 
