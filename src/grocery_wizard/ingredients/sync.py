@@ -25,6 +25,7 @@ from src.grocery_wizard.ingredients.parsed import (
     name_from_stored_line,
 )
 from src.grocery_wizard.recipes.scraper import ingredients_to_text
+from src.grocery_wizard.shopping.line_items import strip_line_item
 
 _REMOVAL_PREFIX_RE = re.compile(r"^remove\s*:?\s*(.+)$", re.IGNORECASE)
 _REMOVAL_DASH_RE = re.compile(r"^-\s+(.+)$")
@@ -56,7 +57,9 @@ def _normalize_stored_lines(text: str) -> list[str]:
     normalized = _BR_SPLIT.sub("\n", text)
     lines: list[str] = []
     for raw_line in normalized.splitlines():
-        line = raw_line.strip()
+        line = strip_line_item(raw_line)
+        if not line:
+            continue
         line = re.sub(r"^[▢•*]\s*", "", line)
         line = re.sub(r"^\\[ \\]\s*▢?", "", line).strip()
         line = re.sub(r"^\d+\.\s*(?:\[\s*\]\s*)", "", line).strip()

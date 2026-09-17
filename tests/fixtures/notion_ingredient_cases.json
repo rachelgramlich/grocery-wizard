@@ -16,7 +16,7 @@
   {
     "recipe": "Brownie Pudding",
     "raw_line": "[x] 1 tablespoon framboise liqueur, optional",
-    "expect_after_prepare": null,
+    "expect_after_prepare": "framboise liqueur",
     "expect_normalized": "[x] 1 tablespoon framboise liqueur",
     "notes": "optional, bullet"
   },
@@ -107,7 +107,7 @@
   {
     "recipe": "Brownie Pudding",
     "raw_line": "[x] 4 extra-large eggs, at room temperature",
-    "expect_after_prepare": null,
+    "expect_after_prepare": "4 eggs",
     "expect_normalized": "[x] 4 extra-large eggs, at room temperature",
     "notes": "bullet"
   },
@@ -116,28 +116,28 @@
     "raw_line": "[x] 2 cups sugar",
     "expect_normalized": "[x] 2 cups sugar",
     "notes": "bullet",
-    "expect_after_prepare": null
+    "expect_after_prepare": "sugar"
   },
   {
     "recipe": "Brownie Pudding",
     "raw_line": "[x] 3/4 cup good cocoa powder",
     "expect_normalized": "[x] 3/4 cup good cocoa powder",
     "notes": "bullet",
-    "expect_after_prepare": null
+    "expect_after_prepare": "good cocoa powder"
   },
   {
     "recipe": "Brownie Pudding",
     "raw_line": "[x] 1/2 cup all-purpose flour",
     "expect_normalized": "[x] 1/2 cup all-purpose flour",
     "notes": "bullet",
-    "expect_after_prepare": null
+    "expect_after_prepare": "flour"
   },
   {
     "recipe": "Brownie Pudding",
     "raw_line": "[x] Seeds scraped from 1 vanilla bean",
     "expect_normalized": "[x] seeds scraped from 1 vanilla bean",
     "notes": "bullet",
-    "expect_after_prepare": null
+    "expect_after_prepare": "Seeds scraped from 1 vanilla bean"
   },
   {
     "recipe": "Cauli, Three-Potato & White Bean Soup",
