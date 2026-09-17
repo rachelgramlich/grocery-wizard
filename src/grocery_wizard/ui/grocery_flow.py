@@ -120,7 +120,6 @@ def build_grocery_result_payload(
     extra_items_text: str,
     pantry_extra: set[str],
     ingredient_overrides: dict[str, str] | None,
-    edit_count: int = 0,
     recipes: list[Recipe] | None = None,
 ) -> dict[str, Any]:
     recurring_weekly_items = parse_line_items(recurring_text)
@@ -148,7 +147,6 @@ def build_grocery_result_payload(
         "run_removals": [],
         "source_recipes": tuple(selected),
         "week_plan": tuple(selected),
-        "edit_count": edit_count,
     }
 
 
@@ -160,7 +158,6 @@ def stash_grocery_result(
     *,
     recipes: list[Recipe],
     review: dict[str, str] | None = None,
-    edit_count: int = 0,
 ) -> None:
     """Build final list as if the user confirmed review (defaults: formatted Notion lines)."""
     review_text = review if review is not None else fetch_recipe_review_text(selected, recipes)
@@ -172,6 +169,5 @@ def stash_grocery_result(
         extra_items_text=options.extra_items_text,
         pantry_extra=session_pantry_extra(session_state),
         ingredient_overrides=ingredient_overrides_from_review(review_text),
-        edit_count=edit_count,
         recipes=recipes,
     )

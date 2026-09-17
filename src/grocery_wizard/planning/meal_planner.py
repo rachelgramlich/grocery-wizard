@@ -1,4 +1,4 @@
-"""Meal planning helpers for Streamlit and dev validation."""
+"""Meal planning helpers for Streamlit."""
 
 from __future__ import annotations
 

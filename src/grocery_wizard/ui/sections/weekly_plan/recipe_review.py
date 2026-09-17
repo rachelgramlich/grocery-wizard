@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import streamlit as st
 
-from src.grocery_wizard.dev.edit_log import log_ingredient_edits
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 from src.grocery_wizard.ui.grocery_flow import (
     GroceryPreBuildOptions,
@@ -66,13 +65,10 @@ def _render_per_recipe_review(db: NotionRecipesDB, selected: list[str]) -> None:
     with col_build:
         if st.button("Build final list", type="primary", key="review_build_final"):
             overrides: dict[str, str] = {}
-            edit_count = 0
             for idx, name in enumerate(selected):
                 widget_key = f"review_ing_{idx}"
                 edited_text = st.session_state.get(widget_key, review.get(name, ""))
-                original_text = review.get(name, "")
                 overrides[name.lower()] = edited_text
-                edit_count += log_ingredient_edits(name, original_text, edited_text)
 
             extra_items_text = opts.get("extra_items_text", "")
 
@@ -88,7 +84,6 @@ def _render_per_recipe_review(db: NotionRecipesDB, selected: list[str]) -> None:
                     extra_items_text=extra_items_text,
                     pantry_extra=_session_pantry_extra(),
                     ingredient_overrides=overrides,
-                    edit_count=edit_count,
                     recipes=review_recipes,
                 )
 

@@ -4,41 +4,26 @@
 
 | You type | Purpose |
 | --- | --- |
-| **`/create-issues`** | One or more notes → auto **bug vs backlog**, merge by **code area**, create GitHub issue(s) |
-| **`/architecture-review`** | **Phase A:** standards audit report + Ruff/CI gap analysis; **Phase B:** file **`audit`**-labeled issues (`dev create-issues --audit`) |
-| **`/list-enhancements`** | Open backlog (grocery-wizard label) |
-| **`/work-on-issue N`** | Full implementation brief for backlog **or** bug #N |
+| **`/create-issues`** | One or more notes → auto **bug vs backlog**, merge by **code area**, create GitHub issue(s) via **`gh`** |
+| **`/architecture-review`** | **Phase A:** standards audit report + Ruff/CI gap analysis; **Phase B:** file **`audit`**-labeled issues (see `.cursor/commands/architecture-review.md`) |
+| **`/list-enhancements`** | Open backlog (`grocery-wizard` label) via **`gh`** |
+| **`/work-on-issue N`** | Load issue with **`gh issue view`**, implement using area → files table in `.cursor/commands/work-on-issue.md` |
 
 Slash files: `.cursor/commands/create-issues.md`, `architecture-review.md`, `list-enhancements.md`, `work-on-issue.md`.
 
-Agents run the matching CLI when structured output or `gh` is needed:
-
-- `dev create-issues` — `--dry-run` to preview; `--item` (repeat) or stdin; `--plan-file` for edited JSON; `--audit` for architecture-review follow-ups
-- `dev list-enhancements`
-- `dev work-on-issue <issue-number>`
-
-**Create issues on This Mac** when possible (`gh` auth). Cloud agents should ask the user to switch before running `create-issues`.
+**Requires `gh`** authenticated for this repo. **Create issues on This Mac** when possible. Cloud agents should ask the user to switch before running **`/create-issues`**.
 
 ### Backlog ship checklist (enhancements)
 
-1. PR title: `dev enhancement-pr-title <issue-number>`
+1. PR title: `#<issue-number>: <issue title>` (truncate title if needed for GitHub limits)
 2. PR template **Manual verification** + `Closes #<issue-number>`
 3. Create PRs **ready for review** (not draft) unless the user asks for a draft.
-4. Manual UAT: non-UI → agent runs checks and `dev record-manual-verification`; UI → user confirms in chat, then `record-manual-verification`
+4. Manual UAT: non-UI → agent runs checks and posts sign-off via **`gh pr comment`** (see `/work-on-issue`); UI → user confirms in chat, then post sign-off
 
 Do not close backlog issues by hand — merge with `Closes #N`.
 
-One-time: `dev migrate-enhancements-to-github`, `dev backfill-enhancement-labels`.
+## User workflow
 
-## Dev CLI (maintenance)
-
-`uv run python -m src.grocery_wizard dev --help`
-
-| Area | Commands |
-| --- | --- |
-| **Notion ingredients** | `backfill-ingredients`, `reconcile-ingredients`, `refresh-all-ingredients`, `reformat-ingredients`, `audit-recipes`, `show-schema` |
-| **Parser hints from UI** | `suggest-fixes` (`.local/grocery_wizard/ingredient_edits.jsonl`) |
-| **Pipeline check** | `validate-pipeline` |
-| **Prod feedback log** | `list-feedback` |
+**Streamlit + Notion only.** Run `just grocery-ui` for recipes, meal planning, pantry, NYT recipe-box sync, and grocery lists.
 
 After `just setup`, Streamlit’s `developing-with-streamlit` skill is under `.cursor/skills/` for UI work.
