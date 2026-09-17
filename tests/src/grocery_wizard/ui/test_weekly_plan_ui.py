@@ -40,6 +40,21 @@ def test_scratch_plan_slot_first_manual_picker() -> None:
     assert "Fill remaining slots" in source
 
 
+def test_manual_picker_recipe_first_then_or_filter() -> None:
+    """Issue #220: direct recipe pick before optional per-slot filters."""
+    source = ui_source()
+    manual = source.split("def _render_slot_manual_picker", 1)[1].split(
+        "def _render_dev_jump_tools", 1
+    )[0]
+    assert 'st.subheader("Pick a recipe")' in manual
+    assert '"Choose recipe"' in manual
+    assert "plan_slot_direct_pick_" in manual
+    assert 'st.subheader("Or filter")' in manual
+    assert "st.divider()" in manual
+    assert manual.index('st.subheader("Pick a recipe")') < manual.index('st.subheader("Or filter")')
+    assert manual.index('"Choose recipe"') < manual.index("render_meal_plan_filters")
+
+
 def test_weekly_plan_build_shows_per_meal_swap() -> None:
     """AppTest smoke test: Build my plan renders per-meal ↺ buttons."""
     from streamlit.testing.v1 import AppTest
