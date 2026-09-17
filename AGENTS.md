@@ -35,7 +35,7 @@ Skills (committed): `.cursor/skills/tidy-first/SKILL.md` (mirrored under `.agent
 1. PR title: `#<issue-number>: <issue title>` (truncate title if needed for GitHub limits)
 2. PR template **Manual verification** + `Closes #<issue-number>`
 3. Create PRs **ready for review** (not draft) unless the user asks for a draft.
-4. Manual UAT: non-UI → agent runs checks and posts sign-off via **`gh pr comment`** (see `/work-on-issue`); UI → user confirms in chat, then post sign-off
+4. Manual UAT: non-UI → agent runs checks and posts sign-off via **`gh pr comment`** (see `/work-on-issue`); UI → Cloud agents smoke-test Streamlit in the browser when feasible, then user confirms in chat (default) before sign-off — details in `/work-on-issue`
 
 Do not close backlog issues by hand — merge with `Closes #N`.
 

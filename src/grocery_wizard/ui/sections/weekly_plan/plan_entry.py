@@ -310,28 +310,28 @@ def _render_weekly_plan_entry() -> bool:
     return False
 
 
-def render_meals_section(db: NotionRecipesDB, *, all_recipes: list) -> list[str]:
-    """Render step 1 (meals) and return the current planned recipe names."""
-    schema = db.schema
-    config = load_config()
-
+def _ensure_plan_session_defaults() -> None:
     if "plan_meals_text" not in st.session_state:
         st.session_state.plan_meals_text = ""
-
     if _weekly_plan_mode() == "dev" and "plan_meal_count" not in st.session_state:
         st.session_state.plan_meal_count = 1
 
+
+def _render_meal_count_input() -> int:
+    config = load_config()
     st.markdown("### 1. Meals")
     if _weekly_plan_mode() == "dev":
-        meal_count = st.number_input(
-            "How many meals this week?",
-            min_value=1,
-            max_value=21,
-            step=1,
-            key="plan_meal_count",
+        return int(
+            st.number_input(
+                "How many meals this week?",
+                min_value=1,
+                max_value=21,
+                step=1,
+                key="plan_meal_count",
+            )
         )
-    else:
-        meal_count = st.number_input(
+    return int(
+        st.number_input(
             "How many meals this week?",
             min_value=1,
             max_value=21,
@@ -339,17 +339,26 @@ def render_meals_section(db: NotionRecipesDB, *, all_recipes: list) -> list[str]
             step=1,
             key="plan_meal_count",
         )
+    )
 
-    _render_dev_jump_tools(db)
 
-    filter_defaults = default_filters(schema.all_columns)
-    filter_columns = [*schema.filter_columns, *schema.checkbox_columns]
-
+def _cached_plan_ingredient_index(all_recipes: list) -> dict[str, set[str]]:
     recipes_cache_key = recipes_ingredient_cache_key(all_recipes)
     if st.session_state.get("_ingredient_index_key") != recipes_cache_key:
         st.session_state["_ingredient_index_key"] = recipes_cache_key
         st.session_state["_ingredient_index"] = build_ingredient_index(all_recipes)
-    ingredient_index: dict[str, set[str]] = st.session_state["_ingredient_index"]
+    return st.session_state["_ingredient_index"]
+
+
+def _render_generate_plan_controls(
+    db: NotionRecipesDB,
+    *,
+    all_recipes: list,
+    meal_count: int,
+    ingredient_index: dict[str, set[str]],
+) -> MealPlanFilters:
+    schema = db.schema
+    filter_defaults = default_filters(schema.all_columns)
 
     st.markdown("#### Generate your plan")
     st.caption(
@@ -362,10 +371,6 @@ def render_meals_section(db: NotionRecipesDB, *, all_recipes: list) -> list[str]
         filter_defaults,
         key_prefix="plan_week_filter",
         ingredient_index=None,
-    )
-
-    suggestion_pool = filter_recipes(
-        all_recipes, week_filters, schema.all_columns, ingredient_index=ingredient_index
     )
 
     _render_prebuild_recipe_picker(all_recipes, meal_count=int(meal_count))
@@ -387,77 +392,119 @@ def render_meals_section(db: NotionRecipesDB, *, all_recipes: list) -> list[str]
         _clear_grocery_result()
         st.rerun()
 
+    return week_filters
+
+
+def _render_built_plan_meals(
+    db: NotionRecipesDB,
+    *,
+    all_recipes: list,
+    meal_count: int,
+    week_filters: MealPlanFilters,
+    ingredient_index: dict[str, set[str]],
+) -> None:
+    schema = db.schema
+    filter_defaults = default_filters(schema.all_columns)
+    filter_columns = [*schema.filter_columns, *schema.checkbox_columns]
+
+    suggestion_pool = filter_recipes(
+        all_recipes, week_filters, schema.all_columns, ingredient_index=ingredient_index
+    )
+
     current_plan = _current_plan_names()
-    if current_plan:
+    if not current_plan:
+        return
 
-        def _apply_plan_swap(names_to_replace: list[str]) -> None:
-            rejected = set(st.session_state.get("plan_rejected_names", []))
-            new_plan, rejected = replace_meals_in_plan(
-                current_plan,
-                names_to_replace,
+    def _apply_plan_swap(names_to_replace: list[str]) -> None:
+        rejected = set(st.session_state.get("plan_rejected_names", []))
+        new_plan, rejected = replace_meals_in_plan(
+            current_plan,
+            names_to_replace,
+            all_recipes=all_recipes,
+            pool=suggestion_pool,
+            rejected_names=rejected,
+        )
+        _write_plan_names(new_plan)
+        st.session_state.plan_rejected_names = sorted(rejected)
+        _invalidate_weekly_plan_save_state()
+        _clear_grocery_session_overrides()
+        _clear_grocery_result()
+        st.rerun()
+
+    st.markdown("**Your meals**")
+    for index, name in enumerate(current_plan, start=1):
+        meal_col, swap_col = st.columns([8, 1])
+        with meal_col:
+            st.write(f"**Meal {index}** — {name}")
+            _render_slot_manual_picker(
+                slot_index=index,
+                current_name=name,
                 all_recipes=all_recipes,
-                pool=suggestion_pool,
-                rejected_names=rejected,
-            )
-            _write_plan_names(new_plan)
-            st.session_state.plan_rejected_names = sorted(rejected)
-            _invalidate_weekly_plan_save_state()
-            _clear_grocery_session_overrides()
-            _clear_grocery_result()
-            st.rerun()
-
-        st.markdown("**Your meals**")
-        for index, name in enumerate(current_plan, start=1):
-            meal_col, swap_col = st.columns([8, 1])
-            with meal_col:
-                st.write(f"**Meal {index}** — {name}")
-                _render_slot_manual_picker(
-                    slot_index=index,
-                    current_name=name,
-                    all_recipes=all_recipes,
-                    filter_columns=filter_columns,
-                    filter_defaults=filter_defaults,
-                    schema_columns=schema.all_columns,
-                    ingredient_index=ingredient_index,
-                )
-            with swap_col:
-                if st.button("↺", key=f"swap_meal_{index}", help="Swap this meal"):
-                    _apply_plan_swap([name])
-
-        if len(current_plan) < int(meal_count) and st.button(
-            "Fill remaining slots", key="fill_remaining_plan"
-        ):
-            plan = suggest_meals(
-                all_recipes,
-                meals=int(meal_count),
-                locked_names=current_plan,
-                filters=week_filters,
+                filter_columns=filter_columns,
+                filter_defaults=filter_defaults,
                 schema_columns=schema.all_columns,
                 ingredient_index=ingredient_index,
             )
-            _write_plan_names(plan)
-            _invalidate_weekly_plan_save_state()
-            _clear_grocery_session_overrides()
-            _clear_grocery_result()
-            st.rerun()
+        with swap_col:
+            if st.button("↺", key=f"swap_meal_{index}", help="Swap this meal"):
+                _apply_plan_swap([name])
 
-        if st.button("↺ Re-generate everything", key="regenerate_plan"):
-            rejected = set(st.session_state.get("plan_rejected_names", []))
-            plan = suggest_meals(
-                all_recipes,
-                meals=int(meal_count),
-                locked_names=[],
-                filters=week_filters,
-                schema_columns=schema.all_columns,
-                rejected_names=rejected,
-                ingredient_index=ingredient_index,
-            )
-            _write_plan_names(plan)
-            _invalidate_weekly_plan_save_state()
-            _clear_grocery_session_overrides()
-            _clear_grocery_result()
-            st.rerun()
+    if len(current_plan) < int(meal_count) and st.button(
+        "Fill remaining slots", key="fill_remaining_plan"
+    ):
+        plan = suggest_meals(
+            all_recipes,
+            meals=int(meal_count),
+            locked_names=current_plan,
+            filters=week_filters,
+            schema_columns=schema.all_columns,
+            ingredient_index=ingredient_index,
+        )
+        _write_plan_names(plan)
+        _invalidate_weekly_plan_save_state()
+        _clear_grocery_session_overrides()
+        _clear_grocery_result()
+        st.rerun()
 
-        _render_save_plan_controls(_current_plan_names(), cached_recipes=all_recipes)
+    if st.button("↺ Re-generate everything", key="regenerate_plan"):
+        rejected = set(st.session_state.get("plan_rejected_names", []))
+        plan = suggest_meals(
+            all_recipes,
+            meals=int(meal_count),
+            locked_names=[],
+            filters=week_filters,
+            schema_columns=schema.all_columns,
+            rejected_names=rejected,
+            ingredient_index=ingredient_index,
+        )
+        _write_plan_names(plan)
+        _invalidate_weekly_plan_save_state()
+        _clear_grocery_session_overrides()
+        _clear_grocery_result()
+        st.rerun()
+
+    _render_save_plan_controls(_current_plan_names(), cached_recipes=all_recipes)
+
+
+def render_meals_section(db: NotionRecipesDB, *, all_recipes: list) -> list[str]:
+    """Render step 1 (meals) and return the current planned recipe names."""
+    _ensure_plan_session_defaults()
+    meal_count = _render_meal_count_input()
+    _render_dev_jump_tools(db)
+
+    ingredient_index = _cached_plan_ingredient_index(all_recipes)
+    week_filters = _render_generate_plan_controls(
+        db,
+        all_recipes=all_recipes,
+        meal_count=meal_count,
+        ingredient_index=ingredient_index,
+    )
+    _render_built_plan_meals(
+        db,
+        all_recipes=all_recipes,
+        meal_count=meal_count,
+        week_filters=week_filters,
+        ingredient_index=ingredient_index,
+    )
 
     return _current_plan_names()

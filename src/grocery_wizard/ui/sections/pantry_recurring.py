@@ -102,13 +102,7 @@ def _render_remove_picker(
             st.warning(f"Could not remove “{pick}”.")
 
 
-def render_pantry_and_recurring() -> None:
-    st.subheader("Pantry & recurring items")
-    st.caption(
-        "Recurring items are added to every new weekly list. "
-        "Pantry items are assumed on hand when building grocery lists."
-    )
-
+def _render_recurring_weekly_section() -> None:
     st.markdown("### Recurring weekly items")
     template = load_recurring_weekly_items()
     if template:
@@ -134,16 +128,13 @@ def render_pantry_and_recurring() -> None:
             else:
                 st.warning("Could not add — empty name or already on the list.")
 
-    st.divider()
-    st.markdown("### Pantry")
-    st.caption("Grouped by the same store aisles as your grocery list (`config/store_aisles.txt`).")
-    aisle_config = load_store_aisles()
-    try:
-        pantry_entries = _load_pantry_entries_from_notion()
-    except ValueError as exc:
-        st.error(str(exc))
-        pantry_entries = []
 
+def _render_pantry_table(
+    pantry_entries: list,
+    *,
+    aisle_config: StoreAisleConfig,
+) -> list[str]:
+    """Grouped pantry list by store aisle. Returns flat item names for remove picker."""
     grouped_aisles = _group_pantry_items_by_store_aisle(pantry_entries, config=aisle_config)
     all_pantry_names: list[str] = []
     if grouped_aisles:
@@ -159,15 +150,10 @@ def render_pantry_and_recurring() -> None:
         st.caption("No pantry items matched a store aisle.")
     else:
         st.caption("No pantry items yet.")
+    return all_pantry_names
 
-    if all_pantry_names:
-        _render_remove_picker(
-            items=sorted(set(all_pantry_names), key=str.lower),
-            key="pantry_tab_remove_pick",
-            label="Remove a pantry item",
-            on_remove=_remove_pantry_item_and_invalidate,
-        )
 
+def _render_pantry_add_form(*, aisle_config: StoreAisleConfig) -> None:
     with st.form("pantry_add_form", clear_on_submit=True):
         new_pantry_name = st.text_input("Add pantry item", placeholder="e.g. soy sauce")
         new_pantry_aisle = st.selectbox(
@@ -190,3 +176,36 @@ def render_pantry_and_recurring() -> None:
                     st.rerun()
                 else:
                     st.warning("Could not add — empty name or already in pantry.")
+
+
+def _render_pantry_section() -> None:
+    st.markdown("### Pantry")
+    st.caption("Grouped by the same store aisles as your grocery list (`config/store_aisles.txt`).")
+    aisle_config = load_store_aisles()
+    try:
+        pantry_entries = _load_pantry_entries_from_notion()
+    except ValueError as exc:
+        st.error(str(exc))
+        pantry_entries = []
+
+    all_pantry_names = _render_pantry_table(pantry_entries, aisle_config=aisle_config)
+    if all_pantry_names:
+        _render_remove_picker(
+            items=sorted(set(all_pantry_names), key=str.lower),
+            key="pantry_tab_remove_pick",
+            label="Remove a pantry item",
+            on_remove=_remove_pantry_item_and_invalidate,
+        )
+    _render_pantry_add_form(aisle_config=aisle_config)
+
+
+def render_pantry_and_recurring() -> None:
+    st.subheader("Pantry & recurring items")
+    st.caption(
+        "Recurring items are added to every new weekly list. "
+        "Pantry items are assumed on hand when building grocery lists."
+    )
+
+    _render_recurring_weekly_section()
+    st.divider()
+    _render_pantry_section()
