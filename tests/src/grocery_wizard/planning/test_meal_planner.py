@@ -398,20 +398,6 @@ def test_eligible_suggestion_pool_excludes_accepted_and_rejected() -> None:
     assert [recipe.name for recipe in eligible] == ["Bean Bowl"]
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def test_pick_diverse_recipe_samples_from_top_scorers() -> None:
     tied = [
         _recipe("Alpha", properties={"Protein": ["Chicken"], "Dinner Category": ["Pasta"]}),
@@ -600,5 +586,3 @@ def test_ingredient_filter_without_precomputed_index() -> None:
     result_names = {r.name for r in result}
     assert "Tofu Stir Fry" in result_names
     assert "Chicken Curry" not in result_names
-
-

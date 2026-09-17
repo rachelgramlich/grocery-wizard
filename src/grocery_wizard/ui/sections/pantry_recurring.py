@@ -57,6 +57,7 @@ def _group_pantry_items_by_store_aisle(
     rank = {label.lower(): index for index, label in enumerate(walk_order)}
 
     grouped: list[tuple[str, list[str]]] = []
+
     def _aisle_sort_key(text: str) -> tuple[int, str]:
         return rank.get(text.lower(), 999), text.lower()
 
@@ -69,9 +70,7 @@ def _group_pantry_items_by_store_aisle(
 def _render_markdown_item_list(items: list[str], *, item_class: str) -> None:
     if not items:
         return
-    lines = [
-        f'<li class="{item_class}">{html.escape(name)}</li>' for name in items
-    ]
+    lines = [f'<li class="{item_class}">{html.escape(name)}</li>' for name in items]
     st.markdown(
         f'<ul class="gw-item-list">{"".join(lines)}</ul>',
         unsafe_allow_html=True,

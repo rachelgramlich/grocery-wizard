@@ -401,4 +401,3 @@ def save_week_plan(recipe_names: list[str], path: Path = WEEK_PLAN_PATH) -> Path
     payload = {"recipes": [name.strip() for name in recipe_names if name.strip()]}
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     return path
-

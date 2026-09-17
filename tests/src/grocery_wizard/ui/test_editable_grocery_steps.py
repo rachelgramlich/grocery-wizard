@@ -2,11 +2,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
-from ui_source import ui_source
-
-UI_ROOT = Path(__file__).resolve().parents[4] / "src" / "grocery_wizard" / "ui"
+from ui_source import UI_ROOT, ui_source
 
 
 def test_start_recipe_review_formats_notion_storage_lines() -> None:

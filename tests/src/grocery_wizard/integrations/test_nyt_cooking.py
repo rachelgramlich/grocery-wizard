@@ -527,9 +527,11 @@ def test_format_metadata_review_lists_recipes() -> None:
 def test_verify_nyt_credentials_raises_when_not_configured() -> None:
     from src.grocery_wizard.integrations.nyt_cooking import NytAuthError, verify_nyt_credentials
 
-    with patch("src.grocery_wizard.integrations.nyt_cooking.load_credentials", return_value=None):
-        with pytest.raises(NytAuthError, match="not configured"):
-            verify_nyt_credentials()
+    with (
+        patch("src.grocery_wizard.integrations.nyt_cooking.load_credentials", return_value=None),
+        pytest.raises(NytAuthError, match="not configured"),
+    ):
+        verify_nyt_credentials()
 
 
 def test_reclassify_updates_meal_and_weeknight() -> None:

@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 UI_ROOT = Path(__file__).resolve().parents[4] / "src" / "grocery_wizard" / "ui"
+APP_PATH = UI_ROOT / "app.py"
 
 _UI_MODULE_PATHS = (
     "app.py",

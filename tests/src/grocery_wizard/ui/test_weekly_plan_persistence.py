@@ -2,11 +2,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
-from ui_source import ui_source
-
-APP_PATH = Path(__file__).resolve().parents[4] / "src" / "grocery_wizard" / "ui" / "app.py"
+from ui_source import APP_PATH, ui_source
 
 
 def test_saved_plan_build_keeps_loaded_recipes_by_default() -> None:
@@ -29,7 +25,9 @@ def test_weekly_plan_entry_modes_in_app() -> None:
 
 def test_create_grocery_auto_saves_plan_if_missing() -> None:
     source = ui_source()
-    section = source.split('if st.button("Create grocery list"', 1)[1].split("_start_recipe_review", 1)[0]
+    section = source.split('if st.button("Create grocery list"', 1)[1].split(
+        "_start_recipe_review", 1
+    )[0]
     assert "_ensure_weekly_plan_saved_before_grocery" in section
 
 

@@ -2,11 +2,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
-from ui_source import pantry_tab_source, ui_source
-
-APP_PATH = Path(__file__).resolve().parents[4] / "src" / "grocery_wizard" / "ui" / "app.py"
+from ui_source import APP_PATH, pantry_tab_source, ui_source
 
 
 def test_weekly_recipe_tab_is_first_and_default() -> None:

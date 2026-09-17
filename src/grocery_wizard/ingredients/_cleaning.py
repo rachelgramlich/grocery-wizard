@@ -86,11 +86,7 @@ def _left_is_qty_plus_bare_color(left: str) -> bool:
         return False
     if len(words) == 1:
         return words[0] in _COLOR_ADJECTIVES
-    return (
-        len(words) == 2
-        and words[0] in _COLOR_ADJECTIVES
-        and words[1] in _COLOR_ADJECTIVES
-    )
+    return len(words) == 2 and words[0] in _COLOR_ADJECTIVES and words[1] in _COLOR_ADJECTIVES
 
 
 def _looks_like_ingredient(part: str) -> bool:

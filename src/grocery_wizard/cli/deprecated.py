@@ -34,8 +34,8 @@ DEPRECATED_COMMANDS: dict[str, str] = {
     "pantry": _EDIT_PANTRY_HINT,
     "sync": _MAINTENANCE_REMOVED,
     "refresh-ingredients": _MAINTENANCE_REMOVED,
-    "audit": "Maintenance CLI was removed.",
-    "schema": "Maintenance CLI was removed.",
+    "audit": _MAINTENANCE_REMOVED,
+    "schema": _MAINTENANCE_REMOVED,
 }
 
 DEPRECATED_DEV_COMMANDS: dict[str, str] = {

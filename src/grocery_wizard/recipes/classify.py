@@ -306,10 +306,7 @@ def _classify_meal_structured(text: str) -> str | None:
 
 def _is_dessert(text: str) -> bool:
     if SAVORY_MEAL_BLOCKERS.search(text):
-        if DESSERT_CRISP_PATTERN.search(text) and not SAVORY_MEAL_BLOCKERS.search(text):
-            pass
-        else:
-            return False
+        return False
 
     if DESSERT_PATTERN.search(text):
         return True
