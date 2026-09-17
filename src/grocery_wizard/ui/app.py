@@ -30,6 +30,7 @@ from src.grocery_wizard.ui.tabs import (
 )
 
 _GW_RENDER_SECTION = "gw_render_section"
+_SKIP_PICKER_RENDER_SYNC = "gw_skip_picker_render_sync"
 
 # Re-export for tests and AppTest entry points that import from app.
 __all__ = [
@@ -52,8 +53,19 @@ def _on_active_tab_change() -> None:
     st.session_state[_GW_RENDER_SECTION] = st.session_state["gw_active_tab"]
 
 
+def _sync_render_section_from_picker() -> None:
+    """Keep body section aligned when the picker changes without on_change."""
+    if st.session_state.get(_SKIP_PICKER_RENDER_SYNC):
+        st.session_state[_SKIP_PICKER_RENDER_SYNC] = False
+        return
+    picker_tab = st.session_state.get("gw_active_tab")
+    if picker_tab and picker_tab != st.session_state.get(_GW_RENDER_SECTION):
+        st.session_state[_GW_RENDER_SECTION] = picker_tab
+
+
 def _refresh_notion_cache_from_ui() -> None:
     """Invalidate Notion caches; Streamlit reruns after the button callback."""
+    st.session_state[_SKIP_PICKER_RENDER_SYNC] = True
     invalidate_notion_cache()
     # Keep picker state aligned with the section we are actually rendering.
     st.session_state["gw_active_tab"] = st.session_state[_GW_RENDER_SECTION]
@@ -97,6 +109,7 @@ def main() -> None:
         persist_state="session",
         on_change=_on_active_tab_change,
     )
+    _sync_render_section_from_picker()
 
     active_tab = st.session_state[_GW_RENDER_SECTION]
     section_key = _TAB_CONTAINER_KEYS.get(active_tab, "unknown")

@@ -32,6 +32,20 @@ def test_active_section_render_is_keyed_container() -> None:
 def test_section_body_branches_on_render_section_not_picker_return() -> None:
     app = APP_PATH.read_text(encoding="utf-8")
     assert "active_tab = st.session_state[_GW_RENDER_SECTION]" in app
+    assert "_sync_render_section_from_picker()" in app
+    assert "_SKIP_PICKER_RENDER_SYNC" in app
+
+
+def test_picker_sync_updates_render_section_without_on_change() -> None:
+    from streamlit.testing.v1 import AppTest
+
+    at = AppTest.from_file(str(APP_PATH), default_timeout=60)
+    at.run(timeout=60)
+    at.segmented_control[0].set_value("Pantry & recurring").run(timeout=60)
+    at.session_state["gw_render_section"] = "Weekly recipe generation"
+    at.run(timeout=60)
+    assert at.session_state["gw_render_section"] == "Pantry & recurring"
+    assert not any(s.value == "Create weekly plan" for s in at.subheader)
 
 
 def test_refresh_keeps_pantry_body_when_picker_state_desyncs() -> None:
