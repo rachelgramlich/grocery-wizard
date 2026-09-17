@@ -71,6 +71,15 @@ def test_format_ingredients_for_review_expands_storage_encodings() -> None:
     assert "remove: salt" in lines
 
 
+def test_prepare_ingredients_for_notion_strips_checklist_prefixes() -> None:
+    text = "- [x] Milk\n[x] 2 cups sugar\n- [ ] Flowers"
+    prepared = prepare_ingredients_for_notion(text)
+    lines = prepared.splitlines()
+    assert lines == ["Milk", "sugar", "Flowers"]
+    assert "[x]" not in prepared
+    assert "[ ]" not in prepared
+
+
 def test_prepare_ingredients_for_notion_strips_trailing_prep() -> None:
     text = "2 small yellow onions, sliced 1/4 inch thick lengthwise"
     prepared = prepare_ingredients_for_notion(text)
