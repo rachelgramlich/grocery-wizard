@@ -24,32 +24,17 @@ from urllib.parse import urlparse
 
 from ingredient_parser import parse_ingredient
 
+from src.grocery_wizard.ingredients._patterns import (
+    _AMOUNT_STR_RE,
+    _LEADING_QTY_RE,
+    _UNICODE_DASHES,
+    _UNICODE_FRACTIONS,
+)
+
 if TYPE_CHECKING:
     from ingredient_parser.dataclasses import IngredientAmount, ParsedIngredient
 
 _nltk_ready = False
-
-_LEADING_QTY_RE = re.compile(
-    r"^((?:\d+\s+)?\d+/\d+|\d+(?:\.\d+)?)\s*",
-)
-
-_AMOUNT_STR_RE = re.compile(
-    r"^((?:\d+\s+)?\d+/\d+|\d+(?:\.\d+)?)\s*(.*)\Z",
-    re.DOTALL,
-)
-
-_UNICODE_DASHES = ("–", "—", "−")  # noqa: RUF001
-_UNICODE_FRACTIONS = {
-    "¼": "1/4",
-    "½": "1/2",
-    "¾": "3/4",
-    "⅓": "1/3",
-    "⅔": "2/3",
-    "⅛": "1/8",
-    "⅜": "3/8",
-    "⅝": "5/8",
-    "⅞": "7/8",
-}
 
 _VOLUME_UNITS = frozenset(
     {
