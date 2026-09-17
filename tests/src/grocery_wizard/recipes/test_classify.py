@@ -122,6 +122,37 @@ def test_meal_savory_pie_stays_dinner() -> None:
     assert classify_column("Meal", "Samosa Pie", [], allowed_options=MEAL_OPTIONS) == "Dinner"
 
 
+def test_meal_dessert_vs_savory_crisp_edge_cases() -> None:
+    """Savory blockers beat dessert *crisp*; sweet crisps stay Dessert."""
+    assert (
+        classify_column("Meal", "Chile Crisp", [], allowed_options=MEAL_OPTIONS) == "Dinner"
+    )
+    assert classify_column("Meal", "Apple Crisp", [], allowed_options=MEAL_OPTIONS) == "Dessert"
+
+
+def test_meal_dessert_vs_savory_pie_and_tart_edge_cases() -> None:
+    assert (
+        classify_column("Meal", "Blueberry Pie", [], allowed_options=MEAL_OPTIONS) == "Dessert"
+    )
+    assert classify_column("Meal", "Tomato Tart", [], allowed_options=MEAL_OPTIONS) == "Dinner"
+
+
+def test_meal_savory_blockers_in_ingredients_block_dessert_title() -> None:
+    assert (
+        classify_column(
+            "Meal",
+            "Apple Crisp",
+            ["1 boneless chicken breast"],
+            allowed_options=MEAL_OPTIONS,
+        )
+        == "Dinner"
+    )
+
+
+def test_meal_dessert_bars_without_savory_blockers() -> None:
+    assert classify_column("Meal", "Lemon Bars", [], allowed_options=MEAL_OPTIONS) == "Dessert"
+
+
 def test_meal_snack_side_alias_for_legacy_snack_option() -> None:
     legacy_options = ["Drink", "Breakfast", "Lunch", "Dinner", "Snack", "Dessert"]
     assert (

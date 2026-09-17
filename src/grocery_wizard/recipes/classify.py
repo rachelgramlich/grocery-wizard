@@ -305,6 +305,14 @@ def _classify_meal_structured(text: str) -> str | None:
 
 
 def _is_dessert(text: str) -> bool:
+    """Whether normalized title+ingredient text should classify as Dessert.
+
+    ``SAVORY_MEAL_BLOCKERS`` wins over dessert sub-patterns: e.g. *Chile Crisp*
+    (condiment) and *Tomato Tart* stay savory even though *crisp* / *tart* match
+    dessert regexes. Sweet-only titles such as *Apple Crisp* or *Blueberry Pie*
+    classify as dessert. Savory tokens anywhere in the combined text (including
+    ingredients) block dessert — e.g. *Apple Crisp* with chicken in the list.
+    """
     if SAVORY_MEAL_BLOCKERS.search(text):
         return False
 
@@ -317,7 +325,7 @@ def _is_dessert(text: str) -> bool:
     if DESSERT_PIE_TART_PATTERN.search(text):
         return "pot" not in text and "chicken" not in text and "tomato" not in text
 
-    return bool(DESSERT_BARS_PATTERN.search(text) and not SAVORY_MEAL_BLOCKERS.search(text))
+    return bool(DESSERT_BARS_PATTERN.search(text))
 
 
 def _resolve_meal_option(meal: str, allowed_options: list[str] | None) -> str | None:

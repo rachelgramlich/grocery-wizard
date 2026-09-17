@@ -11,15 +11,17 @@ This document codifies the coding standards enforced in this repository. All cha
 Run everything locally before pushing:
 
 ```bash
-just check        # lint --fix + tests (local)
-just ci           # sync + pytest (same as GitHub Actions)
+just check        # ruff check + ruff format --check + pytest (local pre-push)
+just ci           # sync + same checks as just check (GitHub Actions)
 just format       # auto-format with ruff
 just lint         # ruff check --fix
+just lint-check   # ruff check (no fix)
+just format-check # ruff format --check
 just test         # pytest
-just pre-commit   # all pre-commit hooks
+just pre-commit   # all pre-commit hooks (ruff --fix + ruff-format on commit)
 ```
 
-**GitHub Actions** runs `just ci` on push to `main` and on pull requests. Style checks stay in pre-commit (local or [pre-commit.ci](https://pre-commit.ci) if enabled).
+**GitHub Actions** runs `just ci` on push to `main` and on pull requests (`ruff check`, `ruff format --check`, `pytest`). Pre-commit still auto-fixes lint/format on each commit locally (or via [pre-commit.ci](https://pre-commit.ci) if enabled).
 
 ---
 
@@ -153,8 +155,7 @@ def build_grocery_list(
     *,
     recipe_names: list[str],
     exclude_pantry: bool = True,
-) -> tuple[list[str], list[str], None, list[str], dict[str, list[str]], list[NameLinkMismatch]]:
-    ...
+) -> tuple[list[str], list[str], None, list[str], dict[str, list[str]], list[NameLinkMismatch]]: ...
 ```
 
 ### Boolean arguments
@@ -307,6 +308,10 @@ assert raised
 with pytest.raises(MyError, match="message"):
     risky()
 ```
+
+### UI source paths
+
+Streamlit UI regression tests read concatenated sources via `tests/src/grocery_wizard/ui/ui_source.py`. Import `APP_PATH`, `UI_ROOT`, `ui_source()`, and `pantry_tab_source()` from that module (or `from ui_source import …` inside `tests/src/grocery_wizard/ui/`). Do not duplicate `Path(...)/app.py` literals across test files.
 
 ### String literals in tests
 

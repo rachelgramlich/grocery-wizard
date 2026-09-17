@@ -26,6 +26,23 @@ Use this skill during **normal implementation** — features, bugs, refactors th
 4. **Match the repo** — naming, types, patterns in surrounding code (see `CONTRIBUTING.md` here).
 5. **Verify** — run `just check` (or project equivalent) on touched paths.
 
+## Automation expectations
+
+| Layer | Enforces |
+| --- | --- |
+| **GitHub Actions** | `just ci` → `ruff check`, `ruff format --check`, `pytest` |
+| **Pre-commit** | `ruff --fix` + `ruff-format` on commit |
+| **You (inline tidy)** | **`just check`** before push; separate **S** commits from **B** |
+
+**Repo patterns (prefer when deduping during tidy):**
+
+- UI test paths → `tests/src/grocery_wizard/ui/ui_source.py`
+- Theme static CSS path → `APP_THEME_STATIC_CSS` in `theme.py`
+- Ingredient table regex → `ingredients/_patterns.py`
+- CLI deprecation copy → shared constants in `cli/` shims
+
+Details: `AGENTS.md` (Structure-only tidy), `CONTRIBUTING.md` (Automated Checks).
+
 ## Decide: tidy first?
 
 | If… | Then… |
@@ -61,6 +78,10 @@ Avoid “always tidy” and “never tidy.”
 | **One pile** | Inline to understand, then re-split cleanly. |
 | **Comments** | Intent only; delete redundant restatements of code. |
 | **New interface, old impl** | Desired API delegating to current code until **B** completes. |
+
+## Behavior opportunities (do not mix into S)
+
+Inline tidying stops at **S**. If you spot a **B** opportunity — bug fix, feature gap, product decision, or refactor too risky for structure-only — note it in chat or the PR, and optionally file a GitHub issue with **`gh issue create`**. Use **`.cursor/commands/create-issues.md`** planning rules (bug vs enhancement, **`gw-area-*`** labels). Never fold **B** into an **S** commit or tidy PR.
 
 ## Review expectations
 
