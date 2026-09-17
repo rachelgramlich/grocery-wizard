@@ -1,6 +1,6 @@
 ---
 name: tidy-first
-description: Use whenever editing or refactoring application code — Kent Beck Tidy First structure-only tidyings, separate from behavior changes. Triggers refactor, cleanup, simplify, extract, guard clause, dead code, readability, messy code, tidy, tidying, split commit, structure vs behavior. Not for whole-repo scans (use tidy-project skill or /tidy-project).
+description: Use whenever editing or refactoring application code — Kent Beck Tidy First structure-only tidyings, separate from behavior changes. Triggers refactor, cleanup, simplify, extract, guard clause, dead code, readability, messy code, tidy, tidying, split commit, structure vs behavior. Not for whole-repo scans (use /tidy-project command).
 ---
 
 # Tidy First (inline while you work)
@@ -9,7 +9,7 @@ Canonical copy also lives at `.cursor/skills/tidy-first/SKILL.md` (committed). K
 
 Use this skill during **normal implementation** — features, bugs, refactors the user asked for. Keep **structure (S)** and **behavior (B)** separate.
 
-**Not in scope here:** repo-wide tidying campaigns → **`/tidy-project`** or the **`tidy-project`** skill.
+**Not in scope here:** repo-wide tidying campaigns → **`/tidy-project`** command (`.cursor/commands/tidy-project.md`).
 
 ## When to read this skill
 
