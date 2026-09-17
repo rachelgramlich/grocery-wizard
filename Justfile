@@ -21,7 +21,15 @@ setup-upgrade:
 sync:
     uv sync --all-extras
 
-# Run linting checks
+# Lint (no auto-fix; same as CI)
+lint-check:
+    uv run ruff check
+
+# Verify formatting (no write; same as CI)
+format-check:
+    uv run ruff format --check
+
+# Run linting checks with auto-fix
 lint:
     uv run ruff check --fix
 
@@ -50,11 +58,11 @@ clean:
     rm -rf .coverage htmlcov/
     rm -rf dist/ build/ *.egg-info
 
-# Local pre-push: auto-fix lint + tests
-check: lint test
+# Local pre-push: ruff lint + format check + tests (no auto-fix)
+check: lint-check format-check test
 
-# GitHub Actions entry point (deps + pytest; lint via pre-commit locally)
-ci: sync test
+# GitHub Actions entry point (sync + same checks as check)
+ci: sync lint-check format-check test
 
 # Run pre-commit checks
 pre-commit:

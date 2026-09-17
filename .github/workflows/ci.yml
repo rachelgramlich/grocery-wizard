@@ -25,5 +25,5 @@ jobs:
       - name: Install just
         uses: extractions/setup-just@v3
 
-      - name: just ci
+      - name: just ci (ruff check, ruff format --check, pytest)
         run: just ci

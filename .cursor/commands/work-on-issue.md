@@ -40,7 +40,10 @@ Follow the issue title/body plus this command file for ship steps.
 ### 3. Implement
 
 - `git fetch origin main` and create branch `cursor/<slug>-21af` off `main`.
-- Match existing project style; `uv run ruff check` on touched Python.
+- Match existing project style.
+- If files you touch are messy, read **`tidy-first`** (`.cursor/skills/tidy-first/SKILL.md`): optional **S** commit before **B**; do not mix structure and behavior in one commit.
+- **UI tests:** import paths and concatenated UI source from `tests/src/grocery_wizard/ui/ui_source.py` (`APP_PATH`, `UI_ROOT`, `ui_source`, `pantry_tab_source`) — not ad-hoc `Path(...)` literals.
+- Before opening the PR: **`just check`** (or `uv run ruff check && uv run ruff format --check && uv run pytest`).
 
 ### 4. Ship
 
