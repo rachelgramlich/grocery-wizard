@@ -43,15 +43,46 @@ Follow the issue title/body plus this command file for ship steps.
 - Match existing project style.
 - If files you touch are messy, read **`tidy-first`** (`.cursor/skills/tidy-first/SKILL.md`): optional **S** commit before **B**; do not mix structure and behavior in one commit.
 - **UI tests:** import paths and concatenated UI source from `tests/src/grocery_wizard/ui/ui_source.py` (`APP_PATH`, `UI_ROOT`, `ui_source`, `pantry_tab_source`) — not ad-hoc `Path(...)` literals.
-- Before opening the PR: **`just check`** (or `uv run ruff check && uv run ruff format --check && uv run pytest`).
 
-### 4. Ship
+### 4. Smoke test
+
+Run automated smoke **before** local code review and opening the PR:
+
+- **`just check`** (or `uv run ruff check && uv run ruff format --check && uv run pytest`).
+- Any **issue-specific** checks from the issue body (CLI paths, AppTest smoke, etc.).
+- **UI changes:** run whatever automated UI tests cover the surface; note remaining steps for PR **Manual verification** (user UAT comes later).
+
+Do not open the PR until smoke passes.
+
+### 5. Local code review (implement fixes)
+
+After smoke passes, review the **full branch diff vs `main`**, then **implement** warranted fixes — do not hand back a findings-only list.
+
+**How to review (no extra Bugbot cost):**
+
+- Prefer **Agent Review** in Cursor: **`/agent-review`** on the branch diff, or Source Control → Agent Review.
+- **Depth:** **Quick** for small/trivial diffs; **Deep** for logic, security, Streamlit UX, or multi-file changes.
+- Also check against the **issue acceptance criteria**, `CONTRIBUTING.md`, and the area → files table above.
+
+**What to fix in this step:**
+
+- Bugs, missing edge cases, weak or missing tests on touched behavior.
+- Scope creep or dead code introduced in the branch.
+- Style/readability issues in code you added (use **`tidy-first`** for **S** vs **B** commits when fixing).
+
+**After fixes:**
+
+1. Re-run **§4 Smoke test** until green.
+2. If fixes were substantial, run **`/agent-review`** once more on the updated diff.
+3. Only then continue to **Ship** and **Manual verification**.
+
+### 6. Ship
 
 - PR title: `#<issue-number>: <issue title>` (use `fix: …` prefix for bugs if clearer).
 - PR body: repo template, **Manual verification**, `Closes #<issue-number>`.
 - Open the PR **ready for review** (not draft) unless the user asks otherwise.
 
-### 5. Manual verification
+### 7. Manual verification
 
 Fill the PR template **Manual verification** section in every case.
 
