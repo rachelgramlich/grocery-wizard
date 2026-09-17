@@ -34,8 +34,13 @@ def test_scratch_plan_slot_first_manual_picker() -> None:
     source = ui_source()
     assert "Choose recipe manually" in source
     assert "_render_slot_manual_picker" in source
-    assert "plan_week_filter" in source
-    assert "week_level_plan_filter_columns" in source
+    assert "plan_prebuild_filter" in source
+    assert (
+        "week_level_plan_filter_columns"
+        not in source.split("def _render_generate_plan_controls", 1)[1].split(
+            "def _render_built_plan_meals", 1
+        )[0]
+    )
     assert "Keep these recipes" not in source
     assert 'st.expander("More options"' not in source
     assert "Fill remaining slots" in source
@@ -52,13 +57,14 @@ def test_manual_picker_recipe_first_then_or_filter() -> None:
     assert "plan_slot_direct_pick_" in manual
     assert 'placeholder="Search or pick a recipe…"' in manual
     assert 'st.markdown("**Or filter**")' in manual
-    assert "st.container(border=True)" in manual
-    assert 'st.markdown("**Matching recipes**")' in manual
+    assert "_render_filtered_recipe_picker" in manual
     assert "st.divider()" in manual
     assert manual.index('st.markdown("**Pick a recipe**")') < manual.index(
         'st.markdown("**Or filter**")'
     )
-    assert manual.index("placeholder=") < manual.index("render_meal_plan_filters")
+    assert manual.index("_render_filtered_recipe_picker") > manual.index(
+        'st.markdown("**Or filter**")'
+    )
 
 
 def test_meal_plan_ingredient_filter_before_checkboxes() -> None:
@@ -162,16 +168,37 @@ def test_dev_mode_default_meal_count() -> None:
 
 
 def test_prebuild_recipe_picker_before_build_my_plan() -> None:
+    """Issue #223: single pre-build manual expander; no pin multiselect or week filter row."""
     source = ui_source()
-    assert "_render_prebuild_recipe_picker" in source
+    generate = source.split("def _render_generate_plan_controls", 1)[1].split(
+        "def _render_built_plan_meals", 1
+    )[0]
+    prebuild = source.split("def _render_prebuild_recipe_picker", 1)[1].split(
+        "def _set_plan_slot_recipe", 1
+    )[0]
+    assert "_render_prebuild_recipe_picker" in generate
     assert "_clamp_prebuild_pinned_recipes" in source
-    assert 'key="plan_prebuild_pinned_recipes"' in source
-    build_idx = source.index('if st.button("Build my plan"')
-    picker_idx = source.index("_render_prebuild_recipe_picker(")
+    assert "_render_filtered_recipe_picker" in source
+    assert "Pin this recipe" in source
+    assert "**Pinned meals**" in source
+    assert "plan_prebuild_filter" in prebuild
+    assert "Pin recipes before building" not in generate
+    assert "plan_week_filter" not in generate
+    build_idx = generate.index('key="build_plan"')
+    picker_idx = generate.index("_render_prebuild_recipe_picker(")
     assert picker_idx < build_idx
+    assert 'with st.expander("Choose recipe manually"' in prebuild
     assert (
         "plan_prebuild_pinned_recipes" in source.split("def _locked_recipes_for_plan_build", 1)[1]
     )
+
+
+def test_post_build_slot_manual_picker_caption() -> None:
+    source = ui_source()
+    slot = source.split("def _render_slot_manual_picker", 1)[1].split(
+        "def _render_dev_jump_tools", 1
+    )[0]
+    assert "Filters apply to this meal slot only." in slot
 
 
 def test_grocery_list_extra_items_before_create_button() -> None:

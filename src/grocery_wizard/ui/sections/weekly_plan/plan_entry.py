@@ -31,7 +31,6 @@ from src.grocery_wizard.ui.dev_ui import dev_ui_enabled
 from src.grocery_wizard.ui.meal_plan_filters import (
     recipes_ingredient_cache_key,
     render_meal_plan_filters,
-    week_level_plan_filter_columns,
 )
 from src.grocery_wizard.ui.notion_cache import cached_saved_plans
 from src.grocery_wizard.ui.sections.weekly_plan.state import (
@@ -61,7 +60,7 @@ def _locked_recipes_for_plan_build(*, meal_count: int) -> list[str]:
 
 
 def _clamp_prebuild_pinned_recipes(*, max_pins: int) -> None:
-    """Keep pin multiselect state within ``max_selections`` (e.g. after lowering meal count)."""
+    """Keep pre-build pins within meal count (e.g. after lowering meal count)."""
     key = "plan_prebuild_pinned_recipes"
     pinned = list(st.session_state.get(key) or [])
     if not pinned:
@@ -72,30 +71,130 @@ def _clamp_prebuild_pinned_recipes(*, max_pins: int) -> None:
     st.session_state[key] = pinned[:limit]
 
 
-def _render_prebuild_recipe_picker(all_recipes: list, *, meal_count: int) -> None:
-    """Searchable multiselect to pin recipes before **Build my plan**."""
-    all_names = sorted({recipe.name for recipe in all_recipes}, key=str.lower)
-    if not all_names:
-        st.caption("No recipes in Notion yet — add recipes to pin meals before building.")
+def _append_prebuild_pin(recipe_name: str, *, max_pins: int) -> None:
+    pinned = list(st.session_state.get("plan_prebuild_pinned_recipes") or [])
+    if recipe_name in pinned:
+        st.warning("That recipe is already pinned.")
         return
+    if len(pinned) >= max(1, int(max_pins)):
+        st.warning(f"You can pin at most {max_pins} meals for this week.")
+        return
+    pinned.append(recipe_name)
+    st.session_state.plan_prebuild_pinned_recipes = pinned
+    st.rerun()
 
+
+def _remove_prebuild_pin(recipe_name: str) -> None:
+    pinned = list(st.session_state.get("plan_prebuild_pinned_recipes") or [])
+    if recipe_name not in pinned:
+        return
+    st.session_state.plan_prebuild_pinned_recipes = [name for name in pinned if name != recipe_name]
+    st.rerun()
+
+
+def _render_filtered_recipe_picker(
+    *,
+    all_recipes: list,
+    filter_columns: list[ColumnInfo],
+    filter_defaults: MealPlanFilters,
+    schema_columns: dict[str, ColumnInfo],
+    ingredient_index: dict[str, set[str]],
+    key_prefix: str,
+    selectbox_key: str,
+    apply_button_key: str,
+    apply_button_label: str,
+    on_apply: Callable[[str], None],
+    filter_caption: str | None = None,
+) -> None:
+    """Shared filter widgets + filtered recipe selectbox + confirm action."""
+    if filter_caption:
+        st.caption(filter_caption)
+    active_filters = render_meal_plan_filters(
+        filter_columns,
+        filter_defaults,
+        key_prefix=key_prefix,
+        ingredient_index=ingredient_index,
+    )
+    pool = filter_recipes(
+        all_recipes,
+        active_filters,
+        schema_columns,
+        ingredient_index=ingredient_index,
+    )
+    matching_names = [recipe.name for recipe in pool]
+    with st.container(border=True):
+        st.markdown("**Matching recipes**")
+        st.caption("Recipes that match the filters above.")
+        if not matching_names:
+            st.warning("No recipes match these filters.")
+            return
+        picked = st.selectbox(
+            "Recipe",
+            matching_names,
+            index=None,
+            placeholder="Pick from filtered recipes…",
+            key=selectbox_key,
+            label_visibility="collapsed",
+        )
+        if st.button(apply_button_label, key=apply_button_key):
+            if not picked:
+                st.warning("Choose a recipe from the filtered list first.")
+            else:
+                on_apply(picked)
+
+
+def _render_prebuild_recipe_picker(
+    all_recipes: list,
+    *,
+    meal_count: int,
+    filter_columns: list[ColumnInfo],
+    filter_defaults: MealPlanFilters,
+    schema_columns: dict[str, ColumnInfo],
+    ingredient_index: dict[str, set[str]],
+) -> None:
+    """Single expander: filter → pin → repeat, before **Build my plan**."""
+    all_names = sorted({recipe.name for recipe in all_recipes}, key=str.lower)
     max_pins = max(1, int(meal_count))
     current = _current_plan_names()
     if "plan_prebuild_pinned_recipes" not in st.session_state and current:
         st.session_state.plan_prebuild_pinned_recipes = list(current)[:max_pins]
     _clamp_prebuild_pinned_recipes(max_pins=max_pins)
+    pinned = list(st.session_state.get("plan_prebuild_pinned_recipes") or [])
 
-    st.multiselect(
-        "Pin recipes before building",
-        options=all_names,
-        max_selections=max_pins,
-        key="plan_prebuild_pinned_recipes",
-        placeholder="Search and pick recipes to keep when building…",
-        help=(
-            f"Optional — pin up to {max_pins} meals. Auto-fill keeps these and suggests "
-            "the rest from your filters below."
-        ),
-    )
+    if not all_names:
+        st.caption("No recipes in Notion yet — add recipes to pin meals before building.")
+        return
+
+    with st.expander("Choose recipe manually", expanded=False):
+        st.caption(
+            "Set filters, pick a recipe, and pin it. Change filters and pin again until "
+            "you have as many locked meals as you want."
+        )
+        _render_filtered_recipe_picker(
+            all_recipes=all_recipes,
+            filter_columns=filter_columns,
+            filter_defaults=filter_defaults,
+            schema_columns=schema_columns,
+            ingredient_index=ingredient_index,
+            key_prefix="plan_prebuild_filter",
+            selectbox_key="plan_prebuild_filtered_pick",
+            apply_button_key="plan_prebuild_pin_recipe",
+            apply_button_label="Pin this recipe",
+            on_apply=lambda name: _append_prebuild_pin(name, max_pins=max_pins),
+        )
+
+    if pinned:
+        st.markdown("**Pinned meals**")
+        st.caption(
+            f"{len(pinned)} of {max_pins} slots pinned — remove any you change your mind on."
+        )
+        for index, name in enumerate(pinned):
+            pin_col, remove_col = st.columns([8, 1])
+            with pin_col:
+                st.write(name)
+            with remove_col:
+                if st.button("Remove", key=f"plan_prebuild_unpin_{index}", help="Unpin this meal"):
+                    _remove_prebuild_pin(name)
 
 
 def _set_plan_slot_recipe(plan: list[str], slot_index: int, recipe_name: str) -> list[str]:
@@ -149,38 +248,19 @@ def _slot_manual_picker_fragment(
 
         st.divider()
         st.markdown("**Or filter**")
-        st.caption("Optional — narrow the list using the filters below.")
-        slot_filters = render_meal_plan_filters(
-            filter_columns,
-            filter_defaults,
+        _render_filtered_recipe_picker(
+            all_recipes=all_recipes,
+            filter_columns=filter_columns,
+            filter_defaults=filter_defaults,
+            schema_columns=schema_columns,
+            ingredient_index=ingredient_index,
             key_prefix=f"plan_slot_{slot_index}",
-            ingredient_index=ingredient_index,
+            selectbox_key=f"plan_slot_pick_{slot_index}",
+            apply_button_key=f"plan_slot_apply_{slot_index}",
+            apply_button_label="Use this recipe",
+            on_apply=_apply_picked,
+            filter_caption="Optional — narrow the list using the filters below.",
         )
-        slot_pool = filter_recipes(
-            all_recipes,
-            slot_filters,
-            schema_columns,
-            ingredient_index=ingredient_index,
-        )
-        slot_names = [recipe.name for recipe in slot_pool]
-        with st.container(border=True):
-            st.markdown("**Matching recipes**")
-            st.caption("Recipes that match the filters above.")
-            if not slot_names:
-                st.warning("No recipes match these filters.")
-                return
-            filtered_picked = st.selectbox(
-                "Filtered recipes",
-                slot_names,
-                index=None,
-                placeholder="Pick from filtered recipes…",
-                key=f"plan_slot_pick_{slot_index}",
-            )
-            if st.button("Use this recipe", key=f"plan_slot_apply_{slot_index}"):
-                if not filtered_picked:
-                    st.warning("Choose a recipe from the filtered list first.")
-                else:
-                    _apply_picked(filtered_picked)
 
     return _render
 
@@ -195,6 +275,7 @@ def _render_slot_manual_picker(
     ingredient_index: dict[str, set[str]],
 ) -> None:
     with st.expander("Choose recipe manually", expanded=False):
+        st.caption("Filters apply to this meal slot only.")
         _slot_manual_picker_fragment(slot_index)(
             all_recipes=all_recipes,
             filter_columns=filter_columns,
@@ -433,27 +514,34 @@ def _render_generate_plan_controls(
 
     st.markdown("#### 1a. Build your meal list")
     st.caption(
-        "Pin specific recipes, set week filters, then auto-fill the rest. "
+        "Optionally pin meals you already know, then **Build my plan** auto-fills the rest. "
         "Per-meal filters are available under each meal after you build."
     )
-    week_filter_columns = week_level_plan_filter_columns(schema)
-    week_filters = render_meal_plan_filters(
-        week_filter_columns,
-        filter_defaults,
-        key_prefix="plan_week_filter",
-        ingredient_index=None,
+    filter_columns = [*schema.filter_columns, *schema.checkbox_columns]
+    build_filters = default_filters(schema.all_columns)
+
+    _render_prebuild_recipe_picker(
+        all_recipes,
+        meal_count=int(meal_count),
+        filter_columns=filter_columns,
+        filter_defaults=filter_defaults,
+        schema_columns=schema.all_columns,
+        ingredient_index=ingredient_index,
     )
 
-    _render_prebuild_recipe_picker(all_recipes, meal_count=int(meal_count))
-
-    if st.button("Build my plan", type="primary", key="build_plan"):
+    if st.button(
+        "Build my plan",
+        type="primary",
+        key="build_plan",
+        help="Keeps pinned meals and suggests diverse recipes for any open slots.",
+    ):
         with st.spinner("Building your meal plan…"):
             locked_for_build = _locked_recipes_for_plan_build(meal_count=int(meal_count))
             plan = suggest_meals(
                 all_recipes,
                 meals=int(meal_count),
                 locked_names=locked_for_build,
-                filters=week_filters,
+                filters=build_filters,
                 schema_columns=schema.all_columns,
                 ingredient_index=ingredient_index,
             )
@@ -462,10 +550,10 @@ def _render_generate_plan_controls(
             _invalidate_weekly_plan_save_state()
             _clear_grocery_session_overrides()
             _clear_grocery_result()
-            st.session_state.plan_last_week_filters = week_filters
+            st.session_state.plan_last_week_filters = build_filters
         st.rerun()
 
-    return week_filters
+    return build_filters
 
 
 def _render_built_plan_meals(
