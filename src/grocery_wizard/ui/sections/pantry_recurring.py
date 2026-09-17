@@ -262,7 +262,6 @@ def _render_pantry_section() -> None:
 
 
 def render_pantry_and_recurring() -> None:
-    st.subheader("Pantry & recurring items")
     st.caption(
         "Recurring items are added to every new weekly list. "
         "Pantry items are assumed on hand when building grocery lists."
