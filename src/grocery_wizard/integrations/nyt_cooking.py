@@ -158,28 +158,53 @@ class NytRecipeBoxFolder:
     recipe_count: int | None = None
 
 
+_PREFERRED_NYT_FOLDER_LABELS = ("To make", "Favorites")
+
+
+def _recipe_box_folders_from_collections(
+    collections: list[NytCollection],
+) -> list[NytRecipeBoxFolder]:
+    """Build folder choices with preferred labels first; no full-recipe-box option."""
+    preferred_lower = {label.casefold() for label in _PREFERRED_NYT_FOLDER_LABELS}
+    picked: list[NytRecipeBoxFolder] = []
+    remaining: list[NytRecipeBoxFolder] = []
+
+    for collection in collections:
+        folder = NytRecipeBoxFolder(
+            collection_id=collection.id,
+            label=collection.name,
+            recipe_count=collection.recipe_count,
+        )
+        if collection.name.casefold() in preferred_lower:
+            picked.append(folder)
+        else:
+            remaining.append(folder)
+
+    def _preferred_sort_key(folder: NytRecipeBoxFolder) -> tuple[int, str]:
+        try:
+            order = next(
+                index
+                for index, label in enumerate(_PREFERRED_NYT_FOLDER_LABELS)
+                if label.casefold() == folder.label.casefold()
+            )
+        except StopIteration:
+            order = len(_PREFERRED_NYT_FOLDER_LABELS)
+        return order, folder.label.casefold()
+
+    picked.sort(key=_preferred_sort_key)
+    return [*picked, *remaining]
+
+
 def list_recipe_box_folders(client: NYTCookingClient) -> list[NytRecipeBoxFolder]:
-    """Return folder choices for UI or CLI sync (full box first, then collections)."""
-    total = _recipe_box_total_count(client)
-    folders: list[NytRecipeBoxFolder] = [
-        NytRecipeBoxFolder(collection_id=None, label="All saved recipes", recipe_count=total),
-    ]
+    """Return recipe-box folder choices for UI sync (collections only)."""
     try:
         collections = client.list_collections()
     except NytAuthError:
         raise
     except NYTCookingError:
-        return folders
+        return []
 
-    folders.extend(
-        NytRecipeBoxFolder(
-            collection_id=collection.id,
-            label=collection.name,
-            recipe_count=collection.recipe_count,
-        )
-        for collection in collections
-    )
-    return folders
+    return _recipe_box_folders_from_collections(collections)
 
 
 class NYTCookingClient:
@@ -371,11 +396,9 @@ def prompt_collection_choice(
 ) -> tuple[str | None, str]:
     """Interactively pick a recipe-box collection.
 
-    Returns ``(collection_id, label)``. ``collection_id`` is ``None`` for the full recipe box.
+    Returns ``(collection_id, label)``.
     Raises ``NytSyncCancelledError`` when the user declines or enters an invalid choice.
     """
-    from src.grocery_wizard.lib.prompts import confirm_yes_default
-
     info = on_info or (lambda _message: None)
 
     collections: list[NytCollection] = []
@@ -384,20 +407,16 @@ def prompt_collection_choice(
     except NytAuthError:
         raise
     except NYTCookingError as exc:
-        info(f"Could not load recipe-box folders ({exc}); full recipe box only.")
+        info(f"Could not load recipe-box folders ({exc}).")
+        raise NytSyncCancelledError("No recipe-box folders available.") from exc
 
     if not collections:
-        total = _recipe_box_total_count(client)
-        count_note = f" ({total} recipes)" if total is not None else ""
-        info(f"Syncing full recipe box{count_note}.")
-        if not confirm_yes_default("Continue?", prompt_fn=prompt_fn):
-            raise NytSyncCancelledError("Sync cancelled.")
-        return None, "All saved recipes"
+        info("No recipe-box folders found in your NYT Cooking account.")
+        raise NytSyncCancelledError("No recipe-box folders available.")
 
-    total = _recipe_box_total_count(client)
-    options: list[tuple[str | None, str, int | None]] = [
-        (None, "All saved recipes", total),
-        *((c.id, c.name, c.recipe_count) for c in collections),
+    folders = _recipe_box_folders_from_collections(collections)
+    options: list[tuple[str, str, int | None]] = [
+        (folder.collection_id or "", folder.label, folder.recipe_count) for folder in folders
     ]
 
     info("Choose a recipe-box folder to sync:")

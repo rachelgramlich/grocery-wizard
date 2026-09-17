@@ -342,7 +342,7 @@ def test_prompt_collection_choice_picks_folder(credentials: NytCredentials) -> N
         raise AssertionError(f"Unexpected URL: {url}")
 
     session.get.side_effect = fake_get
-    prompts = iter(["3"])
+    prompts = iter(["2"])
     collection_id, label = prompt_collection_choice(
         client,
         prompt_fn=lambda _msg: next(prompts),
@@ -352,7 +352,7 @@ def test_prompt_collection_choice_picks_folder(credentials: NytCredentials) -> N
     assert label == "Desserts"
 
 
-def test_prompt_collection_choice_picks_all_saved(credentials: NytCredentials) -> None:
+def test_prompt_collection_choice_picks_first_folder(credentials: NytCredentials) -> None:
     session = MagicMock()
     client = NYTCookingClient(credentials, session=session)
 
@@ -365,8 +365,6 @@ def test_prompt_collection_choice_picks_all_saved(credentials: NytCredentials) -
                     ]
                 }
             )
-        if "recipe_box_search" in url:
-            return _mock_response(payload={"collectables": [], "collectables_count": 8})
         raise AssertionError(f"Unexpected URL: {url}")
 
     session.get.side_effect = fake_get
@@ -376,8 +374,8 @@ def test_prompt_collection_choice_picks_all_saved(credentials: NytCredentials) -
         prompt_fn=lambda _msg: next(prompts),
     )
 
-    assert collection_id is None
-    assert label == "All saved recipes"
+    assert collection_id == "10"
+    assert label == "Weeknight"
 
 
 def test_prompt_collection_choice_fallback_when_collections_unavailable(
@@ -392,21 +390,13 @@ def test_prompt_collection_choice_fallback_when_collections_unavailable(
             "list_collections",
             side_effect=NytNetworkError("collections unavailable"),
         ),
-        patch.object(
-            client,
-            "list_saved_recipes",
-            return_value={"collectables": [], "collectables_count": 5},
-        ),
+        pytest.raises(NytSyncCancelledError),
     ):
-        prompts = iter(["y"])
-        collection_id, label = prompt_collection_choice(
+        prompt_collection_choice(
             client,
-            prompt_fn=lambda msg: next(prompts),
+            prompt_fn=lambda _msg: "",
             on_info=lambda _msg: None,
         )
-
-    assert collection_id is None
-    assert label == "All saved recipes"
 
 
 def test_prompt_collection_choice_cancelled(credentials: NytCredentials) -> None:
@@ -475,7 +465,7 @@ def test_run_recipe_box_sync_passes_folder_and_saves_report() -> None:
     assert result.review_report["created"][0]["name"] == "Pasta"
 
 
-def test_list_recipe_box_folders_includes_all_and_collections() -> None:
+def test_list_recipe_box_folders_orders_preferred_labels_first() -> None:
     from src.grocery_wizard.integrations.nyt_cooking import (
         NytCollection,
         list_recipe_box_folders,
@@ -484,18 +474,13 @@ def test_list_recipe_box_folders_includes_all_and_collections() -> None:
     client = MagicMock()
     client.list_collections.return_value = [
         NytCollection(id="c1", name="Weeknight", recipe_count=5),
+        NytCollection(id="c2", name="Favorites", recipe_count=2),
+        NytCollection(id="c3", name="To make", recipe_count=7),
     ]
-    with patch(
-        "src.grocery_wizard.integrations.nyt_cooking._recipe_box_total_count",
-        return_value=12,
-    ):
-        folders = list_recipe_box_folders(client)
+    folders = list_recipe_box_folders(client)
 
-    assert folders[0].collection_id is None
-    assert folders[0].label == "All saved recipes"
-    assert folders[0].recipe_count == 12
-    assert folders[1].collection_id == "c1"
-    assert folders[1].label == "Weeknight"
+    assert [folder.label for folder in folders] == ["To make", "Favorites", "Weeknight"]
+    assert all(folder.collection_id is not None for folder in folders)
 
 
 def test_flag_metadata_issues_detects_dessert_mismatch() -> None:

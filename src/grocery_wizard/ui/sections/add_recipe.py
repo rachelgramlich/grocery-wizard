@@ -73,7 +73,7 @@ def render_add_recipe() -> None:
 
     with st.container(border=True):
         st.markdown("**Sync from NYT Cooking**")
-        st.caption("Sync all saved recipes from your NYT Cooking recipe-box folder.")
+        st.caption("Sync a NYT Cooking recipe-box folder (To make and Favorites appear first).")
         render_nyt_sync_controls()
         _render_previews_for_entry(db, schema, previews, _ENTRY_PATH_NYT)
 
