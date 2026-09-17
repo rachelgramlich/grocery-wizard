@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from src.grocery_wizard.shopping.store_aisles import load_store_aisles
 from src.grocery_wizard.ui.sections.pantry_recurring import (
+    _filter_grouped_pantry_aisles,
     _group_pantry_items_by_store_aisle,
     _pantry_display_aisle_label,
 )
@@ -29,3 +30,11 @@ def test_pantry_groups_under_notion_label_not_classifier() -> None:
     grouped = _group_pantry_items_by_store_aisle(entries, config=config)
     assert grouped[0][0] == "Baking"
     assert grouped[0][1][0] == "bananas"
+
+
+def test_filter_grouped_pantry_aisles_matches_item_names() -> None:
+    grouped = [("Produce", ["limes", "lettuce"]), ("Dairy", ["milk"])]
+    assert _filter_grouped_pantry_aisles(grouped, "") == grouped
+    filtered = _filter_grouped_pantry_aisles(grouped, "lime")
+    assert filtered == [("Produce", ["limes"])]
+    assert _filter_grouped_pantry_aisles(grouped, "missing") == []

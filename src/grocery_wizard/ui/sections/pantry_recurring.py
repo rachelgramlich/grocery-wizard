@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import html
 from collections.abc import Callable
 
@@ -21,6 +22,8 @@ from src.grocery_wizard.shopping.store_aisles import (
     load_store_aisles,
 )
 from src.grocery_wizard.ui.notion_cache import cached_pantry_entries, invalidate_notion_cache
+
+_PANTRY_AISLE_CAPTION = "Grouped by store walk order—the same aisle headings as your grocery list."
 
 
 def _load_pantry_entries_from_notion() -> list:
@@ -65,6 +68,52 @@ def _group_pantry_items_by_store_aisle(
         names = sorted(set(by_label[label]), key=str.lower)
         grouped.append((label, names))
     return grouped
+
+
+def _filter_grouped_pantry_aisles(
+    grouped: list[tuple[str, list[str]]],
+    query: str,
+) -> list[tuple[str, list[str]]]:
+    needle = query.strip().casefold()
+    if not needle:
+        return grouped
+    filtered: list[tuple[str, list[str]]] = []
+    for aisle_label_text, items in grouped:
+        matched = [name for name in items if needle in name.casefold()]
+        if matched:
+            filtered.append((aisle_label_text, matched))
+    return filtered
+
+
+def _pantry_remove_button_key(*, aisle: str, name: str) -> str:
+    digest = hashlib.sha256(f"{aisle}|{name}".encode()).hexdigest()[:16]
+    return f"pantry_rm_{digest}"
+
+
+def _render_pantry_items_with_inline_remove(
+    items: list[str],
+    *,
+    aisle: str,
+    on_remove: Callable[[str], bool],
+) -> None:
+    for name in items:
+        label_col, btn_col = st.columns([11, 1], gap="small")
+        with label_col:
+            st.markdown(
+                f'<p class="gw-pantry-item">{html.escape(name)}</p>',
+                unsafe_allow_html=True,
+            )
+        with btn_col:
+            if st.button(
+                "x",
+                key=_pantry_remove_button_key(aisle=aisle, name=name),
+                help=f"Remove “{name}” from pantry",
+                type="secondary",
+            ):
+                if on_remove(name):
+                    st.rerun()
+                else:
+                    st.warning(f"Could not remove “{name}”.")
 
 
 def _render_markdown_item_list(items: list[str], *, item_class: str) -> None:
@@ -134,24 +183,33 @@ def _render_pantry_table(
     pantry_entries: list,
     *,
     aisle_config: StoreAisleConfig,
-) -> list[str]:
-    """Grouped pantry list by store aisle. Returns flat item names for remove picker."""
+    search_query: str,
+    on_remove: Callable[[str], bool],
+) -> None:
+    """Grouped pantry list by store aisle with search and collapsible sections."""
     grouped_aisles = _group_pantry_items_by_store_aisle(pantry_entries, config=aisle_config)
-    all_pantry_names: list[str] = []
-    if grouped_aisles:
-        for aisle_heading, items in grouped_aisles:
-            safe_heading = html.escape(aisle_heading)
-            st.markdown(
-                f'<p class="gw-pantry-aisle-heading">{safe_heading}</p>',
-                unsafe_allow_html=True,
+    visible_aisles = _filter_grouped_pantry_aisles(grouped_aisles, search_query)
+    searching = bool(search_query.strip())
+
+    if not grouped_aisles:
+        if pantry_entries:
+            st.caption("No pantry items matched a store aisle.")
+        else:
+            st.caption("No pantry items yet.")
+        return
+
+    if searching and not visible_aisles:
+        st.caption(f"No pantry items match “{search_query.strip()}”.")
+        return
+
+    for aisle_heading, items in visible_aisles:
+        title = f"{aisle_heading} ({len(items)})"
+        with st.expander(title, expanded=searching):
+            _render_pantry_items_with_inline_remove(
+                items,
+                aisle=aisle_heading,
+                on_remove=on_remove,
             )
-            _render_markdown_item_list(items, item_class="gw-pantry-item")
-            all_pantry_names.extend(items)
-    elif pantry_entries:
-        st.caption("No pantry items matched a store aisle.")
-    else:
-        st.caption("No pantry items yet.")
-    return all_pantry_names
 
 
 def _render_pantry_add_form(*, aisle_config: StoreAisleConfig) -> None:
@@ -181,7 +239,7 @@ def _render_pantry_add_form(*, aisle_config: StoreAisleConfig) -> None:
 
 def _render_pantry_section() -> None:
     st.markdown("### Pantry")
-    st.caption("Grouped by the same store aisles as your grocery list (`config/store_aisles.txt`).")
+    st.caption(_PANTRY_AISLE_CAPTION)
     aisle_config = load_store_aisles()
     try:
         pantry_entries = _load_pantry_entries_from_notion()
@@ -189,14 +247,17 @@ def _render_pantry_section() -> None:
         st.error(str(exc))
         pantry_entries = []
 
-    all_pantry_names = _render_pantry_table(pantry_entries, aisle_config=aisle_config)
-    if all_pantry_names:
-        _render_remove_picker(
-            items=sorted(set(all_pantry_names), key=str.lower),
-            key="pantry_tab_remove_pick",
-            label="Remove a pantry item",
-            on_remove=_remove_pantry_item_and_invalidate,
-        )
+    search_query = st.text_input(
+        "Search pantry",
+        placeholder="Filter by item name…",
+        key="pantry_tab_search",
+    )
+    _render_pantry_table(
+        pantry_entries,
+        aisle_config=aisle_config,
+        search_query=search_query,
+        on_remove=_remove_pantry_item_and_invalidate,
+    )
     _render_pantry_add_form(aisle_config=aisle_config)
 
 
