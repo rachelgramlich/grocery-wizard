@@ -43,8 +43,8 @@ def test_scratch_plan_slot_first_manual_picker() -> None:
 def test_manual_picker_recipe_first_then_or_filter() -> None:
     """Issue #220: direct recipe pick before optional per-slot filters."""
     source = ui_source()
-    manual = source.split("def _render_slot_manual_picker", 1)[1].split(
-        "def _render_dev_jump_tools", 1
+    manual = source.split("def _slot_manual_picker_fragment", 1)[1].split(
+        "def _render_slot_manual_picker", 1
     )[0]
     assert 'st.markdown("**Pick a recipe**")' in manual
     assert '"Choose recipe"' in manual
@@ -149,6 +149,7 @@ def test_dev_mode_default_meal_count() -> None:
 def test_prebuild_recipe_picker_before_build_my_plan() -> None:
     source = ui_source()
     assert "_render_prebuild_recipe_picker" in source
+    assert "_clamp_prebuild_pinned_recipes" in source
     assert 'key="plan_prebuild_pinned_recipes"' in source
     build_idx = source.index('if st.button("Build my plan"')
     picker_idx = source.index("_render_prebuild_recipe_picker(")

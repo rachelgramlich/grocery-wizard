@@ -66,7 +66,8 @@ def _sync_render_section_from_picker() -> None:
 def _refresh_notion_cache_from_ui() -> None:
     """Invalidate Notion caches; Streamlit reruns after the button callback."""
     st.session_state[_SKIP_PICKER_RENDER_SYNC] = True
-    invalidate_notion_cache()
+    with st.spinner("Refreshing from Notion…"):
+        invalidate_notion_cache()
     # Keep picker state aligned with the section we are actually rendering.
     st.session_state["gw_active_tab"] = st.session_state[_GW_RENDER_SECTION]
 

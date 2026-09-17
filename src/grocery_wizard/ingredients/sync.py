@@ -57,6 +57,10 @@ def _normalize_stored_lines(text: str) -> list[str]:
     normalized = _BR_SPLIT.sub("\n", text)
     lines: list[str] = []
     for raw_line in normalized.splitlines():
+        stripped_raw = raw_line.strip()
+        if stripped_raw and is_removal_directive(stripped_raw):
+            lines.append(stripped_raw)
+            continue
         line = strip_line_item(raw_line)
         if not line:
             continue
@@ -220,6 +224,8 @@ def is_removal_directive(line: str) -> bool:
     if not match:
         return False
     target = match.group(1).strip()
+    if target.startswith("["):
+        return False
     return not re.match(r"^\d", target)
 
 

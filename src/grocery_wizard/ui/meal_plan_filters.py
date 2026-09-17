@@ -19,6 +19,33 @@ def ingredient_options_from_index(ingredient_index: dict[str, set[str]]) -> list
     return sorted({name for names in ingredient_index.values() for name in names})
 
 
+_INGREDIENT_SEARCH_MAX_MATCHES = 150
+
+
+def scoped_ingredient_multiselect_options(
+    all_options: list[str],
+    selected: list[str],
+    search_query: str,
+    *,
+    max_matches: int = _INGREDIENT_SEARCH_MAX_MATCHES,
+) -> list[str]:
+    """Options for ingredient multiselect: keep selections plus capped search matches."""
+    selected_set = {name for name in selected if name}
+    query = search_query.strip().lower()
+    if query:
+        pool = [name for name in all_options if query in name.lower()]
+    else:
+        pool = list(all_options)
+    matches: list[str] = []
+    for name in pool:
+        if name in selected_set:
+            continue
+        matches.append(name)
+        if len(matches) >= max_matches:
+            break
+    return sorted(selected_set | set(matches), key=str.lower)
+
+
 def week_level_plan_filter_columns(schema: DatabaseSchema) -> list[ColumnInfo]:
     columns: list[ColumnInfo] = []
     meal = schema.all_columns.get("Meal")
@@ -92,17 +119,34 @@ def render_meal_plan_filters(
 
     if ingredient_index is not None:
         ingredient_options = ingredient_options_from_index(ingredient_index)
-        help_text = (
-            f"{len(ingredient_options)} ingredients from your recipes"
-            if ingredient_options
-            else None
+        total = len(ingredient_options)
+        if total:
+            st.caption(
+                f"{total} ingredients in your recipes — search to narrow the list "
+                f"(up to {_INGREDIENT_SEARCH_MAX_MATCHES} matches)."
+            )
+        search_query = st.text_input(
+            "Search ingredients",
+            key=f"{key_prefix}_ingredient_search",
+            placeholder="Type to search ingredients…",
+            label_visibility="collapsed",
         )
+        names_key = f"{key_prefix}_ingredient_names"
+        selected_so_far: list[str] = list(st.session_state.get(names_key, []))
+        if total and not search_query.strip() and not selected_so_far:
+            display_options: list[str] = []
+            st.caption("Start typing above to pick ingredients.")
+        else:
+            display_options = scoped_ingredient_multiselect_options(
+                ingredient_options,
+                selected_so_far,
+                search_query,
+            )
         ingredient_names = st.multiselect(
             "Ingredients",
-            ingredient_options,
-            default=[],
+            display_options,
             key=f"{key_prefix}_ingredient_names",
-            help=help_text,
+            placeholder="Selected ingredients appear here…",
         )
         if ingredient_names:
             ingredient_mode = st.radio(

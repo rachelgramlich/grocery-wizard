@@ -184,16 +184,17 @@ def render_grocery_list_section(
         )
 
     if st.button("Create grocery list", type="primary", key="create_grocery"):
-        _ensure_weekly_plan_saved_before_grocery(current_plan, cached_recipes=all_recipes)
-        _clear_grocery_result(clear_pre_extra_items=False)
-        _start_recipe_review(
-            current_plan,
-            all_recipes,
-            exclude_pantry=exclude_pantry,
-            recurring_text=recurring_text,
-            default_recurring=default_recurring,
-            extra_items_text=extra_items_text,
-        )
+        with st.spinner("Preparing ingredient review…"):
+            _ensure_weekly_plan_saved_before_grocery(current_plan, cached_recipes=all_recipes)
+            _clear_grocery_result(clear_pre_extra_items=False)
+            _start_recipe_review(
+                current_plan,
+                all_recipes,
+                exclude_pantry=exclude_pantry,
+                recurring_text=recurring_text,
+                default_recurring=default_recurring,
+                extra_items_text=extra_items_text,
+            )
         st.rerun()
 
 
