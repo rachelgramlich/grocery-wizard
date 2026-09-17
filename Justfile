@@ -10,8 +10,9 @@ default:
 setup:
     uv sync --all-extras
     uv run streamlit skills --yes
-    mkdir -p .cursor/skills
+    mkdir -p .cursor/skills .agents/skills
     ln -sfn "$(readlink .agents/skills/developing-with-streamlit)" .cursor/skills/developing-with-streamlit
+    ln -sfn ../../.agents/skills/tidy-first .cursor/skills/tidy-first
 
 # Upgrade and sync dependencies
 setup-upgrade:

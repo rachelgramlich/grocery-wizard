@@ -21,3 +21,5 @@ src/grocery_wizard.egg-info/
 # Streamlit agent skills (environment-specific symlinks into .venv)
 .agents/skills/developing-with-streamlit
 .cursor/skills/developing-with-streamlit
+# tidy-first skill (symlinked by just setup from .agents/skills/tidy-first)
+.cursor/skills/tidy-first
