@@ -11,7 +11,7 @@ def test_weekly_recipe_tab_is_first_and_default() -> None:
     assert "_UI_TABS = (_TAB_WEEKLY, _TAB_ADD, _TAB_PANTRY)" in source
     app = APP_PATH.read_text(encoding="utf-8")
     assert "st.segmented_control(" in app
-    assert "default=_TAB_WEEKLY" in app
+    assert "_init_section_navigation_state()" in app
     assert "if active_tab == _TAB_WEEKLY:" in app
     assert "render_create_weekly_plan()" in app
 
