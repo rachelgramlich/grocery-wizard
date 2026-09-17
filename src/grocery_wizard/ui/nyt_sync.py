@@ -169,7 +169,7 @@ def _execute_nyt_recipe_box_sync(
 
 
 def render_nyt_sync_controls() -> None:
-    """Sidebar-adjacent NYT recipe-box sync (folder picker, dry run, sync)."""
+    """NYT recipe-box sync on the Add Recipe tab (folder picker, dry run, sync)."""
     with st.expander("Sync from NYT Cooking", expanded=False):
         if not _render_nyt_credentials_panel():
             return
