@@ -42,6 +42,13 @@ __all__ = [
 ]
 
 
+def _notion_load_caption() -> str:
+    load_seconds = last_recipe_cache_load_seconds()
+    if load_seconds is None:
+        return "Recipes load from Notion on first use."
+    return f"Last full recipe load: {load_seconds:.2f}s"
+
+
 def _init_section_navigation_state() -> None:
     if "gw_active_tab" not in st.session_state:
         st.session_state["gw_active_tab"] = _TAB_WEEKLY
@@ -73,11 +80,7 @@ def _refresh_notion_cache_from_ui() -> None:
 
 
 def _render_notion_cache_controls() -> None:
-    hint_col, refresh_col = st.columns([3, 2])
-    with hint_col:
-        load_seconds = last_recipe_cache_load_seconds()
-        if load_seconds is not None:
-            st.caption(f"Last full recipe load from Notion: {load_seconds:.2f}s")
+    _, refresh_col = st.columns([2, 1])
     with refresh_col:
         st.button(
             "Refresh from Notion",
@@ -87,6 +90,7 @@ def _render_notion_cache_controls() -> None:
             help="Reload recipes, pantry, and saved plans from Notion",
             on_click=_refresh_notion_cache_from_ui,
         )
+        st.caption(_notion_load_caption())
 
 
 def main() -> None:

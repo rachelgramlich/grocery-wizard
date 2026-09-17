@@ -45,6 +45,7 @@ class Config(BaseSettings):
         validation_alias="NOTION_WEEKLY_MEAL_PLANS_DATABASE_ID",
     )
     default_meals: int = Field(default=7, validation_alias="GROCERY_WIZARD_DEFAULT_MEALS")
+    dev_ui_enabled: bool = Field(default=False, validation_alias="GROCERY_WIZARD_DEV_UI")
     notion_data_source_id: str | None = Field(
         default=None,
         validation_alias="NOTION_DATA_SOURCE_ID",
