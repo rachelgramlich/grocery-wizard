@@ -86,20 +86,21 @@ def _render_remove_picker(
 ) -> None:
     if not items:
         return
-    pick = st.selectbox(
-        label,
-        options=["", *items],
-        format_func=lambda name: name or "Choose an item…",
-        key=key,
-        label_visibility="visible",
-    )
-    if st.button("Remove selected", key=f"{key}_btn", type="secondary"):
-        if not pick:
-            st.warning("Choose an item to remove.")
-        elif on_remove(pick):
-            st.rerun()
-        else:
-            st.warning(f"Could not remove “{pick}”.")
+    with st.form(f"{key}_remove_form", clear_on_submit=False):
+        pick = st.selectbox(
+            label,
+            options=["", *items],
+            format_func=lambda name: name or "Choose an item…",
+            key=key,
+            label_visibility="visible",
+        )
+        if st.form_submit_button("Remove selected", type="secondary"):
+            if not pick:
+                st.warning("Choose an item to remove.")
+            elif on_remove(pick):
+                st.rerun()
+            else:
+                st.warning(f"Could not remove “{pick}”.")
 
 
 def _render_recurring_weekly_section() -> None:
