@@ -162,9 +162,7 @@ def _render_dev_jump_tools(db: NotionRecipesDB) -> None:
             if manual_recipes is not None and not manual_recipes:
                 st.warning("Pick at least one recipe for the manual meals jump.")
                 return
-            meal_count = int(
-                st.session_state.get("plan_meal_count", DEFAULT_DEV_MEAL_COUNT)
-            )
+            meal_count = int(st.session_state.get("plan_meal_count", DEFAULT_DEV_MEAL_COUNT))
             if manual_recipes is not None:
                 names = list(manual_recipes)
             else:
@@ -175,8 +173,7 @@ def _render_dev_jump_tools(db: NotionRecipesDB) -> None:
             names = commit_dev_jump(st.session_state, db, target, names)
             if not names:
                 st.error(
-                    "No recipes in Notion to use for dev jump. Add recipes with "
-                    "ingredients first."
+                    "No recipes in Notion to use for dev jump. Add recipes with ingredients first."
                 )
                 return
             st.session_state.plan_prebuild_pinned_recipes = list(names)

@@ -178,8 +178,6 @@ def align_item_provenance_with_items(
     return aligned
 
 
-
-
 def build_grocery_list(
     db: NotionRecipesDB,
     *,
@@ -384,8 +382,6 @@ def format_meals_and_grocery_list(
     return "Grocery List"
 
 
-
-
 def _normalized_item_key(name: str) -> str:
     cleaned = strip_checklist_prefix(name)
     return (normalize_ingredient(cleaned) or ingredient_name(cleaned) or cleaned.strip()).lower()
@@ -469,23 +465,3 @@ def _build_item_provenance(
 def _split_ingredient_text(text: str) -> list[str]:
     """Deprecated: use parse_ingredients_text from sync instead."""
     return parse_ingredients_text(text)[0]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

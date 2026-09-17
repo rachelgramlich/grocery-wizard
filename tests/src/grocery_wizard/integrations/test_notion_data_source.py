@@ -28,9 +28,7 @@ def test_resolve_single_source() -> None:
     databases = MagicMock()
     databases.retrieve.return_value = {"data_sources": [{"id": "only-ds"}]}
     data_sources = MagicMock()
-    assert (
-        resolve_notion_data_source_id(databases, data_sources, "db-1") == "only-ds"
-    )
+    assert resolve_notion_data_source_id(databases, data_sources, "db-1") == "only-ds"
 
 
 def test_resolve_prefers_link_property() -> None:

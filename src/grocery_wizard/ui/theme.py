@@ -14,6 +14,8 @@ from typing import Final
 # WCAG 2.x contrast ratio for normal text (AA).
 MIN_CONTRAST_RATIO_AA: Final[float] = 4.5
 
+APP_THEME_STATIC_CSS = Path(__file__).resolve().parent / "static" / "app_theme.css"
+
 
 @dataclass(frozen=True, slots=True)
 class ThemeTokens:
@@ -94,9 +96,8 @@ def assert_theme_contrast_aa(
 
 def app_theme_css(tokens: ThemeTokens = GW_THEME) -> str:
     """Return the ``<style>`` block for ``st.markdown(..., unsafe_allow_html=True)``."""
-    static_path = Path(__file__).resolve().parent / "static" / "app_theme.css"
-    if tokens is GW_THEME and static_path.is_file():
-        css = static_path.read_text(encoding="utf-8")
+    if tokens is GW_THEME and APP_THEME_STATIC_CSS.is_file():
+        css = APP_THEME_STATIC_CSS.read_text(encoding="utf-8")
         return f"<style>\n{css}\n</style>"
 
     t = tokens

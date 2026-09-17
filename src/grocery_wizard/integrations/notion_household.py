@@ -48,6 +48,7 @@ def resolve_pantry_aisle_column(column_types: dict[str, str]) -> str:
     expected = ", ".join(repr(n) for n in _PANTRY_AISLE_COLUMN_CANDIDATES)
     raise ValueError(f"Pantry database needs a store-aisle column ({expected}).")
 
+
 PLAN_NAME_COLUMN = "Name"
 PLAN_WEEK_START_COLUMN = "Week start"
 PLAN_VERSION_COLUMN = "Version"

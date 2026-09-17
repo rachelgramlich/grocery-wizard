@@ -74,7 +74,7 @@ def test_weekly_plan_build_shows_per_meal_swap() -> None:
 
 def test_dev_mode_exposes_collapsed_dev_tools_expander() -> None:
     source = ui_source()
-    assert '_render_dev_jump_tools(db)' in source
+    assert "_render_dev_jump_tools(db)" in source
     assert 'st.expander("Dev tools", expanded=False)' in source
     assert '_weekly_plan_mode() != "dev"' in source
     assert "commit_dev_jump" in source
@@ -85,7 +85,9 @@ def test_dev_mode_exposes_collapsed_dev_tools_expander() -> None:
     assert 'st.markdown("#### Meals filled")' not in source
     assert '"Choose recipes manually"' in source
     assert '"Final list"' in source
-    dev_section = source.split('st.expander("Dev tools"', 1)[1].split("def _render_weekly_plan_entry", 1)[0]
+    dev_section = source.split('st.expander("Dev tools"', 1)[1].split(
+        "def _render_weekly_plan_entry", 1
+    )[0]
     assert "DEV_JUMP_FLOW_ORDER" in dev_section
     assert "for step in DEV_JUMP_FLOW_ORDER:\n            _dev_jump_bullet(step)" in dev_section
     bullets_end = dev_section.index("all_names = sorted")
@@ -120,7 +122,9 @@ def test_prebuild_recipe_picker_before_build_my_plan() -> None:
     build_idx = source.index('if st.button("Build my plan"')
     picker_idx = source.index("_render_prebuild_recipe_picker(")
     assert picker_idx < build_idx
-    assert "plan_prebuild_pinned_recipes" in source.split("def _locked_recipes_for_plan_build", 1)[1]
+    assert (
+        "plan_prebuild_pinned_recipes" in source.split("def _locked_recipes_for_plan_build", 1)[1]
+    )
 
 
 def test_grocery_list_extra_items_before_create_button() -> None:

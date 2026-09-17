@@ -92,9 +92,7 @@ def field_values_from_scrape(
         total_minutes=scraped.total_time_minutes,
         weeknight_column=weeknight_column,
     )
-    ingredients_text = (
-        ingredients_to_text(scraped.ingredients) if schema.ingredients_column else ""
-    )
+    ingredients_text = ingredients_to_text(scraped.ingredients) if schema.ingredients_column else ""
     return base_recipe_field_values(
         schema,
         url=url,

@@ -261,18 +261,6 @@ def test_build_grocery_list_keeps_named_beans_when_pantry_has_modifier_or_generi
     assert f"{variety} beans" not in excluded
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 def test_build_grocery_list_never_scrapes_with_empty_ingredients(tmp_path: Path) -> None:
     """build_grocery_list must never call scrape_recipe, even when ingredients are empty."""
     pantry_path = tmp_path / "pantry.txt"
@@ -365,8 +353,6 @@ def test_build_grocery_list_override_can_supply_ingredients_when_notion_empty(
 
     assert missing == []
     assert any("lime" in item.lower() for item in items)
-
-
 
 
 def test_build_grocery_list_splits_title_bleed(tmp_path: Path) -> None:
@@ -643,8 +629,6 @@ def test_build_grocery_list_skips_duplicate_recurring_banana_plural(tmp_path: Pa
     )
 
     assert len([item for item in items if "banana" in item.lower()]) == 1
-
-
 
 
 def test_build_grocery_list_consolidates_lemon_variants(tmp_path: Path) -> None:
@@ -985,5 +969,3 @@ def test_format_meals_and_grocery_list_excludes_provenance() -> None:
     assert "Item sources" not in text
     assert "Crispy Potato Quesadillas" not in text
     assert "peas" in text
-
-

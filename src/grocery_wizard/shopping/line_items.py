@@ -21,11 +21,11 @@ def strip_line_item(line: str) -> str:
     Examples::
 
         strip_line_item("- [ ] Flowers")  # -> "Flowers"
-        strip_line_item("- [x] Milk")     # -> "Milk"
-        strip_line_item("[ ] Eggs")       # -> "Eggs"
-        strip_line_item("- Bread")        # -> "Bread"
-        strip_line_item("1. [ ] Apples") # -> "Apples"
-        strip_line_item("Sugar")          # -> "Sugar"
+        strip_line_item("- [x] Milk")  # -> "Milk"
+        strip_line_item("[ ] Eggs")  # -> "Eggs"
+        strip_line_item("- Bread")  # -> "Bread"
+        strip_line_item("1. [ ] Apples")  # -> "Apples"
+        strip_line_item("Sugar")  # -> "Sugar"
     """
     stripped = line.strip()
     if not stripped:
