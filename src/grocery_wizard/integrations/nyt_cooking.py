@@ -440,21 +440,14 @@ class NytSyncSummary:
     created_recipes: list[NytCreatedRecipe] = field(default_factory=list)
 
 
-def sync_saved_recipes_to_notion(
-    db: Any,
+def _resolve_sync_collection(
     client: NYTCookingClient,
     *,
-    collection_name: str | None = None,
-    collection_id: str | None = None,
-    collection_label: str | None = None,
-    dry_run: bool = False,
-    no_confirm: bool = True,
-    confirm: Callable[[str], bool] | None = None,
-    on_progress: Callable[[str], None] | None = None,
-) -> NytSyncSummary:
-    """Sync NYT saved recipes to Notion, skipping duplicates by link."""
-    from src.grocery_wizard.recipes.add_recipe import add_prefetched_recipes
-
+    collection_name: str | None,
+    collection_id: str | None,
+    collection_label: str | None,
+    on_progress: Callable[[str], None] | None,
+) -> tuple[str | None, str | None]:
     resolved_id = collection_id
     resolved_label = collection_label
 
@@ -478,85 +471,141 @@ def sync_saved_recipes_to_notion(
             count_note = f" ({total} recipes)" if total is not None else ""
             on_progress(f"Syncing: {resolved_label}{count_note}")
 
-    summary = NytSyncSummary(collection_label=resolved_label)
+    return resolved_id, resolved_label
 
+
+def _report_sync_nyt_checkbox_column(
+    db: Any,
+    on_progress: Callable[[str], None] | None,
+) -> None:
+    if not on_progress:
+        return
     nyt_column = db.nyt_synced_column_name()
-    if on_progress:
-        if nyt_column:
-            on_progress(f"Marking synced recipes with checkbox: {nyt_column}")
-        else:
-            on_progress(
-                f"Warning: checkbox column '{DEFAULT_NYT_SYNCED_COLUMN}' "
-                "not found in Notion — add it to tag NYT imports."
-            )
-
-    for saved in client.iter_all_saved_recipes(collection_id=resolved_id):
-        summary.total += 1
-        url = saved.url
-        if not url:
-            summary.failed += 1
-            if on_progress:
-                on_progress(f"Skipping recipe without URL: {saved.name}")
-            continue
-
-        existing = db.find_by_link(url)
-        if existing:
-            summary.skipped_existing += 1
-            if on_progress:
-                on_progress(f"Skip (already in Notion): {existing.name}")
-            continue
-
-        if dry_run:
-            summary.dry_run += 1
-            total_minutes = _fetch_nyt_total_minutes(client, saved.id, saved.url)
-            metadata = _metadata_for_recipe(
-                db,
-                saved.name,
-                url,
-                mark_nyt_synced=True,
-                total_minutes=total_minutes,
-            )
-            flags = flag_metadata_issues(saved.name, metadata)
-            summary.created_recipes.append(
-                NytCreatedRecipe(
-                    page_id="",
-                    name=saved.name,
-                    url=url,
-                    metadata=metadata,
-                    flags=flags,
-                )
-            )
-            if on_progress:
-                on_progress(f"Would add: {saved.name}")
-            continue
-
-        total_minutes = _fetch_nyt_total_minutes(client, saved.id, saved.url)
-        results = add_prefetched_recipes(
-            db,
-            [(saved.name, url, [], total_minutes)],
-            confirm=confirm,
-            no_confirm=no_confirm,
-            include_ingredients=False,
-            mark_nyt_synced=True,
+    if nyt_column:
+        on_progress(f"Marking synced recipes with checkbox: {nyt_column}")
+    else:
+        on_progress(
+            f"Warning: checkbox column '{DEFAULT_NYT_SYNCED_COLUMN}' "
+            "not found in Notion — add it to tag NYT imports."
         )
-        if results:
-            summary.created += 1
-            result = results[0]
-            metadata = _metadata_from_field_values(db, result.field_values)
-            flags = flag_metadata_issues(result.name, metadata)
-            entry = NytCreatedRecipe(
-                page_id=result.page_id,
-                name=result.name,
-                url=result.url,
+
+
+def _process_saved_recipe_in_sync(
+    db: Any,
+    client: NYTCookingClient,
+    saved: NytSavedRecipe,
+    summary: NytSyncSummary,
+    *,
+    dry_run: bool,
+    no_confirm: bool,
+    confirm: Callable[[str], bool] | None,
+    on_progress: Callable[[str], None] | None,
+) -> None:
+    from src.grocery_wizard.recipes.add_recipe import add_prefetched_recipes
+
+    summary.total += 1
+    url = saved.url
+    if not url:
+        summary.failed += 1
+        if on_progress:
+            on_progress(f"Skipping recipe without URL: {saved.name}")
+        return
+
+    existing = db.find_by_link(url)
+    if existing:
+        summary.skipped_existing += 1
+        if on_progress:
+            on_progress(f"Skip (already in Notion): {existing.name}")
+        return
+
+    if dry_run:
+        summary.dry_run += 1
+        total_minutes = _fetch_nyt_total_minutes(client, saved.id, saved.url)
+        metadata = _metadata_for_recipe(
+            db,
+            saved.name,
+            url,
+            mark_nyt_synced=True,
+            total_minutes=total_minutes,
+        )
+        flags = flag_metadata_issues(saved.name, metadata)
+        summary.created_recipes.append(
+            NytCreatedRecipe(
+                page_id="",
+                name=saved.name,
+                url=url,
                 metadata=metadata,
                 flags=flags,
             )
-            summary.created_recipes.append(entry)
-            if on_progress:
-                flag_note = f" [{'; '.join(flags)}]" if flags else ""
-                on_progress(f"Created: {result.name}{flag_note}")
-        elif on_progress:
-            on_progress(f"Skipped: {saved.name}")
+        )
+        if on_progress:
+            on_progress(f"Would add: {saved.name}")
+        return
+
+    total_minutes = _fetch_nyt_total_minutes(client, saved.id, saved.url)
+    results = add_prefetched_recipes(
+        db,
+        [(saved.name, url, [], total_minutes)],
+        confirm=confirm,
+        no_confirm=no_confirm,
+        include_ingredients=False,
+        mark_nyt_synced=True,
+    )
+    if results:
+        summary.created += 1
+        result = results[0]
+        metadata = _metadata_from_field_values(db, result.field_values)
+        flags = flag_metadata_issues(result.name, metadata)
+        entry = NytCreatedRecipe(
+            page_id=result.page_id,
+            name=result.name,
+            url=result.url,
+            metadata=metadata,
+            flags=flags,
+        )
+        summary.created_recipes.append(entry)
+        if on_progress:
+            flag_note = f" [{'; '.join(flags)}]" if flags else ""
+            on_progress(f"Created: {result.name}{flag_note}")
+    elif on_progress:
+        on_progress(f"Skipped: {saved.name}")
+
+
+def sync_saved_recipes_to_notion(
+    db: Any,
+    client: NYTCookingClient,
+    *,
+    collection_name: str | None = None,
+    collection_id: str | None = None,
+    collection_label: str | None = None,
+    dry_run: bool = False,
+    no_confirm: bool = True,
+    confirm: Callable[[str], bool] | None = None,
+    on_progress: Callable[[str], None] | None = None,
+) -> NytSyncSummary:
+    """Sync NYT saved recipes to Notion, skipping duplicates by link."""
+    resolved_id, resolved_label = _resolve_sync_collection(
+        client,
+        collection_name=collection_name,
+        collection_id=collection_id,
+        collection_label=collection_label,
+        on_progress=on_progress,
+    )
+
+    summary = NytSyncSummary(collection_label=resolved_label)
+    _report_sync_nyt_checkbox_column(db, on_progress)
+
+    for saved in client.iter_all_saved_recipes(collection_id=resolved_id):
+        _process_saved_recipe_in_sync(
+            db,
+            client,
+            saved,
+            summary,
+            dry_run=dry_run,
+            no_confirm=no_confirm,
+            confirm=confirm,
+            on_progress=on_progress,
+        )
 
     return summary
 
@@ -766,6 +815,119 @@ class NytReclassifySummary:
     changes: list[NytReclassifyChange] = field(default_factory=list)
 
 
+def _require_nyt_synced_column(db: Any) -> str:
+    nyt_column = db.nyt_synced_column_name()
+    if not nyt_column:
+        raise NYTCookingError(
+            f"NYT synced checkbox column not found. Add '{DEFAULT_NYT_SYNCED_COLUMN}' to Notion."
+        )
+    return nyt_column
+
+
+def _weeknight_column_for_reclassify(db: Any) -> str:
+    from src.grocery_wizard.recipes.weeknight import DEFAULT_WEEKNIGHT_COLUMN
+
+    weeknight_column = DEFAULT_WEEKNIGHT_COLUMN
+    if weeknight_column not in db.schema.all_columns:
+        return ""
+    return weeknight_column
+
+
+def _fetch_reclassify_total_minutes(
+    client: NYTCookingClient,
+    recipe: Any,
+    summary: NytReclassifySummary,
+    *,
+    on_progress: Callable[[str], None] | None,
+) -> float | None:
+    title = recipe.name
+    recipe_id = _recipe_id_from_url(recipe.link or "")
+    if not recipe_id:
+        return None
+    try:
+        nyt_recipe = client.get_recipe(recipe_id)
+    except NYTCookingError:
+        summary.api_failures += 1
+        if on_progress:
+            on_progress(f"Could not fetch NYT timing for: {title}")
+        return None
+    else:
+        return nyt_recipe.total_time_minutes
+
+
+def _build_reclassify_field_updates(
+    recipe: Any,
+    *,
+    new_meal: Any,
+    old_meal: Any,
+    total_minutes: float | None,
+    weeknight_column: str,
+    summary: NytReclassifySummary,
+) -> dict[str, Any]:
+    from src.grocery_wizard.recipes.weeknight import is_weeknight_friendly
+
+    title = recipe.name
+    fields: dict[str, Any] = {}
+
+    if new_meal and new_meal != old_meal:
+        fields["Meal"] = new_meal
+        summary.meal_changes += 1
+        summary.changes.append(
+            NytReclassifyChange(
+                page_id=recipe.page_id,
+                name=title,
+                field="Meal",
+                old_value=old_meal,
+                new_value=new_meal,
+            )
+        )
+
+    effective_meal = fields.get("Meal", old_meal)
+    if weeknight_column:
+        new_weeknight = is_weeknight_friendly(
+            title,
+            meal=effective_meal,
+            total_minutes=total_minutes,
+        )
+        old_weeknight = bool(recipe.properties.get(weeknight_column))
+        if new_weeknight != old_weeknight:
+            fields[weeknight_column] = new_weeknight
+            if new_weeknight:
+                summary.weeknight_set += 1
+            else:
+                summary.weeknight_cleared += 1
+            summary.changes.append(
+                NytReclassifyChange(
+                    page_id=recipe.page_id,
+                    name=title,
+                    field=weeknight_column,
+                    old_value=old_weeknight,
+                    new_value=new_weeknight,
+                )
+            )
+
+    return fields
+
+
+def _apply_reclassify_recipe_updates(
+    db: Any,
+    recipe: Any,
+    fields: dict[str, Any],
+    summary: NytReclassifySummary,
+    *,
+    dry_run: bool,
+    on_progress: Callable[[str], None] | None,
+) -> None:
+    if fields:
+        if on_progress:
+            detail = ", ".join(f"{key}={value}" for key, value in fields.items())
+            on_progress(f"Update: {recipe.name} ({detail})")
+        if not dry_run:
+            db.update_recipe(recipe.page_id, fields)
+    else:
+        summary.unchanged += 1
+
+
 def reclassify_nyt_synced_recipes(
     db: Any,
     client: NYTCookingClient,
@@ -775,18 +937,9 @@ def reclassify_nyt_synced_recipes(
 ) -> NytReclassifySummary:
     """Re-run Meal and Weeknight Friendly for NYT-synced recipes in Notion."""
     from src.grocery_wizard.recipes.classify import classify_recipe
-    from src.grocery_wizard.recipes.weeknight import DEFAULT_WEEKNIGHT_COLUMN, is_weeknight_friendly
 
-    nyt_column = db.nyt_synced_column_name()
-    if not nyt_column:
-        raise NYTCookingError(
-            f"NYT synced checkbox column not found. Add '{DEFAULT_NYT_SYNCED_COLUMN}' to Notion."
-        )
-
-    weeknight_column = DEFAULT_WEEKNIGHT_COLUMN
-    if weeknight_column not in db.schema.all_columns:
-        weeknight_column = ""
-
+    nyt_column = _require_nyt_synced_column(db)
+    weeknight_column = _weeknight_column_for_reclassify(db)
     filter_columns = [(col.name, col.type, col.options) for col in db.schema.filter_columns]
     summary = NytReclassifySummary()
 
@@ -800,64 +953,25 @@ def reclassify_nyt_synced_recipes(
         new_meal = inferred.get("Meal")
         old_meal = recipe.properties.get("Meal")
 
-        total_minutes: float | None = None
-        recipe_id = _recipe_id_from_url(recipe.link or "")
-        if recipe_id:
-            try:
-                nyt_recipe = client.get_recipe(recipe_id)
-                total_minutes = nyt_recipe.total_time_minutes
-            except NYTCookingError:
-                summary.api_failures += 1
-                if on_progress:
-                    on_progress(f"Could not fetch NYT timing for: {title}")
-
-        fields: dict[str, Any] = {}
-
-        if new_meal and new_meal != old_meal:
-            fields["Meal"] = new_meal
-            summary.meal_changes += 1
-            summary.changes.append(
-                NytReclassifyChange(
-                    page_id=recipe.page_id,
-                    name=title,
-                    field="Meal",
-                    old_value=old_meal,
-                    new_value=new_meal,
-                )
-            )
-
-        effective_meal = fields.get("Meal", old_meal)
-        if weeknight_column:
-            new_weeknight = is_weeknight_friendly(
-                title,
-                meal=effective_meal,
-                total_minutes=total_minutes,
-            )
-            old_weeknight = bool(recipe.properties.get(weeknight_column))
-            if new_weeknight != old_weeknight:
-                fields[weeknight_column] = new_weeknight
-                if new_weeknight:
-                    summary.weeknight_set += 1
-                else:
-                    summary.weeknight_cleared += 1
-                summary.changes.append(
-                    NytReclassifyChange(
-                        page_id=recipe.page_id,
-                        name=title,
-                        field=weeknight_column,
-                        old_value=old_weeknight,
-                        new_value=new_weeknight,
-                    )
-                )
-
-        if fields:
-            if on_progress:
-                detail = ", ".join(f"{key}={value}" for key, value in fields.items())
-                on_progress(f"Update: {title} ({detail})")
-            if not dry_run:
-                db.update_recipe(recipe.page_id, fields)
-        else:
-            summary.unchanged += 1
+        total_minutes = _fetch_reclassify_total_minutes(
+            client, recipe, summary, on_progress=on_progress
+        )
+        fields = _build_reclassify_field_updates(
+            recipe,
+            new_meal=new_meal,
+            old_meal=old_meal,
+            total_minutes=total_minutes,
+            weeknight_column=weeknight_column,
+            summary=summary,
+        )
+        _apply_reclassify_recipe_updates(
+            db,
+            recipe,
+            fields,
+            summary,
+            dry_run=dry_run,
+            on_progress=on_progress,
+        )
 
     return summary
 
