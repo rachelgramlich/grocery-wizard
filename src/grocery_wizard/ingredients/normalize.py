@@ -40,6 +40,7 @@ from src.grocery_wizard.ingredients._cleaning import (
 from src.grocery_wizard.ingredients._patterns import (
     _CHECKLIST_ITEM_RE,
     _CONJUNCTION_SPLIT_RE,
+    _DIMENSION_PREP_SEGMENT_RE,
     _GROCERY_NOUNS,
     _INGREDIENT_ALTERNATIVE_RE,
     _INSTRUCTION_ONLY_RE,
@@ -48,6 +49,7 @@ from src.grocery_wizard.ingredients._patterns import (
     _MERGED_CAMEL_SPLIT_RE,
     _MERGED_QTY_SPLIT_RE,
     _METADATA_LINE_RE,
+    _PREP_WORDS,
     _RECIPE_STEP_RE,
     _SIZES,
     _TORTILLA_PREFIXES,
@@ -413,6 +415,61 @@ _FILTER_TRAILING_NOISE = frozenset({"slice", "slices", "thick", "thin", "thickly
 _FILTER_COMPOUND_TAILS = frozenset(
     {"extract", "juice", "liqueur", "paste", "powder", "sauce", "zest"}
 )
+_FILTER_PREP_CONNECTORS = frozenset({"&", "and", "or", "optional", "to"})
+_FILTER_PREP_ONLY_EXTRA = frozenset(
+    {
+        "crosswise",
+        "diagonally",
+        "half",
+        "lengthwise",
+        "long",
+        "moons",
+        "pit",
+        "pitted",
+        "pits",
+        "pieces",
+        "wedges",
+        "wide",
+    }
+)
+_FILTER_PREP_DIMENSION_RE = re.compile(
+    r"\d+(?:\.\d+)?(?:/\d+)?\s*-?\s*(?:inch|inches|in)\b",
+    re.IGNORECASE,
+)
+
+
+def _filter_word_is_prep_only(token: str) -> bool:
+    allowed = (
+        _PREP_WORDS
+        | _FILTER_PREP_CONNECTORS
+        | _FILTER_PREP_ONLY_EXTRA
+        | _FILTER_TRAILING_NOISE
+        | _FILTER_PREP_LEADING
+        | {"in", "inch", "inches"}
+    )
+    if token in allowed:
+        return True
+    if re.match(r"^\d+(?:\.\d+)?(?:/\d+)?$", token):
+        return True
+    if re.match(r"^\d+(?:\.\d+)?(?:/\d+)?-inch$", token):
+        return True
+    return bool(re.match(r"^-?inch$", token))
+
+
+def _is_prep_instruction_fragment(text: str) -> bool:
+    stripped = text.strip()
+    if not stripped:
+        return True
+    if _DIMENSION_PREP_SEGMENT_RE.match(stripped):
+        return True
+    words = _sanitize_filter_words(stripped)
+    if not words:
+        return True
+    if _find_grocery_noun_positions(words):
+        return False
+    if _FILTER_PREP_DIMENSION_RE.search(stripped) and words[0] in _PREP_WORDS | {"pitted"}:
+        return True
+    return all(_filter_word_is_prep_only(word) for word in words)
 
 
 def _strip_filter_leading_noise(words: list[str]) -> list[str]:
@@ -452,6 +509,8 @@ def _is_non_filterable_segment(segment: str) -> bool:
     if _FILTER_DIMENSION_RE.match(lowered) or lowered.startswith("inch "):
         return True
     if re.match(r"^-?inch\b", lowered):
+        return True
+    if _is_prep_instruction_fragment(prepared):
         return True
     words = _sanitize_filter_words(lowered)
     return bool(
@@ -503,6 +562,8 @@ def _segment_has_filter_noun(segment: str) -> bool:
 def _segment_contributes_filter_key(part: str) -> bool:
     lowered = part.lower().strip()
     if lowered.startswith("for "):
+        return False
+    if _is_non_filterable_segment(part):
         return False
     if is_junk_ingredient(part):
         return False

@@ -772,6 +772,9 @@ def test_filter_ingredient_keys_drop_prose_and_dimension_fragments() -> None:
     assert filter_ingredient_keys("a combination") == set()
     assert filter_ingredient_keys("a mix") == set()
     assert filter_ingredient_keys("1/2-inch thick slices") == set()
+    assert filter_ingredient_keys("sliced lengthwise 1/4-inch") == set()
+    assert filter_ingredient_keys("pitted and diced") == set()
+    assert filter_ingredient_keys("pitted and diced, optional") == set()
 
 
 def test_filter_ingredient_keys_grated_cheese_lines() -> None:
