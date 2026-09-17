@@ -10,9 +10,12 @@ from src.grocery_wizard.integrations.notion import (
     NotionFieldValues,
     NotionRecipesDB,
 )
-from src.grocery_wizard.recipes.classify import classify_recipe
-from src.grocery_wizard.recipes.scraper import ScrapeError, ingredients_to_text, scrape_recipe
-from src.grocery_wizard.recipes.weeknight import DEFAULT_WEEKNIGHT_COLUMN
+from src.grocery_wizard.recipes.add_recipe import (
+    RecipeUrlPreview,
+    base_recipe_field_values,
+    ordered_recipe_field_names,
+    preview_recipe_urls,
+)
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.notion_cache import invalidate_notion_cache
 
@@ -35,16 +38,18 @@ def render_add_recipe() -> None:
         if not urls:
             st.warning("Paste a recipe URL first.")
         else:
-            st.session_state["preview_recipes"] = _preview_recipes(db, urls)
+            st.session_state["preview_recipes"] = _previews_for_ui(db, urls)
 
     with st.expander("Type it in myself", expanded=False):
         if st.button("Start blank recipe"):
             st.session_state["preview_recipes"] = [
-                {
-                    "status": "manual",
-                    "url": "",
-                    "fields": _base_recipe_fields(schema),
-                }
+                _preview_dict(
+                    RecipeUrlPreview(
+                        status="manual",
+                        url="",
+                        fields=base_recipe_field_values(schema),
+                    )
+                )
             ]
 
     previews = st.session_state.get("preview_recipes", [])
@@ -59,41 +64,22 @@ def render_add_recipe() -> None:
         _render_recipe_review(db, schema, preview, index)
 
 
-def _ordered_recipe_field_names(schema: DatabaseSchema) -> list[str]:
-    names = [schema.name_column, schema.link_column]
-    if schema.ingredients_column:
-        names.append(schema.ingredients_column)
-    names.extend(col.name for col in schema.review_columns)
-    return names
-
-
-def _guess_recipe_name_from_url(url: str) -> str:
-    slug = url.rstrip("/").rsplit("/", maxsplit=1)[-1]
-    slug = slug.split("?")[0]
-    if not slug or slug.startswith("http"):
-        return ""
-    return slug.replace("-", " ").replace("_", " ").strip().title()
-
-
-def _base_recipe_fields(
-    schema: DatabaseSchema,
-    *,
-    url: str = "",
-    name: str = "",
-    ingredients: str = "",
-    inferred: NotionFieldValues | None = None,
-) -> NotionFieldValues:
-    fields: NotionFieldValues = {
-        schema.name_column: name,
-        schema.link_column: url,
+def _preview_dict(preview: RecipeUrlPreview) -> dict[str, object]:
+    data: dict[str, object] = {
+        "status": preview.status,
+        "url": preview.url,
     }
-    if schema.ingredients_column:
-        fields[schema.ingredients_column] = ingredients
-    if inferred:
-        fields.update(inferred)
-    for col in schema.checkbox_columns:
-        fields.setdefault(col.name, False)
-    return fields
+    if preview.fields is not None:
+        data["fields"] = preview.fields
+    if preview.error:
+        data["error"] = preview.error
+    if preview.duplicate_name:
+        data["name"] = preview.duplicate_name
+    return data
+
+
+def _previews_for_ui(db: NotionRecipesDB, urls: list[str]) -> list[dict[str, object]]:
+    return [_preview_dict(preview) for preview in preview_recipe_urls(db, urls)]
 
 
 def _render_recipe_review(
@@ -152,7 +138,7 @@ def _render_recipe_field_editors(
     key_prefix: str,
 ) -> NotionFieldValues:
     edited: NotionFieldValues = {}
-    for field_name in _ordered_recipe_field_names(schema):
+    for field_name in ordered_recipe_field_names(schema):
         if field_name not in fields and field_name not in schema.all_columns:
             continue
         value = fields.get(field_name)
@@ -211,69 +197,3 @@ def _render_recipe_field_editors(
                 key=widget_key,
             )
     return edited
-
-
-def _preview_recipes(db: NotionRecipesDB, urls: list[str]) -> list[dict]:
-    schema = db.schema
-    previews: list[dict] = []
-
-    for url in urls:
-        existing = db.find_by_link(url)
-        if existing:
-            previews.append({"status": "duplicate", "name": existing.name, "url": url})
-            continue
-
-        try:
-            scraped = scrape_recipe(url)
-        except ScrapeError as exc:
-            previews.append(
-                {
-                    "status": "manual",
-                    "url": url,
-                    "error": str(exc),
-                    "fields": _base_recipe_fields(
-                        schema,
-                        url=url,
-                        name=_guess_recipe_name_from_url(url),
-                    ),
-                }
-            )
-            continue
-
-        filter_columns = [(col.name, col.type, col.options) for col in schema.filter_columns]
-        weeknight_column = (
-            DEFAULT_WEEKNIGHT_COLUMN if DEFAULT_WEEKNIGHT_COLUMN in schema.all_columns else None
-        )
-        inferred = classify_recipe(
-            scraped.title,
-            scraped.ingredients,
-            filter_columns,
-            total_minutes=scraped.total_time_minutes,
-            weeknight_column=weeknight_column,
-        )
-        ingredients_text = (
-            ingredients_to_text(scraped.ingredients) if schema.ingredients_column else ""
-        )
-        fields = _base_recipe_fields(
-            schema,
-            url=url,
-            name=scraped.title,
-            ingredients=ingredients_text,
-            inferred=inferred,
-        )
-
-        if schema.ingredients_column and not scraped.ingredients:
-            previews.append(
-                {
-                    "status": "manual",
-                    "url": url,
-                    "error": "No ingredients found on this page. Paste them below.",
-                    "fields": fields,
-                }
-            )
-        else:
-            previews.append({"status": "ready", "url": url, "fields": fields})
-
-    return previews
-
-

@@ -11,7 +11,7 @@ Grocery Wizard treats recipe ingredients in two separate pipelines. They share h
 | Scrape / read URL | `recipes/scraper.py` | raw HTML → line list |
 | Drop junk & split merges | `ingredients/normalize.py` | `drop_junk_ingredient_lines`, `expand_ingredient_line`, `is_instruction_line`, … |
 | Format for Notion | `ingredients/parsed.py` | `format_ingredient_for_storage`, `minimal_clean_for_storage` (NYT) |
-| Orchestration | `ingredients/sync.py` | `prepare_ingredients_for_notion`, `merge_ingredients`, dev backfill/reconcile |
+| Orchestration | `ingredients/sync.py` | `prepare_ingredients_for_notion`, `merge_ingredients` |
 
 **Name for dedup / merge:** `parsed.name_from_stored_line` — parses the qty/name embedded in a storage line. Do **not** use this for grocery-list display keys.
 
@@ -58,7 +58,7 @@ Three different “ingredient name” helpers existed historically:
 | `ingredient_name` | `parsed.py` | Deprecated alias → `name_from_stored_line` |
 | `ingredient_name` | `shopping/store_aisles.py` | Strip qty prefix from **formatted list lines** for aisle keywords |
 
-Prefer **`ingredients/public.py`** for new imports (grouped re-exports below).
+Import from **`ingredients/parsed.py`**, **`ingredients/normalize.py`**, or **`ingredients/sync.py`** depending on pipeline (see table below).
 
 ## Module map
 
@@ -69,10 +69,9 @@ Prefer **`ingredients/public.py`** for new imports (grouped re-exports below).
 | `parsed.py` | Library-backed parse → storage string; parse stored lines |
 | `normalize.py` | Grocery normalization, amounts, aggregation |
 | `sync.py` | Notion sync, merge, refresh, review formatting |
-| `public.py` | Stable facade for the two pipelines |
 
 ## Tests
 
 - Unit cases: `tests/src/grocery_wizard/ingredients/test_normalize.py`, `test_sync.py`
 - End-to-end storage → grocery: `tests/src/grocery_wizard/ingredients/test_pipeline.py` (via `pipeline_helpers.py`)
-- Full app path: `dev validate-pipeline` (Notion → plan → list)
+- Full app path: Streamlit weekly plan → ingredient review → grocery list (`tests/src/grocery_wizard/ingredients/test_pipeline.py` covers storage → list)

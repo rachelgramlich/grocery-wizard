@@ -12,12 +12,21 @@ __all__ = [
     "NytNetworkError",
     "NytNotFoundError",
     "NytRecipe",
+    "NytRecipeBoxFolder",
     "NytSavedRecipe",
     "NytSyncCancelledError",
+    "NytSyncRunResult",
     "NytSyncSummary",
+    "credentials_status",
+    "format_metadata_review",
+    "format_sync_summary",
+    "list_recipe_box_folders",
     "load_credentials",
+    "load_sync_report",
     "prompt_collection_choice",
+    "run_recipe_box_sync",
     "sync_saved_recipes_to_notion",
+    "verify_nyt_credentials",
 ]
 
 import json
@@ -128,6 +137,49 @@ def credentials_status() -> dict[str, Any]:
         "configured": creds is not None,
         "regi_id": creds.regi_id if creds else None,
     }
+
+
+def verify_nyt_credentials(client: NYTCookingClient | None = None) -> None:
+    """Raise ``NytAuthError`` when credentials are missing or invalid."""
+    if load_credentials() is None:
+        raise NytAuthError(
+            "NYT Cooking credentials are not configured. Set NYT_S_COOKIE and "
+            "NYT_REGI_ID (or NYT_USER_ID) in your environment."
+        )
+    (client or NYTCookingClient()).verify_auth()
+
+
+@dataclass(frozen=True, slots=True)
+class NytRecipeBoxFolder:
+    """One selectable NYT recipe-box folder (or the full box)."""
+
+    collection_id: str | None
+    label: str
+    recipe_count: int | None = None
+
+
+def list_recipe_box_folders(client: NYTCookingClient) -> list[NytRecipeBoxFolder]:
+    """Return folder choices for UI or CLI sync (full box first, then collections)."""
+    total = _recipe_box_total_count(client)
+    folders: list[NytRecipeBoxFolder] = [
+        NytRecipeBoxFolder(collection_id=None, label="All saved recipes", recipe_count=total),
+    ]
+    try:
+        collections = client.list_collections()
+    except NytAuthError:
+        raise
+    except NYTCookingError:
+        return folders
+
+    folders.extend(
+        NytRecipeBoxFolder(
+            collection_id=collection.id,
+            label=collection.name,
+            recipe_count=collection.recipe_count,
+        )
+        for collection in collections
+    )
+    return folders
 
 
 class NYTCookingClient:
@@ -507,6 +559,71 @@ def sync_saved_recipes_to_notion(
             on_progress(f"Skipped: {saved.name}")
 
     return summary
+
+
+@dataclass(frozen=True, slots=True)
+class NytSyncRunResult:
+    summary: NytSyncSummary
+    review_report: dict[str, Any] | None = None
+
+
+def _sync_report_from_summary(summary: NytSyncSummary) -> dict[str, Any]:
+    return {
+        "synced_at": datetime.now(UTC).isoformat(),
+        "collection": summary.collection_label,
+        "created": [
+            {
+                "page_id": recipe.page_id,
+                "name": recipe.name,
+                "url": recipe.url,
+                "metadata": recipe.metadata,
+                "flags": recipe.flags,
+            }
+            for recipe in summary.created_recipes
+        ],
+    }
+
+
+def format_sync_summary(summary: NytSyncSummary) -> str:
+    """One-line counts after a sync or dry run."""
+    return (
+        f"Sync complete: {summary.total} in NYT, "
+        f"{summary.skipped_existing} already in Notion, "
+        f"{summary.created} created, "
+        f"{summary.dry_run} would add, "
+        f"{summary.failed} failed."
+    )
+
+
+def run_recipe_box_sync(
+    db: Any,
+    client: NYTCookingClient,
+    *,
+    collection_name: str | None = None,
+    collection_id: str | None = None,
+    collection_label: str | None = None,
+    dry_run: bool = False,
+    no_confirm: bool = True,
+    save_report: bool = True,
+    on_progress: Callable[[str], None] | None = None,
+) -> NytSyncRunResult:
+    """Run NYT recipe-box sync and optionally persist the metadata review report."""
+    summary = sync_saved_recipes_to_notion(
+        db,
+        client,
+        collection_name=collection_name,
+        collection_id=collection_id,
+        collection_label=collection_label,
+        dry_run=dry_run,
+        no_confirm=no_confirm,
+        on_progress=on_progress,
+    )
+    review_report: dict[str, Any] | None = None
+    if summary.created_recipes:
+        review_report = _sync_report_from_summary(summary)
+    if save_report and not dry_run and summary.created_recipes:
+        save_sync_report(summary)
+    return NytSyncRunResult(summary=summary, review_report=review_report)
 
 
 _TITLE_MEAL_HINTS: dict[str, list[str]] = {

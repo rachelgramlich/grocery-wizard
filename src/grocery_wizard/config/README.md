@@ -48,16 +48,4 @@ Optional: `NOTION_DATA_SOURCE_ID` — force a specific data source when a Notion
 
 ### Pantry `Aisle` select options
 
-After creating the pantry database (with an **Aisle** column — legacy **Section** still works), sync select options from the committed aisle config:
-
-```bash
-uv run python -m src.grocery_wizard dev sync-notion-pantry-sections
-```
-
-Use `--dry-run` to preview. The command sets **Aisle** to a **select** whose options are the display labels in `store_aisles.txt` and reclassifies each row from the item name.
-
-If rows land in the wrong aisle, extend keywords in `store_aisles.txt`, then:
-
-```bash
-uv run python -m src.grocery_wizard dev remap-notion-pantry-aisles
-```
+When you create the pantry database, add an **Aisle** column (legacy **Section** still works). Option labels should match the display labels in `store_aisles.txt`. Reclassify rows by editing keywords in `store_aisles.txt` and updating aisle values in Notion (or via the Streamlit pantry UI).

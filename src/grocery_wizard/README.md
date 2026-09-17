@@ -4,37 +4,27 @@ Notion-driven recipe tool: add recipes, plan meals, generate grocery lists.
 
 ## What do I run?
 
-All commands run from the repo root:
-
-```shell
-uv run python -m src.grocery_wizard.cli <command>
-```
-
-### I found a new recipe online
-
-```shell
-uv run python -m src.grocery_wizard.cli add-recipe https://example.com/my-recipe
-```
-
-Saves the recipe to Notion and scrapes ingredients from the page.
-
-### I need to plan dinners or build a grocery list
-
-Use the **Streamlit app** (primary workflow):
+**Primary workflow — Streamlit:**
 
 ```shell
 just grocery-ui
 ```
 
+Use the app to add recipes, plan meals, edit pantry staples, and build your grocery list.
+
+### I found a new recipe online
+
+Open **Add recipe** in the Streamlit app and paste the URL. The app saves the recipe to Notion and scrapes ingredients from the page.
+
+### I need to plan dinners or build a grocery list
+
+Use **Create weekly plan** in the Streamlit app (same `just grocery-ui` command).
+
 Plan meals, adjust pantry exclusions, add recurring items, and export your list from the browser. The app persists plans in Notion and keeps a local `.local/grocery_wizard/week_plan.json` cache for diversity hints.
 
 ### My pantry staples changed
 
-```shell
-uv run python -m src.grocery_wizard.cli edit-pantry
-```
-
-`edit-pantry` updates your **Notion pantry** database — items there won't show up on your shopping list.
+Use **Pantry & recurring** in the Streamlit app to update your Notion pantry database — items there won't show up on your shopping list.
 
 ### I want to sync my NYT Cooking recipe box to Notion
 
@@ -60,73 +50,17 @@ NYT_REGI_ID=12345678
 
 **Cloud Agent / dashboard** — add the same names as Secrets (`NYT_S_COOKIE`, `NYT_REGI_ID` or `NYT_USER_ID`).
 
-#### Verify and use
+#### Sync in the Streamlit app
 
-```shell
-uv run python -m src.grocery_wizard nyt auth-status   # check env vars + live verification
-uv run python -m src.grocery_wizard nyt saved         # list recipe box
-uv run python -m src.grocery_wizard nyt sync          # import to Notion (prompts for folder)
-```
+1. Run `just grocery-ui` (or `uv run streamlit run src/grocery_wizard/ui/app.py`).
+2. Under the title, expand **Sync from NYT Cooking**.
+3. Pick a recipe-box folder (or **All saved recipes**), optionally enable **Dry run**, then click **Sync to Notion** or **Preview sync**.
 
-NYT sync adds **name, link, classified metadata, and the "Synced from NYT recipe box" checkbox** — not ingredients. Add a **checkbox** column with that exact name in Notion (or set `GROCERY_WIZARD_NYT_SYNCED_COLUMN` if you name it differently). Fill ingredients later with `dev backfill-ingredients` or when ingredient parsing (#21) lands.
+NYT sync adds **name, link, classified metadata, and the "Synced from NYT recipe box" checkbox** — not ingredients. Add a **checkbox** column with that exact name in Notion (or set `GROCERY_WIZARD_NYT_SYNCED_COLUMN` if you name it differently). Fill ingredients in Notion or via the Streamlit ingredient review step.
 
-**NYT sync flags:**
+After sync, the app shows a **Metadata review** expander. The last sync report is also available from **Last sync metadata review**. Ask your agent to fix flagged recipes if needed.
 
-| Flag | When to use it |
-|------|----------------|
-| *(no flag)* | Interactive picker — choose full recipe box or a specific folder |
-| `--collection "Folder Name"` | Sync one NYT recipe-box folder without prompting (falls back to full box if not found) |
-| `--dry-run` | Preview what would be added without writing to Notion |
-| `--confirm` | Review each recipe before creating (default: batch import with auto-classified metadata) |
-
-After sync, a metadata review prints automatically. Run `nyt review-metadata` anytime, or ask your agent to fix flagged recipes.
-
-Other NYT commands: `nyt auth-status`, `nyt review-metadata`, `nyt apply-metadata`, `nyt reclassify`.
-
-`nyt reclassify` re-runs **Meal** and **Dinner: Weeknight Friendly** for every recipe with the NYT sync checkbox checked.
-
-**Weeknight friendly** is set automatically when you add any recipe (`add-recipe`, NYT sync, or the Streamlit UI). For **Dinner** recipes it is checked when total cook time is under 60 minutes (from the scraper's JSON-LD data or NYT API) or the title suggests a quick/easy dish (weeknight, one-pot, sheet pan, stir fry, etc.). You do not need to set the checkbox manually during review.
-
-## Command cheat sheet
-
-| Command | What it does |
-|---------|--------------|
-| `add-recipe` | Save a new recipe from a URL into Notion |
-| `edit-pantry` | Edit what's always in your kitchen (won't appear on shopping list) |
-| `nyt auth-status` | Check NYT Cooking env credentials and verify session |
-| `nyt saved` | List recipes in your NYT recipe box |
-| `nyt sync` | Import saved NYT recipes into Notion (interactive folder picker; skips duplicates) |
-| `nyt reclassify` | Re-run Meal and Weeknight Friendly for NYT-synced recipes |
-
-### Dev / maintenance commands
-
-Use when you edit Notion directly, need to refresh ingredient data, or debug schema issues.
-
-| Command | What it does |
-|---------|--------------|
-| `dev backfill-ingredients` | Fill in missing ingredient lists from recipe links |
-| `dev reconcile-ingredients` | Update ingredients where you already have some (keeps your edits) |
-| `dev refresh-all-ingredients` | Re-download ingredients for every recipe |
-| `dev audit-recipes` | Show which recipes need attention |
-| `dev show-schema` | Show how Notion columns are detected |
-
-```shell
-# Recipes added in Notion with a link but no ingredients
-uv run python -m src.grocery_wizard.cli dev backfill-ingredients
-
-# Preview without writing
-uv run python -m src.grocery_wizard.cli dev backfill-ingredients --dry-run
-
-# Reconcile recipes you already edited in Notion
-uv run python -m src.grocery_wizard.cli dev reconcile-ingredients
-
-# Nuclear option: re-scrape everything
-uv run python -m src.grocery_wizard.cli dev refresh-all-ingredients
-
-# Health check
-uv run python -m src.grocery_wizard.cli dev audit-recipes
-uv run python -m src.grocery_wizard.cli dev show-schema
-```
+**Weeknight friendly** is set automatically when you add any recipe (NYT sync or the Streamlit UI). For **Dinner** recipes it is checked when total cook time is under 60 minutes (from the scraper's JSON-LD data or NYT API) or the title suggests a quick/easy dish (weeknight, one-pot, sheet pan, stir fry, etc.). You do not need to set the checkbox manually during review.
 
 ## Project layout
 
@@ -136,15 +70,14 @@ Grocery Wizard is a package under `src/grocery_wizard/`. Folders group code by *
 
 | Folder | Key files | Responsibility |
 |--------|-----------|----------------|
-| `cli/` | `main.py` | Command-line entry (`add-recipe`, `edit-pantry`, `dev …`; Streamlit for planning) |
+| `cli/` | `main.py`, `deprecated.py` | Removed-command hints only (product is Streamlit) |
 | `ui/` | `app.py`, `sections/`, `notion_cache.py` | Streamlit app: segmented sections (weekly plan, add recipe, pantry & recurring) |
 | `config/` | `__init__.py`, `store_aisles.txt` | Env settings and committed store walk order |
 | `integrations/` | `notion.py`, `notion_household.py`, `nyt_cooking.py` | Notion API; pantry/recurring/plans DBs; NYT sync |
 | `recipes/` | `scraper.py`, `classify.py`, `add_recipe.py` | Scrape URLs, classify metadata, save new recipes |
-| `ingredients/` | `public.py`, `ARCHITECTURE.md` | Two pipelines: storage (`parsed`/`sync`) vs grocery list (`normalize`); see doc |
-| `planning/` | `meal_planner.py` | Meal suggestion and filter logic (Streamlit + dev validation) |
+| `ingredients/` | `parsed.py`, `sync.py`, `ARCHITECTURE.md` | Two pipelines: storage vs grocery list (`normalize`); see doc |
+| `planning/` | `meal_planner.py` | Meal suggestion and filter logic (Streamlit) |
 | `shopping/` | `grocery_list.py`, `pantry.py` | Build shopping list; pantry load/match/edit |
-| `dev/` | `audit.py` | Recipe health checks |
 | `lib/` | `prompts.py` | Shared interactive prompts |
 
 ### Tests (`tests/src/grocery_wizard/`)
@@ -161,10 +94,7 @@ Same subfolders as source — e.g. `recipes/test_scraper.py` tests `recipes/scra
 ### Entry points
 
 ```shell
-# CLI (primary)
-uv run python -m src.grocery_wizard.cli <command>
-
-# Streamlit (secondary) — run from repository root so .streamlit/config.toml loads
+# Streamlit (primary) — run from repository root so .streamlit/config.toml loads
 just grocery-ui
 # or: uv run streamlit run src/grocery_wizard/ui/app.py
 ```
@@ -178,7 +108,7 @@ grocery-wizard/
 
 ## Architecture notes
 
-Ingredient **storage** (Notion write) and **grocery-list** (read/normalize) pipelines are documented in [`ingredients/ARCHITECTURE.md`](ingredients/ARCHITECTURE.md). Prefer importing from [`ingredients/public.py`](ingredients/public.py) when adding new call sites.
+Ingredient **storage** (Notion write) and **grocery-list** (read/normalize) pipelines are documented in [`ingredients/ARCHITECTURE.md`](ingredients/ARCHITECTURE.md).
 
 ## How ingredients are stored
 
@@ -199,8 +129,7 @@ Normalization and pantry exclusion happen at grocery-list time only — not when
    - `NOTION_RECIPE_DATABASE_ID` — Recipes database ID
    - `NOTION_PANTRY_DATABASE_ID`, `NOTION_RECURRING_WEEKLY_DATABASE_ID`, `NOTION_WEEKLY_MEAL_PLANS_DATABASE_ID`
 5. From repo root: `just setup`
-6. Verify: `uv run python -m src.grocery_wizard.cli dev show-schema`
-7. Sync pantry aisle select options: `uv run python -m src.grocery_wizard dev sync-notion-pantry-sections`
+6. Open **`just grocery-ui`** and confirm your Notion recipes load.
 
 ## Meal planning
 
@@ -211,7 +140,7 @@ Use **`just grocery-ui`** for weekly planning. Default filters in the UI match t
 | Meal | Dinner |
 | Dinner: Weeknight Friendly | yes |
 
-Suggestions maximize variety across **Protein**, **Dinner Category**, and **Cuisine**. Plans are stored in Notion; the app also writes `{"recipes": ["Name1", ...]}` to `.local/grocery_wizard/week_plan.json` for session hints and `dev validate-pipeline`.
+Suggestions maximize variety across **Protein**, **Dinner Category**, and **Cuisine**. Plans are stored in Notion; the app also writes `{"recipes": ["Name1", ...]}` to `.local/grocery_wizard/week_plan.json` for session hints.
 
 ## Configuration vs local data
 
@@ -226,14 +155,7 @@ Committed config lives in the package; per-week data stays local:
 
 ## Pantry staples
 
-`edit-pantry` edits your Notion pantry database, grouped by section headers. Interactive options:
-
-- **a** — add an item (pick a section or create one)
-- **r** — remove by number or name
-- **e** — open a temp file in `$EDITOR`, then sync back to Notion on quit
-- **q** — save and quit
-
-Matching uses phrase boundaries: `kosher salt` matches pantry item `salt`, but `beef` does not match `beef stock`.
+Edit pantry staples in the **Pantry & recurring** section of the Streamlit app (Notion pantry database). Matching uses phrase boundaries: `kosher salt` matches pantry item `salt`, but `beef` does not match `beef stock`.
 
 ## Recurring weekly items
 
@@ -265,7 +187,7 @@ just grocery-ui
 
 Sections (segmented control): **Create weekly plan** (meal planning, ingredient review, grocery list), **Add recipe**, **Pantry & recurring**.
 
-**Phone / remote access:** see [docs/remote-access.md](docs/remote-access.md) (local Wi‑Fi + CLI by default; always-on host only if we implement #138).
+**Phone / remote access:** see [docs/remote-access.md](docs/remote-access.md) (local Wi‑Fi by default; always-on host only if we implement #138).
 
 UI performance research (Streamlit rerun model, Notion caching, phased roadmap): [`docs/ui-performance-research.md`](../../docs/ui-performance-research.md).
 
@@ -287,6 +209,6 @@ Key columns:
 | Cuisine | multi_select | Italian, Asian, Mexican, … |
 | Dinner Category | multi_select | Curry, Pasta, Bowl, … |
 | Dinner: Weeknight Friendly | checkbox | Meal-planning filter |
-| Synced from NYT recipe box | checkbox | Set automatically by `nyt sync` |
+| Synced from NYT recipe box | checkbox | Set automatically by NYT recipe-box sync in the Streamlit app |
 
 Optional env overrides: `GROCERY_WIZARD_NAME_COLUMN`, `GROCERY_WIZARD_LINK_COLUMN`, `GROCERY_WIZARD_INGREDIENTS_COLUMN`.

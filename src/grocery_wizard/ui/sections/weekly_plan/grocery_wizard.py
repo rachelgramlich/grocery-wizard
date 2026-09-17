@@ -216,7 +216,7 @@ def _render_grocery_result() -> None:
         st.warning(
             f"Skipped {len(missing_ingredients)} recipe(s) with no ingredients in Notion: "
             f"{', '.join(missing_ingredients)}. "
-            "Run `dev backfill-ingredients` to populate them from their links."
+            "Add ingredient lines in Notion or edit them in the review step above."
         )
 
     _render_added_and_removed_summary(result)
@@ -291,7 +291,3 @@ def _render_grocery_result() -> None:
         )
     elif not excluded and not meal_names:
         st.warning("No grocery items found.")
-
-    edit_count: int = result.get("edit_count", 0)
-    if edit_count:
-        st.caption(f"_{edit_count} ingredient edit(s) logged for later review._")
