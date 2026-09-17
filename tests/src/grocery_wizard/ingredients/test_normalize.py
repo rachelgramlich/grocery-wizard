@@ -4,6 +4,8 @@ from src.grocery_wizard.ingredients.normalize import (
     aggregate_amounts,
     clean_ingredient_line_for_storage,
     expand_ingredient_line,
+    filter_ingredient_key,
+    filter_ingredient_keys,
     is_instruction_line,
     is_junk_ingredient,
     is_metadata_line,
@@ -706,3 +708,78 @@ def test_corn_tortillas_not_split_by_title_bleed() -> None:
 
 def test_cilantro_sprigs_normalized_to_lowercase() -> None:
     assert normalize_ingredient("Cilantro sprigs") == "cilantro sprigs"
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected_key"),
+    [
+        ("2 red or russet potatoes", "potatoes"),
+        ("1 lb Yukon Gold potatoes", "potatoes"),
+        ("1/2 teaspoon turmeric", "turmeric"),
+        ("1 lb chicken breast", "chicken"),
+        ("boneless skinless chicken breasts", "chicken"),
+        ("2 cans white beans", "white beans"),
+        ("butter beans", "butter beans"),
+        ("2 tablespoons olive oil", "olive oil"),
+        ("balsamic vinegar", "balsamic vinegar"),
+        ("red or yellow onions", "onions"),
+        ("low-sodium chicken or vegetable stock", "stock"),
+    ],
+)
+def test_filter_ingredient_key_staple_granularity(raw: str, expected_key: str) -> None:
+    assert filter_ingredient_key(raw) == expected_key
+
+
+def test_filter_ingredient_key_does_not_change_grocery_normalize() -> None:
+    """Grocery-list names stay line-specific while filter keys stay coarse."""
+    russet = normalize_ingredient("2 red or russet potatoes")
+    yukon = normalize_ingredient("1 lb Yukon Gold potatoes")
+    assert russet != yukon
+    assert filter_ingredient_key("2 red or russet potatoes") == filter_ingredient_key(
+        "1 lb Yukon Gold potatoes"
+    )
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "potatoes, unpeeled but scrubbed clean",
+        "1 pound potatoes, unpeeled but scrubbed clean",
+        "waxy white or yellow potatoes, roughly about the same size",
+    ],
+)
+def test_filter_ingredient_keys_potato_prep_lines(raw: str) -> None:
+    assert filter_ingredient_keys(raw) == {"potatoes"}
+
+
+def test_filter_ingredient_keys_comma_separated_list() -> None:
+    assert filter_ingredient_keys("sweet potato, carrots, parsnips") == {
+        "potatoes",
+        "carrots",
+        "parsnips",
+    }
+
+
+def test_filter_ingredient_keys_strips_notion_checkbox_prefix() -> None:
+    assert filter_ingredient_keys("[x] 1 tablespoon framboise liqueur") == {
+        "framboise liqueur",
+    }
+    assert filter_ingredient_keys("[x] vanilla ice cream, for serving") == {"ice cream"}
+
+
+def test_filter_ingredient_keys_drop_prose_and_dimension_fragments() -> None:
+    assert filter_ingredient_keys("-inch thick") == set()
+    assert filter_ingredient_keys("a combination") == set()
+    assert filter_ingredient_keys("a mix") == set()
+    assert filter_ingredient_keys("1/2-inch thick slices") == set()
+    assert filter_ingredient_keys("sliced lengthwise 1/4-inch") == set()
+    assert filter_ingredient_keys("pitted and diced") == set()
+    assert filter_ingredient_keys("pitted and diced, optional") == set()
+
+
+def test_filter_ingredient_keys_grated_cheese_lines() -> None:
+    fontina = "about 1 heaping cup coarsely grated fontina"
+    parmesan = "about 1 heaping cup coarsely grated parmesan"
+    assert filter_ingredient_keys(fontina) == {"fontina"}
+    assert filter_ingredient_keys(parmesan) == {"parmesan"}
+    assert filter_ingredient_keys("a few drops vanilla extract") == {"vanilla extract"}

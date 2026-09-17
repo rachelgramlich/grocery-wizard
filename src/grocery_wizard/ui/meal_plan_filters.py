@@ -57,6 +57,47 @@ def week_level_plan_filter_columns(schema: DatabaseSchema) -> list[ColumnInfo]:
     return columns
 
 
+def _render_column_filter(
+    column: ColumnInfo,
+    defaults: MealPlanFilters,
+    *,
+    key_prefix: str,
+) -> Any:
+    default_val = defaults.values.get(column.name)
+    if column.type in ("select", "status"):
+        options = ["Any", *column.options]
+        current = default_val if default_val in column.options else "Any"
+        picked = st.selectbox(
+            column.name,
+            options,
+            index=options.index(current),
+            key=f"{key_prefix}_{column.name}",
+        )
+        if picked != "Any":
+            return picked
+        return None
+    if column.type == "multi_select":
+        default_list = default_val if isinstance(default_val, list) else []
+        picked = st.multiselect(
+            column.name,
+            column.options,
+            default=default_list,
+            key=f"{key_prefix}_{column.name}",
+        )
+        return picked or None
+    if column.type == "checkbox":
+        checked = st.checkbox(
+            column.name,
+            value=bool(default_val) if isinstance(default_val, bool) else False,
+            key=f"{key_prefix}_{column.name}",
+        )
+        if isinstance(default_val, bool):
+            return checked
+        if checked:
+            return True
+    return None
+
+
 def render_meal_plan_filters(
     filter_columns: list[ColumnInfo],
     defaults: MealPlanFilters,
@@ -65,46 +106,19 @@ def render_meal_plan_filters(
     ingredient_index: dict[str, set[str]] | None = None,
 ) -> MealPlanFilters:
     values: dict[str, Any] = {}
-    for column in filter_columns:
-        default_val = defaults.values.get(column.name)
-        if column.type in ("select", "status"):
-            options = ["Any", *column.options]
-            current = default_val if default_val in column.options else "Any"
-            picked = st.selectbox(
-                column.name,
-                options,
-                index=options.index(current),
-                key=f"{key_prefix}_{column.name}",
-            )
-            if picked != "Any":
-                values[column.name] = picked
-        elif column.type == "multi_select":
-            default_list = default_val if isinstance(default_val, list) else []
-            picked = st.multiselect(
-                column.name,
-                column.options,
-                default=default_list,
-                key=f"{key_prefix}_{column.name}",
-            )
-            if picked:
-                values[column.name] = picked
-        elif column.type == "checkbox":
-            checked = st.checkbox(
-                column.name,
-                value=bool(default_val) if isinstance(default_val, bool) else False,
-                key=f"{key_prefix}_{column.name}",
-            )
-            if isinstance(default_val, bool):
-                values[column.name] = checked
-            elif checked:
-                values[column.name] = True
+    select_columns = [column for column in filter_columns if column.type != "checkbox"]
+    checkbox_columns = [column for column in filter_columns if column.type == "checkbox"]
+
+    for column in select_columns:
+        picked = _render_column_filter(column, defaults, key_prefix=key_prefix)
+        if picked is not None:
+            values[column.name] = picked
 
     ingredient_names: list[str] = []
     ingredient_mode = "include"
 
     if ingredient_index is not None:
         ingredient_options = ingredient_options_from_index(ingredient_index)
-        st.markdown("**Ingredients**")
         total = len(ingredient_options)
         if total:
             st.caption(
@@ -129,10 +143,9 @@ def render_meal_plan_filters(
                 search_query,
             )
         ingredient_names = st.multiselect(
-            "Pick one or more ingredients",
+            "Ingredients",
             display_options,
-            key=names_key,
-            label_visibility="collapsed",
+            key=f"{key_prefix}_ingredient_names",
             placeholder="Selected ingredients appear here…",
         )
         if ingredient_names:
@@ -148,6 +161,11 @@ def render_meal_plan_filters(
                 key=f"{key_prefix}_ingredient_mode",
                 label_visibility="collapsed",
             )
+
+    for column in checkbox_columns:
+        picked = _render_column_filter(column, defaults, key_prefix=key_prefix)
+        if picked is not None:
+            values[column.name] = picked
 
     return MealPlanFilters(
         values=values,

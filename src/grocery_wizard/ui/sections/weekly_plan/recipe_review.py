@@ -103,6 +103,8 @@ def _render_per_recipe_review(db: NotionRecipesDB, selected: list[str]) -> None:
                 return
 
             st.session_state.grocery_result = result_payload
+            st.session_state.pop("grocery_readd", None)
+            st.session_state.pop("grocery_remove_once", None)
             st.session_state.pop("grocery_per_recipe_review", None)
             st.session_state.pop("grocery_review_options", None)
             st.session_state.pop("grocery_review_recipes", None)

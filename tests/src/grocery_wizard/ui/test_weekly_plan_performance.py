@@ -30,4 +30,7 @@ def test_long_actions_show_spinners() -> None:
     assert "Building your meal plan" in source
     assert "Preparing ingredient review" in source
     assert "Building grocery list" in source
-    assert "Refreshing from Notion" in source
+    refresh_fn = source.split("def _refresh_notion_cache_from_ui", 1)[1].split(
+        "def _render_notion_cache_controls", 1
+    )[0]
+    assert "Refreshing from Notion" in refresh_fn
