@@ -5,6 +5,7 @@ from src.grocery_wizard.ingredients.normalize import (
     clean_ingredient_line_for_storage,
     expand_ingredient_line,
     filter_ingredient_key,
+    filter_ingredient_keys,
     is_instruction_line,
     is_junk_ingredient,
     is_metadata_line,
@@ -737,3 +738,30 @@ def test_filter_ingredient_key_does_not_change_grocery_normalize() -> None:
     assert filter_ingredient_key("2 red or russet potatoes") == filter_ingredient_key(
         "1 lb Yukon Gold potatoes"
     )
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "potatoes, unpeeled but scrubbed clean",
+        "1 pound potatoes, unpeeled but scrubbed clean",
+        "waxy white or yellow potatoes, roughly about the same size",
+    ],
+)
+def test_filter_ingredient_keys_potato_prep_lines(raw: str) -> None:
+    assert filter_ingredient_keys(raw) == {"potatoes"}
+
+
+def test_filter_ingredient_keys_comma_separated_list() -> None:
+    assert filter_ingredient_keys("sweet potato, carrots, parsnips") == {
+        "potatoes",
+        "carrots",
+        "parsnips",
+    }
+
+
+def test_filter_ingredient_keys_strips_notion_checkbox_prefix() -> None:
+    assert filter_ingredient_keys("[x] 1 tablespoon framboise liqueur") == {
+        "framboise liqueur",
+    }
+    assert filter_ingredient_keys("[x] vanilla ice cream, for serving") == {"ice cream"}

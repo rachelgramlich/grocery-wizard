@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any
 
 from src.grocery_wizard.config import WEEK_PLAN_PATH
-from src.grocery_wizard.ingredients.normalize import filter_ingredient_key
+from src.grocery_wizard.ingredients.normalize import filter_ingredient_keys
 from src.grocery_wizard.ingredients.sync import parse_ingredients_text
 from src.grocery_wizard.integrations.notion import (
     ColumnInfo,
@@ -53,9 +53,7 @@ def _recipe_normalized_ingredient_set(recipe: Recipe) -> set[str]:
     lines, _ = parse_ingredients_text(raw)
     result: set[str] = set()
     for line in lines:
-        key = filter_ingredient_key(line)
-        if key:
-            result.add(key)
+        result.update(filter_ingredient_keys(line))
     return result
 
 

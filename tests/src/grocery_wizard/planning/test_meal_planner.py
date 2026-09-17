@@ -23,6 +23,7 @@ from src.grocery_wizard.planning.meal_planner import (
     select_diverse_meals,
     suggest_meals,
 )
+from src.grocery_wizard.ui.meal_plan_filters import ingredient_options_from_index
 
 
 def _recipe(
@@ -476,6 +477,32 @@ _INGREDIENT_RECIPES = [_CHICKEN_RECIPE, _FISH_RECIPE, _TOFU_RECIPE, _EMPTY_RECIP
 def test_recipe_normalized_ingredient_set_parses_lines() -> None:
     result = _recipe_normalized_ingredient_set(_CHICKEN_RECIPE)
     assert "chicken" in result
+
+
+def test_ingredient_picker_deduplicates_potato_wording() -> None:
+    recipes = [
+        _recipe(
+            "A",
+            page_id="id-a",
+            ingredients="potatoes, unpeeled but scrubbed clean",
+            properties={"Meal": "Dinner"},
+        ),
+        _recipe(
+            "B",
+            page_id="id-b",
+            ingredients="waxy white or yellow potatoes, roughly about the same size",
+            properties={"Meal": "Dinner"},
+        ),
+        _recipe(
+            "C",
+            page_id="id-c",
+            ingredients="2 red or russet potatoes",
+            properties={"Meal": "Dinner"},
+        ),
+    ]
+    options = ingredient_options_from_index(build_ingredient_index(recipes))
+    potato_options = [name for name in options if "potato" in name]
+    assert potato_options == ["potatoes"]
 
 
 def test_ingredient_filter_potato_variants_share_canonical_key() -> None:

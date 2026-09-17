@@ -13,6 +13,7 @@ __all__ = [
     "drop_junk_ingredient_lines",
     "expand_ingredient_line",
     "filter_ingredient_key",
+    "filter_ingredient_keys",
     "is_instruction_line",
     "is_junk_ingredient",
     "is_metadata_line",
@@ -343,7 +344,11 @@ def _compound_filter_key_start(words: list[str], pos: int) -> int:
         if start > 0 and words[start - 1] == "wine":
             start -= 1
         return start
-    if word == "cream" and pos > 0 and words[pos - 1] in _CREAM_PREFIXES:
+    if (
+        word == "cream"
+        and pos > 0
+        and (words[pos - 1] in _CREAM_PREFIXES or words[pos - 1] == "ice")
+    ):
         return pos - 1
     if word in {"tortilla", "tortillas"} and pos > 0 and words[pos - 1] in _TORTILLA_PREFIXES:
         return pos - 1
@@ -356,29 +361,107 @@ def _compound_filter_key_start(words: list[str], pos: int) -> int:
     return pos
 
 
-def _filter_key_from_normalized_name(name: str) -> str:
-    """Coarse staple key for meal-plan filters; grocery list uses ``normalize_ingredient``."""
+def _sanitize_filter_words(text: str) -> list[str]:
+    """Tokenize for meal-plan filter keys; strip punctuation stuck to tokens."""
+    cleaned = re.sub(r"[,;]", " ", text)
+    words: list[str] = []
+    for raw in cleaned.lower().split():
+        word = raw.strip(".,;:!()[]")
+        if word:
+            words.append(word)
+    return words
+
+
+def _strip_filter_line_prefix(line: str) -> str:
+    stripped = line.strip()
+    for prefix in ("[x]", "▢", "•", "*"):
+        if stripped.startswith(prefix):
+            return stripped[len(prefix) :].strip()
+    return stripped
+
+
+def _segment_has_filter_noun(segment: str) -> bool:
+    prepared = _strip_filter_line_prefix(segment)
+    source = normalize_ingredient(prepared) or prepared
+    return bool(_find_grocery_noun_positions(_sanitize_filter_words(source)))
+
+
+def _segment_contributes_filter_key(part: str) -> bool:
+    lowered = part.lower().strip()
+    if lowered.startswith("for "):
+        return False
+    if is_junk_ingredient(part):
+        return False
+    if _segment_has_filter_noun(part):
+        return True
+    prepared = _strip_filter_line_prefix(part)
+    normalized = normalize_ingredient(prepared)
+    if not normalized:
+        return False
+    return len(_sanitize_filter_words(normalized)) <= 3
+
+
+def _filter_line_segments(line: str) -> list[str]:
+    """Split stored lines into parts that each contribute filter keys."""
+    from src.grocery_wizard.ingredients.parsed import _normalize_unicode
+
+    text = _strip_filter_line_prefix(line)
+    text = _normalize_unicode(_normalize_unicode_dashes(text))
+    if not text:
+        return []
+    parts = [part.strip() for part in text.split(",") if part.strip()]
+    if len(parts) <= 1:
+        return [text]
+    contributors = [part for part in parts if _segment_contributes_filter_key(part)]
+    if len(contributors) >= 2:
+        return contributors
+    if contributors:
+        return [contributors[0]]
+    return [text]
+
+
+def _filter_key_from_words(words: list[str]) -> str:
     from src.grocery_wizard.ingredients.parsed import _prefer_plural_form
 
-    stripped = name.strip()
-    if not stripped:
+    if not words:
         return ""
-    words = stripped.lower().split()
     positions = _find_grocery_noun_positions(words)
     if not positions:
-        return _prefer_plural_form(stripped)
+        return _prefer_plural_form(" ".join(words))
     pos = positions[-1]
     start = _compound_filter_key_start(words, pos)
     chunk = " ".join(words[start : pos + 1])
     return _prefer_plural_form(chunk)
 
 
+def _filter_key_from_segment(segment: str) -> str:
+    """Coarse staple key for one ingredient segment (meal-plan filters only)."""
+    prepared = _strip_filter_line_prefix(segment)
+    source = normalize_ingredient(prepared) or prepared
+    if source.startswith(("[x]", "▢", "•", "*")):
+        stripped = _strip_filter_line_prefix(source)
+        source = normalize_ingredient(stripped) or stripped
+    return _filter_key_from_words(_sanitize_filter_words(source))
+
+
+def filter_ingredient_keys(line: str) -> set[str]:
+    """Return canonical staple keys for meal-plan ingredient filters."""
+    if is_junk_ingredient(line):
+        return set()
+    keys: set[str] = set()
+    for segment in _filter_line_segments(line):
+        key = _filter_key_from_segment(segment)
+        if key:
+            keys.add(key)
+    return keys
+
+
 def filter_ingredient_key(line: str) -> str:
-    """Return a canonical staple key for meal-plan ingredient filters."""
-    normalized = normalize_ingredient(line)
-    if not normalized:
+    """Return one canonical staple key (first sorted) for meal-plan filters."""
+    keys = filter_ingredient_keys(line)
+    if not keys:
         return ""
-    return _filter_key_from_normalized_name(normalized)
+    return min(keys)
 
 
 def looks_like_merged_ingredient_line(text: str) -> bool:
