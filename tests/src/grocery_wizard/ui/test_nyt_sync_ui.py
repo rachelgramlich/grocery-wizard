@@ -30,9 +30,7 @@ def test_nyt_sync_visible_on_add_recipe_when_credentials_missing() -> None:
     markdown_text = " ".join(m.value for m in at.markdown if m.value)
     caption_text = " ".join(c.value for c in at.caption if c.value)
     assert "Sync from NYT Cooking" in markdown_text
-    assert (
-        "Sync a NYT Cooking recipe-box folder." in caption_text
-    )
+    assert "Sync a NYT Cooking recipe-box folder." in caption_text
     assert any("NYT credentials are not set" in w.value for w in at.warning)
     assert not any((expander.label or "") == "Sync from NYT Cooking" for expander in at.expander)
 
