@@ -1,63 +1,86 @@
 # Tidy project
 
-Apply **Kent Beck — *Tidy First?*** on the codebase area the user names (or the whole repo). **Structure only** in this pass unless the user also asked for behavior changes.
+**Repo-wide structure-only pass.** Scan the project, apply *Tidy First?* tidyings, and open **one or more PRs** that contain **no behavior changes**.
 
-## Core rules
+For tidying **while implementing a feature**, follow the **`tidy-first` skill** (`.agents/skills/tidy-first/SKILL.md`) — do not use this command for that.
 
-1. **One hat:** structure change (**S**) or behavior change (**B**) — never both in the same commit.
-2. **Tidyings preserve behavior.** If observable output changes, that is **B**, not tidying.
-3. **Separate commits:** tidy first (or tidy-only PR), then behavior in a follow-up commit/PR.
-4. **Small steps:** prefer several tiny tidyings over one large refactor.
-5. **Reversible:** if a tidying does not read better, revert it.
+## Outcome
 
-## When to tidy first
+- PR title pattern: `chore(tidy): <area or theme>` (structure only).
+- PRs **ready for review** unless the user asks for draft.
+- Every PR passes `just check` on touched paths.
+- PR description lists: areas scanned, tidyings applied, files touched, explicit **“No behavior change”** statement.
 
-Ask: *What **S** makes the next **B** cheaper?*
+## Rules (same as skill)
 
-| Situation | Action |
-| --- | --- |
-| Mess blocks the feature you are about to add | Tidy first, then **B** |
-| Tidying does not help this change | **B** now; optional tidy after |
-| Only cleaning up, no feature | Tidying-only commits/PR |
-| S and B already mixed | Untangle (rebase/split commits), ship tangled only if user insists, or redo |
-
-Do **not** dogmatically tidy everything upfront or refuse all tidying.
-
-## How to tidy (workflow)
-
-1. **Scope** — Files or module the user pointed at; read surrounding style first.
-2. **Goal** — One sentence: what behavior change is coming (if any), or “readability/coupling only.”
-3. **Pick tidyings** — From the catalog below; chain 1–3 related moves max per commit.
-4. **Apply** — Run `just check` / `ruff` on touched Python; no new features in this commit.
-5. **Commit message** — Prefix e.g. `chore(tidy): …` or `refactor: … (structure only)`; state technique if helpful.
-6. **Handoff** — If **B** was deferred, list what is ready for the next commit/PR.
-
-## Tidying catalog (pick what fits)
-
-| Tidying | Do this |
-| --- | --- |
-| **Guard clause** | Early return on invalid/edge cases; flatten nested `if`. |
-| **Delete dead code** | Remove unused vars, commented-out code, unreachable paths. |
-| **Normalize symmetries** | Same kind of check/logic expressed the same way everywhere. |
-| **Explaining variable / constant** | Name a subexpression or magic number after its meaning. |
-| **Explicit parameters** | Replace opaque dict bags with named params where call sites clarify intent. |
-| **Chunk statements** | Blank lines between logical groups (balance screen space). |
-| **Extract helper** | Name a chunk of logic; keep helpers private unless shared. |
-| **Reading order** | Order functions in a file for top-down reading. |
-| **Cohesion order** | Keep elements that change together close together. |
-| **One pile** | Temporarily inline scattered logic to understand it; then re-split cleanly. |
-| **Comments** | Add only non-obvious intent; delete comments that duplicate the code. |
-| **New interface, old impl** | Introduce the API you wish existed; delegate to current code until **B** lands. |
-
-Practice examples (optional): `rg-playground` → `src/python_practice/tidy_first/`.
-
-## Review bar
-
-- **Structure PR / commit:** light review — diff should be easy to undo.
-- **Behavior PR / commit:** tests, manual verification, full review.
+1. **S only** — no feature fixes, no bug fixes, no test expectation changes unless tests only mirrored dead code removal with identical behavior.
+2. **Separate PRs** from any in-flight feature work; branch from latest `main`.
+3. **Split PRs** when diff grows large or areas are unrelated (e.g. `src/grocery_wizard/ui` vs `src/grocery_wizard/dev`).
+4. **Small commits** inside each PR; one theme per commit when practical.
 
 ## Your task
 
-1. Confirm scope with the user if unclear.
-2. Execute tidyings per workflow above; **do not** mix **B** unless explicitly requested.
-3. Report: files touched, tidyings used, suggested next **B** step (if any).
+### 1. Sync and branch
+
+```bash
+git fetch origin main
+git checkout main && git pull origin main
+git checkout -b cursor/tidy-<short-theme>-287b
+```
+
+Use a new branch per tidy PR if shipping multiple PRs sequentially.
+
+### 2. Scan the project
+
+Prioritize (highest mess / change friction first):
+
+- `src/` application code (exclude generated or vendored trees if any).
+- `tests/` only when tidying test **structure** (helpers, duplication) without changing what is asserted.
+- Skip: lockfiles, `.venv`, third-party vendored code, unrelated docs-only churn unless user asked.
+
+Look for: deep nesting, dead code, magic numbers, duplicated validation patterns, oversized functions that are **pure structure** to split, inconsistent symmetries, misleading names that can be clarified **without** semantic change.
+
+Use `uv run ruff check` and test failures as hints; do not “fix” behavior to green tests.
+
+### 3. Plan before editing
+
+Produce a short plan for the user (in chat):
+
+- Buckets by module or theme.
+- Which tidyings per bucket.
+- **One PR vs many PRs** (prefer ≤ ~400 lines meaningful diff per PR).
+
+Wait for user objection only if they gave a narrow scope; if they invoked **`/tidy-project`** with no scope, proceed with the plan.
+
+### 4. Apply tidyings
+
+Follow the catalog in `.agents/skills/tidy-first/SKILL.md`.
+
+After each bucket: `just check`. Fix only issues **your tidying introduced**.
+
+### 5. Commit and push
+
+```bash
+git add -A
+git commit -m "chore(tidy): <specific theme>"
+git push -u origin HEAD
+```
+
+Repeat for additional PRs from fresh branches off `main` if splitting.
+
+### 6. Open PR(s)
+
+Use the repo PR template. **Manual verification:**
+
+| Step | Expected |
+| --- | --- |
+| `just check` | Pass |
+| Smoke / UI | Unchanged behavior (same flows as before tidy) |
+
+**Manual sign-off:** agent-verified for non-UI; UI → user confirms in chat if Streamlit paths were touched.
+
+No `Closes #N` unless the user tied this to an issue.
+
+### 7. Report
+
+Summarize PR links, themes per PR, and anything **not** tidied (risk of behavior drift, needs feature work first).

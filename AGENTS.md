@@ -8,9 +8,12 @@
 | **`/architecture-review`** | **Phase A:** standards audit report + Ruff/CI gap analysis; **Phase B:** file **`audit`**-labeled issues (`dev create-issues --audit`) |
 | **`/list-enhancements`** | Open backlog (grocery-wizard label) |
 | **`/work-on-issue N`** | Full implementation brief for backlog **or** bug #N |
-| **`/tidy-project`** | Structure-only tidying (*Tidy First?* workflow; separate S from B) |
+| **`/tidy-project`** | Scan the **whole project** → structure-only tidy PR(s); no behavior changes |
+| *(automatic)* **`tidy-first` skill** | While implementing work: tidy inline, **S** vs **B** in separate commits |
 
 Slash files: `.cursor/commands/create-issues.md`, `architecture-review.md`, `list-enhancements.md`, `work-on-issue.md`, `tidy-project.md`.
+
+Skill: `.agents/skills/tidy-first/SKILL.md` (linked into `.cursor/skills/` by `just setup`).
 
 Agents run the matching CLI when structured output or `gh` is needed:
 
@@ -42,4 +45,4 @@ One-time: `dev migrate-enhancements-to-github`, `dev backfill-enhancement-labels
 | **Pipeline check** | `validate-pipeline` |
 | **Prod feedback log** | `list-feedback` |
 
-After `just setup`, Streamlit’s `developing-with-streamlit` skill is under `.cursor/skills/` for UI work.
+After `just setup`, skills under `.cursor/skills/`: `developing-with-streamlit` (UI), `tidy-first` (structure vs behavior while coding).
