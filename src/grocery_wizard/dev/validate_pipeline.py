@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import json
 import random
 import re
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from src.grocery_wizard.config import WEEK_PLAN_PATH, load_config
+from src.grocery_wizard.config import LEGACY_WEEK_PLAN_PATH, WEEK_PLAN_PATH, load_config
 from src.grocery_wizard.dev.audit import looks_suspicious_ingredients
 from src.grocery_wizard.ingredients.normalize import (
     is_junk_ingredient,
@@ -17,15 +19,34 @@ from src.grocery_wizard.ingredients.normalize import (
 from src.grocery_wizard.ingredients.sync import parse_ingredients_text
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 from src.grocery_wizard.planning.meal_planner import default_filters, suggest_meals
-from src.grocery_wizard.shopping.grocery_list import (
-    _load_week_plan_names,
-    build_grocery_list,
-)
+from src.grocery_wizard.shopping.grocery_list import build_grocery_list
 
 _SUSPICIOUS_NORMALIZED_RE = re.compile(
     r"\[x\]|</?br|▢|recipe serves|heat the|stir to combine",
     re.IGNORECASE,
 )
+
+
+def _load_week_plan_names(path: Path) -> list[str]:
+    resolved = path
+    if not resolved.exists():
+        if path == WEEK_PLAN_PATH and LEGACY_WEEK_PLAN_PATH.exists():
+            resolved = LEGACY_WEEK_PLAN_PATH
+        else:
+            return []
+
+    try:
+        data = json.loads(resolved.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        print(f"Warning: could not read week plan ({resolved}): {exc}", file=sys.stderr)
+        return []
+    if isinstance(data, dict):
+        recipes = data.get("recipes", [])
+        if isinstance(recipes, list):
+            return [str(name).strip() for name in recipes if str(name).strip()]
+    if isinstance(data, list):
+        return [str(name).strip() for name in data if str(name).strip()]
+    return []
 
 
 @dataclass

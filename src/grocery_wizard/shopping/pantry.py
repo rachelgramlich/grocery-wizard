@@ -10,15 +10,10 @@ __all__ = [
     "load_pantry",
     "parse_pantry_file",
     "remove_pantry_item_by_name",
-    "run_pantry_interactive",
     "write_pantry_file",
 ]
 
-import os
 import re
-import shlex
-import subprocess
-import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -282,6 +277,10 @@ def remove_pantry_item_by_name(search: str, path: Path | None = None) -> bool:
     return True
 
 
+def _flatten_items(sections: list[PantrySection]) -> list[tuple[int, str]]:
+    return [entry for section in sections for entry in section.items]
+
+
 def format_pantry_display(sections: list[PantrySection]) -> str:
     """Format pantry sections for terminal display."""
     parts: list[str] = []
@@ -295,117 +294,6 @@ def format_pantry_display(sections: list[PantrySection]) -> str:
         if section.items:
             parts.append("")
     return "\n".join(parts).rstrip()
-
-
-def _flatten_items(sections: list[PantrySection]) -> list[tuple[int, str]]:
-    return [entry for section in sections for entry in section.items]
-
-
-def _add_item(lines: list[str], sections: list[PantrySection]) -> None:
-    name = input("Item name: ").strip()
-    if not name:
-        print("Cancelled — empty name.")
-        return
-    if name.startswith("#"):
-        print("Cancelled — item names cannot start with '#'.")
-        return
-
-    numbered_sections = [
-        (index + 1, section)
-        for index, section in enumerate(sections)
-        if section.header is not None or section.items
-    ]
-    if not numbered_sections:
-        numbered_sections = [(1, PantrySection(header="# --- Uncategorized ---"))]
-
-    print("\nAdd to section:")
-    for number, section in numbered_sections:
-        label = section.header or "(no header)"
-        print(f"  {number}. {label}")
-    print(f"  {len(numbered_sections) + 1}. New section")
-
-    choice = input("Section [#]: ").strip()
-    if not choice:
-        target = numbered_sections[-1][1]
-    else:
-        try:
-            picked = int(choice)
-        except ValueError:
-            print("Cancelled — invalid section.")
-            return
-        if picked == len(numbered_sections) + 1:
-            header = input("New section header (e.g. # --- Spices ---): ").strip()
-            if not header:
-                header = "# --- Uncategorized ---"
-            elif not header.startswith("#"):
-                header = f"# {header}"
-            target = PantrySection(header=header)
-            sections.append(target)
-            lines.append(header)
-        elif 1 <= picked <= len(numbered_sections):
-            target = numbered_sections[picked - 1][1]
-        else:
-            print("Cancelled — invalid section.")
-            return
-
-    insert_at = len(lines)
-    if target.items:
-        insert_at = target.items[-1][0] + 1
-    elif target.header is not None:
-        try:
-            insert_at = lines.index(target.header) + 1
-        except ValueError:
-            insert_at = len(lines)
-
-    lines.insert(insert_at, name)
-    _reindex_sections(lines, sections)
-
-
-def _remove_item(lines: list[str], sections: list[PantrySection]) -> None:
-    flat = _flatten_items(sections)
-    if not flat:
-        print("No items to remove.")
-        return
-
-    choice = input("Item # or name to remove: ").strip()
-    if not choice:
-        print("Cancelled.")
-        return
-
-    line_index: int | None = None
-    if choice.isdigit():
-        number = int(choice)
-        if 1 <= number <= len(flat):
-            line_index = flat[number - 1][0]
-    else:
-        matches = [(index, item) for index, item in flat if _matches_pantry_search(choice, item)]
-        if len(matches) == 1:
-            line_index = matches[0][0]
-        elif len(matches) > 1:
-            print("Multiple matches:")
-            for index, (_line_idx, item) in enumerate(matches, start=1):
-                print(f"  {index}. {item}")
-            pick = input("Pick match #: ").strip()
-            if pick.isdigit() and 1 <= int(pick) <= len(matches):
-                line_index = matches[int(pick) - 1][0]
-            else:
-                print("Cancelled.")
-                return
-        else:
-            print(f"No match for '{choice}'.")
-            return
-
-    if line_index is None:
-        print("Cancelled — invalid item.")
-        return
-
-    removed = lines.pop(line_index)
-    print(f"Removed: {removed}")
-    _reindex_sections(lines, sections)
-
-
-def _reindex_sections(lines: list[str], sections: list[PantrySection]) -> None:
-    _, sections[:] = parse_pantry_file_from_lines(lines)
 
 
 def parse_pantry_file_from_lines(lines: list[str]) -> tuple[list[str], list[PantrySection]]:
@@ -429,75 +317,3 @@ def parse_pantry_file_from_lines(lines: list[str]) -> tuple[list[str], list[Pant
         sections = [PantrySection(header="# --- Uncategorized ---")]
 
     return lines, sections
-
-
-def _open_in_editor(path: Path) -> None:
-    editor = os.environ.get("EDITOR", "vi")
-    try:
-        subprocess.run([*shlex.split(editor), str(path)], check=False)
-    except FileNotFoundError:
-        print(f"Editor not found: {editor}", file=sys.stderr)
-
-
-def run_pantry_interactive(path: Path | None = None) -> int:
-    """Show pantry grouped by section; add, remove, or edit in $EDITOR."""
-    use_notion = path is None
-    if use_notion:
-        from src.grocery_wizard.integrations.notion_household import NotionPantryDB
-
-        lines, sections = NotionPantryDB().load_as_pantry_lines()
-        pantry_path: Path | None = None
-    else:
-        pantry_path = path
-        lines, sections = parse_pantry_file(pantry_path)
-
-    while True:
-        print()
-        print("Pantry staples")
-        print("=" * 40)
-        print(format_pantry_display(sections))
-        print()
-        print("[a]dd  [r]emove  [e]ditor  [q]uit")
-        choice = input("> ").strip().lower()
-
-        if choice in ("q", "quit"):
-            if use_notion:
-                from src.grocery_wizard.integrations.notion_household import NotionPantryDB
-
-                NotionPantryDB().sync_from_lines(lines)
-                print("Saved pantry to Notion")
-            else:
-                write_pantry_file(pantry_path, lines)
-                print(f"Saved {pantry_path}")
-            return 0
-        if choice in ("a", "add"):
-            _add_item(lines, sections)
-            continue
-        if choice in ("r", "remove"):
-            _remove_item(lines, sections)
-            continue
-        if choice in ("e", "edit", "editor"):
-            if use_notion:
-                import tempfile
-
-                with tempfile.NamedTemporaryFile(
-                    mode="w",
-                    suffix=".txt",
-                    delete=False,
-                    encoding="utf-8",
-                ) as handle:
-                    write_pantry_file(Path(handle.name), lines)
-                    edit_path = Path(handle.name)
-                _open_in_editor(edit_path)
-                lines, sections = parse_pantry_file(edit_path)
-                edit_path.unlink(missing_ok=True)
-            else:
-                write_pantry_file(pantry_path, lines)
-                _open_in_editor(pantry_path)
-                lines, sections = parse_pantry_file(pantry_path)
-            continue
-
-        if not choice:
-            continue  # empty Enter — just re-display the menu
-
-        print("Unknown option. Use a, r, e, or q.")

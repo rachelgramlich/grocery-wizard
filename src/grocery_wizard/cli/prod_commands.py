@@ -51,6 +51,9 @@ def cmd_add(args: argparse.Namespace) -> int:
 
 
 def cmd_pantry(_args: argparse.Namespace) -> int:
-    from src.grocery_wizard.shopping.pantry import run_pantry_interactive
-
-    return run_pantry_interactive()
+    print("Command 'edit-pantry' was removed.", file=sys.stderr)
+    print(
+        "Use the Streamlit app (`just grocery-ui`) — **Pantry & recurring** tab.",
+        file=sys.stderr,
+    )
+    return 1

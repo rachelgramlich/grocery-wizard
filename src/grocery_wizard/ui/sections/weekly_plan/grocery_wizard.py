@@ -216,7 +216,8 @@ def _render_grocery_result() -> None:
         st.warning(
             f"Skipped {len(missing_ingredients)} recipe(s) with no ingredients in Notion: "
             f"{', '.join(missing_ingredients)}. "
-            "Run `dev backfill-ingredients` to populate them from their links."
+            "Open the **Add Recipe** tab to scrape ingredients from each recipe link, "
+            "or paste ingredients directly in Notion."
         )
 
     _render_added_and_removed_summary(result)

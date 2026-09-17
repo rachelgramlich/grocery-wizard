@@ -105,7 +105,7 @@ def format_audit_report(report: AuditReport) -> str:
         "Recommended next steps:",
     ]
     if report.empty:
-        lines.append("  - Run: dev backfill-ingredients")
+        lines.append("  - Add ingredients via Streamlit Add Recipe tab or edit Notion directly")
     if report.suspicious:
         lines.append("  - Run: dev reconcile-ingredients  (re-scrape broken recipes)")
     if report.no_link and not report.empty:

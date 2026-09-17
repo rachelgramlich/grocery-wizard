@@ -371,129 +371,26 @@ def cmd_dev_schema(_args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_dev_backfill(args: argparse.Namespace) -> int:
-    from src.grocery_wizard.ingredients.sync import (
-        SyncResult,
-        categorize_recipes,
-        format_recipe_progress,
-        format_sync_summary,
-        run_sync,
-    )
-
-    config = load_config()
-    db = NotionRecipesDB(config)
-
-    categories = categorize_recipes(db.query_recipes())
-    count = len(categories.empty)
-    if args.dry_run:
-        print(f"Would backfill {count} recipe(s) with empty Ingredients...")
-    else:
-        print(f"Backfilling {count} recipe(s) with empty Ingredients...")
-        if count:
-            print()
-
-    def on_recipe_done(index: int, total: int, result: SyncResult) -> None:
-        print(format_recipe_progress(index, total, result))
-        if args.verbose and result.ingredient_lines:
-            for line in result.ingredient_lines:
-                print(f"    {line}")
-
-    summary = run_sync(
-        db,
-        dry_run=args.dry_run,
-        force=args.force,
-        on_recipe_done=None if args.dry_run else on_recipe_done,
-    )
-
-    print()
-    print(format_sync_summary(summary, dry_run=args.dry_run, merge=False, verbose=args.verbose))
-    return 0
-
-
-def cmd_dev_reconcile(args: argparse.Namespace) -> int:
-    from src.grocery_wizard.ingredients.sync import (
-        categorize_recipes,
-        format_sync_summary,
-        run_merge_sync,
-    )
-
-    config = load_config()
-    db = NotionRecipesDB(config)
-
-    if args.dry_run:
-        categories = categorize_recipes(db.query_recipes())
-        count = len(categories.populated)
-        print(f"Would reconcile {count} populated recipe(s)...")
-    else:
-        print("Reconciling populated recipes one at a time...")
-
-    summary = run_merge_sync(db, dry_run=args.dry_run)
-
-    print()
-    print(format_sync_summary(summary, dry_run=args.dry_run, merge=True, verbose=args.verbose))
-    return 0
-
-
-def cmd_dev_refresh_all(args: argparse.Namespace) -> int:
-    from src.grocery_wizard.ingredients.sync import (
-        RefreshResult,
-        format_refresh_progress,
-        format_refresh_summary,
-        run_refresh_ingredients,
-    )
-
-    config = load_config()
-    db = NotionRecipesDB(config)
-    recipe_filter = getattr(args, "recipe", None)
-    if recipe_filter:
-        needle = recipe_filter.strip().lower()
-        recipes = [r for r in db.query_recipes() if needle in r.name.lower()]
-    else:
-        recipes = db.query_recipes()
-    total = len(recipes)
-
-    if args.split_only:
-        mode = "split-only"
-    else:
-        mode = "scrape + split"
-
-    scope = f" matching '{recipe_filter}'" if recipe_filter else ""
-    if args.dry_run:
-        print(f"Dry run: refreshing {total} recipe(s){scope} ({mode})...")
-    else:
-        print(f"Refreshing {total} recipe(s){scope} ({mode})...")
-        if total:
-            print()
-
-    def on_recipe_done(index: int, count: int, result: RefreshResult) -> None:
-        print(format_refresh_progress(index, count, result))
-        if args.verbose and result.ingredient_lines:
-            for line in result.ingredient_lines:
-                print(f"    {line}")
-
-    summary = run_refresh_ingredients(
-        db,
-        dry_run=args.dry_run,
-        split_only=args.split_only,
-        recipe_name_filter=recipe_filter,
-        on_recipe_done=None if args.dry_run else on_recipe_done,
-    )
-
-    if args.dry_run:
-        print()
-        for index, result in enumerate(summary.results, start=1):
-            if result.status in ("dry_run", "unchanged", "skipped", "failed"):
-                print(format_refresh_progress(index, total, result))
-
-    print()
+def _dev_batch_ingredients_removed(command: str) -> int:
+    print(f"Command 'dev {command}' was removed.", file=sys.stderr)
     print(
-        format_refresh_summary(
-            summary,
-            dry_run=args.dry_run,
-            split_only=args.split_only,
-        )
+        "Use the Streamlit app (`just grocery-ui`) — **Add Recipe** tab or edit "
+        "ingredients in Notion.",
+        file=sys.stderr,
     )
-    return 0
+    return 1
+
+
+def cmd_dev_backfill(_args: argparse.Namespace) -> int:
+    return _dev_batch_ingredients_removed("backfill-ingredients")
+
+
+def cmd_dev_reconcile(_args: argparse.Namespace) -> int:
+    return _dev_batch_ingredients_removed("reconcile-ingredients")
+
+
+def cmd_dev_refresh_all(_args: argparse.Namespace) -> int:
+    return _dev_batch_ingredients_removed("refresh-all-ingredients")
 
 
 def cmd_dev_reformat(args: argparse.Namespace) -> int:

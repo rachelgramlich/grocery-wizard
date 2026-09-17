@@ -2,7 +2,7 @@
 
 Turns stored (or raw) lines into canonical item names, amounts, and merged
 quantities. Notion write paths use ``parsed.py`` + ``sync.py`` instead — see
-``ARCHITECTURE.md`` and ``public.py``.
+``ARCHITECTURE.md``.
 """
 
 from __future__ import annotations

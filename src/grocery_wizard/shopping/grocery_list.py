@@ -24,20 +24,16 @@ __all__ = [
     "format_meals_and_grocery_list",
     "format_meals_copy_text",
     "format_name_link_mismatch_warning",
-    "format_sync_message",
     "merge_grocery_items",
     "normalize_grocery_list_item",
     "recipe_title_from_url",
 ]
 
 import difflib
-import json
 import re
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from src.grocery_wizard.config import LEGACY_WEEK_PLAN_PATH, WEEK_PLAN_PATH
 from src.grocery_wizard.ingredients.normalize import (
     aggregate_amounts,
     expand_ingredient_line,
@@ -49,11 +45,7 @@ from src.grocery_wizard.ingredients.parsed import (
     format_garlic_grocery_amount,
     format_lemon_zest_grocery_line,
 )
-from src.grocery_wizard.ingredients.sync import (
-    SyncSummary,
-    format_sync_summary,
-    parse_ingredients_text,
-)
+from src.grocery_wizard.ingredients.sync import parse_ingredients_text
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 from src.grocery_wizard.shopping.line_items import strip_checklist_prefix, strip_line_item
 from src.grocery_wizard.shopping.pantry import is_pantry_item, load_pantry
@@ -194,7 +186,6 @@ def build_grocery_list(
     recipe_names: list[str],
     recipes: list[Recipe] | None = None,
     staples: list[str] | None = None,
-    week_plan_path: Path = WEEK_PLAN_PATH,
     pantry_path: Path | None = None,
     pantry_extra: set[str] | None = None,
     recurring_weekly_items_path: Path | None = None,
@@ -296,32 +287,6 @@ def build_grocery_list(
         item_provenance,
         name_link_mismatches,
     )
-
-
-def format_sync_message(summary: SyncSummary) -> str:
-    return format_sync_summary(summary)
-
-
-def _load_week_plan_names(path: Path) -> list[str]:
-    resolved = path
-    if not resolved.exists():
-        if path == WEEK_PLAN_PATH and LEGACY_WEEK_PLAN_PATH.exists():
-            resolved = LEGACY_WEEK_PLAN_PATH
-        else:
-            return []
-
-    try:
-        data = json.loads(resolved.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError) as exc:
-        print(f"Warning: could not read week plan ({resolved}): {exc}", file=sys.stderr)
-        return []
-    if isinstance(data, dict):
-        recipes = data.get("recipes", [])
-        if isinstance(recipes, list):
-            return [str(name).strip() for name in recipes if str(name).strip()]
-    if isinstance(data, list):
-        return [str(name).strip() for name in data if str(name).strip()]
-    return []
 
 
 def _get_ingredient_lines(recipe: Recipe) -> list[str]:

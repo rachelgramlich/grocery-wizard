@@ -18,9 +18,9 @@ DEPRECATED_COMMANDS: dict[str, str] = {
     "plan-recipes": _STREAMLIT_HINT,
     "grocery": _STREAMLIT_HINT,
     "create-grocery-list": _STREAMLIT_HINT,
-    "pantry": "Use `edit-pantry` instead.",
-    "sync": "Use `dev backfill-ingredients` or `dev reconcile-ingredients`.",
-    "refresh-ingredients": "Use `dev refresh-all-ingredients` instead.",
+    "pantry": "Use the Streamlit app (`just grocery-ui`) — **Pantry & recurring** tab.",
+    "sync": "Use the Streamlit app (`just grocery-ui`) — **Add Recipe** tab.",
+    "refresh-ingredients": "Edit ingredients in Notion or use **Add Recipe** in Streamlit.",
     "audit": "Use `dev audit-recipes` instead.",
     "schema": "Use `dev show-schema` instead.",
 }

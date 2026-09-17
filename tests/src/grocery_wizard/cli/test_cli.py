@@ -18,7 +18,7 @@ from src.grocery_wizard.cli.main import main
         (["grocery"], "grocery-ui"),
         (["create-grocery-list"], "grocery-ui"),
         (["add"], "add-recipe"),
-        (["pantry"], "edit-pantry"),
+        (["pantry"], "Pantry & recurring"),
         (["dev", "backfill"], "backfill-ingredients"),
         (["dev", "reconcile"], "reconcile-ingredients"),
         (["dev", "refresh-all"], "refresh-all-ingredients"),
