@@ -79,6 +79,10 @@ Avoid “always tidy” and “never tidy.”
 | **Comments** | Intent only; delete redundant restatements of code. |
 | **New interface, old impl** | Desired API delegating to current code until **B** completes. |
 
+## Behavior opportunities (do not mix into S)
+
+Inline tidying stops at **S**. If you spot a **B** opportunity — bug fix, feature gap, product decision, or refactor too risky for structure-only — note it in chat or the PR, and optionally file a GitHub issue with **`gh issue create`**. Use **`.cursor/commands/create-issues.md`** planning rules (bug vs enhancement, **`gw-area-*`** labels). Never fold **B** into an **S** commit or tidy PR.
+
 ## Review expectations
 
 - **S-only** changes: light review, should be reversible.

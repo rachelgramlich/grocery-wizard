@@ -8,9 +8,9 @@
 | **`/architecture-review`** | **Phase A:** standards audit report + Ruff/CI gap analysis; **Phase B:** file **`audit`**-labeled issues (see `.cursor/commands/architecture-review.md`) |
 | **`/list-enhancements`** | Open backlog (`grocery-wizard` label) via **`gh`** |
 | **`/work-on-issue N`** | Load issue with **`gh issue view`**, implement using area → files table in `.cursor/commands/work-on-issue.md` |
-| **`/tidy-project`** | Scan the **whole project** → structure-only tidy PR(s); no behavior changes |
+| **`/tidy-project`** | Scan the **whole project** → structure-only tidy PR(s); no behavior changes; may file follow-up issues via **`gh`** for deferred **B** work (see command + **`create-issues`** rules) |
 | **`/create-command`** | Add a new slash **command** (or skill) without command/skill name collisions — see `.cursor/commands/create-command.md` |
-| *(automatic)* **`tidy-first` skill** | While implementing work: tidy inline, **S** vs **B** in separate commits |
+| *(automatic)* **`tidy-first` skill** | While implementing work: tidy inline, **S** vs **B** in separate commits; may file follow-up issues for **B** spotted during tidy (not in **S** commits) |
 
 Slash files: `.cursor/commands/create-issues.md`, `architecture-review.md`, `list-enhancements.md`, `work-on-issue.md`, `tidy-project.md`, `create-command.md`. **Command-only workflows** must not duplicate the same name under `.cursor/skills/` (see **`/create-command`**).
 

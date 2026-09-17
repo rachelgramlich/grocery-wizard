@@ -22,6 +22,7 @@ For tidying **while implementing a feature**, follow the **`tidy-first`** skill 
 2. **Separate PRs** from any in-flight feature work; branch from latest `main`.
 3. **Split PRs** when diff grows large or areas are unrelated (e.g. `src/grocery_wizard/ui` vs `src/grocery_wizard/dev`).
 4. **Small commits** inside each PR; one theme per commit when practical.
+5. **Follow-up issues** — tidying stops at **S**. When scan or tidy surfaces items that need behavior fixes, product decisions, or risky refactors (not safe structure-only), file GitHub issue(s) with **`gh issue create`** instead of mixing **B** into tidy PRs. Apply planning rules from **`.cursor/commands/create-issues.md`** (bug vs enhancement, merge by area, **`gw-area-*`** labels). Cloud agents may use **`gh`** when the user allows issue creation in the tidy flow.
 
 ## Your task
 
@@ -101,6 +102,10 @@ Use the repo PR template. **Manual verification:**
 
 No `Closes #N` unless the user tied this to an issue.
 
-### 7. Report
+### 7. File follow-up issues (optional)
 
-Summarize PR links, themes per PR, and anything **not** tidied (risk of behavior drift, needs feature work first).
+After scan/tidy, for each **B** opportunity you deferred: create issue(s) via **`gh issue create`** (see rule 5 and **`.cursor/commands/create-issues.md`**). Link issue numbers in the tidy PR description or report.
+
+### 8. Report
+
+Summarize PR links, themes per PR, follow-up issue links (if any), and anything **not** tidied (risk of behavior drift, needs feature work first).
