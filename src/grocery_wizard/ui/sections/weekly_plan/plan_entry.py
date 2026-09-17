@@ -524,10 +524,7 @@ def _render_meal_count_input() -> int:
 def _cached_plan_ingredient_index(all_recipes: list) -> dict[str, set[str]]:
     recipes_cache_key = recipes_ingredient_cache_key(all_recipes)
     cached_index = st.session_state.get("_ingredient_index")
-    if (
-        st.session_state.get("_ingredient_index_key") != recipes_cache_key
-        or cached_index is None
-    ):
+    if st.session_state.get("_ingredient_index_key") != recipes_cache_key or cached_index is None:
         st.session_state["_ingredient_index_key"] = recipes_cache_key
         st.session_state["_ingredient_index"] = build_ingredient_index(all_recipes)
     return st.session_state["_ingredient_index"]
