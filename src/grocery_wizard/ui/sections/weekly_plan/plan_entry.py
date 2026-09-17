@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 from collections.abc import Callable
 
 import streamlit as st
@@ -622,7 +623,11 @@ def _render_built_plan_meals(
     for index, name in enumerate(current_plan, start=1):
         meal_col, swap_col = st.columns([8, 1])
         with meal_col:
-            st.write(f"**Meal {index}** — {name}")
+            st.markdown(
+                f'<p class="gw-meal-slot-label">'
+                f'<span class="gw-meal-slot-title">Meal {index}</span> — {html.escape(name)}</p>',
+                unsafe_allow_html=True,
+            )
             _render_slot_manual_picker(
                 slot_index=index,
                 all_recipes=all_recipes,
