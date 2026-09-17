@@ -14,6 +14,7 @@ import streamlit as st
 
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.notion_cache import (
+    cached_query_recipes,
     invalidate_notion_cache,
     last_recipe_cache_load_seconds,
 )
@@ -47,7 +48,9 @@ def _render_notion_cache_controls() -> None:
             use_container_width=True,
             help="Reload recipes, pantry, and saved plans from Notion",
         ):
-            invalidate_notion_cache()
+            with st.spinner("Refreshing from Notion…"):
+                invalidate_notion_cache()
+                cached_query_recipes(get_db())
             st.rerun()
 
 

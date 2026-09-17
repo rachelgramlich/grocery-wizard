@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import streamlit as st
 
 from src.grocery_wizard.config import load_config
@@ -90,17 +92,19 @@ def _set_plan_slot_recipe(plan: list[str], slot_index: int, recipe_name: str) ->
     return updated
 
 
-def _render_slot_manual_picker(
-    *,
+def _slot_manual_picker_fragment(
     slot_index: int,
-    current_name: str,
-    all_recipes: list,
-    filter_columns: list[ColumnInfo],
-    filter_defaults: MealPlanFilters,
-    schema_columns: dict[str, ColumnInfo],
-    ingredient_index: dict[str, set[str]],
-) -> None:
-    with st.expander("Choose recipe manually", expanded=False):
+) -> Callable[..., None]:
+    @st.fragment(key=f"plan_slot_manual_{slot_index}")
+    def _render(
+        *,
+        current_name: str,
+        all_recipes: list,
+        filter_columns: list[ColumnInfo],
+        filter_defaults: MealPlanFilters,
+        schema_columns: dict[str, ColumnInfo],
+        ingredient_index: dict[str, set[str]],
+    ) -> None:
         st.caption("Filters apply to this meal slot only.")
         slot_filters = render_meal_plan_filters(
             filter_columns,
@@ -132,6 +136,29 @@ def _render_slot_manual_picker(
             _clear_grocery_session_overrides()
             _clear_grocery_result()
             st.rerun()
+
+    return _render
+
+
+def _render_slot_manual_picker(
+    *,
+    slot_index: int,
+    current_name: str,
+    all_recipes: list,
+    filter_columns: list[ColumnInfo],
+    filter_defaults: MealPlanFilters,
+    schema_columns: dict[str, ColumnInfo],
+    ingredient_index: dict[str, set[str]],
+) -> None:
+    with st.expander("Choose recipe manually", expanded=False):
+        _slot_manual_picker_fragment(slot_index)(
+            current_name=current_name,
+            all_recipes=all_recipes,
+            filter_columns=filter_columns,
+            filter_defaults=filter_defaults,
+            schema_columns=schema_columns,
+            ingredient_index=ingredient_index,
+        )
 
 
 def _render_dev_jump_tools(db: NotionRecipesDB) -> None:
@@ -376,20 +403,21 @@ def _render_generate_plan_controls(
     _render_prebuild_recipe_picker(all_recipes, meal_count=int(meal_count))
 
     if st.button("Build my plan", type="primary", key="build_plan"):
-        locked_for_build = _locked_recipes_for_plan_build(meal_count=int(meal_count))
-        plan = suggest_meals(
-            all_recipes,
-            meals=int(meal_count),
-            locked_names=locked_for_build,
-            filters=week_filters,
-            schema_columns=schema.all_columns,
-            ingredient_index=ingredient_index,
-        )
-        _write_plan_names(plan)
-        st.session_state.plan_rejected_names = []
-        _invalidate_weekly_plan_save_state()
-        _clear_grocery_session_overrides()
-        _clear_grocery_result()
+        with st.spinner("Building your meal plan…"):
+            locked_for_build = _locked_recipes_for_plan_build(meal_count=int(meal_count))
+            plan = suggest_meals(
+                all_recipes,
+                meals=int(meal_count),
+                locked_names=locked_for_build,
+                filters=week_filters,
+                schema_columns=schema.all_columns,
+                ingredient_index=ingredient_index,
+            )
+            _write_plan_names(plan)
+            st.session_state.plan_rejected_names = []
+            _invalidate_weekly_plan_save_state()
+            _clear_grocery_session_overrides()
+            _clear_grocery_result()
         st.rerun()
 
     return week_filters
