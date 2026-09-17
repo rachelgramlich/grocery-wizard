@@ -27,7 +27,7 @@ Use the UI to create a weekly plan, review ingredients, and generate your grocer
 |------|---------|
 | Add a recipe from a URL | `uv run python -m src.grocery_wizard.cli add-recipe <url>` |
 | Edit pantry staples | `uv run python -m src.grocery_wizard.cli edit-pantry` |
-| Import NYT recipe box | `uv run python -m src.grocery_wizard nyt sync` |
+| Import NYT recipe box | Streamlit app → **Sync from NYT Cooking** (`just grocery-ui`) |
 
 Full command reference, NYT credentials, meal-planning defaults, aisle config, and Notion schema: **[`src/grocery_wizard/README.md`](src/grocery_wizard/README.md)**.
 

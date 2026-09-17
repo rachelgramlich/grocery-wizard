@@ -60,30 +60,15 @@ NYT_REGI_ID=12345678
 
 **Cloud Agent / dashboard** — add the same names as Secrets (`NYT_S_COOKIE`, `NYT_REGI_ID` or `NYT_USER_ID`).
 
-#### Verify and use
+#### Sync in the Streamlit app
 
-```shell
-uv run python -m src.grocery_wizard nyt auth-status   # check env vars + live verification
-uv run python -m src.grocery_wizard nyt saved         # list recipe box
-uv run python -m src.grocery_wizard nyt sync          # import to Notion (prompts for folder)
-```
+1. Run `just grocery-ui` (or `uv run streamlit run src/grocery_wizard/ui/app.py`).
+2. Under the title, expand **Sync from NYT Cooking**.
+3. Pick a recipe-box folder (or **All saved recipes**), optionally enable **Dry run**, then click **Sync to Notion** or **Preview sync**.
 
 NYT sync adds **name, link, classified metadata, and the "Synced from NYT recipe box" checkbox** — not ingredients. Add a **checkbox** column with that exact name in Notion (or set `GROCERY_WIZARD_NYT_SYNCED_COLUMN` if you name it differently). Fill ingredients later with `dev backfill-ingredients` or when ingredient parsing (#21) lands.
 
-**NYT sync flags:**
-
-| Flag | When to use it |
-|------|----------------|
-| *(no flag)* | Interactive picker — choose full recipe box or a specific folder |
-| `--collection "Folder Name"` | Sync one NYT recipe-box folder without prompting (falls back to full box if not found) |
-| `--dry-run` | Preview what would be added without writing to Notion |
-| `--confirm` | Review each recipe before creating (default: batch import with auto-classified metadata) |
-
-After sync, a metadata review prints automatically. Run `nyt review-metadata` anytime, or ask your agent to fix flagged recipes.
-
-Other NYT commands: `nyt auth-status`, `nyt review-metadata`, `nyt apply-metadata`, `nyt reclassify`.
-
-`nyt reclassify` re-runs **Meal** and **Dinner: Weeknight Friendly** for every recipe with the NYT sync checkbox checked.
+After sync, the app shows a **Metadata review** expander. The last sync report is also available from **Last sync metadata review**. Ask your agent to fix flagged recipes if needed.
 
 **Weeknight friendly** is set automatically when you add any recipe (`add-recipe`, NYT sync, or the Streamlit UI). For **Dinner** recipes it is checked when total cook time is under 60 minutes (from the scraper's JSON-LD data or NYT API) or the title suggests a quick/easy dish (weeknight, one-pot, sheet pan, stir fry, etc.). You do not need to set the checkbox manually during review.
 
@@ -93,10 +78,7 @@ Other NYT commands: `nyt auth-status`, `nyt review-metadata`, `nyt apply-metadat
 |---------|--------------|
 | `add-recipe` | Save a new recipe from a URL into Notion |
 | `edit-pantry` | Edit what's always in your kitchen (won't appear on shopping list) |
-| `nyt auth-status` | Check NYT Cooking env credentials and verify session |
-| `nyt saved` | List recipes in your NYT recipe box |
-| `nyt sync` | Import saved NYT recipes into Notion (interactive folder picker; skips duplicates) |
-| `nyt reclassify` | Re-run Meal and Weeknight Friendly for NYT-synced recipes |
+| Streamlit → **Sync from NYT Cooking** | Import saved NYT recipes into Notion (folder picker, dry run; skips duplicates) |
 
 ### Dev / maintenance commands
 
@@ -287,6 +269,6 @@ Key columns:
 | Cuisine | multi_select | Italian, Asian, Mexican, … |
 | Dinner Category | multi_select | Curry, Pasta, Bowl, … |
 | Dinner: Weeknight Friendly | checkbox | Meal-planning filter |
-| Synced from NYT recipe box | checkbox | Set automatically by `nyt sync` |
+| Synced from NYT recipe box | checkbox | Set automatically by NYT recipe-box sync in the Streamlit app |
 
 Optional env overrides: `GROCERY_WIZARD_NAME_COLUMN`, `GROCERY_WIZARD_LINK_COLUMN`, `GROCERY_WIZARD_INGREDIENTS_COLUMN`.
