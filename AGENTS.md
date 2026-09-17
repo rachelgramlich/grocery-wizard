@@ -5,6 +5,7 @@
 | You type | Purpose |
 | --- | --- |
 | **`/create-issues`** | One or more notes → auto **bug vs backlog**, merge by **code area**, create GitHub issue(s) via **`gh`** |
+| **`/app-review`** | Hands-on Streamlit UAT → findings (slow / unintuitive / broken / other) → optional grouped **`gh`** issues (see `.cursor/commands/app-review.md`) |
 | **`/architecture-review`** | **Phase A:** standards audit report + Ruff/CI gap analysis; **Phase B:** file **`audit`**-labeled issues (see `.cursor/commands/architecture-review.md`) |
 | **`/list-enhancements`** | Open backlog (`grocery-wizard` label) via **`gh`** |
 | **`/work-on-issue N`** | Load issue with **`gh issue view`**, implement using area → files table in `.cursor/commands/work-on-issue.md` |
@@ -12,7 +13,7 @@
 | **`/create-command`** | Add a new slash **command** (or skill) without command/skill name collisions — see `.cursor/commands/create-command.md` |
 | *(automatic)* **`tidy-first` skill** | While implementing work: tidy inline, **S** vs **B** in separate commits; may file follow-up issues for **B** spotted during tidy (not in **S** commits) |
 
-Slash files: `.cursor/commands/create-issues.md`, `architecture-review.md`, `list-enhancements.md`, `work-on-issue.md`, `tidy-project.md`, `create-command.md`. **Command-only workflows** must not duplicate the same name under `.cursor/skills/` (see **`/create-command`**).
+Slash files: `.cursor/commands/create-issues.md`, `architecture-review.md`, `list-enhancements.md`, `work-on-issue.md`, `tidy-project.md`, `create-command.md`, `app-review.md`. **Command-only workflows** must not duplicate the same name under `.cursor/skills/` (see **`/create-command`**).
 
 Skills (committed): `.cursor/skills/tidy-first/SKILL.md` (mirrored under `.agents/skills/tidy-first/`). Do **not** add a `tidy-project` skill — it collides with the **`/tidy-project`** command in Cursor’s `/` menu.
 
