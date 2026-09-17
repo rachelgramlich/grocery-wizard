@@ -111,7 +111,7 @@ def _render_slot_manual_picker(
 
         all_names = sorted({recipe.name for recipe in all_recipes}, key=str.lower)
 
-        st.caption("Pick a recipe")
+        st.markdown("**Pick a recipe**")
         if not all_names:
             st.warning("No recipes in Notion yet.")
         else:
@@ -130,8 +130,8 @@ def _render_slot_manual_picker(
                     _apply_picked(direct_picked)
 
         st.divider()
-        st.caption("Or filter")
-        st.caption("Optional — narrow the list, then pick from the filtered recipes below.")
+        st.markdown("**Or filter**")
+        st.caption("Optional — narrow the list using the filters below.")
         slot_filters = render_meal_plan_filters(
             filter_columns,
             filter_defaults,
@@ -145,22 +145,24 @@ def _render_slot_manual_picker(
             ingredient_index=ingredient_index,
         )
         slot_names = [recipe.name for recipe in slot_pool]
-        if not slot_names:
-            st.warning("No recipes match these filters.")
-            return
-        filtered_picked = st.selectbox(
-            "Recipe",
-            slot_names,
-            index=None,
-            placeholder="Pick from filtered recipes…",
-            key=f"plan_slot_pick_{slot_index}",
-            label_visibility="collapsed",
-        )
-        if st.button("Use this recipe", key=f"plan_slot_apply_{slot_index}"):
-            if not filtered_picked:
-                st.warning("Choose a recipe from the filtered list first.")
-            else:
-                _apply_picked(filtered_picked)
+        with st.container(border=True):
+            st.markdown("**Matching recipes**")
+            st.caption("Recipes that match the filters above.")
+            if not slot_names:
+                st.warning("No recipes match these filters.")
+                return
+            filtered_picked = st.selectbox(
+                "Filtered recipes",
+                slot_names,
+                index=None,
+                placeholder="Pick from filtered recipes…",
+                key=f"plan_slot_pick_{slot_index}",
+            )
+            if st.button("Use this recipe", key=f"plan_slot_apply_{slot_index}"):
+                if not filtered_picked:
+                    st.warning("Choose a recipe from the filtered list first.")
+                else:
+                    _apply_picked(filtered_picked)
 
 
 def _render_dev_jump_tools(db: NotionRecipesDB) -> None:

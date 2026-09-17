@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ui_source import APP_PATH, ui_source
+from ui_source import APP_PATH, UI_ROOT, ui_source
 
 APP_FILE = str(APP_PATH)
 
@@ -46,14 +46,29 @@ def test_manual_picker_recipe_first_then_or_filter() -> None:
     manual = source.split("def _render_slot_manual_picker", 1)[1].split(
         "def _render_dev_jump_tools", 1
     )[0]
-    assert 'st.caption("Pick a recipe")' in manual
+    assert 'st.markdown("**Pick a recipe**")' in manual
     assert '"Choose recipe"' in manual
     assert "plan_slot_direct_pick_" in manual
     assert 'placeholder="Search or pick a recipe…"' in manual
-    assert 'st.caption("Or filter")' in manual
+    assert 'st.markdown("**Or filter**")' in manual
+    assert "st.container(border=True)" in manual
+    assert 'st.markdown("**Matching recipes**")' in manual
     assert "st.divider()" in manual
-    assert manual.index('st.caption("Pick a recipe")') < manual.index('st.caption("Or filter")')
+    assert manual.index('st.markdown("**Pick a recipe**")') < manual.index(
+        'st.markdown("**Or filter**")'
+    )
     assert manual.index("placeholder=") < manual.index("render_meal_plan_filters")
+
+
+def test_meal_plan_ingredient_filter_before_checkboxes() -> None:
+    """Ingredients multiselect matches other filters and sits above checkbox toggles."""
+    filters_source = (UI_ROOT / "meal_plan_filters.py").read_text(encoding="utf-8")
+    filters_source = filters_source.split("def render_meal_plan_filters", 1)[1]
+    assert '"Ingredients"' in filters_source
+    assert 'st.markdown("**Ingredients**")' not in filters_source
+    assert filters_source.index('key=f"{key_prefix}_ingredient_names"') < filters_source.index(
+        "for column in checkbox_columns"
+    )
 
 
 def test_weekly_plan_build_shows_per_meal_swap() -> None:
