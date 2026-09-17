@@ -26,6 +26,23 @@ Use this skill during **normal implementation** — features, bugs, refactors th
 4. **Match the repo** — naming, types, patterns in surrounding code (see `CONTRIBUTING.md` here).
 5. **Verify** — run `just check` (or project equivalent) on touched paths.
 
+## Automation expectations
+
+| Layer | Enforces |
+| --- | --- |
+| **GitHub Actions** | `just ci` → `ruff check`, `ruff format --check`, `pytest` |
+| **Pre-commit** | `ruff --fix` + `ruff-format` on commit |
+| **You (inline tidy)** | **`just check`** before push; separate **S** commits from **B** |
+
+**Repo patterns (prefer when deduping during tidy):**
+
+- UI test paths → `tests/src/grocery_wizard/ui/ui_source.py`
+- Theme static CSS path → `APP_THEME_STATIC_CSS` in `theme.py`
+- Ingredient table regex → `ingredients/_patterns.py`
+- CLI deprecation copy → shared constants in `cli/` shims
+
+Details: `AGENTS.md` (Structure-only tidy), `CONTRIBUTING.md` (Automated Checks).
+
 ## Decide: tidy first?
 
 | If… | Then… |

@@ -44,3 +44,11 @@ Do not close backlog issues by hand — merge with `Closes #N`.
 **Streamlit + Notion only.** Run `just grocery-ui` for recipes, meal planning, pantry, NYT recipe-box sync, and grocery lists.
 
 After `just setup`, `.cursor/skills/developing-with-streamlit` (UI, symlink into `.venv`). **`tidy-first`** skill is committed under `.cursor/skills/`; **`/tidy-project`** is the command in `.cursor/commands/tidy-project.md`.
+
+## Structure-only tidy (agents)
+
+- **S vs B:** Follow the **`tidy-first`** skill — structure (**S**) and behavior (**B**) in **separate commits**. Repo-wide structure passes → **`/tidy-project`** (`.cursor/commands/tidy-project.md`).
+- **Verify before push:** `just check` runs `ruff check`, `ruff format --check`, and `pytest` on `src/` and `tests/`. Equivalent: `uv run ruff check && uv run ruff format --check && uv run pytest`.
+- **CI:** GitHub Actions runs the same checks via `just ci` on every PR.
+- **UI regression tests:** Import `APP_PATH`, `UI_ROOT`, `ui_source`, `pantry_tab_source` from `tests/src/grocery_wizard/ui/ui_source.py` — do not copy Streamlit path literals into individual tests.
+- **Dedupe constants:** One owning module for repeated paths or regex (e.g. `APP_THEME_STATIC_CSS` in `theme.py`, unicode/qty patterns in `ingredients/_patterns.py`, shared CLI deprecation strings in `cli/` shims).

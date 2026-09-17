@@ -45,7 +45,22 @@ Prioritize (highest mess / change friction first):
 
 Look for: deep nesting, dead code, magic numbers, duplicated validation patterns, oversized functions that are **pure structure** to split, inconsistent symmetries, misleading names that can be clarified **without** semantic change.
 
-Use `uv run ruff check` and test failures as hints; do not “fix” behavior to green tests.
+Use `uv run ruff check`, `uv run ruff format --check`, and test failures as hints; do not “fix” behavior to green tests.
+
+## Automation expectations
+
+| Layer | Enforces |
+| --- | --- |
+| **GitHub Actions** | `just ci` → `ruff check`, `ruff format --check`, `pytest` |
+| **Pre-commit** | `ruff --fix` + `ruff-format` on commit (local or pre-commit.ci) |
+| **Agents / contributors** | Run **`just check`** before push (same Ruff + pytest as CI, no auto-fix) |
+
+**Patterns to prefer when tidying (structure only):**
+
+- **UI tests:** central helpers in `tests/src/grocery_wizard/ui/ui_source.py` (`APP_PATH`, `UI_ROOT`, `ui_source()`).
+- **Theme CSS:** single constant `APP_THEME_STATIC_CSS` in `src/grocery_wizard/ui/theme.py`; import elsewhere.
+- **Ingredient parsing:** shared regex/unicode in `src/grocery_wizard/ingredients/_patterns.py`; import from `parsed.py` / `normalize.py`, do not copy patterns.
+- **CLI shims:** reuse deprecation message constants instead of duplicating strings.
 
 ### 3. Plan before editing
 
