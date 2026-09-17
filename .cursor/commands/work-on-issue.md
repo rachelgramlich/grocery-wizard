@@ -60,6 +60,17 @@ gh pr comment <pr-url> --body "**Manual verification:** passed (issue #<issue-nu
 <what you ran>"
 ```
 
-**Streamlit / UI:** Echo **Manual verification** from the PR for the user. When they confirm in chat, run the same `gh pr comment` (optional note in the body).
+**Streamlit / UI (including Cloud Agents):**
+
+1. **Smoke UAT:** When credentials/env allow, run the app (`just grocery-ui` or `uv run streamlit run …`) and smoke-test in the browser via the **computerUse** subagent, covering the issue’s manual test hints from the PR **Manual verification** section.
+2. **Artifacts:** Capture walkthrough evidence (screenshots/video per `.cursor/skills` walkthrough-artifacts guidance); attach or link in the PR when possible.
+3. **Sign-off:** Echo the PR **Manual verification** steps for the user to spot-check. Post `gh pr comment` sign-off **after the user confirms in chat** (default: agent smoke + user confirm, per `AGENTS.md`). Only skip user confirm if they explicitly delegate full UAT to the agent in chat.
+4. **Env blocked** (no Notion creds, app won’t start): Fall back to automated UI coverage (`AppTest` / pytest UI tests where they exist), note the limitation in the PR **Manual verification** table, and still ask the user to confirm when they can run the UI locally.
+
+```bash
+gh pr comment <pr-url> --body "**Manual verification:** passed (issue #<issue-number>).
+
+<what you ran / smoke UAT + artifact links>"
+```
 
 Summarize changes and share the PR link.
