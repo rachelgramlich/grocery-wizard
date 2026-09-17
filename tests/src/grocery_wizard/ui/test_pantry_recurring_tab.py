@@ -7,7 +7,7 @@ from ui_source import APP_PATH, pantry_tab_source, ui_source
 
 def test_weekly_recipe_tab_is_first_and_default() -> None:
     source = ui_source()
-    assert '_TAB_WEEKLY = "Weekly recipe generation"' in source
+    assert '_TAB_WEEKLY = "Create weekly plan"' in source
     assert "_UI_TABS = (_TAB_WEEKLY, _TAB_ADD, _TAB_PANTRY)" in source
     app = APP_PATH.read_text(encoding="utf-8")
     assert "st.segmented_control(" in app

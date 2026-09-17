@@ -356,6 +356,11 @@
             line-height: 1 !important;
         }
 
+        /* Let section tabs stay reachable without scrolling past the Streamlit chrome. */
+        header[data-testid="stHeader"] {
+            position: relative !important;
+        }
+
         [data-testid="stToolbar"], footer, #MainMenu {
             visibility: hidden;
         }

@@ -9,7 +9,8 @@ APP_FILE = str(APP_PATH)
 
 def test_weekly_plan_has_per_meal_swap_buttons() -> None:
     source = ui_source()
-    assert 'st.button("↺", key=f"swap_meal_{index}"' in source
+    assert '"Swap"' in source
+    assert 'key=f"swap_meal_{index}"' in source
     assert "meal_col, swap_col = st.columns([8, 1])" in source
     assert "_apply_plan_swap" in source
     assert "replace_meals_in_plan(" in source
@@ -17,7 +18,7 @@ def test_weekly_plan_has_per_meal_swap_buttons() -> None:
 
 def test_weekly_plan_regenerate_preserves_rejected_names() -> None:
     source = ui_source()
-    assert 'st.button("↺ Re-generate everything"' in source
+    assert 'st.button("Re-generate all meals"' in source
     assert "plan_rejected_names" in source
     assert "st.session_state.plan_rejected_names = []" in source
 
@@ -55,11 +56,11 @@ def test_weekly_plan_build_shows_per_meal_swap() -> None:
     assert build_buttons, "Build my plan button missing"
     build_buttons[0].click().run(timeout=60)
 
-    swap_buttons = [b for b in at.button if b.label == "↺"]
-    assert len(swap_buttons) >= 1, "Expected at least one per-meal ↺ swap button"
+    swap_buttons = [b for b in at.button if b.label == "Swap"]
+    assert len(swap_buttons) >= 1, "Expected at least one per-meal Swap button"
 
-    regen = [b for b in at.button if b.label == "↺ Re-generate everything"]
-    assert regen, "↺ Re-generate everything button missing"
+    regen = [b for b in at.button if b.label == "Re-generate all meals"]
+    assert regen, "Re-generate all meals button missing"
 
     expander_labels = [e.label for e in at.expander]
     assert "Edit manually" not in expander_labels
@@ -76,6 +77,7 @@ def test_dev_mode_exposes_collapsed_dev_tools_expander() -> None:
     source = ui_source()
     assert "_render_dev_jump_tools(db)" in source
     assert 'st.expander("Dev tools", expanded=False)' in source
+    assert "dev_ui_enabled()" in source
     assert '_weekly_plan_mode() != "dev"' in source
     assert "commit_dev_jump" in source
     assert "pick_default_recipe_names" in source
@@ -99,14 +101,27 @@ def test_dev_mode_exposes_collapsed_dev_tools_expander() -> None:
     assert dev_section.index('label="Per-recipe review"') < dev_section.index('label="Final list"')
 
 
+def test_post_build_collapses_generate_controls() -> None:
+    source = ui_source()
+    assert 'st.expander("Adjust filters or rebuild plan", expanded=False)' in source
+    assert "plan_last_week_filters" in source
+
+
+def test_weekly_tab_step_caption() -> None:
+    source = ui_source()
+    assert "**Steps:** 1. Meals → 2. Grocery list" in source
+
+
 def test_dev_mode_auto_continues_without_continue_button() -> None:
     source = ui_source()
     entry = source.split("def _render_weekly_plan_entry", 1)[1].split(
-        "def _invalidate_stale_grocery_result", 1
+        "def _ensure_plan_session_defaults", 1
     )[0]
-    assert 'if choice == "dev":' in entry
+    assert 'if choice == "dev" and dev_ui_enabled():' in entry
     assert "plan_meal_count = 1" in entry
-    assert entry.index('if choice == "dev":') < entry.index("weekly_plan_mode_continue")
+    assert entry.index('if choice == "dev" and dev_ui_enabled():') < entry.index(
+        "weekly_plan_mode_continue"
+    )
 
 
 def test_dev_mode_default_meal_count() -> None:

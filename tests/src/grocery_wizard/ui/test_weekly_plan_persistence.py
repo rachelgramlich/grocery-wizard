@@ -20,7 +20,7 @@ def test_weekly_plan_entry_modes_in_app() -> None:
     assert "_ensure_weekly_plan_saved_before_grocery" in source
     assert "saved_plan_week_start" in source
     assert "_render_save_week_choice_buttons" in source
-    assert "Dev mode (nothing saved)" in source
+    assert "Dev mode (nothing saved to Notion)" in source
 
 
 def test_create_grocery_auto_saves_plan_if_missing() -> None:

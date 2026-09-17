@@ -33,12 +33,15 @@ __all__ = [
 ]
 
 
+def _notion_load_caption() -> str:
+    load_seconds = last_recipe_cache_load_seconds()
+    if load_seconds is None:
+        return "Recipes load from Notion on first use."
+    return f"Last full recipe load: {load_seconds:.2f}s"
+
+
 def _render_notion_cache_controls() -> None:
-    hint_col, refresh_col = st.columns([3, 2])
-    with hint_col:
-        load_seconds = last_recipe_cache_load_seconds()
-        if load_seconds is not None:
-            st.caption(f"Last full recipe load from Notion: {load_seconds:.2f}s")
+    _, refresh_col = st.columns([2, 1])
     with refresh_col:
         if st.button(
             "Refresh from Notion",
@@ -49,6 +52,7 @@ def _render_notion_cache_controls() -> None:
         ):
             invalidate_notion_cache()
             st.rerun()
+        st.caption(_notion_load_caption())
 
 
 def main() -> None:

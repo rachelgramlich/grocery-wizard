@@ -17,6 +17,7 @@ from src.grocery_wizard.ui.sections.weekly_plan.state import _invalidate_stale_g
 def render_create_weekly_plan() -> None:
     st.subheader("Create weekly plan")
     st.caption("Pick your meals, then get a grocery list.")
+    st.markdown("**Steps:** 1. Meals → 2. Grocery list")
 
     _invalidate_stale_grocery_result()
 

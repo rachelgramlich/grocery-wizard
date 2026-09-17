@@ -25,6 +25,7 @@ from src.grocery_wizard.ui.dev_jumps import (
     dev_jump_display_title,
     pick_default_recipe_names,
 )
+from src.grocery_wizard.ui.dev_ui import dev_ui_enabled
 from src.grocery_wizard.ui.meal_plan_filters import (
     recipes_ingredient_cache_key,
     render_meal_plan_filters,
@@ -32,7 +33,6 @@ from src.grocery_wizard.ui.meal_plan_filters import (
 )
 from src.grocery_wizard.ui.notion_cache import cached_saved_plans
 from src.grocery_wizard.ui.sections.weekly_plan.state import (
-    _WEEKLY_PLAN_MODES,
     _clear_grocery_result,
     _clear_grocery_session_overrides,
     _current_plan_names,
@@ -40,6 +40,7 @@ from src.grocery_wizard.ui.sections.weekly_plan.state import (
     _render_save_plan_controls,
     _reset_weekly_plan_workflow,
     _weekly_plan_mode,
+    _weekly_plan_mode_choices,
     _write_plan_names,
 )
 
@@ -136,7 +137,7 @@ def _render_slot_manual_picker(
 
 def _render_dev_jump_tools(db: NotionRecipesDB) -> None:
     """Collapsed dev-only shortcuts to wizard steps for manual UAT."""
-    if _weekly_plan_mode() != "dev":
+    if not dev_ui_enabled() or _weekly_plan_mode() != "dev":
         return
 
     with st.expander("Dev tools", expanded=False):
@@ -240,20 +241,21 @@ def _render_weekly_plan_entry() -> bool:
         return True
 
     st.markdown("### How do you want to start?")
+    mode_options = _weekly_plan_mode_choices()
     choice = st.radio(
         "Weekly plan session",
-        options=_WEEKLY_PLAN_MODES,
+        options=mode_options,
         format_func=lambda value: {
-            "new": (
-                "Start a new list (Save plan anytime, or auto-saves when you create a grocery list)"
-            ),
-            "saved": (
-                "Start from a saved list (grocery list is not saved; meals auto-save if new)"
-            ),
-            "dev": "Dev mode (nothing saved)",
+            "new": "Start a new weekly plan",
+            "saved": "Continue a saved weekly plan",
+            "dev": "Dev mode (nothing saved to Notion)",
         }[value],
         key="weekly_plan_mode_choice",
         label_visibility="collapsed",
+    )
+    st.caption(
+        "New plans can be saved anytime. Saved plans reload your meals; "
+        "grocery lists stay in this session."
     )
 
     config = load_config()
@@ -285,7 +287,7 @@ def _render_weekly_plan_entry() -> bool:
                 key="weekly_plan_saved_name_pick",
             )
 
-    if choice == "dev":
+    if choice == "dev" and dev_ui_enabled():
         st.session_state.weekly_plan_mode = "dev"
         _reset_weekly_plan_workflow(clear_mode=False)
         st.session_state.plan_meals_text = ""
@@ -360,10 +362,10 @@ def _render_generate_plan_controls(
     schema = db.schema
     filter_defaults = default_filters(schema.all_columns)
 
-    st.markdown("#### Generate your plan")
+    st.markdown("#### 1a. Build your meal list")
     st.caption(
-        "Pin specific recipes below, then auto-fill the rest using Meal and weeknight-friendly "
-        "filters. Per-meal filters are still available after you build."
+        "Pin specific recipes, set week filters, then auto-fill the rest. "
+        "Per-meal filters are available under each meal after you build."
     )
     week_filter_columns = week_level_plan_filter_columns(schema)
     week_filters = render_meal_plan_filters(
@@ -390,6 +392,7 @@ def _render_generate_plan_controls(
         _invalidate_weekly_plan_save_state()
         _clear_grocery_session_overrides()
         _clear_grocery_result()
+        st.session_state.plan_last_week_filters = week_filters
         st.rerun()
 
     return week_filters
@@ -431,7 +434,7 @@ def _render_built_plan_meals(
         _clear_grocery_result()
         st.rerun()
 
-    st.markdown("**Your meals**")
+    st.markdown("#### 1b. Your meals")
     for index, name in enumerate(current_plan, start=1):
         meal_col, swap_col = st.columns([8, 1])
         with meal_col:
@@ -446,7 +449,11 @@ def _render_built_plan_meals(
                 ingredient_index=ingredient_index,
             )
         with swap_col:
-            if st.button("↺", key=f"swap_meal_{index}", help="Swap this meal"):
+            if st.button(
+                "Swap",
+                key=f"swap_meal_{index}",
+                help="Pick a different recipe for this meal",
+            ):
                 _apply_plan_swap([name])
 
     if len(current_plan) < int(meal_count) and st.button(
@@ -466,7 +473,7 @@ def _render_built_plan_meals(
         _clear_grocery_result()
         st.rerun()
 
-    if st.button("↺ Re-generate everything", key="regenerate_plan"):
+    if st.button("Re-generate all meals", key="regenerate_plan"):
         rejected = set(st.session_state.get("plan_rejected_names", []))
         plan = suggest_meals(
             all_recipes,
@@ -493,18 +500,40 @@ def render_meals_section(db: NotionRecipesDB, *, all_recipes: list) -> list[str]
     _render_dev_jump_tools(db)
 
     ingredient_index = _cached_plan_ingredient_index(all_recipes)
-    week_filters = _render_generate_plan_controls(
-        db,
-        all_recipes=all_recipes,
-        meal_count=meal_count,
-        ingredient_index=ingredient_index,
-    )
-    _render_built_plan_meals(
-        db,
-        all_recipes=all_recipes,
-        meal_count=meal_count,
-        week_filters=week_filters,
-        ingredient_index=ingredient_index,
-    )
+    current_plan = _current_plan_names()
+    fallback_filters = default_filters(db.schema.all_columns)
+    stored_filters = st.session_state.get("plan_last_week_filters", fallback_filters)
+
+    if current_plan:
+        _render_built_plan_meals(
+            db,
+            all_recipes=all_recipes,
+            meal_count=meal_count,
+            week_filters=stored_filters,
+            ingredient_index=ingredient_index,
+        )
+        with st.expander("Adjust filters or rebuild plan", expanded=False):
+            week_filters = _render_generate_plan_controls(
+                db,
+                all_recipes=all_recipes,
+                meal_count=meal_count,
+                ingredient_index=ingredient_index,
+            )
+            st.session_state.plan_last_week_filters = week_filters
+    else:
+        week_filters = _render_generate_plan_controls(
+            db,
+            all_recipes=all_recipes,
+            meal_count=meal_count,
+            ingredient_index=ingredient_index,
+        )
+        st.session_state.plan_last_week_filters = week_filters
+        _render_built_plan_meals(
+            db,
+            all_recipes=all_recipes,
+            meal_count=meal_count,
+            week_filters=week_filters,
+            ingredient_index=ingredient_index,
+        )
 
     return _current_plan_names()
