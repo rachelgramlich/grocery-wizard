@@ -58,7 +58,7 @@ Three different “ingredient name” helpers existed historically:
 | `ingredient_name` | `parsed.py` | Deprecated alias → `name_from_stored_line` |
 | `ingredient_name` | `shopping/store_aisles.py` | Strip qty prefix from **formatted list lines** for aisle keywords |
 
-Prefer **`ingredients/public.py`** for new imports (grouped re-exports below).
+Import from **`ingredients/parsed.py`**, **`ingredients/normalize.py`**, or **`ingredients/sync.py`** depending on pipeline (see table below).
 
 ## Module map
 
@@ -69,7 +69,6 @@ Prefer **`ingredients/public.py`** for new imports (grouped re-exports below).
 | `parsed.py` | Library-backed parse → storage string; parse stored lines |
 | `normalize.py` | Grocery normalization, amounts, aggregation |
 | `sync.py` | Notion sync, merge, refresh, review formatting |
-| `public.py` | Stable facade for the two pipelines |
 
 ## Tests
 

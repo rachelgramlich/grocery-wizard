@@ -75,7 +75,7 @@ Grocery Wizard is a package under `src/grocery_wizard/`. Folders group code by *
 | `config/` | `__init__.py`, `store_aisles.txt` | Env settings and committed store walk order |
 | `integrations/` | `notion.py`, `notion_household.py`, `nyt_cooking.py` | Notion API; pantry/recurring/plans DBs; NYT sync |
 | `recipes/` | `scraper.py`, `classify.py`, `add_recipe.py` | Scrape URLs, classify metadata, save new recipes |
-| `ingredients/` | `public.py`, `ARCHITECTURE.md` | Two pipelines: storage (`parsed`/`sync`) vs grocery list (`normalize`); see doc |
+| `ingredients/` | `parsed.py`, `sync.py`, `ARCHITECTURE.md` | Two pipelines: storage vs grocery list (`normalize`); see doc |
 | `planning/` | `meal_planner.py` | Meal suggestion and filter logic (Streamlit) |
 | `shopping/` | `grocery_list.py`, `pantry.py` | Build shopping list; pantry load/match/edit |
 | `lib/` | `prompts.py` | Shared interactive prompts |
@@ -108,7 +108,7 @@ grocery-wizard/
 
 ## Architecture notes
 
-Ingredient **storage** (Notion write) and **grocery-list** (read/normalize) pipelines are documented in [`ingredients/ARCHITECTURE.md`](ingredients/ARCHITECTURE.md). Prefer importing from [`ingredients/public.py`](ingredients/public.py) when adding new call sites.
+Ingredient **storage** (Notion write) and **grocery-list** (read/normalize) pipelines are documented in [`ingredients/ARCHITECTURE.md`](ingredients/ARCHITECTURE.md).
 
 ## How ingredients are stored
 

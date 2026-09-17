@@ -1,7 +1,7 @@
 """Parse and format ingredient lines for Notion storage (qty + name strings).
 
 Grocery-list naming and aggregation live in ``normalize.py`` — see
-``ARCHITECTURE.md`` and ``public.py`` for which entry points to use.
+``ARCHITECTURE.md`` for which entry points to use.
 """
 
 from __future__ import annotations

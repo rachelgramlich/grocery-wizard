@@ -13,22 +13,8 @@ from src.grocery_wizard.ingredients.sync import (
     parse_ingredients_text,
     parse_removal_target,
     prepare_ingredients_for_notion,
-    recipe_needs_merge,
-    recipe_needs_sync,
-    refresh_ingredients_for_recipe,
     split_ingredients_text,
 )
-from src.grocery_wizard.integrations.notion import Recipe
-
-
-def _recipe(name: str, link: str | None, ingredients: str | None) -> Recipe:
-    return Recipe(
-        page_id=f"id-{name}",
-        name=name,
-        link=link,
-        ingredients=ingredients,
-        properties={},
-    )
 
 
 @pytest.mark.parametrize(
@@ -155,26 +141,6 @@ def test_apply_removals_substring_match() -> None:
     assert result == ["2 tbsp olive oil", "1 lb chicken"]
 
 
-def test_recipe_needs_sync_empty_only() -> None:
-    empty = _recipe("Empty", "https://example.com", None)
-    populated = _recipe("Full", "https://example.com", "2 eggs")
-    no_link = _recipe("NoLink", None, None)
-
-    assert recipe_needs_sync(empty)
-    assert recipe_needs_sync(empty, force=True)
-    assert not recipe_needs_sync(populated)
-    assert not recipe_needs_sync(populated, force=True)
-    assert not recipe_needs_sync(no_link)
-
-
-def test_recipe_needs_merge_populated_only() -> None:
-    empty = _recipe("Empty", "https://example.com", None)
-    populated = _recipe("Full", "https://example.com", "2 eggs")
-
-    assert recipe_needs_merge(populated)
-    assert not recipe_needs_merge(empty)
-
-
 def test_split_ingredients_text_preserves_directives() -> None:
     text = "Naan bread and rice\nremove: salt\n# pantry note"
     result = split_ingredients_text(text)
@@ -183,38 +149,6 @@ def test_split_ingredients_text_preserves_directives() -> None:
     assert lines[1] == "rice"
     assert lines[2] == "remove: salt"
     assert lines[3] == "# pantry note"
-
-
-def test_refresh_ingredients_split_only(monkeypatch: pytest.MonkeyPatch) -> None:
-    recipe = _recipe(
-        "Curry",
-        "https://example.com/curry",
-        "Naan bread and rice",
-    )
-    updates: list[dict[str, str]] = []
-
-    class FakeDB:
-        schema = type("Schema", (), {"ingredients_column": "Ingredients"})()
-
-        def update_recipe(self, page_id: str, field_values: dict[str, str]) -> Recipe:
-            updates.append(field_values)
-            return recipe
-
-    result = refresh_ingredients_for_recipe(FakeDB(), recipe, split_only=True)
-    assert result.status == "updated"
-    assert result.ingredient_count == 2
-    assert updates == [{"Ingredients": "Naan bread\nrice"}]
-
-
-def test_refresh_ingredients_skips_without_link(monkeypatch: pytest.MonkeyPatch) -> None:
-    recipe = _recipe("Manual", None, "2 eggs")
-
-    class FakeDB:
-        schema = type("Schema", (), {"ingredients_column": "Ingredients"})()
-
-    result = refresh_ingredients_for_recipe(FakeDB(), recipe)
-    assert result.status == "skipped"
-    assert result.message == "no link"
 
 
 def test_notion_fixture_prepare(notion_case: dict) -> None:

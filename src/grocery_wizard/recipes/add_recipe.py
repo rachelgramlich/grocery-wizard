@@ -14,7 +14,12 @@ from src.grocery_wizard.integrations.notion import (
 )
 from src.grocery_wizard.lib.prompts import confirm_no_default
 from src.grocery_wizard.recipes.classify import classify_recipe
-from src.grocery_wizard.recipes.scraper import ScrapeError, ingredients_to_text, scrape_recipe
+from src.grocery_wizard.recipes.scraper import (
+    ScrapedRecipe,
+    ScrapeError,
+    ingredients_to_text,
+    scrape_recipe,
+)
 from src.grocery_wizard.recipes.weeknight import DEFAULT_WEEKNIGHT_COLUMN
 
 
@@ -24,6 +29,129 @@ class PrefetchedCreateResult:
     name: str
     url: str
     field_values: NotionFieldValues
+
+
+@dataclass(frozen=True, slots=True)
+class RecipeUrlPreview:
+    """Result of scraping/classifying one URL before Notion create (UI or CLI)."""
+
+    status: str  # duplicate | manual | ready
+    url: str
+    fields: NotionFieldValues | None = None
+    error: str | None = None
+    duplicate_name: str | None = None
+
+
+def ordered_recipe_field_names(schema: DatabaseSchema) -> list[str]:
+    names = [schema.name_column, schema.link_column]
+    if schema.ingredients_column:
+        names.append(schema.ingredients_column)
+    names.extend(col.name for col in schema.review_columns)
+    return names
+
+
+def guess_recipe_name_from_url(url: str) -> str:
+    from src.grocery_wizard.shopping.grocery_list import recipe_title_from_url
+
+    title = recipe_title_from_url(url)
+    return title.title() if title else ""
+
+
+def base_recipe_field_values(
+    schema: DatabaseSchema,
+    *,
+    url: str = "",
+    name: str = "",
+    ingredients: str = "",
+    inferred: NotionFieldValues | None = None,
+) -> NotionFieldValues:
+    fields: NotionFieldValues = {
+        schema.name_column: name,
+        schema.link_column: url,
+    }
+    if schema.ingredients_column:
+        fields[schema.ingredients_column] = ingredients
+    if inferred:
+        fields.update(inferred)
+    for col in schema.checkbox_columns:
+        fields.setdefault(col.name, False)
+    return fields
+
+
+def field_values_from_scrape(
+    schema: DatabaseSchema,
+    url: str,
+    scraped: ScrapedRecipe,
+) -> NotionFieldValues:
+    filter_columns = [(col.name, col.type, col.options) for col in schema.filter_columns]
+    weeknight_column = _weeknight_column_name(schema)
+    inferred = classify_recipe(
+        scraped.title,
+        scraped.ingredients,
+        filter_columns,
+        total_minutes=scraped.total_time_minutes,
+        weeknight_column=weeknight_column,
+    )
+    ingredients_text = (
+        ingredients_to_text(scraped.ingredients) if schema.ingredients_column else ""
+    )
+    return base_recipe_field_values(
+        schema,
+        url=url,
+        name=scraped.title,
+        ingredients=ingredients_text,
+        inferred=inferred,
+    )
+
+
+def preview_recipe_urls(db: NotionRecipesDB, urls: list[str]) -> list[RecipeUrlPreview]:
+    """Scrape and classify URLs; detect duplicates and missing ingredients."""
+    schema = db.schema
+    previews: list[RecipeUrlPreview] = []
+
+    for url in urls:
+        existing = db.find_by_link(url)
+        if existing:
+            previews.append(
+                RecipeUrlPreview(
+                    status="duplicate",
+                    url=url,
+                    duplicate_name=existing.name,
+                )
+            )
+            continue
+
+        try:
+            scraped = scrape_recipe(url)
+        except ScrapeError as exc:
+            previews.append(
+                RecipeUrlPreview(
+                    status="manual",
+                    url=url,
+                    error=str(exc),
+                    fields=base_recipe_field_values(
+                        schema,
+                        url=url,
+                        name=guess_recipe_name_from_url(url),
+                    ),
+                )
+            )
+            continue
+
+        fields = field_values_from_scrape(schema, url, scraped)
+        if schema.ingredients_column and not scraped.ingredients:
+            previews.append(
+                RecipeUrlPreview(
+                    status="manual",
+                    url=url,
+                    error="No ingredients found on this page. Paste them below.",
+                    fields=fields,
+                )
+            )
+        else:
+            previews.append(RecipeUrlPreview(status="ready", url=url, fields=fields))
+
+    return previews
 
 
 def add_prefetched_recipes(
@@ -147,24 +275,7 @@ def add_recipes_from_urls(
             print(f"Could not scrape recipe: {exc}")
             continue
 
-        filter_columns = [(col.name, col.type, col.options) for col in schema.filter_columns]
-        weeknight_column = _weeknight_column_name(schema)
-        inferred = classify_recipe(
-            scraped.title,
-            scraped.ingredients,
-            filter_columns,
-            total_minutes=scraped.total_time_minutes,
-            weeknight_column=weeknight_column,
-        )
-
-        field_values: NotionFieldValues = {
-            schema.name_column: scraped.title,
-            schema.link_column: url,
-        }
-        if schema.ingredients_column:
-            field_values[schema.ingredients_column] = ingredients_to_text(scraped.ingredients)
-
-        field_values.update(inferred)
+        field_values = field_values_from_scrape(schema, url, scraped)
 
         reviewed = _review_fields(
             db=db,
