@@ -29,7 +29,7 @@ Use **`src/grocery_wizard/ui/app.py`** entry and section tabs from **`src/grocer
 | Tab | Minimum path |
 | --- | --- |
 | **Weekly recipe generation** | Start modes (prefer **Dev mode** for no Notion saves unless user wants save flows) → meal count → **Build my plan** → **Create grocery list** → per-recipe review (if shown) → final list (copy/download, pantry adjust expanders). Optionally exercise **Start from a saved list** if user wants save flows. |
-| **Add Recipe** | Empty URL validation → **Start blank recipe** (expand manual section if needed) → skim NYT sync UI (dry run default; do not live-sync unless asked). |
+| **Add Recipe** | Empty URL validation → **Start blank recipe** (visible in manual section) → skim NYT sync UI (dry run off by default; do not live-sync unless asked). |
 | **Pantry & recurring** | List loads; add/remove forms reachable (do not require persisting test data unless user OK). |
 | **Global** | **Refresh from Notion**; tab switching after long weekly scroll; note load/blank states on first open. |
 

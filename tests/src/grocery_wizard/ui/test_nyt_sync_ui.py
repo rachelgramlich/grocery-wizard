@@ -33,3 +33,12 @@ def test_nyt_sync_visible_on_add_recipe_when_credentials_missing() -> None:
     assert "Sync all saved recipes from your NYT Cooking recipe-box folder." in caption_text
     assert any("NYT credentials are not set" in w.value for w in at.warning)
     assert not any((expander.label or "") == "Sync from NYT Cooking" for expander in at.expander)
+
+
+def test_nyt_dry_run_defaults_off_and_clarifies_notion_outcome() -> None:
+    nyt_sync = (APP_PATH.parent / "nyt_sync.py").read_text(encoding="utf-8")
+    assert 'key="nyt_sync_dry_run"' in nyt_sync
+    assert "value=False" in nyt_sync
+    assert "Dry run finished — Notion was not updated." in nyt_sync
+    assert "Notion updated — added" in nyt_sync
+    assert "Notion updated — no new recipes were needed" in nyt_sync
