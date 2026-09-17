@@ -21,7 +21,15 @@ from src.grocery_wizard.ui.sections.add_recipe import render_add_recipe
 from src.grocery_wizard.ui.sections.pantry_recurring import render_pantry_and_recurring
 from src.grocery_wizard.ui.sections.weekly_plan import render_create_weekly_plan
 from src.grocery_wizard.ui.styles import inject_app_styles
-from src.grocery_wizard.ui.tabs import _TAB_ADD, _TAB_WEEKLY, _UI_TABS
+from src.grocery_wizard.ui.tabs import (
+    _TAB_ADD,
+    _TAB_CONTAINER_KEYS,
+    _TAB_PANTRY,
+    _TAB_WEEKLY,
+    _UI_TABS,
+)
+
+_GW_RENDER_SECTION = "gw_render_section"
 
 # Re-export for tests and AppTest entry points that import from app.
 __all__ = [
@@ -33,9 +41,22 @@ __all__ = [
 ]
 
 
+def _init_section_navigation_state() -> None:
+    if "gw_active_tab" not in st.session_state:
+        st.session_state["gw_active_tab"] = _TAB_WEEKLY
+    if _GW_RENDER_SECTION not in st.session_state:
+        st.session_state[_GW_RENDER_SECTION] = st.session_state["gw_active_tab"]
+
+
+def _on_active_tab_change() -> None:
+    st.session_state[_GW_RENDER_SECTION] = st.session_state["gw_active_tab"]
+
+
 def _refresh_notion_cache_from_ui() -> None:
     """Invalidate Notion caches; Streamlit reruns after the button callback."""
     invalidate_notion_cache()
+    # Keep picker state aligned with the section we are actually rendering.
+    st.session_state["gw_active_tab"] = st.session_state[_GW_RENDER_SECTION]
 
 
 def _render_notion_cache_controls() -> None:
@@ -64,22 +85,28 @@ def main() -> None:
     inject_app_styles()
     st.title("Grocery Wizard")
 
-    active_tab = st.segmented_control(
+    _init_section_navigation_state()
+
+    st.segmented_control(
         "Section",
         _UI_TABS,
-        default=_TAB_WEEKLY,
         key="gw_active_tab",
         label_visibility="collapsed",
+        persist_state="session",
+        on_change=_on_active_tab_change,
     )
 
     _render_notion_cache_controls()
 
-    with st.container(key=f"gw_section_{active_tab}"):
+    active_tab = st.session_state[_GW_RENDER_SECTION]
+    section_key = _TAB_CONTAINER_KEYS.get(active_tab, "unknown")
+
+    with st.container(key=f"gw_section_{section_key}"):
         if active_tab == _TAB_WEEKLY:
             render_create_weekly_plan()
         elif active_tab == _TAB_ADD:
             render_add_recipe()
-        else:
+        elif active_tab == _TAB_PANTRY:
             render_pantry_and_recurring()
 
 

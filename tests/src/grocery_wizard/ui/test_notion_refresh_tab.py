@@ -23,7 +23,14 @@ def test_section_picker_runs_before_notion_refresh_controls() -> None:
 
 def test_active_section_render_is_keyed_container() -> None:
     app = APP_PATH.read_text(encoding="utf-8")
-    assert 'st.container(key=f"gw_section_{active_tab}")' in app
+    assert "_GW_RENDER_SECTION" in app
+    assert 'st.container(key=f"gw_section_{section_key}")' in app
+    assert "persist_state=\"session\"" in app
+
+
+def test_section_body_branches_on_render_section_not_picker_return() -> None:
+    app = APP_PATH.read_text(encoding="utf-8")
+    assert "active_tab = st.session_state[_GW_RENDER_SECTION]" in app
 
 
 def test_pantry_tab_after_notion_refresh_does_not_show_weekly_plan() -> None:
