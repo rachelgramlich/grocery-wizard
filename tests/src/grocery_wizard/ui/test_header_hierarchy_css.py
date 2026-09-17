@@ -31,7 +31,7 @@ def test_markdown_heading_rules_do_not_shrink_page_title() -> None:
     css = app_theme_css()
     assert '.stApp [data-testid="stMarkdownContainer"] h1,' not in css
     assert '.stApp [data-testid="stMarkdownContainer"] h2,' not in css
-    assert 'font-size: revert' in css
+    assert "font-size: revert" in css
 
 
 def test_heading_size_tokens_are_monotonic() -> None:
