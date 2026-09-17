@@ -13,7 +13,7 @@ def test_add_recipe_surfaces_three_entry_paths_without_collapsed_expanders() -> 
     assert source.count("st.container(border=True)") >= 3
     assert "**Recipe URL**" in source
     assert "**Sync from NYT Cooking**" in source
-    assert "Sync a NYT Cooking recipe-box folder (To make and Favorites appear first)." in source
+    assert "Sync a NYT Cooking recipe-box folder." in source
     assert "**Type it in myself**" in source
     assert 'st.expander("Type it in myself"' not in source
 
