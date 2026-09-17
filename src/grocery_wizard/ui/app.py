@@ -87,6 +87,8 @@ def main() -> None:
 
     _init_section_navigation_state()
 
+    _render_notion_cache_controls()
+
     st.segmented_control(
         "Section",
         _UI_TABS,
@@ -95,8 +97,6 @@ def main() -> None:
         persist_state="session",
         on_change=_on_active_tab_change,
     )
-
-    _render_notion_cache_controls()
 
     active_tab = st.session_state[_GW_RENDER_SECTION]
     section_key = _TAB_CONTAINER_KEYS.get(active_tab, "unknown")
