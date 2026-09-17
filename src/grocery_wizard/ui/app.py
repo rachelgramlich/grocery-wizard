@@ -33,6 +33,11 @@ __all__ = [
 ]
 
 
+def _refresh_notion_cache_from_ui() -> None:
+    """Invalidate Notion caches; Streamlit reruns after the button callback."""
+    invalidate_notion_cache()
+
+
 def _render_notion_cache_controls() -> None:
     hint_col, refresh_col = st.columns([3, 2])
     with hint_col:
@@ -40,15 +45,14 @@ def _render_notion_cache_controls() -> None:
         if load_seconds is not None:
             st.caption(f"Last full recipe load from Notion: {load_seconds:.2f}s")
     with refresh_col:
-        if st.button(
+        st.button(
             "Refresh from Notion",
             key="notion_cache_refresh",
             type="secondary",
             use_container_width=True,
             help="Reload recipes, pantry, and saved plans from Notion",
-        ):
-            invalidate_notion_cache()
-            st.rerun()
+            on_click=_refresh_notion_cache_from_ui,
+        )
 
 
 def main() -> None:
@@ -59,7 +63,6 @@ def main() -> None:
     )
     inject_app_styles()
     st.title("Grocery Wizard")
-    _render_notion_cache_controls()
 
     active_tab = st.segmented_control(
         "Section",
@@ -69,12 +72,15 @@ def main() -> None:
         label_visibility="collapsed",
     )
 
-    if active_tab == _TAB_WEEKLY:
-        render_create_weekly_plan()
-    elif active_tab == _TAB_ADD:
-        render_add_recipe()
-    else:
-        render_pantry_and_recurring()
+    _render_notion_cache_controls()
+
+    with st.container(key=f"gw_section_{active_tab}"):
+        if active_tab == _TAB_WEEKLY:
+            render_create_weekly_plan()
+        elif active_tab == _TAB_ADD:
+            render_add_recipe()
+        else:
+            render_pantry_and_recurring()
 
 
 if __name__ == "__main__":
