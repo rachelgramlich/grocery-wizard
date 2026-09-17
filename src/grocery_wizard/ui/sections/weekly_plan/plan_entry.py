@@ -93,7 +93,6 @@ def _set_plan_slot_recipe(plan: list[str], slot_index: int, recipe_name: str) ->
 def _render_slot_manual_picker(
     *,
     slot_index: int,
-    current_name: str,
     all_recipes: list,
     filter_columns: list[ColumnInfo],
     filter_defaults: MealPlanFilters,
@@ -112,22 +111,26 @@ def _render_slot_manual_picker(
 
         all_names = sorted({recipe.name for recipe in all_recipes}, key=str.lower)
 
-        st.subheader("Pick a recipe")
+        st.caption("Pick a recipe")
         if not all_names:
             st.warning("No recipes in Notion yet.")
         else:
-            direct_default = all_names.index(current_name) if current_name in all_names else 0
             direct_picked = st.selectbox(
                 "Choose recipe",
                 all_names,
-                index=direct_default,
+                index=None,
+                placeholder="Search or pick a recipe…",
                 key=f"plan_slot_direct_pick_{slot_index}",
+                label_visibility="collapsed",
             )
             if st.button("Use this recipe", key=f"plan_slot_apply_direct_{slot_index}"):
-                _apply_picked(direct_picked)
+                if not direct_picked:
+                    st.warning("Choose a recipe first.")
+                else:
+                    _apply_picked(direct_picked)
 
         st.divider()
-        st.subheader("Or filter")
+        st.caption("Or filter")
         st.caption("Optional — narrow the list, then pick from the filtered recipes below.")
         slot_filters = render_meal_plan_filters(
             filter_columns,
@@ -145,15 +148,19 @@ def _render_slot_manual_picker(
         if not slot_names:
             st.warning("No recipes match these filters.")
             return
-        filtered_default = slot_names.index(current_name) if current_name in slot_names else 0
         filtered_picked = st.selectbox(
             "Recipe",
             slot_names,
-            index=filtered_default,
+            index=None,
+            placeholder="Pick from filtered recipes…",
             key=f"plan_slot_pick_{slot_index}",
+            label_visibility="collapsed",
         )
         if st.button("Use this recipe", key=f"plan_slot_apply_{slot_index}"):
-            _apply_picked(filtered_picked)
+            if not filtered_picked:
+                st.warning("Choose a recipe from the filtered list first.")
+            else:
+                _apply_picked(filtered_picked)
 
 
 def _render_dev_jump_tools(db: NotionRecipesDB) -> None:
@@ -460,7 +467,6 @@ def _render_built_plan_meals(
             st.write(f"**Meal {index}** — {name}")
             _render_slot_manual_picker(
                 slot_index=index,
-                current_name=name,
                 all_recipes=all_recipes,
                 filter_columns=filter_columns,
                 filter_defaults=filter_defaults,

@@ -46,13 +46,14 @@ def test_manual_picker_recipe_first_then_or_filter() -> None:
     manual = source.split("def _render_slot_manual_picker", 1)[1].split(
         "def _render_dev_jump_tools", 1
     )[0]
-    assert 'st.subheader("Pick a recipe")' in manual
+    assert 'st.caption("Pick a recipe")' in manual
     assert '"Choose recipe"' in manual
     assert "plan_slot_direct_pick_" in manual
-    assert 'st.subheader("Or filter")' in manual
+    assert 'placeholder="Search or pick a recipe…"' in manual
+    assert 'st.caption("Or filter")' in manual
     assert "st.divider()" in manual
-    assert manual.index('st.subheader("Pick a recipe")') < manual.index('st.subheader("Or filter")')
-    assert manual.index('"Choose recipe"') < manual.index("render_meal_plan_filters")
+    assert manual.index('st.caption("Pick a recipe")') < manual.index('st.caption("Or filter")')
+    assert manual.index("placeholder=") < manual.index("render_meal_plan_filters")
 
 
 def test_weekly_plan_build_shows_per_meal_swap() -> None:
