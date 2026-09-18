@@ -18,7 +18,7 @@ from src.grocery_wizard.ui.grocery_helpers import (
     meal_entries_with_links,
     parse_line_items_text,
     removal_matches_grocery_line,
-    render_copy_download,
+    render_copy_button,
 )
 from src.grocery_wizard.ui.notion_cache import cached_query_recipes
 from src.grocery_wizard.ui.sections.weekly_plan.recipe_review import (
@@ -265,11 +265,10 @@ def _render_grocery_result() -> None:
             key="meals_final_list",
         )
         meals_for_copy = st.session_state.get("meals_final_list", meals_copy_text)
-        render_copy_download(
+        render_copy_button(
             meals_for_copy,
-            label="Download meals",
+            label="Copy meals",
             key="meals_copy",
-            file_name="meals.txt",
         )
 
         st.markdown("**Grocery List**")
@@ -286,11 +285,10 @@ def _render_grocery_result() -> None:
             help="Edit this consolidated list directly before copy.",
         )
         grocery_for_copy = st.session_state.get("grocery_final_list", grocery_copy_text)
-        render_copy_download(
+        render_copy_button(
             grocery_for_copy,
-            label="Download list",
+            label="Copy list",
             key="grocery_copy",
-            file_name="grocery-list.txt",
         )
     elif not excluded and not meal_names:
         st.warning("No grocery items found.")
