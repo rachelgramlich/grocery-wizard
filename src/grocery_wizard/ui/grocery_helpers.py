@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
-import streamlit as st
+import html
+import json
 
-from src.grocery_wizard.integrations.notion import Recipe, recipe_lookup_key
+import streamlit as st
+import streamlit.components.v1 as components
+
+from src.grocery_wizard.integrations.notion import Recipe, recipe_export_link, recipe_lookup_key
 from src.grocery_wizard.shopping.grocery_list import _normalized_item_key, merge_grocery_items
 from src.grocery_wizard.shopping.line_items import parse_line_items
+from src.grocery_wizard.ui.theme import GW_THEME
 
 
 def meal_entries_with_links(
@@ -17,28 +22,60 @@ def meal_entries_with_links(
     entries: list[tuple[str, str | None]] = []
     for name in meal_names:
         recipe = recipes_by_name.get(recipe_lookup_key(name))
-        link = recipe.link if recipe else None
+        link = recipe_export_link(recipe) if recipe else None
         entries.append((name, link))
     return entries
 
 
-def render_copy_download(
+def render_copy_button(
     text: str,
     *,
-    label: str = "Copy list",
+    label: str = "Copy",
     key: str,
-    file_name: str,
 ) -> None:
-    """Download plain text instead of an iframe clipboard widget (lighter DOM)."""
-    st.download_button(
-        label=label,
-        data=text.encode("utf-8"),
-        file_name=file_name,
-        mime="text/plain",
-        key=key,
-        use_container_width=True,
+    """Render a full-width control that copies ``text`` to the clipboard."""
+    payload = json.dumps(text)
+    label_json = json.dumps(label)
+    copied_json = json.dumps("Copied!")
+    safe_label = html.escape(label)
+    tokens = GW_THEME
+    components.html(
+        f"""
+        <style>
+          .gw-copy-btn {{
+            width: 100%;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            background: {tokens.accent};
+            color: {tokens.on_accent};
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+          }}
+          .gw-copy-btn:hover {{
+            filter: brightness(1.05);
+          }}
+        </style>
+        <button id="gw-copy-{key}" type="button" class="gw-copy-btn">{safe_label}</button>
+        <script>
+          (function () {{
+            const btn = document.getElementById("gw-copy-{key}");
+            const text = {payload};
+            const label = {label_json};
+            const copied = {copied_json};
+            btn.addEventListener("click", function () {{
+              navigator.clipboard.writeText(text).then(function () {{
+                btn.textContent = copied;
+                setTimeout(function () {{ btn.textContent = label; }}, 2000);
+              }});
+            }});
+          }})();
+        </script>
+        """,
+        height=52,
     )
-    st.caption("Select-all in the text area above, or use Download for the same text.")
+    st.caption("Select-all in the text area above, or use Copy for the same text.")
 
 
 def parse_line_items_text(text: str) -> list[str]:

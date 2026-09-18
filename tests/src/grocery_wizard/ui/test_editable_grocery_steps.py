@@ -58,7 +58,9 @@ def test_copy_buttons_read_session_state_after_text_areas() -> None:
     grocery_idx = result_block.index('key="grocery_final_list"')
     grocery_copy_idx = result_block.index("grocery_for_copy")
     assert grocery_idx < grocery_copy_idx
-    assert "render_copy_download(" in result_block
+    assert "render_copy_button(" in result_block
+    assert "st.download_button" not in result_block
+    assert "Download meals" not in result_block
     assert "meals_for_copy" in result_block
     assert "grocery_for_copy" in result_block
 

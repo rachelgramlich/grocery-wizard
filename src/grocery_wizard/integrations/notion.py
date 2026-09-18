@@ -9,6 +9,8 @@ __all__ = [
     "NotionRecipesDB",
     "Recipe",
     "normalize_recipe_name",
+    "notion_page_url",
+    "recipe_export_link",
     "recipe_lookup_key",
 ]
 
@@ -65,6 +67,22 @@ def normalize_recipe_name(name: str) -> str:
 def recipe_lookup_key(name: str) -> str:
     """Case-insensitive match key — same normalization as meal pickers and Notion reads."""
     return normalize_recipe_name(name).lower()
+
+
+def notion_page_url(page_id: str) -> str:
+    """Return a browser URL for a Notion page from its API page id."""
+    return f"https://www.notion.so/{page_id.replace('-', '')}"
+
+
+def recipe_export_link(recipe: Recipe) -> str | None:
+    """Prefer external Link when set; otherwise link to the Notion recipe card."""
+    external = (recipe.link or "").strip()
+    if external:
+        return external
+    page_id = (recipe.page_id or "").strip()
+    if page_id:
+        return notion_page_url(page_id)
+    return None
 
 
 def _normalize_recipe_field_values(
