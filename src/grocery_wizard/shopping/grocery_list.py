@@ -46,7 +46,7 @@ from src.grocery_wizard.ingredients.parsed import (
     format_lemon_zest_grocery_line,
 )
 from src.grocery_wizard.ingredients.sync import parse_ingredients_text
-from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
+from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe, recipe_lookup_key
 from src.grocery_wizard.shopping.line_items import strip_checklist_prefix, strip_line_item
 from src.grocery_wizard.shopping.pantry import is_pantry_item, load_pantry
 from src.grocery_wizard.shopping.recurring_weekly_items import prompt_recurring_weekly_items
@@ -211,7 +211,7 @@ def build_grocery_list(
     When ``recipes`` is provided, it is used instead of calling ``db.query_recipes()``.
     """
     recipe_list = recipes if recipes is not None else db.query_recipes()
-    recipes_by_name = {recipe.name.lower(): recipe for recipe in recipe_list}
+    recipes_by_name = {recipe_lookup_key(recipe.name): recipe for recipe in recipe_list}
     pantry = load_pantry(pantry_path)
     if pantry_extra:
         pantry = pantry | {item.strip().lower() for item in pantry_extra if item.strip()}
@@ -224,16 +224,41 @@ def build_grocery_list(
     name_link_mismatches: list[NameLinkMismatch] = []
 
     for name in recipe_names:
-        recipe = recipes_by_name.get(name.lower())
+        lookup = recipe_lookup_key(name)
+        recipe = recipes_by_name.get(lookup)
+        override_text = (
+            ingredient_overrides.get(lookup)
+            if ingredient_overrides and lookup in ingredient_overrides
+            else None
+        )
+
         if recipe is None:
+            ingredient_lines = (
+                parse_ingredients_text(override_text)[0]
+                if override_text and override_text.strip()
+                else []
+            )
+            if not ingredient_lines:
+                missing_ingredients.append(name)
+                continue
+            source_name = name.strip() or name
+            for line in ingredient_lines:
+                _collect_ingredient_line(
+                    line,
+                    pantry=pantry,
+                    exclude_pantry=exclude_pantry,
+                    collected=collected,
+                    excluded_pantry=excluded_pantry,
+                    recipe_name=source_name,
+                    provenance=provenance,
+                )
             continue
 
         mismatch = detect_name_link_mismatch(recipe)
         if mismatch:
             name_link_mismatches.append(mismatch)
 
-        if ingredient_overrides and name.lower() in ingredient_overrides:
-            override_text = ingredient_overrides[name.lower()]
+        if override_text is not None:
             ingredient_lines = (
                 parse_ingredients_text(override_text)[0] if override_text.strip() else []
             )

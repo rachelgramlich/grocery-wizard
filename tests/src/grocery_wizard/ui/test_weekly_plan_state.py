@@ -16,6 +16,12 @@ class _FakeSessionState:
     def get(self, key: str, default: object = None) -> object:
         return self._data.get(key, default)
 
+    def pop(self, key: str, default: object = None) -> object:
+        return self._data.pop(key, default)
+
+    def keys(self) -> object:
+        return self._data.keys()
+
     def __setattr__(self, name: str, value: object) -> None:
         if name == "_data":
             super().__setattr__(name, value)
@@ -44,3 +50,13 @@ def test_current_plan_names_preserves_commas_in_recipe_titles(
     title = "Sheet-Pan Baked Feta With Broccolini, Tomatoes and Lemon"
     weekly_plan_state._write_plan_names([title])
     assert weekly_plan_state._current_plan_names() == [title]
+
+
+def test_invalidate_stale_grocery_result_clears_review_when_plan_changes(
+    fake_streamlit_session: _FakeSessionState,
+) -> None:
+    fake_streamlit_session.grocery_per_recipe_review = {"Soup": "1 cup broth"}
+    fake_streamlit_session.grocery_review_plan_fingerprint = ("soup",)
+    fake_streamlit_session.plan_meals_text = "Salad"
+    weekly_plan_state._invalidate_stale_grocery_result()
+    assert fake_streamlit_session.get("grocery_per_recipe_review") is None

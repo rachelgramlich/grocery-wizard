@@ -25,6 +25,7 @@ from src.grocery_wizard.ingredients.sync import parse_ingredients_text
 from src.grocery_wizard.integrations.notion import (
     ColumnInfo,
     Recipe,
+    recipe_lookup_key,
 )
 
 DIVERSITY_COLUMNS = ("Protein", "Dinner Category", "Cuisine")
@@ -285,11 +286,11 @@ def _resolve_locked_by_names(
     all_recipes: list[Recipe],
 ) -> list[Recipe]:
     """Resolve locked recipe names to Recipe objects, preserving order and skipping duplicates."""
-    recipe_by_name = {recipe.name: recipe for recipe in all_recipes}
+    recipe_by_name = {recipe_lookup_key(recipe.name): recipe for recipe in all_recipes}
     locked: list[Recipe] = []
     seen_ids: set[str] = set()
     for name in locked_names:
-        recipe = recipe_by_name.get(name)
+        recipe = recipe_by_name.get(recipe_lookup_key(name))
         if recipe is None or recipe.page_id in seen_ids:
             continue
         locked.append(recipe)

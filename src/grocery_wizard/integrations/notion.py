@@ -2,7 +2,15 @@
 
 from __future__ import annotations
 
-__all__ = ["ColumnInfo", "DatabaseSchema", "NotionFieldValues", "NotionRecipesDB", "Recipe"]
+__all__ = [
+    "ColumnInfo",
+    "DatabaseSchema",
+    "NotionFieldValues",
+    "NotionRecipesDB",
+    "Recipe",
+    "normalize_recipe_name",
+    "recipe_lookup_key",
+]
 
 from dataclasses import dataclass, field
 from typing import Any
@@ -47,6 +55,34 @@ class Recipe:
     link: str | None
     ingredients: str | None
     properties: dict[str, Any]
+
+
+def normalize_recipe_name(name: str) -> str:
+    """Trim leading/trailing whitespace on recipe titles (Notion and plan lines both use this)."""
+    return name.strip()
+
+
+def recipe_lookup_key(name: str) -> str:
+    """Case-insensitive match key — same normalization as meal pickers and Notion reads."""
+    return normalize_recipe_name(name).lower()
+
+
+def _normalize_recipe_field_values(
+    schema: DatabaseSchema,
+    field_values: NotionFieldValues,
+) -> NotionFieldValues:
+    name_column = schema.name_column
+    if name_column not in field_values:
+        return field_values
+    raw = field_values[name_column]
+    if not isinstance(raw, str):
+        return field_values
+    normalized = normalize_recipe_name(raw)
+    if normalized == raw:
+        return field_values
+    updated = dict(field_values)
+    updated[name_column] = normalized
+    return updated
 
 
 DEFAULT_NYT_SYNCED_COLUMN = "Synced from NYT recipe box"
@@ -198,6 +234,7 @@ class NotionRecipesDB:
         return None
 
     def create_recipe(self, field_values: NotionFieldValues) -> Recipe:
+        field_values = _normalize_recipe_field_values(self.schema, field_values)
         properties = {
             name: self._to_notion_property(name, value)
             for name, value in field_values.items()
@@ -210,6 +247,7 @@ class NotionRecipesDB:
         return self._page_to_recipe(page)
 
     def update_recipe(self, page_id: str, field_values: NotionFieldValues) -> Recipe:
+        field_values = _normalize_recipe_field_values(self.schema, field_values)
         properties = {
             name: self._to_notion_property(name, value)
             for name, value in field_values.items()
@@ -222,13 +260,72 @@ class NotionRecipesDB:
         column = self.schema.all_columns.get(column_name)
         return column.options if column else []
 
+    def strip_whitespace_from_all_recipe_names(
+        self,
+        *,
+        dry_run: bool = True,
+    ) -> tuple[list[tuple[str, str, str]], list[str]]:
+        """Trim leading/trailing spaces on recipe titles.
+
+        Returns ``(updates, skip_messages)`` where each update is
+        ``(page_id, before, after)`` and skips explain conflicts.
+        """
+        name_column = self.schema.name_column
+        scanned: list[tuple[str, str, str]] = []
+        cursor: str | None = None
+        while True:
+            response = self._client.data_sources.query(
+                data_source_id=self._data_source_id,
+                start_cursor=cursor,
+            )
+            for page in response.get("results", []):
+                page_id = page["id"]
+                props = page.get("properties", {})
+                raw_name = _read_property(props.get(name_column))
+                if not raw_name:
+                    continue
+                before = str(raw_name)
+                after = normalize_recipe_name(before)
+                scanned.append((page_id, before, after))
+            if not response.get("has_more"):
+                break
+            cursor = response.get("next_cursor")
+
+        key_owner: dict[str, str] = {}
+        for page_id, _before, after in scanned:
+            key = recipe_lookup_key(after)
+            key_owner.setdefault(key, page_id)
+
+        changes: list[tuple[str, str, str]] = []
+        skips: list[str] = []
+        for page_id, before, after in scanned:
+            if before == after:
+                continue
+            key = recipe_lookup_key(after)
+            owner = key_owner.get(key)
+            if owner != page_id:
+                skips.append(
+                    f"Skipped {before!r} → {after!r}: another recipe already uses that title."
+                )
+                continue
+            changes.append((page_id, before, after))
+
+        if dry_run or not changes:
+            return changes, skips
+
+        for page_id, _before, after in changes:
+            self.update_recipe(page_id, {name_column: after})
+        return changes, skips
+
     def _page_to_recipe(self, page: dict[str, Any]) -> Recipe:
         props = page.get("properties", {})
         schema = self.schema
 
+        raw_name = _read_property(props.get(schema.name_column))
+        name = normalize_recipe_name(str(raw_name)) if raw_name else ""
         return Recipe(
             page_id=page["id"],
-            name=_read_property(props.get(schema.name_column)),
+            name=name,
             link=_read_property(props.get(schema.link_column)),
             ingredients=(
                 _read_property(props.get(schema.ingredients_column))

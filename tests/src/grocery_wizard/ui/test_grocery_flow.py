@@ -9,8 +9,10 @@ import pytest
 from src.grocery_wizard.integrations.notion import Recipe
 from src.grocery_wizard.ui.grocery_flow import (
     GroceryPreBuildOptions,
+    collect_recipe_review_overrides,
     default_pre_build_grocery_options,
     fetch_recipe_review_text,
+    recipe_review_widget_key,
     stash_grocery_result,
     stash_recipe_review,
 )
@@ -26,12 +28,33 @@ def _recipe(name: str, *, ingredients: str = "1 cup flour") -> Recipe:
     )
 
 
+def test_fetch_recipe_review_text_matches_notion_titles_with_trailing_space() -> None:
+    stored = "2 cans white beans"
+    recipes = [_recipe("Pizza beans ", ingredients=stored)]
+    review = fetch_recipe_review_text(["Pizza beans"], recipes)
+    assert "white beans" in review["Pizza beans"]
+
+
 def test_fetch_recipe_review_text_formats_notion_storage() -> None:
     stored = "clove:5 garlic"
     recipes = [_recipe("Soup", ingredients=stored)]
     review = fetch_recipe_review_text(["Soup"], recipes)
     assert "5 cloves garlic" in review["Soup"]
     assert "clove:5" not in review["Soup"]
+
+
+def test_recipe_review_widget_key_is_stable_per_recipe_name() -> None:
+    assert recipe_review_widget_key("Pizza Beans") == recipe_review_widget_key("pizza beans")
+    assert recipe_review_widget_key("A") != recipe_review_widget_key("B")
+
+
+def test_collect_recipe_review_overrides_reads_widget_state() -> None:
+    session = {
+        "grocery_per_recipe_review": {"Soup": "fallback"},
+        recipe_review_widget_key("Soup"): "2 carrots",
+    }
+    overrides = collect_recipe_review_overrides(session, ["Soup"])
+    assert overrides == {"soup": "2 carrots"}
 
 
 def test_stash_recipe_review_uses_formatted_text(monkeypatch: pytest.MonkeyPatch) -> None:
