@@ -169,6 +169,16 @@ def test_dev_mode_default_meal_count() -> None:
     assert 'key="plan_meal_count"' in source
 
 
+def test_plan_meal_count_widget_uses_session_state_only() -> None:
+    """Issue #258: do not pass value= when key is bound to session state."""
+    source = ui_source()
+    meal_count_fn = source.split("def _render_meal_count_input", 1)[1].split("\ndef ", 1)[0]
+    assert 'key="plan_meal_count"' in meal_count_fn
+    assert "value=int(" not in meal_count_fn
+    defaults_fn = source.split("def _ensure_plan_session_defaults", 1)[1].split("\ndef ", 1)[0]
+    assert '"plan_meal_count" not in st.session_state' in defaults_fn
+
+
 def test_prebuild_recipe_picker_before_build_my_plan() -> None:
     """Issue #223: single pre-build manual expander; no pin multiselect or week filter row."""
     source = ui_source()
