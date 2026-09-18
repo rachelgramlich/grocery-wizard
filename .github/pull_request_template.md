@@ -17,6 +17,7 @@ Document steps and expected results. For **non-UI** changes (CLI, library, tests
 | **Steps** | <!-- numbered steps the user can run --> |
 | **Expected behavior** | <!-- what should happen --> |
 | **Regression** | <!-- nearby flows to spot-check --> |
+| **Browser smoke** | <!-- **ran** (flows + artifact links) / **skipped** — reason / **N/A (non-UI)** --> |
 
 **Manual sign-off:** agent-verified (non-UI) / pending user verification in agent chat (UI).
 
