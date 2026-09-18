@@ -27,8 +27,10 @@ Requires **`gh`** authenticated for this repo when creating issues.
 | Item | Value |
 | --- | --- |
 | **Path** | `.local/grocery_wizard/feedback_backlog.md` (repo root; same tree as `DATA_DIR` in `src/grocery_wizard/config/__init__.py`) |
-| **Archive** | `.local/grocery_wizard/feedback_backlog.archived.md` (append-only; processed entries) |
+| **Archive** | `.local/grocery_wizard/feedback_backlog.archived.md` (append-only; filed entries + GitHub links) |
 | **Format** | **Markdown**, UTF-8, **append-only** blocks (human-readable in any editor) |
+
+**Inbox rule:** `feedback_backlog.md` is only **not yet filed on GitHub**. After issues are created, **remove** filed entries from the active file and **append** them to the archive (never leave filed notes in the inbox).
 
 Each entry is one block, separated from the next by a line containing only `---` (horizontal rule). Recommended shape (UI #240 should follow this; tolerate extra blank lines):
 
@@ -122,27 +124,51 @@ Reference originating backlog text in the issue body (quoted or summarized).
 
 Reply with issue numbers, URLs, and kind. Note **`/work-on-issue <n>`** for backlog items.
 
-### 4. Archive processed backlog entries
+### 4. Clear inbox + archive (required after create)
 
-After **successful** creation for approved items:
+**Do this in the same turn** once `gh issue create` succeeds for approved items. Do **not** clear anything during step 2 (draft plan only).
 
-1. For each backlog entry that was filed (per **Submitted + body**), append the **same block** to **`.local/grocery_wizard/feedback_backlog.archived.md`**, then add a line **`GitHub issues:** #123, #456` (or whatever was created).
-2. Rewrite **`.local/grocery_wizard/feedback_backlog.md`** to contain **only** entries **not** filed in this run (preserve order; keep leading `---` convention between blocks).
-3. Tell the user how many entries were archived and how many remain in the active backlog.
+For each backlog entry that was turned into GitHub issue(s) (match **Submitted + body**):
 
-If creation partially fails, archive **only** entries whose issues were created; leave the rest in the active file.
+1. **Append** to **`.local/grocery_wizard/feedback_backlog.archived.md`**: the original block unchanged, then metadata lines tying it to GitHub (use repo issue numbers from `gh` output):
+
+```markdown
+---
+
+**Submitted:** 2026-09-18T12:00:00Z
+**Surface:** Pantry
+
+Pantry tab feels slow when expanding aisles.
+
+**GitHub issues:** [#241](https://github.com/OWNER/REPO/issues/241)
+**Filed:** 2026-09-18T14:00:00Z
+```
+
+- **`GitHub issues:`** — one or more markdown links `#N` (when several backlog notes merged into one issue, each archived block lists the **same** issue number; when one note became multiple issues, list every `#N`).
+- **`Filed:`** — ISO-8601 time when you archived (optional but recommended).
+
+2. **Remove** that entry from **`.local/grocery_wizard/feedback_backlog.md`** by rewriting the active file to contain **only** entries still unfilled (preserve order; keep `---` between blocks). An empty inbox is an empty file or a file with no blocks.
+
+3. **Report** in chat: how many entries cleared, which `#` issues they map to, how many remain in the inbox.
+
+**Partial failure:** archive and clear **only** entries whose issues were actually created; leave the rest in the active file.
+
+**Skipped in plan:** entries the user asked not to file stay in the active file (unchanged).
 
 Example archive helper (set `filed` to `(submitted_iso, body_text)` keys and `issue_nums` before running):
 
 ```bash
 python3 <<'PY'
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 
 backlog = Path(".local/grocery_wizard/feedback_backlog.md")
 archive = Path(".local/grocery_wizard/feedback_backlog.archived.md")
 filed: set[tuple[str, str]] = set()  # (submitted, body)
 issue_nums: dict[tuple[str, str], list[int]] = {}
+filed_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+repo = "OWNER/REPO"  # e.g. from `gh repo view --json nameWithOwner -q .nameWithOwner`
 
 
 def parse_blocks(text: str) -> list[tuple[str, str, str]]:
@@ -176,14 +202,11 @@ for ts, body, chunk in parsed:
     if key in filed:
         extra = issue_nums.get(key, [])
         nums = ", ".join(f"#{n}" for n in extra)
-        archive.write_text(
-            archive.read_text(encoding="utf-8") if archive.is_file() else "",
-            encoding="utf-8",
-        )
         with archive.open("a", encoding="utf-8") as f:
             f.write(block_text(chunk))
             if nums:
                 f.write(f"\n**GitHub issues:** {nums}\n")
+            f.write(f"**Filed:** {filed_at}\n")  # set filed_at = datetime.now(timezone.utc).isoformat()
     else:
         remaining_chunks.append(chunk)
 backlog.write_text(
