@@ -37,17 +37,17 @@ def test_parse_store_aisles_file_reads_sections_and_keywords(tmp_path: Path) -> 
 def test_load_store_aisles_uses_committed_config() -> None:
     config = load_store_aisles()
     assert config.aisle_order[0] == "flowers"
-    assert config.aisle_order.index("flowers") < config.aisle_order.index("tomatoes")
-    assert config.aisle_order.index("tomatoes") < config.aisle_order.index("fruit")
+    assert config.aisle_order.index("flowers") < config.aisle_order.index("fruit")
     assert config.aisle_order.index("fruit") < config.aisle_order.index("vegetables")
+    assert "grape tomato" in config.aisle_keywords["vegetables"]
     assert config.aisle_order.index("vegetables") < config.aisle_order.index("coffee")
     assert config.aisle_order.index("coffee") < config.aisle_order.index("pasta")
     assert config.aisle_order.index("pasta") < config.aisle_order.index("refrigerated")
     assert config.aisle_order.index("dairy/eggs") < config.aisle_order.index("bakery")
     assert config.aisle_order.index("bakery") < config.aisle_order.index("home goods")
     assert config.aisle_order.index("home goods") < config.aisle_order.index("dry goods")
-    assert config.aisle_order.index("dry goods") < config.aisle_order.index("frozen")
-    assert config.aisle_order.index("frozen") < config.aisle_order.index("meat/fish")
+    assert config.aisle_order.index("dry goods") < config.aisle_order.index("meat/fish")
+    assert config.aisle_order.index("meat/fish") < config.aisle_order.index("frozen")
     assert config.aisle_labels["flowers"] == "Flowers"
     assert config.aisle_labels["home goods"] == "Home goods"
     assert config.aisle_labels["fruit"] == "Fruit"
@@ -155,8 +155,8 @@ def test_sort_grocery_items_follows_store_walk_order() -> None:
         < dairy_index
         < bakery_index
         < dry_goods_index
-        < frozen_index
         < meat_index
+        < frozen_index
     )
     assert sorted_items.index("milk") < bakery_index
 
@@ -228,15 +228,15 @@ def test_classify_aisle_strips_checklist_prefix(item: str, expected_aisle: str) 
         ("Lox pastrami kind", "meat/fish"),
         ("Mexican crema", "dairy/eggs"),
         ("Pesto", "refrigerated"),
-        ("1 pint grape tomatoes", "tomatoes"),
-        ("1 pint cherry tomatoes", "tomatoes"),
+        ("1 pint grape tomatoes", "vegetables"),
+        ("1 pint cherry tomatoes", "vegetables"),
         ("1 bunch broccolini", "vegetables"),
         ("pasta for squash", "pasta"),
         ("cheese sticks", "refrigerated"),
         ("pudding vanilla", "dairy/eggs"),
         ("coconut oil", "dry goods"),
         ("hash brown", "frozen"),
-        ("bfast sausage", "meat/fish"),
+        ("bfast sausage", "frozen"),
     ],
 )
 def test_classify_aisle_misclassifications(item: str, expected_aisle: str) -> None:

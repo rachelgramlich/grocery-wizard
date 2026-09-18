@@ -7,12 +7,6 @@
 flowers
 bouquet
 
-# --- tomatoes: Tomatoes ---
-grape tomatoes
-cherry tomatoes
-grape tomato
-cherry tomato
-
 # --- fruit: Fruit ---
 berry
 berries
@@ -63,6 +57,10 @@ rosemary
 sage
 chive
 tomato
+grape tomatoes
+cherry tomatoes
+grape tomato
+cherry tomato
 lettuce
 spinach
 kale
@@ -314,19 +312,7 @@ maple syrup
 molasses
 vanilla bean paste
 
-# --- frozen: Frozen ---
-hash browns
-hash brown
-frozen peas
-frozen corn
-frozen berries
-ice cream
-frozen
-popsicle
-
 # --- meat/fish: Meat & fish ---
-breakfast sausage
-bfast sausage
 smoked salmon
 sweet italian sausage
 italian sausage
@@ -398,6 +384,20 @@ dates
 prune
 prunes
 dried fruit
+
+# --- frozen: Frozen ---
+hash browns
+hash brown
+bfast sausage
+veggie sausage
+frozen bfast sausage
+breakfast sausage
+frozen peas
+frozen corn
+frozen berries
+ice cream
+frozen
+popsicle
 
 # --- snacks: Snacks ---
 potato chips
