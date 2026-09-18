@@ -2,17 +2,14 @@
 
 from __future__ import annotations
 
-import os
-
 import pytest
 from ui_source import APP_PATH
 
-_PYTEST_NOTION_API_KEY = "pytest-notion-integration-test-key"
+from tests.notion_test_env import live_notion_smoke_enabled
 
 pytestmark = pytest.mark.skipif(
-    not os.environ.get("NOTION_API_KEY")
-    or os.environ.get("NOTION_API_KEY") == _PYTEST_NOTION_API_KEY,
-    reason="Real Notion credentials required for live AppTest smoke",
+    not live_notion_smoke_enabled(),
+    reason="Live Notion credentials required for AppTest smoke (not CI placeholders)",
 )
 
 

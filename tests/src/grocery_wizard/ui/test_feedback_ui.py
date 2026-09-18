@@ -23,7 +23,7 @@ def test_feedback_expander_renders_in_app() -> None:
 def test_feedback_submit_appends_to_backlog(tmp_path: Path) -> None:
     from streamlit.testing.v1 import AppTest
 
-    backlog = tmp_path / "feedback_backlog.jsonl"
+    backlog = tmp_path / "feedback_backlog.md"
 
     def _app() -> None:
         from src.grocery_wizard.ui.feedback import render_feedback_controls

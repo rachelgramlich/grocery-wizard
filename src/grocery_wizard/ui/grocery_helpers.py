@@ -8,7 +8,7 @@ import json
 import streamlit as st
 import streamlit.components.v1 as components
 
-from src.grocery_wizard.integrations.notion import Recipe, recipe_lookup_key
+from src.grocery_wizard.integrations.notion import Recipe, recipe_export_link, recipe_lookup_key
 from src.grocery_wizard.shopping.grocery_list import _normalized_item_key, merge_grocery_items
 from src.grocery_wizard.shopping.line_items import parse_line_items
 from src.grocery_wizard.ui.theme import GW_THEME
@@ -22,7 +22,7 @@ def meal_entries_with_links(
     entries: list[tuple[str, str | None]] = []
     for name in meal_names:
         recipe = recipes_by_name.get(recipe_lookup_key(name))
-        link = recipe.link if recipe else None
+        link = recipe_export_link(recipe) if recipe else None
         entries.append((name, link))
     return entries
 

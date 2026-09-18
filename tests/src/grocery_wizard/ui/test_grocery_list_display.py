@@ -6,12 +6,13 @@ from pathlib import Path
 
 from ui_source import ui_source
 
+from src.grocery_wizard.integrations.notion import Recipe, notion_page_url, recipe_export_link
 from src.grocery_wizard.shopping.grocery_list import (
     format_grocery_items_copy_text,
     format_meals_and_grocery_list,
     format_meals_copy_text,
 )
-from src.grocery_wizard.ui.grocery_helpers import compute_grocery_drafts
+from src.grocery_wizard.ui.grocery_helpers import compute_grocery_drafts, meal_entries_with_links
 
 
 def test_grocery_final_list_syncs_session_state_before_keyed_text_area() -> None:
@@ -47,6 +48,45 @@ st.text_area("display", key="display_key")
     at.button[0].click().run()
 
     assert at.text_area[0].value == "Value: 1"
+
+
+def test_recipe_export_link_prefers_external_url() -> None:
+    recipe = Recipe(
+        page_id="abc123de-f456-7890-abcd-ef1234567890",
+        name="Soup",
+        link="https://example.com/soup",
+        ingredients=None,
+        properties={},
+    )
+    assert recipe_export_link(recipe) == "https://example.com/soup"
+
+
+def test_recipe_export_link_falls_back_to_notion_page() -> None:
+    page_id = "abc123de-f456-7890-abcd-ef1234567890"
+    recipe = Recipe(
+        page_id=page_id,
+        name="Manual Recipe",
+        link=None,
+        ingredients="salt",
+        properties={},
+    )
+    assert recipe_export_link(recipe) == notion_page_url(page_id)
+    assert recipe_export_link(recipe) == "https://www.notion.so/abc123def4567890abcdef1234567890"
+
+
+def test_meal_entries_with_links_uses_notion_when_link_blank() -> None:
+    page_id = "11111111-2222-3333-4444-555555555555"
+    recipes = [
+        Recipe(
+            page_id=page_id,
+            name="No Link Recipe",
+            link="",
+            ingredients=None,
+            properties={},
+        ),
+    ]
+    meals = meal_entries_with_links(["No Link Recipe"], recipes)
+    assert format_meals_copy_text(meals) == (f"- No Link Recipe ({notion_page_url(page_id)})")
 
 
 def test_copy_text_excludes_section_header_lines() -> None:

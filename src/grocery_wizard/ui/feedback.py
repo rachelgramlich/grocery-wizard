@@ -24,7 +24,7 @@ def _submit_feedback(*, surface: str | None) -> None:
 
 
 def render_feedback_controls(*, surface: str | None = None) -> None:
-    """Global feedback expander; writes append-only JSON Lines under ``.local/``."""
+    """Global feedback expander; writes append-only markdown inbox under ``.local/``."""
     with st.expander("Send feedback", expanded=False):
         st.caption("Bugs, ideas, and papercuts — saved locally on this machine for later triage.")
         if st.session_state.pop(_FEEDBACK_FLASH_OK, False):

@@ -9,10 +9,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from tests.notion_test_env import PYTEST_NOTION_API_KEY_PLACEHOLDER
+
 # Dummy Notion settings so CI and fresh clones can run tests without a real `.env`.
 # Real credentials from the environment or `.env` take precedence (`setdefault`).
 _PYTEST_NOTION_ENV: dict[str, str] = {
-    "NOTION_API_KEY": "pytest-notion-integration-test-key",
+    "NOTION_API_KEY": PYTEST_NOTION_API_KEY_PLACEHOLDER,
     "NOTION_RECIPE_DATABASE_ID": "00000000-0000-4000-8000-000000000001",
     "NOTION_PANTRY_DATABASE_ID": "00000000-0000-4000-8000-000000000002",
     "NOTION_RECURRING_WEEKLY_DATABASE_ID": "00000000-0000-4000-8000-000000000003",
