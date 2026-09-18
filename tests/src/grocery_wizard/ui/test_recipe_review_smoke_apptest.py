@@ -7,9 +7,12 @@ import os
 import pytest
 from ui_source import APP_PATH
 
+_PYTEST_NOTION_API_KEY = "pytest-notion-integration-test-key"
+
 pytestmark = pytest.mark.skipif(
-    not os.environ.get("NOTION_API_KEY"),
-    reason="Notion credentials required for live AppTest smoke",
+    not os.environ.get("NOTION_API_KEY")
+    or os.environ.get("NOTION_API_KEY") == _PYTEST_NOTION_API_KEY,
+    reason="Real Notion credentials required for live AppTest smoke",
 )
 
 
