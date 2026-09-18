@@ -42,7 +42,7 @@ _SAVE_WEEK_CHOICE_KEY = "weekly_plan_save_week_choice"
 
 
 def _current_plan_names() -> list[str]:
-    return parse_line_items_text(st.session_state.get("plan_meals_text", "").replace(",", "\n"))
+    return parse_line_items_text(st.session_state.get("plan_meals_text", ""))
 
 
 def _write_plan_names(names: list[str]) -> None:
