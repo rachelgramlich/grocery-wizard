@@ -496,29 +496,19 @@ def _render_weekly_plan_entry() -> bool:
 def _ensure_plan_session_defaults() -> None:
     if "plan_meals_text" not in st.session_state:
         st.session_state.plan_meals_text = ""
-    if _weekly_plan_mode() == "dev" and "plan_meal_count" not in st.session_state:
-        st.session_state.plan_meal_count = 1
+    if "plan_meal_count" not in st.session_state:
+        st.session_state.plan_meal_count = (
+            1 if _weekly_plan_mode() == "dev" else load_config().default_meals
+        )
 
 
 def _render_meal_count_input() -> int:
-    config = load_config()
     st.markdown("### 1. Meals")
-    if _weekly_plan_mode() == "dev":
-        return int(
-            st.number_input(
-                "How many meals this week?",
-                min_value=1,
-                max_value=21,
-                step=1,
-                key="plan_meal_count",
-            )
-        )
     return int(
         st.number_input(
             "How many meals this week?",
             min_value=1,
             max_value=21,
-            value=int(st.session_state.get("plan_meal_count", config.default_meals)),
             step=1,
             key="plan_meal_count",
         )
