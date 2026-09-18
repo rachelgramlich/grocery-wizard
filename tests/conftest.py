@@ -59,7 +59,21 @@ def _notion_test_doubles(monkeypatch: pytest.MonkeyPatch) -> None:
         ),
     ]
 
-    monkeypatch.setattr("src.grocery_wizard.ui.db_access.get_db", lambda: fake_db)
+    def _fake_get_db() -> MagicMock:
+        return fake_db
+
+    get_db_targets = (
+        "src.grocery_wizard.ui.db_access",
+        "src.grocery_wizard.ui.app",
+        "src.grocery_wizard.ui.nyt_sync",
+        "src.grocery_wizard.ui.sections.add_recipe",
+        "src.grocery_wizard.ui.sections.weekly_plan.flow",
+        "src.grocery_wizard.ui.sections.weekly_plan.plan_entry",
+        "src.grocery_wizard.ui.sections.weekly_plan.grocery_wizard",
+        "src.grocery_wizard.ui.sections.weekly_plan.state",
+    )
+    for module_path in get_db_targets:
+        monkeypatch.setattr(f"{module_path}.get_db", _fake_get_db, raising=False)
     monkeypatch.setattr(
         "src.grocery_wizard.ui.notion_cache._load_pantry_cached",
         lambda _generation, _household_db_id: [],
