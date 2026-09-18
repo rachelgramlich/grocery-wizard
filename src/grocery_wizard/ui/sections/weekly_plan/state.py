@@ -19,6 +19,7 @@ from src.grocery_wizard.planning.saved_weekly_plans import (
 )
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.grocery_flow import (
+    GROCERY_STASH_NOTION_GENERATION_KEY,
     bump_grocery_pre_extra_items_widget,
     grocery_pre_extra_items_widget_key,
     recipe_review_plan_fingerprint,
@@ -33,7 +34,7 @@ from src.grocery_wizard.ui.grocery_flow import (
     session_pantry_extra as _session_pantry_extra_state,
 )
 from src.grocery_wizard.ui.grocery_helpers import parse_line_items_text
-from src.grocery_wizard.ui.notion_cache import invalidate_saved_plans_cache
+from src.grocery_wizard.ui.notion_cache import invalidate_saved_plans_cache, notion_cache_generation
 
 if TYPE_CHECKING:
     from src.grocery_wizard.integrations.notion import Recipe
@@ -106,6 +107,7 @@ def _clear_grocery_result(*, clear_pre_extra_items: bool = True) -> None:
         "grocery_review_plan_fingerprint",
         "grocery_review_baseline",
         "grocery_review_save_to_notion",
+        GROCERY_STASH_NOTION_GENERATION_KEY,
     ):
         st.session_state.pop(key, None)
     for key in list(st.session_state.keys()):
@@ -295,6 +297,10 @@ def _render_save_plan_controls(
 
 def _invalidate_stale_grocery_result() -> None:
     """Drop cached grocery results when the meal plan has changed."""
+    stash_gen = st.session_state.get(GROCERY_STASH_NOTION_GENERATION_KEY)
+    if stash_gen is not None and int(stash_gen) != notion_cache_generation():
+        _clear_grocery_result(clear_pre_extra_items=False)
+
     current_plan = tuple(_current_plan_names())
     current_fp = recipe_review_plan_fingerprint(list(current_plan))
 

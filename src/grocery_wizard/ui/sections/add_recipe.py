@@ -23,6 +23,7 @@ from src.grocery_wizard.ui.nyt_sync import render_nyt_sync_controls
 _ENTRY_PATH_URL = "url"
 _ENTRY_PATH_MANUAL = "manual"
 _ENTRY_PATH_NYT = "nyt"
+_MANUAL_RECIPE_EPOCH_KEY = "add_recipe_manual_epoch"
 
 
 def render_add_recipe() -> None:
@@ -58,6 +59,9 @@ def render_add_recipe() -> None:
             type="primary",
             key="add_recipe_manual_start",
         ):
+            st.session_state[_MANUAL_RECIPE_EPOCH_KEY] = (
+                int(st.session_state.get(_MANUAL_RECIPE_EPOCH_KEY, 0)) + 1
+            )
             st.session_state["preview_recipes"] = [
                 _preview_dict(
                     RecipeUrlPreview(
@@ -98,6 +102,13 @@ def _previews_for_ui(db: NotionRecipesDB, urls: list[str]) -> list[dict[str, obj
         _preview_dict(preview, entry_path=_ENTRY_PATH_URL)
         for preview in preview_recipe_urls(db, urls)
     ]
+
+
+def _recipe_editor_key_prefix(index: int, entry_path: str) -> str:
+    if entry_path == _ENTRY_PATH_MANUAL:
+        epoch = int(st.session_state.get(_MANUAL_RECIPE_EPOCH_KEY, 0))
+        return f"recipe_manual_{epoch}_{index}"
+    return f"recipe_{index}"
 
 
 def _resolve_entry_path(preview: dict[str, object]) -> str:
@@ -148,7 +159,8 @@ def _render_recipe_review(
         title = f"Review: {recipe_name}"
 
     with st.expander(title, expanded=True):
-        edited = _render_recipe_field_editors(schema, fields, key_prefix=f"recipe_{index}")
+        key_prefix = _recipe_editor_key_prefix(index, _resolve_entry_path(preview))
+        edited = _render_recipe_field_editors(schema, fields, key_prefix=key_prefix)
 
         if st.button("Save to Notion", key=f"save_{index}", type="primary"):
             cleaned = {key: value for key, value in edited.items() if value not in (None, "", [])}
