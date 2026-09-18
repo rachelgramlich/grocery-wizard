@@ -1,8 +1,8 @@
-"""Append-only local feedback backlog (JSON Lines) for UI capture and agent triage."""
+"""Append-only local feedback backlog (Markdown inbox) for UI capture and agent triage."""
 
 from __future__ import annotations
 
-import json
+import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TypedDict
@@ -15,13 +15,23 @@ __all__ = [
     "read_feedback_backlog",
 ]
 
+_METADATA_LINE = re.compile(r"^\*\*(Submitted|Surface|Context):\*\*.*\n?", re.MULTILINE)
+
 
 class FeedbackEntry(TypedDict, total=False):
-    """One line in ``feedback_backlog.jsonl``."""
+    """One block in ``feedback_backlog.md``."""
 
     timestamp: str
     text: str
     surface: str
+
+
+def _format_entry_block(entry: FeedbackEntry) -> str:
+    lines = ["---", "", f"**Submitted:** {entry['timestamp']}"]
+    if surface := entry.get("surface"):
+        lines.append(f"**Surface:** {surface}")
+    lines.extend(["", entry["text"].rstrip(), ""])
+    return "\n".join(lines)
 
 
 def append_feedback(
@@ -30,7 +40,7 @@ def append_feedback(
     path: Path = FEEDBACK_BACKLOG_PATH,
     surface: str | None = None,
 ) -> Path:
-    """Append a single feedback note to the local backlog file."""
+    """Append a single feedback note to the local markdown inbox."""
     cleaned = text.strip()
     if not cleaned:
         raise ValueError("feedback text must be non-empty after stripping")
@@ -42,9 +52,15 @@ def append_feedback(
     if surface:
         entry["surface"] = surface
 
+    block = _format_entry_block(entry)
     path.parent.mkdir(parents=True, exist_ok=True)
+
+    prefix = ""
+    if path.is_file() and path.read_text(encoding="utf-8").strip():
+        prefix = "\n\n"
+
     with path.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        handle.write(prefix + block)
     return path
 
 
@@ -53,9 +69,23 @@ def read_feedback_backlog(path: Path = FEEDBACK_BACKLOG_PATH) -> list[FeedbackEn
     if not path.is_file():
         return []
 
+    raw = path.read_text(encoding="utf-8")
     entries: list[FeedbackEntry] = []
-    for line in path.read_text(encoding="utf-8").splitlines():
-        stripped = line.strip()
-        if stripped:
-            entries.append(json.loads(stripped))
+    for raw_chunk in re.split(r"\n---\n", raw):
+        block = raw_chunk.strip()
+        if not block:
+            continue
+        if block.startswith("---"):
+            block = block.removeprefix("---").strip()
+
+        submitted = re.search(r"\*\*Submitted:\*\*\s*(.+)", block)
+        timestamp = submitted.group(1).strip() if submitted else ""
+        surface_match = re.search(r"\*\*Surface:\*\*\s*(.+)", block)
+        surface = surface_match.group(1).strip() if surface_match else None
+        body = _METADATA_LINE.sub("", block).strip()
+
+        entry: FeedbackEntry = {"timestamp": timestamp, "text": body}
+        if surface:
+            entry["surface"] = surface
+        entries.append(entry)
     return entries
