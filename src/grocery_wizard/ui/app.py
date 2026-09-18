@@ -13,6 +13,7 @@ if str(_REPO_ROOT) not in sys.path:
 import streamlit as st
 
 from src.grocery_wizard.ui.db_access import get_db
+from src.grocery_wizard.ui.feedback import render_feedback_controls
 from src.grocery_wizard.ui.notion_cache import (
     invalidate_notion_cache,
     last_recipe_cache_load_seconds,
@@ -105,6 +106,7 @@ def main() -> None:
     _init_section_navigation_state()
 
     _render_notion_cache_controls()
+    render_feedback_controls(surface=st.session_state.get(_GW_RENDER_SECTION))
 
     st.segmented_control(
         "Section",
