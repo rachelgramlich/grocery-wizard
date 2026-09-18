@@ -22,7 +22,7 @@ Requires **`gh`** authenticated for this repo when creating issues.
 
 ## Backlog file (local, gitignored)
 
-**Who writes it:** the Streamlit **Send feedback** control in issue **#240** appends each submission. **This slash command only reads and archives** — it does not implement the UI or create the file on first use.
+**Who writes entries:** the Streamlit **Send feedback** control in issue **#240** appends each submission. **This command** reads the inbox and archives after issue creation — no Python helper module; use shell below to ensure the gitignored files exist.
 
 | Item | Value |
 | --- | --- |
@@ -52,13 +52,21 @@ Pantry tab feels slow when expanding aisles.
 
 **Entry identity** for matching when archiving: **`Submitted` timestamp + body text** (strip whitespace on body; both must match).
 
-If the backlog file is **missing** or has **no entries**, say so and stop after suggesting: run `just grocery-ui` and submit feedback once #240 is shipped, or paste 2–3 sample blocks into the file manually for testing.
+If the inbox has **no entry blocks** after scan, say so and stop after suggesting: run `just grocery-ui` and submit feedback once #240 is shipped, or paste 2–3 sample blocks into the inbox manually for testing.
+
+**Ensure files exist** (from repo root; paths stay gitignored via `.local/` in `.gitignore`):
+
+```bash
+mkdir -p .local/grocery_wizard
+for f in feedback_backlog.md feedback_backlog.archived.md; do
+  test -f ".local/grocery_wizard/$f" || : > ".local/grocery_wizard/$f"
+done
+```
 
 **Read entries** (from repo root):
 
 ```bash
 BACKLOG=".local/grocery_wizard/feedback_backlog.md"
-test -f "$BACKLOG" || echo "missing"
 python3 <<'PY'
 import re
 from pathlib import Path
@@ -96,7 +104,7 @@ Valid areas match the table in `.cursor/commands/work-on-issue.md`.
 
 ### 1. Scan
 
-Read **all** unprocessed entry blocks from `.local/grocery_wizard/feedback_backlog.md` (split on `\n---\n`). Report if any block lacks **Submitted** or body text.
+Run **Ensure files exist** (above), then read **all** unprocessed entry blocks from `.local/grocery_wizard/feedback_backlog.md` (split on `\n---\n`). Report if any block lacks **Submitted** or body text.
 
 ### 2. Propose (chat only — no GitHub yet)
 
@@ -201,12 +209,12 @@ for ts, body, chunk in parsed:
     key = (ts, body)
     if key in filed:
         extra = issue_nums.get(key, [])
-        nums = ", ".join(f"#{n}" for n in extra)
+        links = ", ".join(f"[#{n}](https://github.com/{repo}/issues/{n})" for n in extra)
         with archive.open("a", encoding="utf-8") as f:
             f.write(block_text(chunk))
-            if nums:
-                f.write(f"\n**GitHub issues:** {nums}\n")
-            f.write(f"**Filed:** {filed_at}\n")  # set filed_at = datetime.now(timezone.utc).isoformat()
+            if links:
+                f.write(f"\n**GitHub issues:** {links}\n")
+            f.write(f"**Filed:** {filed_at}\n")
     else:
         remaining_chunks.append(chunk)
 backlog.write_text(
