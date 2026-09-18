@@ -35,9 +35,11 @@ def test_create_recipe_strips_name_before_write(monkeypatch) -> None:
     db = NotionRecipesDB.__new__(NotionRecipesDB)
     db.schema = _schema()
     db._database_id = "db"
+    db._data_source_id = "ds-id"
     captured: dict = {}
 
     def fake_create(*, parent, properties):
+        captured["parent"] = parent
         captured["properties"] = properties
         return {
             "id": "page-1",
@@ -54,5 +56,9 @@ def test_create_recipe_strips_name_before_write(monkeypatch) -> None:
 
     db.create_recipe({"Name": "  Pizza beans  ", "Link": "https://example.com"})
 
+    assert captured["parent"] == {
+        "type": "data_source_id",
+        "data_source_id": "ds-id",
+    }
     title_payload = captured["properties"]["Name"]["title"][0]["text"]["content"]
     assert title_payload == "Pizza beans"

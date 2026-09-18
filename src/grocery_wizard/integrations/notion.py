@@ -241,7 +241,10 @@ class NotionRecipesDB:
             if value is not None and value not in ("", [])
         }
         page = self._client.pages.create(
-            parent={"database_id": self._database_id},
+            parent={
+                "type": "data_source_id",
+                "data_source_id": self._data_source_id,
+            },
             properties=properties,
         )
         return self._page_to_recipe(page)
