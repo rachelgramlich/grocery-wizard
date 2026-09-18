@@ -39,11 +39,15 @@ class NotionDatabase:
         return self._data_source_id
 
     def _resolve_data_source_id(self) -> str:
+        configured_id = self._config.notion_data_source_id
+        if configured_id and self._database_id != self._config.notion_recipe_database_id:
+            # NOTION_DATA_SOURCE_ID is recipe-DB scoped; household DBs resolve per database_id.
+            configured_id = None
         return resolve_notion_data_source_id(
             self._client.databases,
             self._client.data_sources,
             self._database_id,
-            configured_id=self._config.notion_data_source_id,
+            configured_id=configured_id,
         )
 
     def _load_column_types(self) -> dict[str, str]:
@@ -72,7 +76,10 @@ class NotionDatabase:
 
     def create_page(self, properties: dict[str, Any]) -> NotionPageRow:
         page = self._client.pages.create(
-            parent={"database_id": self._database_id},
+            parent={
+                "type": "data_source_id",
+                "data_source_id": self._data_source_id,
+            },
             properties=properties,
         )
         return NotionPageRow(page_id=page["id"], properties=page.get("properties", {}))
