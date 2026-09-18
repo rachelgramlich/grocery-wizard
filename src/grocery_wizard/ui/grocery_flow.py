@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
 from typing import Any
 
-from src.grocery_wizard.ingredients.sync import format_ingredients_for_review
-from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
+from src.grocery_wizard.ingredients.sync import (
+    format_ingredients_for_review,
+    prepare_ingredients_for_notion,
+)
+from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe, recipe_lookup_key
 from src.grocery_wizard.shopping.grocery_list import build_grocery_list
 from src.grocery_wizard.shopping.line_items import parse_line_items
 from src.grocery_wizard.shopping.recurring_weekly_items import (
@@ -81,11 +85,79 @@ def default_pre_build_grocery_options(session_state: Any) -> GroceryPreBuildOpti
     )
 
 
+def recipe_review_widget_key(recipe_name: str) -> str:
+    digest = hashlib.sha256(recipe_name.strip().lower().encode()).hexdigest()[:16]
+    return f"review_ing_{digest}"
+
+
+def clear_recipe_review_widget_keys(session_state: Any) -> None:
+    for key in list(session_state.keys()):
+        if str(key).startswith("review_ing_"):
+            session_state.pop(key, None)
+
+
+def recipe_review_plan_fingerprint(selected: list[str]) -> tuple[str, ...]:
+    return tuple(name.strip().lower() for name in selected if name.strip())
+
+
+def collect_recipe_review_overrides(session_state: Any, selected: list[str]) -> dict[str, str]:
+    """Read per-recipe review text areas (lowercase recipe name → edited text)."""
+    review: dict[str, str] = session_state.get("grocery_per_recipe_review") or {}
+    overrides: dict[str, str] = {}
+    for name in selected:
+        widget_key = recipe_review_widget_key(name)
+        text = session_state.get(widget_key, review.get(name, ""))
+        overrides[recipe_lookup_key(name)] = str(text or "")
+    return overrides
+
+
+def sync_recipe_review_overrides_to_session(
+    session_state: Any,
+    selected: list[str],
+) -> dict[str, str]:
+    """Keep ``grocery_per_recipe_review`` aligned with widget state before building."""
+    overrides = collect_recipe_review_overrides(session_state, selected)
+    review = dict(session_state.get("grocery_per_recipe_review") or {})
+    for name in selected:
+        review[name] = overrides.get(recipe_lookup_key(name), review.get(name, ""))
+    session_state["grocery_per_recipe_review"] = review
+    return overrides
+
+
+def persist_reviewed_ingredients_to_notion(
+    db: NotionRecipesDB,
+    *,
+    selected: list[str],
+    overrides: dict[str, str],
+    recipes: list[Recipe],
+    baseline_review: dict[str, str],
+) -> int:
+    """Write edited review text back to Notion for recipes that changed. Returns update count."""
+    schema = db.schema
+    ingredients_column = schema.ingredients_column
+    if not ingredients_column:
+        return 0
+
+    recipes_by_name = {recipe_lookup_key(recipe.name): recipe for recipe in recipes}
+    updated = 0
+    for name in selected:
+        recipe = recipes_by_name.get(recipe_lookup_key(name))
+        if recipe is None:
+            continue
+        edited = overrides.get(recipe_lookup_key(name), "")
+        if edited.strip() == baseline_review.get(name, "").strip():
+            continue
+        prepared = prepare_ingredients_for_notion(edited, source_url=recipe.link)
+        db.update_recipe(recipe.page_id, {ingredients_column: prepared})
+        updated += 1
+    return updated
+
+
 def fetch_recipe_review_text(selected: list[str], recipes: list[Recipe]) -> dict[str, str]:
-    recipes_by_name = {recipe.name.lower(): recipe for recipe in recipes}
+    recipes_by_name = {recipe_lookup_key(recipe.name): recipe for recipe in recipes}
     review: dict[str, str] = {}
     for name in selected:
-        recipe = recipes_by_name.get(name.lower())
+        recipe = recipes_by_name.get(recipe_lookup_key(name))
         raw = recipe.ingredients or "" if recipe else ""
         review[name] = format_ingredients_for_review(raw)
     return review
@@ -97,18 +169,24 @@ def stash_recipe_review(
     recipes: list[Recipe],
     options: GroceryPreBuildOptions,
 ) -> None:
-    session_state["grocery_per_recipe_review"] = fetch_recipe_review_text(selected, recipes)
+    clear_recipe_review_widget_keys(session_state)
+    review = fetch_recipe_review_text(selected, recipes)
+    session_state["grocery_per_recipe_review"] = review
     session_state["grocery_review_recipes"] = recipes
+    session_state["grocery_review_plan_fingerprint"] = recipe_review_plan_fingerprint(selected)
+    session_state["grocery_review_baseline"] = dict(review)
     session_state["grocery_review_options"] = {
         "exclude_pantry": options.exclude_pantry,
         "recurring_text": options.recurring_text,
         "default_recurring": options.default_recurring,
         "extra_items_text": options.extra_items_text,
     }
+    for name in selected:
+        session_state[recipe_review_widget_key(name)] = review.get(name, "")
 
 
 def ingredient_overrides_from_review(review: dict[str, str]) -> dict[str, str]:
-    return {name.lower(): text for name, text in review.items()}
+    return {recipe_lookup_key(name): text for name, text in review.items()}
 
 
 def build_grocery_result_payload(

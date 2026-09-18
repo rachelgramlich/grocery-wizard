@@ -332,6 +332,30 @@ def test_build_grocery_list_uses_ingredient_overrides_instead_of_notion(tmp_path
     assert any("Stew" in recipes for recipes in provenance.values())
 
 
+def test_build_grocery_list_override_applies_when_recipe_name_not_in_notion(
+    tmp_path: Path,
+) -> None:
+    """Saved-plan names that no longer match Notion still contribute via review overrides."""
+    pantry_path = tmp_path / "pantry.txt"
+    pantry_path.write_text("salt\n", encoding="utf-8")
+
+    db = MagicMock()
+    db.query_recipes.return_value = [_recipe("Other Recipe", "1 onion")]
+
+    items, _, _, missing, provenance, _ = build_grocery_list(
+        db,
+        recipe_names=["Pizza Beans"],
+        pantry_path=pantry_path,
+        ingredient_overrides={"pizza beans": "2 cans white beans\n1 pizza crust"},
+    )
+
+    assert missing == []
+    joined = " ".join(items).lower()
+    assert "beans" in joined
+    assert "pizza crust" in joined
+    assert any("Pizza Beans" in recipes for recipes in provenance.values())
+
+
 def test_build_grocery_list_override_can_supply_ingredients_when_notion_empty(
     tmp_path: Path,
 ) -> None:

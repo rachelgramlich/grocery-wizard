@@ -21,6 +21,7 @@ from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.grocery_flow import (
     bump_grocery_pre_extra_items_widget,
     grocery_pre_extra_items_widget_key,
+    recipe_review_plan_fingerprint,
 )
 from src.grocery_wizard.ui.grocery_flow import (
     clear_grocery_session_overrides as _clear_grocery_session_overrides_state,
@@ -101,10 +102,13 @@ def _clear_grocery_result(*, clear_pre_extra_items: bool = True) -> None:
         "grocery_per_recipe_review",
         "grocery_review_options",
         "grocery_review_recipes",
+        "grocery_review_plan_fingerprint",
+        "grocery_review_baseline",
+        "grocery_review_save_to_notion",
     ):
         st.session_state.pop(key, None)
     for key in list(st.session_state.keys()):
-        if key.startswith("review_ing_"):
+        if str(key).startswith("review_ing_"):
             st.session_state.pop(key, None)
     if clear_pre_extra_items:
         _clear_grocery_pre_extra_items()
@@ -290,11 +294,17 @@ def _render_save_plan_controls(
 
 def _invalidate_stale_grocery_result() -> None:
     """Drop cached grocery results when the meal plan has changed."""
+    current_plan = tuple(_current_plan_names())
+    current_fp = recipe_review_plan_fingerprint(list(current_plan))
+
+    review_fp = st.session_state.get("grocery_review_plan_fingerprint")
+    if review_fp is not None and review_fp != current_fp:
+        _clear_grocery_result(clear_pre_extra_items=False)
+
     result = st.session_state.get("grocery_result")
     if not result:
         return
 
-    current_plan = tuple(_current_plan_names())
     cached_plan = result.get("week_plan")
     if cached_plan is not None and cached_plan != current_plan:
         _clear_grocery_result()

@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from datetime import date
 
 from src.grocery_wizard.config import Config, load_config
-from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
+from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe, recipe_lookup_key
 from src.grocery_wizard.integrations.notion_table import NotionDatabase, NotionPageRow
 from src.grocery_wizard.planning.saved_weekly_plans import (
     SavedWeeklyPlan,
@@ -337,7 +337,7 @@ class NotionWeeklyPlansDB:
         else:
             recipe_rows = self._recipes_db.query_recipes()
         recipe_names_by_id = {recipe.page_id: recipe.name for recipe in recipe_rows}
-        page_id_by_name = {recipe.name.lower(): recipe.page_id for recipe in recipe_rows}
+        page_id_by_name = {recipe_lookup_key(recipe.name): recipe.page_id for recipe in recipe_rows}
 
         week_filter = {
             "property": PLAN_WEEK_START_COLUMN,
@@ -356,7 +356,7 @@ class NotionWeeklyPlansDB:
         name = format_plan_name(week_start, version)
         relation_ids: list[str] = []
         for recipe_name in recipes:
-            page_id = page_id_by_name.get(recipe_name.lower())
+            page_id = page_id_by_name.get(recipe_lookup_key(recipe_name))
             if page_id:
                 relation_ids.append(page_id)
         props = {
@@ -416,10 +416,10 @@ class NotionWeeklyPlansDB:
 
     def _recipe_page_ids_for_names(self, recipe_names: tuple[str, ...]) -> list[str]:
         recipes = self._recipes_db.query_recipes()
-        by_name = {recipe.name.lower(): recipe.page_id for recipe in recipes}
+        by_name = {recipe_lookup_key(recipe.name): recipe.page_id for recipe in recipes}
         ids: list[str] = []
         for name in recipe_names:
-            page_id = by_name.get(name.lower())
+            page_id = by_name.get(recipe_lookup_key(name))
             if page_id:
                 ids.append(page_id)
         return ids

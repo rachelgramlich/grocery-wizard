@@ -11,6 +11,7 @@ from src.grocery_wizard.integrations.notion import (
     DatabaseSchema,
     NotionFieldValues,
     NotionRecipesDB,
+    normalize_recipe_name,
 )
 from src.grocery_wizard.lib.prompts import confirm_no_default
 from src.grocery_wizard.recipes.classify import classify_recipe
@@ -66,7 +67,7 @@ def base_recipe_field_values(
     inferred: NotionFieldValues | None = None,
 ) -> NotionFieldValues:
     fields: NotionFieldValues = {
-        schema.name_column: name,
+        schema.name_column: normalize_recipe_name(name) if name else name,
         schema.link_column: url,
     }
     if schema.ingredients_column:

@@ -33,6 +33,10 @@ from src.grocery_wizard.ui.meal_plan_filters import (
     render_meal_plan_filters,
 )
 from src.grocery_wizard.ui.notion_cache import cached_saved_plans
+from src.grocery_wizard.ui.recipe_match import (
+    render_unmatched_plan_recipes_help,
+    unmatched_plan_recipe_names,
+)
 from src.grocery_wizard.ui.sections.weekly_plan.state import (
     _clear_grocery_result,
     _clear_grocery_session_overrides,
@@ -621,6 +625,10 @@ def _render_built_plan_meals(
         st.rerun()
 
     st.markdown("#### 1b. Your meals")
+    render_unmatched_plan_recipes_help(
+        unmatched_plan_recipe_names(current_plan, all_recipes),
+        context="meals",
+    )
     for index, name in enumerate(current_plan, start=1):
         meal_col, swap_col = st.columns([8, 1])
         with meal_col:
