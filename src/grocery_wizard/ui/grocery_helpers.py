@@ -6,7 +6,6 @@ import html
 import json
 
 import streamlit as st
-import streamlit.components.v1 as components
 
 from src.grocery_wizard.integrations.notion import Recipe, recipe_export_link, recipe_lookup_key
 from src.grocery_wizard.shopping.grocery_list import _normalized_item_key, merge_grocery_items
@@ -39,7 +38,7 @@ def render_copy_button(
     copied_json = json.dumps("Copied!")
     safe_label = html.escape(label)
     tokens = GW_THEME
-    components.html(
+    st.iframe(
         f"""
         <style>
           .gw-copy-btn {{
