@@ -22,34 +22,58 @@ Requires **`gh`** authenticated for this repo when creating issues.
 
 ## Backlog file (local, gitignored)
 
+**Who writes it:** the Streamlit **Send feedback** control in issue **#240** appends each submission. **This slash command only reads and archives** — it does not implement the UI or create the file on first use.
+
 | Item | Value |
 | --- | --- |
-| **Path** | `.local/grocery_wizard/feedback_backlog.jsonl` (repo root; same tree as `DATA_DIR` in `src/grocery_wizard/config/__init__.py`) |
-| **Archive** | `.local/grocery_wizard/feedback_backlog.archived.jsonl` (append-only; processed entries) |
-| **Format** | **JSON Lines** — one JSON object per line, UTF-8, append-only |
+| **Path** | `.local/grocery_wizard/feedback_backlog.md` (repo root; same tree as `DATA_DIR` in `src/grocery_wizard/config/__init__.py`) |
+| **Archive** | `.local/grocery_wizard/feedback_backlog.archived.md` (append-only; processed entries) |
+| **Format** | **Markdown**, UTF-8, **append-only** blocks (human-readable in any editor) |
 
-Each entry object (fields from UI #240; tolerate missing optional keys):
+Each entry is one block, separated from the next by a line containing only `---` (horizontal rule). Recommended shape (UI #240 should follow this; tolerate extra blank lines):
+
+```markdown
+---
+
+**Submitted:** 2026-09-18T12:00:00Z
+**Surface:** Pantry
+
+Pantry tab feels slow when expanding aisles.
+```
 
 | Field | Required | Meaning |
 | --- | --- | --- |
-| `ts` | yes | ISO-8601 timestamp when the note was submitted |
-| `text` | yes | User free-text note |
-| `surface` | no | Where in the app (e.g. tab name, page section) |
-| `context` | no | Extra hint (route, widget id, session note) |
+| **Submitted** | yes | ISO-8601 timestamp line (`**Submitted:** …`) |
+| Body | yes | Free-text note (one or more paragraphs after a blank line following metadata) |
+| **Surface** | no | `**Surface:** …` — tab or section |
+| **Context** | no | `**Context:** …` — extra hint (route, widget, etc.) |
 
-**Entry identity** for matching when archiving: pair **`ts` + `text`** (both must match).
+**Entry identity** for matching when archiving: **`Submitted` timestamp + body text** (strip whitespace on body; both must match).
 
-If the backlog file is **missing** or **empty**, say so and stop after suggesting: run `just grocery-ui`, submit feedback via **Send feedback**, or seed 2–3 JSONL lines manually for testing.
+If the backlog file is **missing** or has **no entries**, say so and stop after suggesting: run `just grocery-ui` and submit feedback once #240 is shipped, or paste 2–3 sample blocks into the file manually for testing.
 
 **Read entries** (from repo root):
 
 ```bash
-BACKLOG=".local/grocery_wizard/feedback_backlog.jsonl"
-test -f "$BACKLOG" && wc -l "$BACKLOG" || echo "missing"
-# Pretty-print for your own triage (skip blank lines):
-while IFS= read -r line; do
-  [ -n "$line" ] && echo "$line" | python3 -m json.tool
-done < "$BACKLOG" 2>/dev/null || true
+BACKLOG=".local/grocery_wizard/feedback_backlog.md"
+test -f "$BACKLOG" || echo "missing"
+python3 <<'PY'
+import re
+from pathlib import Path
+
+path = Path(".local/grocery_wizard/feedback_backlog.md")
+if not path.is_file():
+    raise SystemExit(0)
+raw = path.read_text(encoding="utf-8")
+for chunk in re.split(r"\n---\n", raw):
+    chunk = chunk.strip()
+    if not chunk:
+        continue
+    m = re.search(r"\*\*Submitted:\*\*\s*(.+)", chunk)
+    ts = m.group(1).strip() if m else "?"
+    body = re.sub(r"^\*\*(Submitted|Surface|Context):\*\*.*\n?", "", chunk, flags=re.M).strip()
+    print(f"[{ts}] {body[:80]}{'…' if len(body) > 80 else ''}")
+PY
 ```
 
 ## Planning rules (same as `/create-issues`)
@@ -59,7 +83,7 @@ Follow **`.cursor/commands/create-issues.md`** — **Planning rules** section:
 1. **Kind:** **bug** if broken/incorrect behavior, crashes, or regressions; else **enhancement** backlog.
 2. **Area** (`gw-area-*`): **ui**, **parser**, **shopping**, **recipes**, **cli**, **other** — see area table in `.cursor/commands/work-on-issue.md`.
 3. **Grouping:** Merge notes that share **kind + area** and can ship in one PR. Split when area differs or bug vs feature differs.
-4. Use **`surface` / `context`** from the backlog when inferring area.
+4. Use **Surface** / **Context** lines from the backlog when inferring area.
 5. **Duplicates:** Before proposing a new issue, search open issues (`gh issue list` / `gh search issues`) when the note looks like an existing report; call out likely duplicates in the plan.
 
 Valid areas match the table in `.cursor/commands/work-on-issue.md`.
@@ -70,7 +94,7 @@ Valid areas match the table in `.cursor/commands/work-on-issue.md`.
 
 ### 1. Scan
 
-Read **all** unprocessed lines from `.local/grocery_wizard/feedback_backlog.jsonl`. Ignore blank lines and invalid JSON (report count of skipped lines).
+Read **all** unprocessed entry blocks from `.local/grocery_wizard/feedback_backlog.md` (split on `\n---\n`). Report if any block lacks **Submitted** or body text.
 
 ### 2. Propose (chat only — no GitHub yet)
 
@@ -79,7 +103,7 @@ Post a **draft issue plan** that includes for each proposed GitHub issue (or mer
 - Proposed **title**
 - **Kind** (bug vs enhancement)
 - **`gw-area-*`** label(s)
-- **Source backlog entries** (`ts` + short text quote)
+- **Source backlog entries** (Submitted time + short text quote)
 - **Merge/split rationale** if multiple backlog lines map to one issue
 - Whether you recommend **`bug`** and/or **`audit`** labels
 
@@ -102,55 +126,74 @@ Reply with issue numbers, URLs, and kind. Note **`/work-on-issue <n>`** for back
 
 After **successful** creation for approved items:
 
-1. For each backlog entry that was filed (per **`ts` + `text`**), append one line to **`.local/grocery_wizard/feedback_backlog.archived.jsonl`** — the original JSON object plus `"github_issues": [<numbers>]` (array of ints).
-2. Rewrite **`.local/grocery_wizard/feedback_backlog.jsonl`** to contain **only** entries **not** filed in this run (preserve order of remaining lines).
-3. Tell the user how many lines were archived and how many remain in the active backlog.
+1. For each backlog entry that was filed (per **Submitted + body**), append the **same block** to **`.local/grocery_wizard/feedback_backlog.archived.md`**, then add a line **`GitHub issues:** #123, #456` (or whatever was created).
+2. Rewrite **`.local/grocery_wizard/feedback_backlog.md`** to contain **only** entries **not** filed in this run (preserve order; keep leading `---` convention between blocks).
+3. Tell the user how many entries were archived and how many remain in the active backlog.
 
 If creation partially fails, archive **only** entries whose issues were created; leave the rest in the active file.
 
-Example archive helper (adjust `FILED_TS` / mapping to your approved set):
+Example archive helper (set `filed` to `(submitted_iso, body_text)` keys and `issue_nums` before running):
 
 ```bash
 python3 <<'PY'
-import json
+import re
 from pathlib import Path
 
-backlog = Path(".local/grocery_wizard/feedback_backlog.jsonl")
-archive = Path(".local/grocery_wizard/feedback_backlog.archived.jsonl")
-# filed: list of (ts, text) tuples that were turned into GitHub issues
-filed: set[tuple[str, str]] = set()
+backlog = Path(".local/grocery_wizard/feedback_backlog.md")
+archive = Path(".local/grocery_wizard/feedback_backlog.archived.md")
+filed: set[tuple[str, str]] = set()  # (submitted, body)
 issue_nums: dict[tuple[str, str], list[int]] = {}
 
-def load_lines(path: Path) -> list[dict]:
-    if not path.is_file():
-        return []
-    out = []
-    for line in path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        out.append(json.loads(line))
-    return out
 
-entries = load_lines(backlog)
+def parse_blocks(text: str) -> list[tuple[str, str, str]]:
+    """Return list of (submitted, body, original_block_with_leading_hr)."""
+    blocks = []
+    for chunk in re.split(r"\n---\n", text):
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        m = re.search(r"\*\*Submitted:\*\*\s*(.+)", chunk)
+        ts = m.group(1).strip() if m else ""
+        body = re.sub(
+            r"^\*\*(Submitted|Surface|Context):\*\*.*\n?", "", chunk, flags=re.M
+        ).strip()
+        blocks.append((ts, body, chunk))
+    return blocks
+
+
+def block_text(chunk: str) -> str:
+    return f"\n---\n\n{chunk.strip()}\n"
+
+
+if not backlog.is_file():
+    raise SystemExit(0)
+raw = backlog.read_text(encoding="utf-8")
+parsed = parse_blocks(raw)
 archive.parent.mkdir(parents=True, exist_ok=True)
-remaining = []
-for obj in entries:
-    key = (obj.get("ts", ""), obj.get("text", ""))
+remaining_chunks: list[str] = []
+for ts, body, chunk in parsed:
+    key = (ts, body)
     if key in filed:
-        obj = {**obj, "github_issues": issue_nums.get(key, [])}
+        extra = issue_nums.get(key, [])
+        nums = ", ".join(f"#{n}" for n in extra)
+        archive.write_text(
+            archive.read_text(encoding="utf-8") if archive.is_file() else "",
+            encoding="utf-8",
+        )
         with archive.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(obj, ensure_ascii=False) + "\n")
+            f.write(block_text(chunk))
+            if nums:
+                f.write(f"\n**GitHub issues:** {nums}\n")
     else:
-        remaining.append(obj)
+        remaining_chunks.append(chunk)
 backlog.write_text(
-    "".join(json.dumps(o, ensure_ascii=False) + "\n" for o in remaining),
+    "".join(block_text(c) for c in remaining_chunks).lstrip("\n") or "",
     encoding="utf-8",
 )
 PY
 ```
 
-(Fill `filed` and `issue_nums` in the script before running, or equivalent logic in the agent turn.)
+(Fill `filed` and `issue_nums` in the script before running, or use equivalent logic in the agent turn.)
 
 ## Overrides
 

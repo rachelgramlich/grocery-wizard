@@ -5,7 +5,7 @@
 | You type | Purpose |
 | --- | --- |
 | **`/create-issues`** | One or more notes → auto **bug vs backlog**, merge by **code area**, create GitHub issue(s) via **`gh`** |
-| **`/create-issues-from-backlog`** | Local UI feedback JSONL backlog → draft issue plan in chat → **`gh`** create after user approval (see `.cursor/commands/create-issues-from-backlog.md`) |
+| **`/create-issues-from-backlog`** | Local UI feedback Markdown backlog → draft issue plan in chat → **`gh`** create after user approval (see `.cursor/commands/create-issues-from-backlog.md`) |
 | **`/app-review`** | Hands-on Streamlit UAT → findings (slow / unintuitive / broken / other) → optional grouped **`gh`** issues (see `.cursor/commands/app-review.md`) |
 | **`/architecture-review`** | **Phase A:** standards audit report + Ruff/CI gap analysis; **Phase B:** file **`audit`**-labeled issues (see `.cursor/commands/architecture-review.md`) |
 | **`/list-enhancements`** | Open backlog (`grocery-wizard` label) via **`gh`** |
