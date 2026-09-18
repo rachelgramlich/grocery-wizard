@@ -7,6 +7,12 @@
 flowers
 bouquet
 
+# --- tomatoes: Tomatoes ---
+grape tomatoes
+cherry tomatoes
+grape tomato
+cherry tomato
+
 # --- fruit: Fruit ---
 berry
 berries
@@ -33,7 +39,9 @@ blueberry
 raspberry
 
 # --- vegetables: Vegetables ---
+red bell pepper
 bell pepper
+broccolini
 sweet potato
 green onion
 bok choy
@@ -93,11 +101,38 @@ herb
 salad greens
 greens
 
+# --- coffee: Coffee & tea ---
+coffee beans
+coffee
+espresso
+tea
+matcha
+
+# --- pasta: Pasta & noodles ---
+pasta for
+pasta
+spaghetti
+penne
+rigatoni
+fettuccine
+linguine
+orzo
+noodle
+noodles
+ramen
+tortellini
+ravioli
+
 # --- refrigerated: Refrigerated (cheese/tofu) ---
 basil pesto
 pesto
+cheese sticks
+low moisture shredded mozzarella
+shredded mozzarella
 goat cheese
 cream cheese
+parmesan shaved
+parmesan grated
 parmesan
 parm
 mozzarella
@@ -129,6 +164,9 @@ soda
 cola
 
 # --- dairy/eggs: Dairy & eggs ---
+pudding vanilla
+pudding
+butter tub
 mexican crema
 cold foam
 sour cream
@@ -145,48 +183,8 @@ egg
 eggs
 butter
 
-# --- meat/fish: Meat & fish ---
-smoked salmon
-sweet italian sausage
-italian sausage
-sausage links
-sausage
-chicken breast
-chicken thigh
-chicken wing
-chicken
-ground chicken
-ground beef
-ground turkey
-ground pork
-pork chop
-pork tenderloin
-pork shoulder
-bacon
-ham
-prosciutto
-pastrami
-lox
-salmon
-tuna
-cod
-halibut
-tilapia
-trout
-shrimp
-scallop
-crab
-lobster
-fish
-seafood
-meat
-turkey
-beef
-lamb
-steak
-poultry
-
 # --- bakery: Bakery ---
+crusty bread
 english muffin
 hot dog bun
 hamburger bun
@@ -219,6 +217,7 @@ strawberry jam
 blueberry jam
 peanut butter
 applesauce
+coconut oil
 avocado oil
 olive oil
 vegetable oil
@@ -259,18 +258,6 @@ oats
 oatmeal
 cereal
 granola
-pasta
-spaghetti
-penne
-rigatoni
-fettuccine
-linguine
-orzo
-noodle
-noodles
-ramen
-tortellini
-ravioli
 broth
 stock
 beans
@@ -328,12 +315,57 @@ molasses
 vanilla bean paste
 
 # --- frozen: Frozen ---
+hash browns
+hash brown
 frozen peas
 frozen corn
 frozen berries
 ice cream
 frozen
 popsicle
+
+# --- meat/fish: Meat & fish ---
+breakfast sausage
+bfast sausage
+smoked salmon
+sweet italian sausage
+italian sausage
+sausage links
+sausage
+chicken breast
+chicken thigh
+chicken wing
+chicken
+ground chicken
+ground beef
+ground turkey
+ground pork
+pork chop
+pork tenderloin
+pork shoulder
+bacon
+ham
+prosciutto
+pastrami
+lox
+salmon
+tuna
+cod
+halibut
+tilapia
+trout
+shrimp
+scallop
+crab
+lobster
+fish
+seafood
+meat
+turkey
+beef
+lamb
+steak
+poultry
 
 # --- crackers/cookies: Crackers & cookies ---
 graham cracker
@@ -344,13 +376,6 @@ cracker
 crackers
 biscuit
 biscuits
-
-# --- coffee: Coffee & tea ---
-coffee beans
-coffee
-espresso
-tea
-matcha
 
 # --- nuts/dried fruit: Nuts & dried fruit ---
 dried cranberries
