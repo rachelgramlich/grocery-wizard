@@ -17,6 +17,8 @@ from src.grocery_wizard.ui.grocery_flow import (
 
 DEFAULT_DEV_MEAL_COUNT = 1
 _DEV_MEAL_PICK_SEED = 142
+DEV_MANUAL_RECIPES_KEY = "dev_jump_manual_recipes"
+_DEV_MANUAL_RECIPES_FP_KEY = "_dev_jump_manual_recipes_fingerprint"
 
 
 class DevJumpTarget(StrEnum):
@@ -45,8 +47,8 @@ def dev_jump_display_title(target: DevJumpTarget) -> str:
 
 DEV_JUMP_CAPTIONS: dict[DevJumpTarget, str] = {
     DevJumpTarget.MEALS_FILLED: (
-        "Meal plan list (section **1. Meals**) — use **auto** for a default sample or "
-        "**manual** to pick specific Notion recipes."
+        "Meal plan list (section **1. Meals**) — pick recipes in the multiselect (updates "
+        "meals live) or use **auto** for the default sample."
     ),
     DevJumpTarget.PRE_BUILD_GROCERY: (
         "Grocery setup (section **2. Grocery list**) — options expander and "
@@ -59,6 +61,46 @@ DEV_JUMP_CAPTIONS: dict[DevJumpTarget, str] = {
         "Final list — built grocery list with re-add/remove, copy, and meals."
     ),
 }
+
+
+def dev_manual_recipes_fingerprint(names: list[str]) -> tuple[str, ...]:
+    return tuple(name.strip().lower() for name in names if name.strip())
+
+
+def resolve_dev_jump_meal_names(
+    session_state: Any,
+    db: NotionRecipesDB,
+    *,
+    meal_count: int,
+    force_auto: bool = False,
+) -> list[str]:
+    """Manual multiselect wins over auto sample unless *force_auto* is True."""
+    if not force_auto:
+        manual = session_state.get(DEV_MANUAL_RECIPES_KEY) or []
+        cleaned_manual = [name for name in manual if name.strip()]
+        if cleaned_manual:
+            return cleaned_manual
+    return pick_default_recipe_names(db.query_recipes(), meal_count=meal_count)
+
+
+def sync_dev_manual_multiselect(session_state: Any) -> None:
+    """When dev manual recipe pick changes, align the meal plan and drop stale grocery UI."""
+    manual = list(session_state.get(DEV_MANUAL_RECIPES_KEY) or [])
+    fingerprint = dev_manual_recipes_fingerprint(manual)
+    previous = session_state.get(_DEV_MANUAL_RECIPES_FP_KEY)
+    if previous is not None and fingerprint == previous:
+        return
+
+    session_state[_DEV_MANUAL_RECIPES_FP_KEY] = fingerprint
+    if not manual:
+        return
+
+    clear_grocery_flow_state(session_state)
+    session_state["plan_meals_text"] = "\n".join(manual)
+    session_state["plan_prebuild_pinned_recipes"] = list(manual)
+    session_state.pop("plan_rejected_names", None)
+    session_state.pop("weekly_plan_last_saved_name", None)
+    session_state.pop("weekly_plan_saved_fingerprint", None)
 
 
 def pick_default_recipe_names(
@@ -149,5 +191,5 @@ def apply_dev_jump(
     if recipe_names is not None:
         names = list(recipe_names)
     else:
-        names = pick_default_recipe_names(db.query_recipes(), meal_count=meal_count)
+        names = resolve_dev_jump_meal_names(session_state, db, meal_count=meal_count)
     return commit_dev_jump(session_state, db, target, names)
