@@ -45,7 +45,7 @@ from src.grocery_wizard.ingredients.parsed import (
     format_garlic_grocery_amount,
     format_lemon_zest_grocery_line,
 )
-from src.grocery_wizard.ingredients.sync import parse_ingredients_text
+from src.grocery_wizard.ingredients.sync import apply_removals, parse_ingredients_text
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 from src.grocery_wizard.shopping.line_items import strip_checklist_prefix, strip_line_item
 from src.grocery_wizard.shopping.pantry import is_pantry_item, load_pantry
@@ -235,7 +235,7 @@ def build_grocery_list(
         if ingredient_overrides and name.lower() in ingredient_overrides:
             override_text = ingredient_overrides[name.lower()]
             ingredient_lines = (
-                parse_ingredients_text(override_text)[0] if override_text.strip() else []
+                _ingredient_lines_from_stored_text(override_text) if override_text.strip() else []
             )
         else:
             ingredient_lines = _get_ingredient_lines(recipe)
@@ -287,9 +287,15 @@ def build_grocery_list(
     )
 
 
+def _ingredient_lines_from_stored_text(text: str) -> list[str]:
+    """Parse Notion ingredient text and honor ``remove:`` directives for grocery only."""
+    lines, removals = parse_ingredients_text(text)
+    return apply_removals(lines, removals)
+
+
 def _get_ingredient_lines(recipe: Recipe) -> list[str]:
     if recipe.ingredients and recipe.ingredients.strip():
-        return parse_ingredients_text(recipe.ingredients)[0]
+        return _ingredient_lines_from_stored_text(recipe.ingredients)
     return []
 
 

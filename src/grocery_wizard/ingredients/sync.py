@@ -26,6 +26,7 @@ from src.grocery_wizard.ingredients.parsed import (
 )
 from src.grocery_wizard.recipes.scraper import ingredients_to_text
 from src.grocery_wizard.shopping.line_items import strip_line_item
+from src.grocery_wizard.shopping.pantry import fresh_colored_pepper_blocks_generic_pepper
 
 _REMOVAL_PREFIX_RE = re.compile(r"^remove\s*:?\s*(.+)$", re.IGNORECASE)
 _REMOVAL_DASH_RE = re.compile(r"^-\s+(.+)$")
@@ -287,7 +288,25 @@ def _matches_removal(line: str, removal_target: str) -> bool:
     target_norm = name_from_stored_line(removal_target)
     if not normalized or not target_norm:
         return False
-    return target_norm in normalized or normalized in target_norm
+    if fresh_colored_pepper_blocks_generic_pepper(normalized, target_norm):
+        return False
+    if normalized == target_norm:
+        return True
+    name_words = normalized.split()
+    target_words = target_norm.split()
+    if _ingredient_contains_word_phrase(name_words, target_words):
+        return True
+    return _ingredient_contains_word_phrase(target_words, name_words)
+
+
+def _ingredient_contains_word_phrase(haystack_words: list[str], needle_words: list[str]) -> bool:
+    if not needle_words or len(needle_words) > len(haystack_words):
+        return False
+    width = len(needle_words)
+    for index in range(len(haystack_words) - width + 1):
+        if haystack_words[index : index + width] == needle_words:
+            return True
+    return False
 
 
 def apply_removals(lines: list[str], removal_targets: list[str]) -> list[str]:
