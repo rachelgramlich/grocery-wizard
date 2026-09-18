@@ -87,6 +87,7 @@ def clear_grocery_flow_state(session_state: Any) -> None:
         "meals_final_list",
         "meals_final_list_fingerprint",
         "grocery_per_recipe_review",
+        "grocery_review_baseline",
         "grocery_review_options",
         "grocery_review_recipes",
     ):
