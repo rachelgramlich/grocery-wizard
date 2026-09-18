@@ -324,7 +324,9 @@ def normalize_grocery_list_item(item: str) -> str:
         return ""
     name, amount = parse_amount(cleaned)
     if not name:
-        name = normalize_ingredient(cleaned) or cleaned.strip()
+        name = normalize_ingredient(cleaned)
+        if not name:
+            return ""
         amount = None
     else:
         name = normalize_ingredient(name) or name

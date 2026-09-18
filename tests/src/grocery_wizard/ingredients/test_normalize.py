@@ -710,6 +710,27 @@ def test_cilantro_sprigs_normalized_to_lowercase() -> None:
     assert normalize_ingredient("Cilantro sprigs") == "cilantro sprigs"
 
 
+def test_issue_233_lemon_prep_stripped_from_grocery_name() -> None:
+    raw = "1 lemon, 1/2 cut into thin rounds the remaining 1/2 left intact"
+    assert normalize_ingredient(raw) == "lemons"
+    name, amount = parse_amount(raw)
+    assert name == "lemons"
+    assert amount == "1"
+
+
+def test_issue_234_fine_stems_is_junk() -> None:
+    assert is_junk_ingredient("fine stems")
+    assert normalize_ingredient("fine stems") == ""
+
+
+def test_issue_234_broccolini_stem_prep_stripped() -> None:
+    raw = "1 bunch broccolini, fine stems trimmed"
+    assert normalize_ingredient(raw) == "broccolini bunch"
+    name, amount = parse_amount(raw)
+    assert name == "broccolini bunch"
+    assert amount == "1"
+
+
 @pytest.mark.parametrize(
     ("raw", "expected_key"),
     [

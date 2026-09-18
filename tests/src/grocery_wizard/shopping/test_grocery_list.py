@@ -680,6 +680,35 @@ def test_build_grocery_list_consolidates_lemon_variants(tmp_path: Path) -> None:
     assert lemon_items[0] == "3 lemons"
 
 
+def test_build_grocery_list_issues_233_234_sheet_pan_lemon_and_fine_stems(
+    tmp_path: Path,
+) -> None:
+    pantry_path = tmp_path / "pantry.txt"
+    pantry_path.write_text("salt\n", encoding="utf-8")
+
+    db = MagicMock()
+    db.query_recipes.return_value = [
+        _recipe(
+            "Sheet-Pan Baked Feta With Broccolini, Tomatoes and Lemon",
+            "1 lemon, 1/2 cut into thin rounds the remaining 1/2 left intact\n"
+            "fine stems\n"
+            "1 bunch broccolini, fine stems trimmed",
+        )
+    ]
+
+    items, _, _, _, _, _ = build_grocery_list(
+        db,
+        recipe_names=["Sheet-Pan Baked Feta With Broccolini, Tomatoes and Lemon"],
+        pantry_path=pantry_path,
+        exclude_pantry=True,
+    )
+
+    assert "fine stems" not in items
+    assert not any("cut into thin rounds" in item for item in items)
+    assert any("lemon" in item for item in items)
+    assert any("broccolini" in item for item in items)
+
+
 def test_build_grocery_list_issue_27_quality_fixes(tmp_path: Path) -> None:
     """Regression: corn tortillas, prep stripping, and lowercase display names."""
     pantry_path = tmp_path / "pantry.txt"

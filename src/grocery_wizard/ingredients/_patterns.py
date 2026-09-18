@@ -227,6 +227,7 @@ _JUNK_ONLY_PHRASES = frozenset(
         "then grated",
         # Prep/description fragments scraped as standalone lines
         "left whole",
+        "fine stems",
         "tender stems",
         "tender stems and leaves",
         "leaves and tender stems",
