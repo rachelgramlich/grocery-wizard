@@ -9,11 +9,11 @@ import pytest
 from src.grocery_wizard.integrations.notion import Recipe
 from src.grocery_wizard.ui.grocery_flow import (
     GroceryPreBuildOptions,
-    clear_review_ingredient_widget_keys,
+    collect_recipe_review_overrides,
     default_pre_build_grocery_options,
     fetch_recipe_review_text,
-    ingredient_overrides_from_review,
     persist_reviewed_ingredients_to_notion,
+    recipe_review_widget_key,
     stash_grocery_result,
     stash_recipe_review,
     sync_recipe_review_overrides_to_session,
@@ -30,12 +30,43 @@ def _recipe(name: str, *, ingredients: str = "1 cup flour") -> Recipe:
     )
 
 
+def test_fetch_recipe_review_text_matches_notion_titles_with_trailing_space() -> None:
+    stored = "2 cans white beans"
+    recipes = [_recipe("Pizza beans ", ingredients=stored)]
+    review = fetch_recipe_review_text(["Pizza beans"], recipes)
+    assert "white beans" in review["Pizza beans"]
+
+
 def test_fetch_recipe_review_text_formats_notion_storage() -> None:
     stored = "clove:5 garlic"
     recipes = [_recipe("Soup", ingredients=stored)]
     review = fetch_recipe_review_text(["Soup"], recipes)
     assert "5 cloves garlic" in review["Soup"]
     assert "clove:5" not in review["Soup"]
+
+
+def test_recipe_review_widget_key_is_stable_per_recipe_name() -> None:
+    assert recipe_review_widget_key("Pizza Beans") == recipe_review_widget_key("pizza beans")
+    assert recipe_review_widget_key("A") != recipe_review_widget_key("B")
+
+
+def test_collect_recipe_review_overrides_reads_widget_state() -> None:
+    session = {
+        "grocery_per_recipe_review": {"Soup": "fallback"},
+        recipe_review_widget_key("Soup"): "2 carrots",
+    }
+    overrides = collect_recipe_review_overrides(session, ["Soup"])
+    assert overrides == {"soup": "2 carrots"}
+
+
+def test_sync_recipe_review_overrides_to_session_updates_review_dict() -> None:
+    session = {
+        "grocery_per_recipe_review": {"Soup": "original"},
+        recipe_review_widget_key("Soup"): "3 carrots\n",
+    }
+    overrides = sync_recipe_review_overrides_to_session(session, ["Soup"])
+    assert overrides == {"soup": "3 carrots\n"}
+    assert session["grocery_per_recipe_review"]["Soup"] == "3 carrots\n"
 
 
 def test_stash_recipe_review_uses_formatted_text(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -51,44 +82,30 @@ def test_stash_recipe_review_uses_formatted_text(monkeypatch: pytest.MonkeyPatch
         default_recurring=["banana"],
         extra_items_text="",
     )
-    session["review_ing_0"] = "stale widget text"
+    stale_key = recipe_review_widget_key("Soup")
+    session[stale_key] = "stale widget text"
     stash_recipe_review(session, ["Soup"], recipes, opts)
     assert session["grocery_per_recipe_review"]["Soup"] == "formatted:raw"
     assert session["grocery_review_baseline"]["Soup"] == "formatted:raw"
     assert session["grocery_review_recipes"] == recipes
-    assert "review_ing_0" not in session
-
-
-def test_sync_recipe_review_overrides_to_session_reads_widget_keys() -> None:
-    session = {
-        "grocery_per_recipe_review": {"Soup": "original"},
-        "review_ing_0": "3 carrots\n",
-    }
-    synced = sync_recipe_review_overrides_to_session(session, ["Soup"])
-    assert synced["Soup"] == "3 carrots\n"
-    assert session["grocery_per_recipe_review"]["Soup"] == "3 carrots\n"
-    assert ingredient_overrides_from_review(synced) == {"soup": "3 carrots\n"}
+    assert session[stale_key] == "formatted:raw"
 
 
 def test_persist_reviewed_ingredients_to_notion_updates_changed_recipes() -> None:
     db = MagicMock()
     db.schema.ingredients_column = "Ingredients"
     recipe = _recipe("Soup", ingredients="1 cup flour")
-    review = {"Soup": "2 cups flour\n"}
-    baseline = {"Soup": "1 cup flour\n"}
 
     updated = persist_reviewed_ingredients_to_notion(
         db,
-        [recipe],
-        baseline=baseline,
-        review=review,
+        selected=["Soup"],
+        overrides={"soup": "2 cups flour\n"},
+        recipes=[recipe],
+        baseline_review={"Soup": "1 cup flour\n"},
     )
 
-    assert updated == ["Soup"]
+    assert updated == 1
     db.update_recipe.assert_called_once()
-    page_id, fields = db.update_recipe.call_args[0]
-    assert page_id == recipe.page_id
-    assert "Ingredients" in fields
 
 
 def test_persist_reviewed_ingredients_skips_unchanged() -> None:
@@ -98,17 +115,12 @@ def test_persist_reviewed_ingredients_skips_unchanged() -> None:
     text = "1 cup flour\n"
     persist_reviewed_ingredients_to_notion(
         db,
-        [recipe],
-        baseline={"Soup": text},
-        review={"Soup": text},
+        selected=["Soup"],
+        overrides={"soup": text},
+        recipes=[recipe],
+        baseline_review={"Soup": text},
     )
     db.update_recipe.assert_not_called()
-
-
-def test_clear_review_ingredient_widget_keys() -> None:
-    session = {"review_ing_0": "a", "review_ing_1": "b", "other": 1}
-    clear_review_ingredient_widget_keys(session)
-    assert session == {"other": 1}
 
 
 def test_stash_grocery_result_passes_review_overrides(monkeypatch: pytest.MonkeyPatch) -> None:

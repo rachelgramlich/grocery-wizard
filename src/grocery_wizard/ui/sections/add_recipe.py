@@ -156,6 +156,7 @@ def _render_recipe_review(
             if not name:
                 st.warning("Add a recipe name before saving.")
                 return
+            cleaned[schema.name_column] = name
             if schema.ingredients_column and not cleaned.get(schema.ingredients_column, "").strip():
                 st.warning("Add ingredients before saving (one per line).")
                 return

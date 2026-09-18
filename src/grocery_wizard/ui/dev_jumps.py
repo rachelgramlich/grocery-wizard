@@ -90,10 +90,13 @@ def clear_grocery_flow_state(session_state: Any) -> None:
         "grocery_review_baseline",
         "grocery_review_options",
         "grocery_review_recipes",
+        "grocery_review_plan_fingerprint",
+        "grocery_review_baseline",
+        "grocery_review_save_to_notion",
     ):
         session_state.pop(key, None)
     for key in list(session_state.keys()):
-        if key.startswith("review_ing_"):
+        if str(key).startswith("review_ing_"):
             session_state.pop(key, None)
     clear_grocery_session_overrides(session_state)
 

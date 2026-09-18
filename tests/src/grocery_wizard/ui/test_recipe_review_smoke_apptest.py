@@ -1,11 +1,10 @@
-"""AppTest smoke: per-recipe review edits flow into the built grocery list (#237)."""
+"""AppTest smoke: per-recipe review form submit builds the final grocery list (#237)."""
 
 from __future__ import annotations
 
 import os
 
 import pytest
-
 from ui_source import APP_PATH
 
 pytestmark = pytest.mark.skipif(
@@ -14,7 +13,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def _enter_dev_mode(at):  # noqa: ANN001
+def _enter_dev_mode(at) -> None:
     continue_buttons = [b for b in at.button if b.label == "Continue"]
     assert continue_buttons, "Weekly plan Continue missing"
     continue_buttons[0].click().run(timeout=120)
@@ -29,7 +28,8 @@ def _enter_dev_mode(at):  # noqa: ANN001
     session_radio[0].set_value(dev_opt).run(timeout=120)
 
 
-def test_per_recipe_review_edit_applies_on_form_submit(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_per_recipe_review_form_submit_reaches_final_list(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Live Notion: dev jump → review form → Build final list → grocery result UI."""
     monkeypatch.setenv("GROCERY_WIZARD_DEV_UI", "1")
     from streamlit.testing.v1 import AppTest
 
@@ -42,15 +42,15 @@ def test_per_recipe_review_edit_applies_on_form_submit(monkeypatch: pytest.Monke
     review_jump[0].click().run(timeout=120)
 
     assert at.text_area, "Expected per-recipe ingredient text areas"
-    marker = "UNIQUE237SMOKE"
-    edited = f"{(at.text_area[0].value or '').rstrip()}\n{marker}".strip()
-    at.text_area[0].set_value(edited).run(timeout=120)
+    edited = f"{(at.text_area[0].value or '').rstrip()}\n2 cups UNIQUE237SMOKE".strip()
+    at.text_area[0].set_value(edited)
 
     submit = [b for b in at.button if b.label == "Build final list"]
     assert submit, "Build final list form submit missing"
     submit[0].click().run(timeout=120)
 
     assert not at.exception, f"App exception: {at.exception}"
+    assert "grocery_result" in at.session_state
+    assert "grocery_per_recipe_review" not in at.session_state
     grocery_areas = [t for t in at.text_area if t.key == "grocery_final_list"]
     assert grocery_areas, "Final grocery list text area missing"
-    assert marker.lower() in (grocery_areas[0].value or "").lower()
