@@ -12,9 +12,11 @@ from src.grocery_wizard.ui.grocery_flow import (
     collect_recipe_review_overrides,
     default_pre_build_grocery_options,
     fetch_recipe_review_text,
+    persist_reviewed_ingredients_to_notion,
     recipe_review_widget_key,
     stash_grocery_result,
     stash_recipe_review,
+    sync_recipe_review_overrides_to_session,
 )
 
 
@@ -57,6 +59,16 @@ def test_collect_recipe_review_overrides_reads_widget_state() -> None:
     assert overrides == {"soup": "2 carrots"}
 
 
+def test_sync_recipe_review_overrides_to_session_updates_review_dict() -> None:
+    session = {
+        "grocery_per_recipe_review": {"Soup": "original"},
+        recipe_review_widget_key("Soup"): "3 carrots\n",
+    }
+    overrides = sync_recipe_review_overrides_to_session(session, ["Soup"])
+    assert overrides == {"soup": "3 carrots\n"}
+    assert session["grocery_per_recipe_review"]["Soup"] == "3 carrots\n"
+
+
 def test_stash_recipe_review_uses_formatted_text(monkeypatch: pytest.MonkeyPatch) -> None:
     session: dict = {}
     recipes = [_recipe("Soup", ingredients="raw")]
@@ -70,9 +82,45 @@ def test_stash_recipe_review_uses_formatted_text(monkeypatch: pytest.MonkeyPatch
         default_recurring=["banana"],
         extra_items_text="",
     )
+    stale_key = recipe_review_widget_key("Soup")
+    session[stale_key] = "stale widget text"
     stash_recipe_review(session, ["Soup"], recipes, opts)
     assert session["grocery_per_recipe_review"]["Soup"] == "formatted:raw"
+    assert session["grocery_review_baseline"]["Soup"] == "formatted:raw"
     assert session["grocery_review_recipes"] == recipes
+    assert session[stale_key] == "formatted:raw"
+
+
+def test_persist_reviewed_ingredients_to_notion_updates_changed_recipes() -> None:
+    db = MagicMock()
+    db.schema.ingredients_column = "Ingredients"
+    recipe = _recipe("Soup", ingredients="1 cup flour")
+
+    updated = persist_reviewed_ingredients_to_notion(
+        db,
+        selected=["Soup"],
+        overrides={"soup": "2 cups flour\n"},
+        recipes=[recipe],
+        baseline_review={"Soup": "1 cup flour\n"},
+    )
+
+    assert updated == 1
+    db.update_recipe.assert_called_once()
+
+
+def test_persist_reviewed_ingredients_skips_unchanged() -> None:
+    db = MagicMock()
+    db.schema.ingredients_column = "Ingredients"
+    recipe = _recipe("Soup")
+    text = "1 cup flour\n"
+    persist_reviewed_ingredients_to_notion(
+        db,
+        selected=["Soup"],
+        overrides={"soup": text},
+        recipes=[recipe],
+        baseline_review={"Soup": text},
+    )
+    db.update_recipe.assert_not_called()
 
 
 def test_stash_grocery_result_passes_review_overrides(monkeypatch: pytest.MonkeyPatch) -> None:

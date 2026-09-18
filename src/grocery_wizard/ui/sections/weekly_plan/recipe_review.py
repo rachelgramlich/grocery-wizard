@@ -62,95 +62,99 @@ def _render_per_recipe_review(db: NotionRecipesDB, selected: list[str]) -> None:
         context="grocery",
     )
 
-    for name in selected:
-        original_text = review.get(name, "")
-        widget_key = recipe_review_widget_key(name)
-        if widget_key not in st.session_state:
-            st.session_state[widget_key] = original_text
-        with st.expander(name, expanded=False):
-            st.text_area(
-                "Ingredients (one per line)",
-                height=160,
-                key=widget_key,
-                label_visibility="collapsed",
-            )
-
-    save_to_notion = False
-    if _weekly_plan_mode() != "dev":
-        save_to_notion = st.checkbox(
-            "Save ingredient edits to Notion",
-            value=bool(st.session_state.get("grocery_review_save_to_notion")),
-            key="grocery_review_save_to_notion",
-            help="Updates each recipe's Ingredients column in Notion when you build the list.",
-        )
-
-    col_build, col_cancel = st.columns([3, 1])
-    with col_build:
-        if st.button("Build final list", type="primary", key="review_build_final"):
-            overrides = sync_recipe_review_overrides_to_session(st.session_state, selected)
-
-            extra_items_text = opts.get("extra_items_text", "")
-
-            review_recipes = st.session_state.get("grocery_review_recipes")
-            if review_recipes is None:
-                review_recipes = cached_query_recipes(db)
-            baseline = dict(st.session_state.get("grocery_review_baseline") or review)
-            with st.spinner("Building grocery list..."):
-                if save_to_notion:
-                    updated = persist_reviewed_ingredients_to_notion(
-                        db,
-                        selected=selected,
-                        overrides=overrides,
-                        recipes=review_recipes,
-                        baseline_review=baseline,
-                    )
-                    if updated:
-                        invalidate_notion_cache()
-                result_payload = build_grocery_result_payload(
-                    db,
-                    selected,
-                    exclude_pantry=opts["exclude_pantry"],
-                    recurring_text=opts["recurring_text"],
-                    extra_items_text=extra_items_text,
-                    pantry_extra=_session_pantry_extra(),
-                    ingredient_overrides=overrides,
-                    recipes=review_recipes,
+    with st.form("recipe_review_form", clear_on_submit=False):
+        for name in selected:
+            original_text = review.get(name, "")
+            widget_key = recipe_review_widget_key(name)
+            if widget_key not in st.session_state:
+                st.session_state[widget_key] = original_text
+            with st.expander(name, expanded=False):
+                st.text_area(
+                    "Ingredients (one per line)",
+                    height=160,
+                    key=widget_key,
+                    label_visibility="collapsed",
                 )
 
-            if (
-                not result_payload["items"]
-                and not result_payload["excluded"]
-                and not parse_line_items_text(extra_items_text)
-            ):
-                missing_ingredients = result_payload["missing_ingredients"]
-                if missing_ingredients:
-                    st.warning(
-                        "No grocery items found — all selected recipes are missing ingredients. "
-                        f"Affected recipes: {', '.join(missing_ingredients)}."
-                    )
-                else:
-                    st.warning("No grocery items found.")
-                return
+        save_to_notion = False
+        if _weekly_plan_mode() != "dev":
+            save_to_notion = st.checkbox(
+                "Save ingredient edits to Notion",
+                value=bool(st.session_state.get("grocery_review_save_to_notion")),
+                key="grocery_review_save_to_notion",
+                help="Updates each recipe's Ingredients column in Notion when you build the list.",
+            )
 
-            st.session_state.grocery_result = result_payload
-            st.session_state.pop("grocery_final_list", None)
-            st.session_state.pop("grocery_final_list_fingerprint", None)
-            st.session_state.pop("meals_final_list", None)
-            st.session_state.pop("meals_final_list_fingerprint", None)
-            st.session_state.pop("grocery_readd", None)
-            st.session_state.pop("grocery_remove_once", None)
-            st.session_state.pop("grocery_per_recipe_review", None)
-            st.session_state.pop("grocery_review_options", None)
-            st.session_state.pop("grocery_review_recipes", None)
-            st.session_state.pop("grocery_review_plan_fingerprint", None)
-            st.session_state.pop("grocery_review_baseline", None)
-            st.session_state.pop("grocery_review_save_to_notion", None)
-            for key in list(st.session_state.keys()):
-                if str(key).startswith("review_ing_"):
-                    st.session_state.pop(key, None)
-            _clear_grocery_pre_extra_items()
-            st.rerun()
+        submitted = st.form_submit_button("Build final list", type="primary")
+
+    col_cancel, _ = st.columns([1, 3])
     with col_cancel:
         if st.button("Cancel", key="review_cancel"):
             _clear_grocery_result(clear_pre_extra_items=False)
             st.rerun()
+
+    if not submitted:
+        return
+
+    overrides = sync_recipe_review_overrides_to_session(st.session_state, selected)
+    extra_items_text = opts.get("extra_items_text", "")
+
+    review_recipes = st.session_state.get("grocery_review_recipes")
+    if review_recipes is None:
+        review_recipes = cached_query_recipes(db)
+    baseline = dict(st.session_state.get("grocery_review_baseline") or review)
+    with st.spinner("Building grocery list..."):
+        if save_to_notion:
+            updated = persist_reviewed_ingredients_to_notion(
+                db,
+                selected=selected,
+                overrides=overrides,
+                recipes=review_recipes,
+                baseline_review=baseline,
+            )
+            if updated:
+                invalidate_notion_cache()
+        result_payload = build_grocery_result_payload(
+            db,
+            selected,
+            exclude_pantry=opts["exclude_pantry"],
+            recurring_text=opts["recurring_text"],
+            extra_items_text=extra_items_text,
+            pantry_extra=_session_pantry_extra(),
+            ingredient_overrides=overrides,
+            recipes=review_recipes,
+        )
+
+    if (
+        not result_payload["items"]
+        and not result_payload["excluded"]
+        and not parse_line_items_text(extra_items_text)
+    ):
+        missing_ingredients = result_payload["missing_ingredients"]
+        if missing_ingredients:
+            st.warning(
+                "No grocery items found — all selected recipes are missing ingredients. "
+                f"Affected recipes: {', '.join(missing_ingredients)}."
+            )
+        else:
+            st.warning("No grocery items found.")
+        return
+
+    st.session_state.grocery_result = result_payload
+    st.session_state.pop("grocery_final_list", None)
+    st.session_state.pop("grocery_final_list_fingerprint", None)
+    st.session_state.pop("meals_final_list", None)
+    st.session_state.pop("meals_final_list_fingerprint", None)
+    st.session_state.pop("grocery_readd", None)
+    st.session_state.pop("grocery_remove_once", None)
+    st.session_state.pop("grocery_per_recipe_review", None)
+    st.session_state.pop("grocery_review_options", None)
+    st.session_state.pop("grocery_review_recipes", None)
+    st.session_state.pop("grocery_review_plan_fingerprint", None)
+    st.session_state.pop("grocery_review_baseline", None)
+    st.session_state.pop("grocery_review_save_to_notion", None)
+    for key in list(st.session_state.keys()):
+        if str(key).startswith("review_ing_"):
+            st.session_state.pop(key, None)
+    _clear_grocery_pre_extra_items()
+    st.rerun()

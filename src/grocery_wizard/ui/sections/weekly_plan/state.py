@@ -100,6 +100,7 @@ def _clear_grocery_result(*, clear_pre_extra_items: bool = True) -> None:
         "meals_final_list",
         "meals_final_list_fingerprint",
         "grocery_per_recipe_review",
+        "grocery_review_baseline",
         "grocery_review_options",
         "grocery_review_recipes",
         "grocery_review_plan_fingerprint",
