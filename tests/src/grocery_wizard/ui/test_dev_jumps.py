@@ -9,11 +9,14 @@ import pytest
 from src.grocery_wizard.integrations.notion import Recipe
 from src.grocery_wizard.ui.dev_jumps import (
     DEFAULT_DEV_MEAL_COUNT,
+    DEV_MANUAL_RECIPES_KEY,
     DevJumpTarget,
     apply_dev_jump,
     clear_grocery_flow_state,
     commit_dev_jump,
     pick_default_recipe_names,
+    resolve_dev_jump_meal_names,
+    sync_dev_manual_multiselect,
 )
 
 
@@ -114,6 +117,43 @@ def test_apply_dev_jump_accepts_explicit_recipe_names() -> None:
 
     assert used == ["Custom A", "Custom B"]
     assert session["plan_meals_text"] == "Custom A\nCustom B"
+
+
+def test_resolve_dev_jump_meal_names_prefers_manual_multiselect() -> None:
+    session = {DEV_MANUAL_RECIPES_KEY: ["Antipasto Salad"]}
+    db = MagicMock()
+    db.query_recipes.return_value = [_recipe("Sesame Salmon Bowls")]
+
+    names = resolve_dev_jump_meal_names(session, db, meal_count=1)
+
+    assert names == ["Antipasto Salad"]
+
+
+def test_resolve_dev_jump_meal_names_force_auto_ignores_multiselect() -> None:
+    session = {DEV_MANUAL_RECIPES_KEY: ["Antipasto Salad"]}
+    db = MagicMock()
+    db.query_recipes.return_value = [_recipe("Alpha"), _recipe("Beta")]
+
+    names = resolve_dev_jump_meal_names(session, db, meal_count=1, force_auto=True)
+
+    assert len(names) == 1
+    assert names != ["Antipasto Salad"]
+
+
+def test_sync_dev_manual_multiselect_updates_plan_and_clears_grocery() -> None:
+    session = {
+        DEV_MANUAL_RECIPES_KEY: ["Antipasto Salad"],
+        "plan_meals_text": "Sesame Salmon Bowls",
+        "grocery_result": {"items": ["old"]},
+    }
+    sync_dev_manual_multiselect(session)
+    assert session["plan_meals_text"] == "Antipasto Salad"
+    assert "grocery_result" not in session
+
+    session[DEV_MANUAL_RECIPES_KEY] = ["Other Salad"]
+    sync_dev_manual_multiselect(session)
+    assert session["plan_meals_text"] == "Other Salad"
+    assert "grocery_result" not in session
 
 
 def test_clear_grocery_flow_state_removes_review_widgets() -> None:

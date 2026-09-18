@@ -112,10 +112,11 @@ def test_dev_mode_exposes_collapsed_dev_tools_expander() -> None:
     assert 'st.expander("Dev tools", expanded=False)' in source
     assert '_weekly_plan_mode() != "dev"' in source
     assert "commit_dev_jump" in source
-    assert "pick_default_recipe_names" in source
+    assert "resolve_dev_jump_meal_names" in source
+    assert "sync_dev_manual_multiselect" in source
     assert "Meals filled: auto" in source
     assert "Meals filled: manual" in source
-    assert 'key="dev_jump_manual_recipes"' in source
+    assert "DEV_MANUAL_RECIPES_KEY" in source
     assert 'st.markdown("#### Meals filled")' not in source
     assert '"Choose recipes manually"' in source
     assert '"Final list"' in source

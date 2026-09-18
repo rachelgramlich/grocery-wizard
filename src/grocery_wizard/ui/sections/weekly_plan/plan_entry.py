@@ -23,10 +23,12 @@ from src.grocery_wizard.ui.dev_jumps import (
     DEFAULT_DEV_MEAL_COUNT,
     DEV_JUMP_CAPTIONS,
     DEV_JUMP_FLOW_ORDER,
+    DEV_MANUAL_RECIPES_KEY,
     DevJumpTarget,
     commit_dev_jump,
     dev_jump_display_title,
-    pick_default_recipe_names,
+    resolve_dev_jump_meal_names,
+    sync_dev_manual_multiselect,
 )
 from src.grocery_wizard.ui.meal_plan_filters import (
     recipes_ingredient_cache_key,
@@ -332,26 +334,21 @@ def _render_dev_jump_tools(db: NotionRecipesDB) -> None:
             title = dev_jump_display_title(target)
             st.markdown(f"- **{title}** — {DEV_JUMP_CAPTIONS[target]}")
 
+        meal_count = int(st.session_state.get("plan_meal_count", DEFAULT_DEV_MEAL_COUNT))
+
         def _dev_jump_button(
             target: DevJumpTarget,
             *,
             label: str,
             key_suffix: str,
-            manual_recipes: list[str] | None,
+            names: list[str],
+            require_names: bool = False,
         ) -> None:
             if not st.button(label, key=f"dev_jump_{target.value}_{key_suffix}"):
                 return
-            if manual_recipes is not None and not manual_recipes:
+            if require_names and not names:
                 st.warning("Pick at least one recipe for the manual meals jump.")
                 return
-            meal_count = int(st.session_state.get("plan_meal_count", DEFAULT_DEV_MEAL_COUNT))
-            if manual_recipes is not None:
-                names = list(manual_recipes)
-            else:
-                names = pick_default_recipe_names(
-                    db.query_recipes(),
-                    meal_count=meal_count,
-                )
             names = commit_dev_jump(st.session_state, db, target, names)
             if not names:
                 st.error(
@@ -365,41 +362,57 @@ def _render_dev_jump_tools(db: NotionRecipesDB) -> None:
             _dev_jump_bullet(step)
 
         all_names = sorted({recipe.name for recipe in db.query_recipes()}, key=str.lower)
+        manual_pick = st.multiselect(
+            "Choose recipes manually",
+            options=all_names,
+            key=DEV_MANUAL_RECIPES_KEY,
+            placeholder="Pick one or more recipes…",
+            help="When set, updates **1b. Your meals** immediately and is used by every jump "
+            "button below except **Meals filled: auto**.",
+        )
+        sync_dev_manual_multiselect(st.session_state)
+
+        auto_names = resolve_dev_jump_meal_names(
+            st.session_state,
+            db,
+            meal_count=meal_count,
+            force_auto=True,
+        )
+        jump_names = resolve_dev_jump_meal_names(
+            st.session_state,
+            db,
+            meal_count=meal_count,
+        )
         _dev_jump_button(
             DevJumpTarget.MEALS_FILLED,
             label="Meals filled: auto",
             key_suffix="auto",
-            manual_recipes=None,
-        )
-        manual_pick = st.multiselect(
-            "Choose recipes manually",
-            options=all_names,
-            key="dev_jump_manual_recipes",
-            placeholder="Pick one or more recipes…",
+            names=auto_names,
         )
         _dev_jump_button(
             DevJumpTarget.MEALS_FILLED,
             label="Meals filled: manual",
             key_suffix="manual",
-            manual_recipes=manual_pick,
+            names=list(manual_pick),
+            require_names=True,
         )
         _dev_jump_button(
             DevJumpTarget.PRE_BUILD_GROCERY,
             label="Pre-build grocery",
             key_suffix="btn_pre_build",
-            manual_recipes=None,
+            names=jump_names,
         )
         _dev_jump_button(
             DevJumpTarget.PER_RECIPE_REVIEW,
             label="Per-recipe review",
             key_suffix="btn_review",
-            manual_recipes=None,
+            names=jump_names,
         )
         _dev_jump_button(
             DevJumpTarget.GROCERY_RESULT,
             label="Final list",
             key_suffix="btn_final_list",
-            manual_recipes=None,
+            names=jump_names,
         )
 
 
@@ -690,10 +703,23 @@ def _render_built_plan_meals(
     _render_save_plan_controls(_current_plan_names(), cached_recipes=all_recipes)
 
 
+def _trim_plan_to_meal_count(meal_count: int) -> None:
+    """In dev mode, keep plan length aligned with the meal-count widget."""
+    if _weekly_plan_mode() != "dev":
+        return
+    names = _current_plan_names()
+    if len(names) > int(meal_count):
+        _write_plan_names(names[: int(meal_count)])
+        _invalidate_weekly_plan_save_state()
+        _clear_grocery_session_overrides()
+        _clear_grocery_result()
+
+
 def render_meals_section(db: NotionRecipesDB, *, all_recipes: list) -> list[str]:
     """Render step 1 (meals) and return the current planned recipe names."""
     _ensure_plan_session_defaults()
     meal_count = _render_meal_count_input()
+    _trim_plan_to_meal_count(meal_count)
     _render_dev_jump_tools(db)
 
     ingredient_index = _cached_plan_ingredient_index(all_recipes)
