@@ -18,6 +18,8 @@ from src.grocery_wizard.shopping.recurring_weekly_items import (
     load_recurring_weekly_items,
 )
 
+GROCERY_STASH_NOTION_GENERATION_KEY = "grocery_stash_notion_generation"
+
 
 @dataclass(frozen=True)
 class GroceryPreBuildOptions:
@@ -163,6 +165,12 @@ def fetch_recipe_review_text(selected: list[str], recipes: list[Recipe]) -> dict
     return review
 
 
+def _mark_grocery_stash_notion_generation(session_state: Any) -> None:
+    from src.grocery_wizard.ui.notion_cache import notion_cache_generation
+
+    session_state[GROCERY_STASH_NOTION_GENERATION_KEY] = notion_cache_generation()
+
+
 def stash_recipe_review(
     session_state: Any,
     selected: list[str],
@@ -171,6 +179,7 @@ def stash_recipe_review(
 ) -> None:
     clear_recipe_review_widget_keys(session_state)
     review = fetch_recipe_review_text(selected, recipes)
+    _mark_grocery_stash_notion_generation(session_state)
     session_state["grocery_per_recipe_review"] = review
     session_state["grocery_review_recipes"] = recipes
     session_state["grocery_review_plan_fingerprint"] = recipe_review_plan_fingerprint(selected)
@@ -239,6 +248,7 @@ def stash_grocery_result(
 ) -> None:
     """Build final list as if the user confirmed review (defaults: formatted Notion lines)."""
     review_text = review if review is not None else fetch_recipe_review_text(selected, recipes)
+    _mark_grocery_stash_notion_generation(session_state)
     session_state["grocery_result"] = build_grocery_result_payload(
         db,
         selected,

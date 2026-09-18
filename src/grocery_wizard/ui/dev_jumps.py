@@ -8,6 +8,7 @@ from typing import Any
 
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 from src.grocery_wizard.ui.grocery_flow import (
+    GROCERY_STASH_NOTION_GENERATION_KEY,
     clear_grocery_session_overrides,
     default_pre_build_grocery_options,
     stash_grocery_result,
@@ -93,6 +94,7 @@ def clear_grocery_flow_state(session_state: Any) -> None:
         "grocery_review_plan_fingerprint",
         "grocery_review_baseline",
         "grocery_review_save_to_notion",
+        GROCERY_STASH_NOTION_GENERATION_KEY,
     ):
         session_state.pop(key, None)
     for key in list(session_state.keys()):

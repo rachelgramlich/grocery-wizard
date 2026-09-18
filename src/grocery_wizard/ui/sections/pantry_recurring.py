@@ -9,7 +9,11 @@ from collections.abc import Callable
 import streamlit as st
 
 from src.grocery_wizard.config import load_config
-from src.grocery_wizard.shopping.pantry import append_pantry_item, remove_pantry_item_by_name
+from src.grocery_wizard.shopping.pantry import (
+    _matches_pantry_search,
+    append_pantry_item,
+    remove_pantry_item_by_name,
+)
 from src.grocery_wizard.shopping.recurring_weekly_items import (
     append_recurring_weekly_item,
     load_recurring_weekly_items,
@@ -29,6 +33,26 @@ _PANTRY_AISLE_CAPTION = "Grouped by store walk order—the same aisle headings a
 def _load_pantry_entries_from_notion() -> list:
     config = load_config()
     return cached_pantry_entries(pantry_database_id=config.notion_pantry_database_id)
+
+
+def _pantry_already_has(name: str, entries: list) -> bool:
+    cleaned = name.strip()
+    if not cleaned:
+        return False
+    return any(
+        _matches_pantry_search(cleaned, str(getattr(entry, "name", ""))) for entry in entries
+    )
+
+
+def _append_pantry_item_idempotent(name: str, *, section_label: str) -> bool:
+    """Return True when the item is in the pantry after this call (added or already present)."""
+    if append_pantry_item(name, section=section_label):
+        invalidate_notion_cache()
+        return True
+    if _pantry_already_has(name, _load_pantry_entries_from_notion()):
+        invalidate_notion_cache()
+        return True
+    return False
 
 
 def _remove_pantry_item_and_invalidate(name: str) -> bool:
@@ -172,7 +196,9 @@ def _render_recurring_weekly_section() -> None:
             name = new_recurring.strip()
             if not name:
                 st.warning("Enter an item name.")
-            elif append_recurring_weekly_item(name):
+            elif append_recurring_weekly_item(name) or any(
+                existing.casefold() == name.casefold() for existing in load_recurring_weekly_items()
+            ):
                 st.success(f"Added “{name}” to recurring items.")
                 st.rerun()
             else:
@@ -229,8 +255,7 @@ def _render_pantry_add_form(*, aisle_config: StoreAisleConfig) -> None:
                 st.warning("Enter an item name.")
             else:
                 section_label = aisle_label(new_pantry_aisle, config=aisle_config)
-                if append_pantry_item(name, section=section_label):
-                    invalidate_notion_cache()
+                if _append_pantry_item_idempotent(name, section_label=section_label):
                     st.success(f"Added “{name}” to pantry ({section_label}).")
                     st.rerun()
                 else:
