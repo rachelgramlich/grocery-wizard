@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-import os
-
 import pytest
 from ui_source import APP_PATH
 
+from tests.notion_test_env import live_notion_smoke_enabled
+
 pytestmark = pytest.mark.skipif(
-    not os.environ.get("NOTION_API_KEY"),
-    reason="Notion credentials required for live AppTest smoke",
+    not live_notion_smoke_enabled(),
+    reason="Live Notion credentials required for AppTest smoke (not CI placeholders)",
 )
 
 
