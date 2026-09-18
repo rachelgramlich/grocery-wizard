@@ -429,6 +429,31 @@ def test_build_grocery_list_splits_grilled_veggies_over_orzo_bleed(tmp_path: Pat
     assert not any("chimichurri zucchini orzo lemon" in item for item in lowered)
 
 
+def test_build_grocery_list_keeps_red_bell_pepper_when_pantry_has_pepper(tmp_path: Path) -> None:
+    pantry_path = tmp_path / "pantry.txt"
+    pantry_path.write_text("pepper\n", encoding="utf-8")
+
+    db = MagicMock()
+    db.query_recipes.return_value = [
+        _recipe(
+            "Tofu Vegetable Satay",
+            "1 red bell pepper, sliced\n1/2 tsp black pepper\nremove: pepper",
+        ),
+    ]
+
+    items, excluded, _, _, _, _ = build_grocery_list(
+        db,
+        recipe_names=["Tofu Vegetable Satay"],
+        pantry_path=pantry_path,
+        exclude_pantry=True,
+    )
+
+    lowered = [item.lower() for item in items]
+    assert any("bell pepper" in item for item in lowered)
+    assert not any("black pepper" in item for item in lowered)
+    assert not any("bell pepper" in item for item in (x.lower() for x in excluded))
+
+
 def test_build_grocery_list_keeps_fresh_red_pepper_when_pantry_has_pepper(tmp_path: Path) -> None:
     pantry_path = tmp_path / "pantry.txt"
     pantry_path.write_text("pepper\n", encoding="utf-8")
@@ -677,6 +702,35 @@ def test_build_grocery_list_consolidates_lemon_variants(tmp_path: Path) -> None:
     lemon_items = [item for item in items if "lemon" in item.lower()]
     assert len(lemon_items) == 1
     assert lemon_items[0] == "3 lemons"
+
+
+def test_build_grocery_list_issues_233_234_sheet_pan_lemon_and_fine_stems(
+    tmp_path: Path,
+) -> None:
+    pantry_path = tmp_path / "pantry.txt"
+    pantry_path.write_text("salt\n", encoding="utf-8")
+
+    db = MagicMock()
+    db.query_recipes.return_value = [
+        _recipe(
+            "Sheet-Pan Baked Feta With Broccolini, Tomatoes and Lemon",
+            "1 lemon, 1/2 cut into thin rounds the remaining 1/2 left intact\n"
+            "fine stems\n"
+            "1 bunch broccolini, fine stems trimmed",
+        )
+    ]
+
+    items, _, _, _, _, _ = build_grocery_list(
+        db,
+        recipe_names=["Sheet-Pan Baked Feta With Broccolini, Tomatoes and Lemon"],
+        pantry_path=pantry_path,
+        exclude_pantry=True,
+    )
+
+    assert "fine stems" not in items
+    assert not any("cut into thin rounds" in item for item in items)
+    assert any("lemon" in item for item in items)
+    assert any("broccolini" in item for item in items)
 
 
 def test_build_grocery_list_issue_27_quality_fixes(tmp_path: Path) -> None:

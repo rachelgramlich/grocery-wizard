@@ -40,12 +40,22 @@ def load_pantry(path: Path | None = None) -> set[str]:
 
 
 _FRESH_COLORED_PEPPER_RE = re.compile(
-    r"^(red|green|yellow|orange)\s+peppers?$",
+    r"^(red|green|yellow|orange)\s+(?:bell\s+)?peppers?$",
     re.IGNORECASE,
 )
 
-# Generic pantry ``pepper`` must not match fresh bell peppers (``red pepper``).
+# Generic pantry ``pepper`` must not match fresh bell peppers (``red pepper``, ``red bell pepper``).
 _GENERIC_PEPPER_PANTRY = frozenset({"pepper", "peppers"})
+
+
+def fresh_colored_pepper_blocks_generic_pepper(ingredient_name: str, pepper_phrase: str) -> bool:
+    """True when fresh colored bell pepper must not match generic pantry/removal ``pepper``."""
+    name = _pantry_match_key(ingredient_name)
+    phrase = _pantry_match_key(pepper_phrase)
+    if phrase not in _GENERIC_PEPPER_PANTRY:
+        return False
+    return bool(_FRESH_COLORED_PEPPER_RE.match(name))
+
 
 # Generic ``beans`` is not the same as named varieties (``butter beans``, ``white beans``).
 _GENERIC_BEANS_PANTRY = frozenset({"bean", "beans"})

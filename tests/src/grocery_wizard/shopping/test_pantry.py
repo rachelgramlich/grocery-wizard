@@ -120,6 +120,13 @@ def test_fresh_red_pepper_not_matched_by_generic_pepper_pantry() -> None:
     assert is_pantry_item("red pepper flakes", pantry)
 
 
+def test_fresh_red_bell_pepper_not_matched_by_generic_pepper_pantry() -> None:
+    pantry = {"pepper"}
+    assert not is_pantry_item("red bell pepper", pantry)
+    assert not is_pantry_item("2 red bell peppers", pantry)
+    assert is_pantry_item("red bell pepper", {"red bell pepper"})
+
+
 @pytest.mark.parametrize(
     "variety",
     [

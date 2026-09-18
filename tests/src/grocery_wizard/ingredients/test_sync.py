@@ -169,6 +169,27 @@ def test_apply_removals_substring_match() -> None:
     assert result == ["2 tbsp olive oil", "1 lb chicken"]
 
 
+def test_apply_removals_keeps_red_bell_pepper_when_target_is_pepper() -> None:
+    lines = [
+        "1 red bell pepper, sliced",
+        "1/2 tsp black pepper",
+        "2 tbsp peanut butter",
+    ]
+    result = apply_removals(lines, ["pepper"])
+    assert any("bell pepper" in line for line in result)
+    assert not any("black pepper" in line for line in result)
+
+
+def test_merge_keeps_red_bell_pepper_when_existing_has_remove_pepper() -> None:
+    existing = "1 red bell pepper\nremove: pepper\n1/2 tsp black pepper"
+    scraped = "1 red bell pepper\n1/2 tsp black pepper\n2 tbsp peanut butter"
+    merged = merge_ingredients(existing, scraped)
+    lines = [line.lower() for line in merged.splitlines() if line.strip()]
+    assert any("bell pepper" in line for line in lines)
+    assert not any("black pepper" in line for line in lines)
+    assert any("peanut" in line for line in lines)
+
+
 def test_split_ingredients_text_preserves_directives() -> None:
     text = "Naan bread and rice\nremove: salt\n# pantry note"
     result = split_ingredients_text(text)

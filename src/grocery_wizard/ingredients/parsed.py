@@ -291,7 +291,8 @@ _PREP_TRAILING_RE = re.compile(
     r"beaten|chopped|diced|minced|sliced|grated|shredded|crushed|peeled|seeded|cored|"
     r"trimmed|halved|quartered|julienned|cubed|mashed|softened|melted|thawed|rinsed|drained|"
     r"juiced|zested|"
-    r"smashed(?:\s+and\s+peeled)?|peeled\s+and\s+grated|minced\s+or\s+grated"
+    r"smashed(?:\s+and\s+peeled)?|peeled\s+and\s+grated|minced\s+or\s+grated|"
+    r"(?:\d+(?:/\d+)?\s+)?cut\s+into|fine\s+stems\s+trimmed|left\s+intact"
     r")(?:\s+.*)?$",
     re.IGNORECASE,
 )
@@ -1191,7 +1192,10 @@ def looks_like_stored_ingredient_line(text: str) -> bool:
     if _LEMON_LINE_RE.search(stripped):
         return False
     if re.search(
-        r",\s*(?:minced|diced|chopped|grated|peeled|sliced|cut|smashed|drained|rinsed|beaten)\b",
+        r",\s*(?:"
+        r"minced|diced|chopped|grated|peeled|sliced|cut|smashed|drained|rinsed|beaten|"
+        r"(?:\d+(?:/\d+)?\s+)?cut\s+into|fine\s+stems|left\s+intact"
+        r")\b",
         stripped,
         re.IGNORECASE,
     ):
