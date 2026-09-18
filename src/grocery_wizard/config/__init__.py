@@ -21,7 +21,7 @@ LEGACY_DATA_DIR = Path(".grocery_wizard")
 WEEK_PLAN_PATH = DATA_DIR / "week_plan.json"
 LEGACY_WEEK_PLAN_PATH = LEGACY_DATA_DIR / "week_plan.json"
 NYT_LAST_SYNC_PATH = DATA_DIR / "nyt_last_sync.json"
-FEEDBACK_BACKLOG_PATH = DATA_DIR / "feedback_backlog.jsonl"
+FEEDBACK_BACKLOG_PATH = DATA_DIR / "feedback_backlog.md"
 
 
 class Config(BaseSettings):
