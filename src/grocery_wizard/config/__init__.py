@@ -57,6 +57,10 @@ class Config(BaseSettings):
         default=None,
         validation_alias="GROCERY_WIZARD_INGREDIENTS_COLUMN",
     )
+    instructions_column: str | None = Field(
+        default=None,
+        validation_alias="GROCERY_WIZARD_INSTRUCTIONS_COLUMN",
+    )
     nyt_synced_column: str | None = Field(
         default=None,
         validation_alias="GROCERY_WIZARD_NYT_SYNCED_COLUMN",
@@ -72,6 +76,7 @@ class Config(BaseSettings):
         "name_column",
         "link_column",
         "ingredients_column",
+        "instructions_column",
         "nyt_synced_column",
         mode="before",
     )

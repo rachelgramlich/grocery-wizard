@@ -43,6 +43,7 @@ class DatabaseSchema:
     filter_columns: list[ColumnInfo]
     checkbox_columns: list[ColumnInfo]
     all_columns: dict[str, ColumnInfo]
+    instructions_column: str | None = None
 
     @property
     def review_columns(self) -> list[ColumnInfo]:
@@ -154,11 +155,17 @@ class NotionRecipesDB:
         name_column = self._config.name_column or (title_columns[0] if title_columns else "Name")
         link_column = self._resolve_link_column(url_columns, all_columns)
         ingredients_column = self._resolve_ingredients_column(text_columns, all_columns)
+        instructions_column = self._resolve_instructions_column(
+            text_columns,
+            all_columns,
+            ingredients_column,
+        )
 
         return DatabaseSchema(
             name_column=name_column,
             link_column=link_column,
             ingredients_column=ingredients_column,
+            instructions_column=instructions_column,
             filter_columns=filter_columns,
             checkbox_columns=checkbox_columns,
             all_columns=all_columns,
@@ -193,6 +200,22 @@ class NotionRecipesDB:
         if "Ingredients" in all_columns:
             return "Ingredients"
         return None
+
+    def _resolve_instructions_column(
+        self,
+        text_columns: list[str],
+        all_columns: dict[str, ColumnInfo],
+        ingredients_column: str | None,
+    ) -> str | None:
+        if self._config.instructions_column:
+            return self._config.instructions_column
+        if "Instructions" in text_columns or "Instructions" in all_columns:
+            resolved = "Instructions"
+        else:
+            return None
+        if resolved == ingredients_column:
+            return None
+        return resolved
 
     def nyt_synced_column_name(self) -> str | None:
         """Return the NYT sync checkbox column if it exists in the database."""

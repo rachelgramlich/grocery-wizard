@@ -235,6 +235,15 @@ def _render_recipe_field_editors(
                 help="Paste or edit ingredients here. One line per ingredient.",
                 key=widget_key,
             )
+        elif field_name == schema.instructions_column:
+            edited[field_name] = st.text_area(
+                field_name,
+                value=value or "",
+                height=180,
+                placeholder="One step per line\nPreheat oven to 350°F\nMix and bake 25 minutes",
+                help="Paste or type cooking steps. One line per step.",
+                key=widget_key,
+            )
         elif field_name == schema.name_column:
             edited[field_name] = st.text_input(
                 field_name,
