@@ -742,6 +742,8 @@ def _metadata_from_field_values(db: Any, field_values: dict[str, Any]) -> dict[s
     skip = {schema.name_column, schema.link_column}
     if schema.ingredients_column:
         skip.add(schema.ingredients_column)
+    if schema.instructions_column:
+        skip.add(schema.instructions_column)
     return {
         key: value
         for key, value in field_values.items()

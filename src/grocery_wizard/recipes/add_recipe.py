@@ -47,6 +47,8 @@ def ordered_recipe_field_names(schema: DatabaseSchema) -> list[str]:
     names = [schema.name_column, schema.link_column]
     if schema.ingredients_column:
         names.append(schema.ingredients_column)
+    if schema.instructions_column:
+        names.append(schema.instructions_column)
     names.extend(col.name for col in schema.review_columns)
     return names
 
@@ -72,6 +74,8 @@ def base_recipe_field_values(
     }
     if schema.ingredients_column:
         fields[schema.ingredients_column] = ingredients
+    if schema.instructions_column:
+        fields.setdefault(schema.instructions_column, "")
     if inferred:
         fields.update(inferred)
     for col in schema.checkbox_columns:
@@ -315,6 +319,8 @@ def _review_fields(
     ordered_fields = [schema.name_column, schema.link_column]
     if schema.ingredients_column:
         ordered_fields.append(schema.ingredients_column)
+    if schema.instructions_column:
+        ordered_fields.append(schema.instructions_column)
     ordered_fields.extend(col.name for col in schema.review_columns)
 
     for field_name in ordered_fields:
@@ -350,6 +356,12 @@ def _review_fields(
 
         elif field_name == schema.ingredients_column:
             picked = _prompt_ingredients(field_name, current, prompt_fn)
+            if picked is None:
+                return None
+            reviewed[field_name] = picked
+
+        elif field_name == schema.instructions_column:
+            picked = _prompt_multiline_text(field_name, current, prompt_fn)
             if picked is None:
                 return None
             reviewed[field_name] = picked
@@ -392,6 +404,36 @@ def _prompt_ingredients(
 
     print("  Invalid choice, keeping current ingredients.")
     return ingredients_to_text(lines)
+
+
+def _prompt_multiline_text(
+    field_name: str,
+    current: object,
+    prompt_fn: Callable[[str], str],
+) -> str | None:
+    display = _format_value(current)
+    print(f"\n{field_name}:\n{display or '(empty)'}")
+    print("  Enter = keep, e = replace, 0 = skip recipe")
+    choice = prompt_fn("  Choice: ").strip().lower()
+    if choice in ("", "k", "keep"):
+        return str(current or "")
+    if choice == "0":
+        return None
+    if choice == "e":
+        return _read_multiline_field(prompt_fn, field_name)
+    print("  Invalid choice, keeping current value.")
+    return str(current or "")
+
+
+def _read_multiline_field(prompt_fn: Callable[[str], str], field_name: str) -> str:
+    print(f"  Paste {field_name} (one line per step, empty line to finish):")
+    lines: list[str] = []
+    while True:
+        line = prompt_fn("")
+        if not line.strip():
+            break
+        lines.append(line.strip())
+    return "\n".join(lines)
 
 
 def _read_multiline_ingredients(prompt_fn: Callable[[str], str], mode: str) -> str:
