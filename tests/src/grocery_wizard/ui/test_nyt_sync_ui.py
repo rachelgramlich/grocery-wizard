@@ -47,7 +47,7 @@ def test_list_recipe_box_folders_omits_all_saved_recipes_option() -> None:
 
 def test_nyt_sync_shows_progress_bar_during_run() -> None:
     nyt_sync = (APP_PATH.parent / "nyt_sync.py").read_text(encoding="utf-8")
-    assert 'key="nyt_sync_progress"' in nyt_sync
+    assert 'key="nyt_sync_progress"' in nyt_sync  # container hook for AppTest
     assert "st.progress" in nyt_sync
     assert "expected_recipe_count=folder.recipe_count" in nyt_sync
     assert "Sync log" in nyt_sync

@@ -129,13 +129,13 @@ def _execute_nyt_recipe_box_sync(
         "Previewing NYT recipes…" if dry_run else "Syncing NYT recipes to Notion…",
         expanded=True,
     ) as sync_status:
-        progress_bar = st.progress(
-            0.0,
-            text=_sync_progress_label(
-                NytSyncProgressUpdate(message="", processed=0, total=folder.recipe_count)
-            ),
-            key="nyt_sync_progress",
-        )
+        with st.container(key="nyt_sync_progress"):
+            progress_bar = st.progress(
+                0.0,
+                text=_sync_progress_label(
+                    NytSyncProgressUpdate(message="", processed=0, total=folder.recipe_count)
+                ),
+            )
 
         def on_progress(update: NytSyncProgressUpdate) -> None:
             if update.message:
