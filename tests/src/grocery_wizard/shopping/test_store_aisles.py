@@ -265,7 +265,6 @@ def test_resolve_pantry_aisle_id_accepts_id_or_label() -> None:
     config = load_store_aisles()
     assert resolve_pantry_aisle_id("dry goods", config=config) == "dry goods"
     assert resolve_pantry_aisle_id("Dry goods", config=config) == "dry goods"
-    assert resolve_pantry_aisle_id("Home goods", config=config) == "household/personal care"
     assert resolve_pantry_aisle_id(None, config=config) is None
 
 

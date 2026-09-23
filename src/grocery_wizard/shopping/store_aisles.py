@@ -231,9 +231,6 @@ def resolve_pantry_aisle_id(
             return aisle_id
     if raw in ("uncategorized", "other"):
         return "other"
-    # Legacy pantry / Notion values before Home goods → Household and personal care rename.
-    if raw in ("home goods", "home good"):
-        return "household/personal care"
     return "other"
 
 
