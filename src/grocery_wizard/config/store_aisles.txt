@@ -100,6 +100,8 @@ salad greens
 greens
 
 # --- coffee: Coffee & tea ---
+nondairy creamer
+creamer
 coffee beans
 coffee
 espresso
@@ -108,6 +110,7 @@ matcha
 
 # --- pasta: Pasta & noodles ---
 pasta for
+gnocchi
 pasta
 spaghetti
 penne
@@ -142,6 +145,7 @@ ricotta
 mascarpone
 provolone
 swiss cheese
+paneer
 cheese
 tofu
 tempeh
@@ -181,6 +185,19 @@ egg
 eggs
 butter
 
+# --- household/personal care: Household and personal care ---
+laundry detergent
+shaving cream
+pumpkin candle
+detergent
+candle
+hand soap
+dish soap
+paper towels
+toilet paper
+soap
+sponge
+
 # --- bakery: Bakery ---
 crusty bread
 english muffin
@@ -193,21 +210,22 @@ corn tortillas
 tortilla
 pita
 naan
+roti
 bagel
 bread
 bun
 roll
 croissant
 
-# --- home goods: Home goods ---
-hand soap
-dish soap
-paper towels
-toilet paper
-soap
-sponge
-
 # --- dry goods: Dry goods / cans / cereal / rice ---
+thai red curry sauce
+teriyaki sauce
+buffalo sauce
+hot sauce
+curry sauce
+thai green chile
+green chile
+green chiles
 canned peaches
 canned corn
 raspberry jam

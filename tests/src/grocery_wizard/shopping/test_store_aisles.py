@@ -43,13 +43,18 @@ def test_load_store_aisles_uses_committed_config() -> None:
     assert config.aisle_order.index("vegetables") < config.aisle_order.index("coffee")
     assert config.aisle_order.index("coffee") < config.aisle_order.index("pasta")
     assert config.aisle_order.index("pasta") < config.aisle_order.index("refrigerated")
-    assert config.aisle_order.index("dairy/eggs") < config.aisle_order.index("bakery")
-    assert config.aisle_order.index("bakery") < config.aisle_order.index("home goods")
-    assert config.aisle_order.index("home goods") < config.aisle_order.index("dry goods")
+    assert config.aisle_order.index("dairy/eggs") < config.aisle_order.index(
+        "household/personal care"
+    )
+    assert config.aisle_order.index("household/personal care") < config.aisle_order.index("bakery")
+    assert config.aisle_order.index("bakery") < config.aisle_order.index("dry goods")
+    assert config.aisle_order.index("household/personal care") < config.aisle_order.index(
+        "meat/fish"
+    )
     assert config.aisle_order.index("dry goods") < config.aisle_order.index("meat/fish")
     assert config.aisle_order.index("meat/fish") < config.aisle_order.index("frozen")
     assert config.aisle_labels["flowers"] == "Flowers"
-    assert config.aisle_labels["home goods"] == "Home goods"
+    assert config.aisle_labels["household/personal care"] == "Household and personal care"
     assert config.aisle_labels["fruit"] == "Fruit"
     assert config.aisle_labels["meat/fish"] == "Meat & fish"
     assert "banana" in config.aisle_keywords["fruit"]
@@ -224,7 +229,7 @@ def test_classify_aisle_strips_checklist_prefix(item: str, expected_aisle: str) 
         ("Cold foam", "dairy/eggs"),
         ("Flowers", "flowers"),
         ("- [ ] Flowers", "flowers"),
-        ("Hand soap", "home goods"),
+        ("Hand soap", "household/personal care"),
         ("Lox pastrami kind", "meat/fish"),
         ("Mexican crema", "dairy/eggs"),
         ("Pesto", "refrigerated"),
@@ -237,6 +242,19 @@ def test_classify_aisle_strips_checklist_prefix(item: str, expected_aisle: str) 
         ("coconut oil", "dry goods"),
         ("hash brown", "frozen"),
         ("bfast sausage", "frozen"),
+        ("1 1/2 lb paneer", "refrigerated"),
+        ("1/2 bottle thai red curry sauce", "dry goods"),
+        ("thai green chiles", "dry goods"),
+        ("buffalo sauce", "dry goods"),
+        ("hot sauce", "dry goods"),
+        ("teriyaki sauce", "dry goods"),
+        ("pkgs gnocchi", "pasta"),
+        ("gnocchi", "pasta"),
+        ("roti", "bakery"),
+        ("nondairy creamer", "coffee"),
+        ("laundry detergent", "household/personal care"),
+        ("shaving cream", "household/personal care"),
+        ("pumpkin candle", "household/personal care"),
     ],
 )
 def test_classify_aisle_misclassifications(item: str, expected_aisle: str) -> None:
