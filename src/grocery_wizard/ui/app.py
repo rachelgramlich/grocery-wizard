@@ -20,11 +20,13 @@ from src.grocery_wizard.ui.notion_cache import (
 )
 from src.grocery_wizard.ui.sections.add_recipe import render_add_recipe
 from src.grocery_wizard.ui.sections.pantry_recurring import render_pantry_and_recurring
+from src.grocery_wizard.ui.sections.recipe_maintenance import render_recipe_maintenance
 from src.grocery_wizard.ui.sections.weekly_plan import render_create_weekly_plan
 from src.grocery_wizard.ui.styles import inject_app_styles
 from src.grocery_wizard.ui.tabs import (
     _TAB_ADD,
     _TAB_CONTAINER_KEYS,
+    _TAB_MAINTENANCE,
     _TAB_PANTRY,
     _TAB_WEEKLY,
     _UI_TABS,
@@ -40,6 +42,7 @@ __all__ = [
     "render_add_recipe",
     "render_create_weekly_plan",
     "render_pantry_and_recurring",
+    "render_recipe_maintenance",
 ]
 
 
@@ -128,6 +131,8 @@ def main() -> None:
             render_add_recipe()
         elif active_tab == _TAB_PANTRY:
             render_pantry_and_recurring()
+        elif active_tab == _TAB_MAINTENANCE:
+            render_recipe_maintenance()
 
 
 if __name__ == "__main__":

@@ -17,6 +17,7 @@ _UI_MODULE_PATHS = (
     "sections/weekly_plan/grocery_wizard.py",
     "sections/add_recipe.py",
     "sections/pantry_recurring.py",
+    "sections/recipe_maintenance.py",
     "grocery_helpers.py",
     "grocery_flow.py",
     "meal_plan_filters.py",
