@@ -85,6 +85,7 @@ _UNITS = {
     "package",
     "packages",
     "pkg",
+    "pkgs",
     "stick",
     "sticks",
     "bag",

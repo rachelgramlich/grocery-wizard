@@ -239,6 +239,7 @@ def test_split_merged_ingredient_line() -> None:
         # Recognised unit → amount includes qty + unit
         ("1 lb chicken breast", "chicken breast", "1 lb"),
         ("2 cans white beans", "white beans", "2 cans"),
+        ("2 pkgs gnocchi", "gnocchi", "2 pkgs"),
         ("3 cloves garlic, minced", "garlic", "clove:3"),
         ("8 oz tortellini", "tortellini", "8 oz"),
         ("1/2 cup all-purpose flour", "flour", None),
