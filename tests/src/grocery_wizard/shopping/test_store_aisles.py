@@ -244,7 +244,7 @@ def test_classify_aisle_strips_checklist_prefix(item: str, expected_aisle: str) 
         ("bfast sausage", "frozen"),
         ("1 1/2 lb paneer", "refrigerated"),
         ("1/2 bottle thai red curry sauce", "dry goods"),
-        ("thai green chiles", "vegetables"),
+        ("thai green chiles", "dry goods"),
         ("buffalo sauce", "dry goods"),
         ("hot sauce", "dry goods"),
         ("teriyaki sauce", "dry goods"),

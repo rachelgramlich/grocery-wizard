@@ -33,9 +33,6 @@ blueberry
 raspberry
 
 # --- vegetables: Vegetables ---
-thai green chile
-green chile
-green chiles
 red bell pepper
 bell pepper
 broccolini
@@ -128,7 +125,6 @@ tortellini
 ravioli
 
 # --- refrigerated: Refrigerated (cheese/tofu) ---
-paneer
 basil pesto
 pesto
 cheese sticks
@@ -149,6 +145,7 @@ ricotta
 mascarpone
 provolone
 swiss cheese
+paneer
 cheese
 tofu
 tempeh
@@ -226,6 +223,9 @@ teriyaki sauce
 buffalo sauce
 hot sauce
 curry sauce
+thai green chile
+green chile
+green chiles
 canned peaches
 canned corn
 raspberry jam
