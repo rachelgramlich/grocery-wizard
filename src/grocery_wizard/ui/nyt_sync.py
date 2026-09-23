@@ -77,7 +77,10 @@ def _render_nyt_sync_actions() -> tuple[bool, bool]:
         "Dry run (preview only — no Notion writes)",
         value=False,
         key="nyt_sync_dry_run",
-        help="Leave unchecked to write new recipes to Notion. Preview shows counts only.",
+        help=(
+            "Leave unchecked to write new recipes to Notion. "
+            "Preview lists recipes that would be added and ingredient counts."
+        ),
     )
 
     last_report = load_sync_report()

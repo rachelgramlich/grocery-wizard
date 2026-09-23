@@ -56,7 +56,9 @@ NYT_REGI_ID=12345678
 2. Under the title, expand **Sync from NYT Cooking**.
 3. Pick a recipe-box folder (or **All saved recipes**), optionally enable **Dry run**, then click **Sync to Notion** or **Preview sync**.
 
-NYT sync adds **name, link, classified metadata, and the "Synced from NYT recipe box" checkbox** — not ingredients. Add a **checkbox** column with that exact name in Notion (or set `GROCERY_WIZARD_NYT_SYNCED_COLUMN` if you name it differently). Fill ingredients in Notion or via the Streamlit ingredient review step.
+NYT sync adds **name, link, ingredients** (from the NYT Cooking API, with URL scrape as fallback), **classified metadata**, and the **"Synced from NYT recipe box" checkbox**. Add a **checkbox** column with that exact name in Notion (or set `GROCERY_WIZARD_NYT_SYNCED_COLUMN` if you name it differently). Ingredient lines use the same Notion storage format as **Recipe URL** add.
+
+**Dry run** previews new recipes and shows how many ingredients would be fetched — it does not write to Notion.
 
 After sync, the app shows a **Metadata review** expander. The last sync report is also available from **Last sync metadata review**. Ask your agent to fix flagged recipes if needed.
 
