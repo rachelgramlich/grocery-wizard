@@ -40,6 +40,7 @@ from src.grocery_wizard.ui.recipe_match import (
     unmatched_plan_recipe_names,
 )
 from src.grocery_wizard.ui.sections.weekly_plan.state import (
+    PLAN_MEAL_COUNT_WIDGET_KEY,
     _clear_grocery_result,
     _clear_grocery_session_overrides,
     _current_plan_names,
@@ -486,6 +487,7 @@ def _render_weekly_plan_entry() -> bool:
         _reset_weekly_plan_workflow(clear_mode=False)
         st.session_state.plan_meals_text = ""
         st.session_state.plan_meal_count = 1
+        st.session_state.pop(PLAN_MEAL_COUNT_WIDGET_KEY, None)
         st.rerun()
 
     if st.button("Continue", type="primary", key="weekly_plan_mode_continue"):
@@ -501,6 +503,7 @@ def _render_weekly_plan_entry() -> bool:
         elif choice == "new":
             st.session_state.plan_meals_text = ""
             st.session_state.plan_meal_count = load_config().default_meals
+            st.session_state.pop(PLAN_MEAL_COUNT_WIDGET_KEY, None)
         st.rerun()
 
     return False
@@ -515,17 +518,25 @@ def _ensure_plan_session_defaults() -> None:
         )
 
 
+def _sync_plan_meal_count_widget_from_persisted() -> None:
+    if PLAN_MEAL_COUNT_WIDGET_KEY not in st.session_state:
+        st.session_state[PLAN_MEAL_COUNT_WIDGET_KEY] = int(st.session_state.plan_meal_count)
+
+
 def _render_meal_count_input() -> int:
     st.markdown("### 1. Meals")
-    return int(
+    _sync_plan_meal_count_widget_from_persisted()
+    meal_count = int(
         st.number_input(
             "How many meals this week?",
             min_value=1,
             max_value=21,
             step=1,
-            key="plan_meal_count",
+            key=PLAN_MEAL_COUNT_WIDGET_KEY,
         )
     )
+    st.session_state.plan_meal_count = meal_count
+    return meal_count
 
 
 def _cached_plan_ingredient_index(all_recipes: list) -> dict[str, set[str]]:

@@ -41,6 +41,8 @@ if TYPE_CHECKING:
 
 _WEEKLY_PLAN_MODES = ("new", "saved", "dev")
 _SAVE_WEEK_CHOICE_KEY = "weekly_plan_save_week_choice"
+# Widget key for meal count; ``plan_meal_count`` persists when the weekly tab is not rendered.
+PLAN_MEAL_COUNT_WIDGET_KEY = "plan_meal_count_input"
 
 
 def _current_plan_names() -> list[str]:
@@ -132,6 +134,7 @@ def _reset_weekly_plan_workflow(*, clear_mode: bool = False) -> None:
     if clear_mode:
         st.session_state.pop("weekly_plan_mode", None)
         st.session_state.pop("plan_meal_count", None)
+        st.session_state.pop(PLAN_MEAL_COUNT_WIDGET_KEY, None)
     _clear_grocery_result()
 
 
