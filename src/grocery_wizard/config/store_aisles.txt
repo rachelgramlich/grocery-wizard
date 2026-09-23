@@ -188,6 +188,19 @@ egg
 eggs
 butter
 
+# --- household/personal care: Household and personal care ---
+laundry detergent
+shaving cream
+pumpkin candle
+detergent
+candle
+hand soap
+dish soap
+paper towels
+toilet paper
+soap
+sponge
+
 # --- bakery: Bakery ---
 crusty bread
 english muffin
@@ -206,19 +219,6 @@ bread
 bun
 roll
 croissant
-
-# --- home goods: Home goods ---
-laundry detergent
-shaving cream
-pumpkin candle
-detergent
-candle
-hand soap
-dish soap
-paper towels
-toilet paper
-soap
-sponge
 
 # --- dry goods: Dry goods / cans / cereal / rice ---
 thai red curry sauce
