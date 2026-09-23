@@ -150,6 +150,7 @@ _COUNT_UNITS = frozenset(
         "piece",
         "pieces",
         "pkg",
+        "pkgs",
         "slice",
         "slices",
         "sprig",
