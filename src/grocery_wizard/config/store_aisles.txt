@@ -8,6 +8,8 @@ flowers
 bouquet
 
 # --- fruit: Fruit ---
+pink lady
+pomegranate seeds
 berry
 berries
 banana
@@ -33,6 +35,17 @@ blueberry
 raspberry
 
 # --- vegetables: Vegetables ---
+green coleslaw mix
+bird's-eye chile
+bird’s-eye chile
+calabrian chiles
+thai chile
+tomatillo
+tomatillos
+romaine heart
+alfalfa sprouts
+idaho burbank russet
+russet potato
 red bell pepper
 bell pepper
 broccolini
@@ -52,6 +65,8 @@ parsley
 basil
 mint
 dill
+tarragon
+lemongrass
 thyme
 rosemary
 sage
@@ -91,12 +106,17 @@ scallion
 scallions
 radish
 beet
+turnip
+turnips
 asparagus
 eggplant
 edamame
 chard
 herb
 salad greens
+purslane
+shiso
+perilla
 greens
 
 # --- coffee: Coffee & tea ---
@@ -109,8 +129,16 @@ tea
 matcha
 
 # --- pasta: Pasta & noodles ---
+dried lasagna sheets
+lasagna sheets
 pasta for
 gnocchi
+orecchiette
+cavatappi
+farfalle
+fusilli
+ziti
+pastina
 pasta
 spaghetti
 penne
@@ -130,12 +158,18 @@ pesto
 cheese sticks
 low moisture shredded mozzarella
 shredded mozzarella
+parmigiano-reggiano
 goat cheese
 cream cheese
 parmesan shaved
 parmesan grated
 parmesan
 parm
+smoked gouda
+gouda
+fontina
+halloumi
+ciliegine
 mozzarella
 feta
 cheddar
@@ -149,7 +183,11 @@ paneer
 cheese
 tofu
 tempeh
+white miso
+red miso
+sweet miso
 miso paste
+miso
 kimchi
 sauerkraut
 chimichurri
@@ -171,11 +209,15 @@ pudding
 butter tub
 mexican crema
 cold foam
+whipped cream
+low-fat buttermilk
+buttermilk
 sour cream
 heavy cream
 whipping cream
 half and half
 greek yogurt
+greek yoghurt
 cottage cheese
 cream cheese
 crema
@@ -199,6 +241,8 @@ soap
 sponge
 
 # --- bakery: Bakery ---
+packaged puff pastry
+puff pastry
 crusty bread
 english muffin
 hot dog bun
@@ -218,6 +262,52 @@ roll
 croissant
 
 # --- dry goods: Dry goods / cans / cereal / rice ---
+thai red curry paste
+red curry paste
+chile-garlic paste
+chile crisp
+chili crunch
+aji amarillo paste
+aji panca paste
+chinese sesame paste
+sesame paste
+sambal belacan
+sambal oelek
+harissa paste
+harissa
+fermented soybean paste
+chipotle chiles in adobo
+worcestershire sauce
+oyster sauce
+shaoxing wine
+dry white vermouth
+dry white wine
+whole-grain mustard
+dijon mustard
+mayonnaise
+ketchup
+jarred salsa verde
+salsa verde
+pickled pepperoncini
+pickles
+jarred capers
+capers
+pitted kalamata olives
+kalamata olives
+castelvetrano olives
+thai seasoning sauce
+taco seasoning
+tajín
+tajin
+chamoy
+apricot preserves
+dry breadcrumbs
+nori sheets
+neutral oil
+sunflower oil
+safflower oil
+nonstick spray
+cooking oil spray
 thai red curry sauce
 teriyaki sauce
 buffalo sauce
@@ -235,6 +325,8 @@ peanut butter
 applesauce
 coconut oil
 avocado oil
+extra-virgin olive oil
+evoo
 olive oil
 vegetable oil
 canola oil
@@ -245,6 +337,28 @@ vegetable broth
 chicken stock
 beef stock
 vegetable stock
+kashmiri red chile powder
+smoky chile powder
+whole dried chiles
+dried pequin chiles
+birdseye chilies
+red-pepper flakes
+garam masala
+ground cardamom
+ground coriander
+ground cloves
+allspice
+coriander seeds
+whole coriander seeds
+whole black peppercorns
+sichuan peppercorns
+whole star anise
+saffron
+sumac
+za'atar
+za’atar
+aleppo
+poppy seeds
 gochujang
 artichoke hearts
 coconut milk
@@ -310,6 +424,19 @@ pepper
 salt
 
 # --- baking: Baking ---
+sweetened condensed milk
+bittersweet chocolate
+dark chocolate
+pumpkin purée
+pumpkin puree
+unbaked pie crust
+demerara sugar
+unsweetened cocoa
+cocoa
+tapioca starch
+flax seed
+vanilla paste
+vanilla
 chocolate chips
 baking powder
 baking soda
@@ -331,6 +458,10 @@ molasses
 vanilla bean paste
 
 # --- meat/fish: Meat & fish ---
+salt-packed anchovies
+anchovies
+pork belly
+salami
 smoked salmon
 sweet italian sausage
 italian sausage
@@ -382,6 +513,11 @@ biscuit
 biscuits
 
 # --- nuts/dried fruit: Nuts & dried fruit ---
+toasted unsweetened coconut flakes
+unsweetened coconut flakes
+dry coconut flakes
+shredded coconut
+pepitas
 dried cranberries
 dried apricot
 dried mango
@@ -404,6 +540,7 @@ prunes
 dried fruit
 
 # --- frozen: Frozen ---
+eomuk
 hash browns
 hash brown
 bfast sausage
@@ -418,6 +555,7 @@ frozen
 popsicle
 
 # --- snacks: Snacks ---
+tamarind candy straws
 potato chips
 tortilla chips
 pita chips
