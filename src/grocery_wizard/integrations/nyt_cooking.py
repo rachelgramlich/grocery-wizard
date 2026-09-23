@@ -15,6 +15,7 @@ __all__ = [
     "NytRecipeBoxFolder",
     "NytSavedRecipe",
     "NytSyncCancelledError",
+    "NytSyncProgressUpdate",
     "NytSyncRunResult",
     "NytSyncSummary",
     "credentials_status",
@@ -459,13 +460,54 @@ class NytSyncSummary:
     created_recipes: list[NytCreatedRecipe] = field(default_factory=list)
 
 
+@dataclass(frozen=True, slots=True)
+class NytSyncProgressUpdate:
+    """Progress event for NYT recipe-box sync (UI bar + optional log line)."""
+
+    message: str
+    processed: int = 0
+    total: int | None = None
+
+
+NytSyncProgressCallback = Callable[[NytSyncProgressUpdate], None]
+
+
+def _notify_sync_progress(
+    on_progress: NytSyncProgressCallback | None,
+    message: str,
+    *,
+    processed: int = 0,
+    total: int | None = None,
+) -> None:
+    if on_progress is not None:
+        on_progress(NytSyncProgressUpdate(message=message, processed=processed, total=total))
+
+
+def _expected_recipe_count_for_sync(
+    client: NYTCookingClient,
+    collection_id: str | None,
+    explicit: int | None,
+) -> int | None:
+    if explicit is not None and explicit > 0:
+        return explicit
+    if collection_id:
+        try:
+            for collection in client.list_collections():
+                if collection.id == collection_id and collection.recipe_count > 0:
+                    return collection.recipe_count
+        except NYTCookingError:
+            return None
+        return None
+    return _recipe_box_total_count(client)
+
+
 def _resolve_sync_collection(
     client: NYTCookingClient,
     *,
     collection_name: str | None,
     collection_id: str | None,
     collection_label: str | None,
-    on_progress: Callable[[str], None] | None,
+    on_progress: NytSyncProgressCallback | None,
 ) -> tuple[str | None, str | None]:
     resolved_id = collection_id
     resolved_label = collection_label
@@ -473,39 +515,49 @@ def _resolve_sync_collection(
     if resolved_id is None and collection_name:
         collection = client.find_collection_by_name(collection_name)
         if collection is None:
-            if on_progress:
-                on_progress(f"Collection '{collection_name}' not found; syncing full recipe box.")
+            _notify_sync_progress(
+                on_progress,
+                f"Collection '{collection_name}' not found; syncing full recipe box.",
+            )
         else:
             resolved_id = collection.id
             resolved_label = collection.name
-            if on_progress:
-                on_progress(
-                    f"Syncing collection: {collection.name} ({collection.recipe_count} recipes)"
-                )
-    elif on_progress and resolved_label:
+            _notify_sync_progress(
+                on_progress,
+                f"Syncing collection: {collection.name} ({collection.recipe_count} recipes)",
+            )
+    elif resolved_label:
         if resolved_id is not None:
-            on_progress(f"Syncing collection: {resolved_label}")
+            _notify_sync_progress(on_progress, f"Syncing collection: {resolved_label}")
         else:
             total = _recipe_box_total_count(client)
             count_note = f" ({total} recipes)" if total is not None else ""
-            on_progress(f"Syncing: {resolved_label}{count_note}")
+            _notify_sync_progress(on_progress, f"Syncing: {resolved_label}{count_note}")
 
     return resolved_id, resolved_label
 
 
 def _report_sync_nyt_checkbox_column(
     db: Any,
-    on_progress: Callable[[str], None] | None,
+    on_progress: NytSyncProgressCallback | None,
+    *,
+    recipe_total: int | None,
 ) -> None:
-    if not on_progress:
-        return
     nyt_column = db.nyt_synced_column_name()
     if nyt_column:
-        on_progress(f"Marking synced recipes with checkbox: {nyt_column}")
+        _notify_sync_progress(
+            on_progress,
+            f"Marking synced recipes with checkbox: {nyt_column}",
+            processed=0,
+            total=recipe_total,
+        )
     else:
-        on_progress(
+        _notify_sync_progress(
+            on_progress,
             f"Warning: checkbox column '{DEFAULT_NYT_SYNCED_COLUMN}' "
-            "not found in Notion — add it to tag NYT imports."
+            "not found in Notion — add it to tag NYT imports.",
+            processed=0,
+            total=recipe_total,
         )
 
 
@@ -518,23 +570,33 @@ def _process_saved_recipe_in_sync(
     dry_run: bool,
     no_confirm: bool,
     confirm: Callable[[str], bool] | None,
-    on_progress: Callable[[str], None] | None,
+    on_progress: NytSyncProgressCallback | None,
+    recipe_total: int | None,
 ) -> None:
     from src.grocery_wizard.recipes.add_recipe import add_prefetched_recipes
 
     summary.total += 1
+    processed = summary.total
     url = saved.url
     if not url:
         summary.failed += 1
-        if on_progress:
-            on_progress(f"Skipping recipe without URL: {saved.name}")
+        _notify_sync_progress(
+            on_progress,
+            f"Skipping recipe without URL: {saved.name}",
+            processed=processed,
+            total=recipe_total,
+        )
         return
 
     existing = db.find_by_link(url)
     if existing:
         summary.skipped_existing += 1
-        if on_progress:
-            on_progress(f"Skip (already in Notion): {existing.name}")
+        _notify_sync_progress(
+            on_progress,
+            f"Skip (already in Notion): {existing.name}",
+            processed=processed,
+            total=recipe_total,
+        )
         return
 
     if dry_run:
@@ -557,8 +619,12 @@ def _process_saved_recipe_in_sync(
                 flags=flags,
             )
         )
-        if on_progress:
-            on_progress(f"Would add: {saved.name}")
+        _notify_sync_progress(
+            on_progress,
+            f"Would add: {saved.name}",
+            processed=processed,
+            total=recipe_total,
+        )
         return
 
     total_minutes = _fetch_nyt_total_minutes(client, saved.id, saved.url)
@@ -583,11 +649,20 @@ def _process_saved_recipe_in_sync(
             flags=flags,
         )
         summary.created_recipes.append(entry)
-        if on_progress:
-            flag_note = f" [{'; '.join(flags)}]" if flags else ""
-            on_progress(f"Created: {result.name}{flag_note}")
-    elif on_progress:
-        on_progress(f"Skipped: {saved.name}")
+        flag_note = f" [{'; '.join(flags)}]" if flags else ""
+        _notify_sync_progress(
+            on_progress,
+            f"Created: {result.name}{flag_note}",
+            processed=processed,
+            total=recipe_total,
+        )
+    else:
+        _notify_sync_progress(
+            on_progress,
+            f"Skipped: {saved.name}",
+            processed=processed,
+            total=recipe_total,
+        )
 
 
 def sync_saved_recipes_to_notion(
@@ -600,7 +675,8 @@ def sync_saved_recipes_to_notion(
     dry_run: bool = False,
     no_confirm: bool = True,
     confirm: Callable[[str], bool] | None = None,
-    on_progress: Callable[[str], None] | None = None,
+    on_progress: NytSyncProgressCallback | None = None,
+    expected_recipe_count: int | None = None,
 ) -> NytSyncSummary:
     """Sync NYT saved recipes to Notion, skipping duplicates by link."""
     resolved_id, resolved_label = _resolve_sync_collection(
@@ -611,8 +687,10 @@ def sync_saved_recipes_to_notion(
         on_progress=on_progress,
     )
 
+    recipe_total = _expected_recipe_count_for_sync(client, resolved_id, expected_recipe_count)
+
     summary = NytSyncSummary(collection_label=resolved_label)
-    _report_sync_nyt_checkbox_column(db, on_progress)
+    _report_sync_nyt_checkbox_column(db, on_progress, recipe_total=recipe_total)
 
     for saved in client.iter_all_saved_recipes(collection_id=resolved_id):
         _process_saved_recipe_in_sync(
@@ -624,6 +702,19 @@ def sync_saved_recipes_to_notion(
             no_confirm=no_confirm,
             confirm=confirm,
             on_progress=on_progress,
+            recipe_total=recipe_total,
+        )
+
+    if on_progress is not None and summary.total:
+        if recipe_total and recipe_total >= summary.total:
+            effective_total = recipe_total
+        else:
+            effective_total = summary.total
+        _notify_sync_progress(
+            on_progress,
+            f"Finished processing {summary.total} recipe(s).",
+            processed=summary.total,
+            total=effective_total,
         )
 
     return summary
@@ -673,7 +764,8 @@ def run_recipe_box_sync(
     dry_run: bool = False,
     no_confirm: bool = True,
     save_report: bool = True,
-    on_progress: Callable[[str], None] | None = None,
+    on_progress: NytSyncProgressCallback | None = None,
+    expected_recipe_count: int | None = None,
 ) -> NytSyncRunResult:
     """Run NYT recipe-box sync and optionally persist the metadata review report."""
     summary = sync_saved_recipes_to_notion(
@@ -685,6 +777,7 @@ def run_recipe_box_sync(
         dry_run=dry_run,
         no_confirm=no_confirm,
         on_progress=on_progress,
+        expected_recipe_count=expected_recipe_count,
     )
     review_report: dict[str, Any] | None = None
     if summary.created_recipes:
@@ -859,7 +952,7 @@ def _fetch_reclassify_total_minutes(
     recipe: Any,
     summary: NytReclassifySummary,
     *,
-    on_progress: Callable[[str], None] | None,
+    on_progress: NytSyncProgressCallback | None,
 ) -> float | None:
     title = recipe.name
     recipe_id = _recipe_id_from_url(recipe.link or "")
@@ -869,8 +962,7 @@ def _fetch_reclassify_total_minutes(
         nyt_recipe = client.get_recipe(recipe_id)
     except NYTCookingError:
         summary.api_failures += 1
-        if on_progress:
-            on_progress(f"Could not fetch NYT timing for: {title}")
+        _notify_sync_progress(on_progress, f"Could not fetch NYT timing for: {title}")
         return None
     else:
         return nyt_recipe.total_time_minutes
@@ -937,12 +1029,15 @@ def _apply_reclassify_recipe_updates(
     summary: NytReclassifySummary,
     *,
     dry_run: bool,
-    on_progress: Callable[[str], None] | None,
+    on_progress: NytSyncProgressCallback | None,
 ) -> None:
     if fields:
-        if on_progress:
-            detail = ", ".join(f"{key}={value}" for key, value in fields.items())
-            on_progress(f"Update: {recipe.name} ({detail})")
+        detail = ", ".join(f"{key}={value}" for key, value in fields.items())
+        _notify_sync_progress(
+            on_progress,
+            f"Update: {recipe.name} ({detail})",
+            processed=summary.total,
+        )
         if not dry_run:
             db.update_recipe(recipe.page_id, fields)
     else:
@@ -954,7 +1049,7 @@ def reclassify_nyt_synced_recipes(
     client: NYTCookingClient,
     *,
     dry_run: bool = False,
-    on_progress: Callable[[str], None] | None = None,
+    on_progress: NytSyncProgressCallback | None = None,
 ) -> NytReclassifySummary:
     """Re-run Meal and Weeknight Friendly for NYT-synced recipes in Notion."""
     from src.grocery_wizard.recipes.classify import classify_recipe

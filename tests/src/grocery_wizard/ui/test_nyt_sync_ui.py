@@ -45,6 +45,14 @@ def test_list_recipe_box_folders_omits_all_saved_recipes_option() -> None:
     assert 'label="All saved recipes"' not in nyt_cooking
 
 
+def test_nyt_sync_shows_progress_bar_during_run() -> None:
+    nyt_sync = (APP_PATH.parent / "nyt_sync.py").read_text(encoding="utf-8")
+    assert 'key="nyt_sync_progress"' in nyt_sync
+    assert "st.progress" in nyt_sync
+    assert "expected_recipe_count=folder.recipe_count" in nyt_sync
+    assert "Sync log" in nyt_sync
+
+
 def test_nyt_dry_run_defaults_off_and_clarifies_notion_outcome() -> None:
     nyt_sync = (APP_PATH.parent / "nyt_sync.py").read_text(encoding="utf-8")
     assert 'key="nyt_sync_dry_run"' in nyt_sync

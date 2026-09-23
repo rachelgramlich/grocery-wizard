@@ -248,6 +248,45 @@ def test_sync_dry_run_skips_notion_writes(credentials: NytCredentials) -> None:
     add_mock.assert_not_called()
 
 
+def test_sync_reports_progress_with_recipe_counts(credentials: NytCredentials) -> None:
+    session = MagicMock()
+    client = NYTCookingClient(credentials, session=session)
+    session.get.return_value = _mock_response(
+        payload={
+            "collectables": [
+                {
+                    "id": "1",
+                    "name": "New Recipe",
+                    "url": "https://cooking.nytimes.com/recipes/1-new",
+                }
+            ],
+            "collectables_count": 1,
+        }
+    )
+
+    db = MagicMock()
+    db.find_by_link.return_value = None
+    db.nyt_synced_column_name.return_value = "Synced from NYT recipe box"
+
+    updates: list[tuple[int, int | None]] = []
+
+    def on_progress(update) -> None:
+        if update.processed:
+            updates.append((update.processed, update.total))
+
+    with patch("src.grocery_wizard.recipes.add_recipe.add_prefetched_recipes") as add_mock:
+        sync_saved_recipes_to_notion(
+            db,
+            client,
+            dry_run=True,
+            on_progress=on_progress,
+            expected_recipe_count=1,
+        )
+        add_mock.assert_not_called()
+
+    assert (1, 1) in updates
+
+
 def test_sync_skips_existing_links(credentials: NytCredentials) -> None:
     session = MagicMock()
     client = NYTCookingClient(credentials, session=session)
