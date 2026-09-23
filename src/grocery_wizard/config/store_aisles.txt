@@ -33,6 +33,9 @@ blueberry
 raspberry
 
 # --- vegetables: Vegetables ---
+thai green chile
+green chile
+green chiles
 red bell pepper
 bell pepper
 broccolini
@@ -100,6 +103,8 @@ salad greens
 greens
 
 # --- coffee: Coffee & tea ---
+nondairy creamer
+creamer
 coffee beans
 coffee
 espresso
@@ -108,6 +113,7 @@ matcha
 
 # --- pasta: Pasta & noodles ---
 pasta for
+gnocchi
 pasta
 spaghetti
 penne
@@ -122,6 +128,7 @@ tortellini
 ravioli
 
 # --- refrigerated: Refrigerated (cheese/tofu) ---
+paneer
 basil pesto
 pesto
 cheese sticks
@@ -193,6 +200,7 @@ corn tortillas
 tortilla
 pita
 naan
+roti
 bagel
 bread
 bun
@@ -200,6 +208,11 @@ roll
 croissant
 
 # --- home goods: Home goods ---
+laundry detergent
+shaving cream
+pumpkin candle
+detergent
+candle
 hand soap
 dish soap
 paper towels
@@ -208,6 +221,11 @@ soap
 sponge
 
 # --- dry goods: Dry goods / cans / cereal / rice ---
+thai red curry sauce
+teriyaki sauce
+buffalo sauce
+hot sauce
+curry sauce
 canned peaches
 canned corn
 raspberry jam
