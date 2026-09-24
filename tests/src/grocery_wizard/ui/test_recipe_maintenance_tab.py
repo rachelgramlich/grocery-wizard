@@ -11,6 +11,8 @@ def test_recipe_maintenance_tab_registered() -> None:
     assert "_UI_TABS = (_TAB_WEEKLY, _TAB_ADD, _TAB_PANTRY, _TAB_MAINTENANCE)" in source
     assert "def render_recipe_maintenance()" in source
     assert "Start ingredients backfill" in source
+    assert "Manual backfill in Notion" in source
+    assert "Open Notion with this filter" in source
     assert "Start metadata backfill" in source
 
     app = APP_PATH.read_text(encoding="utf-8")

@@ -52,6 +52,17 @@ def recipes_missing_ingredients(recipes: list[Recipe], schema: DatabaseSchema) -
     return [recipe for recipe in recipes if recipe_missing_ingredients(recipe, schema)]
 
 
+def recipe_manual_notion_backfill(recipe: Recipe, schema: DatabaseSchema) -> bool:
+    """Rows with no link and no ingredients — edit manually in Notion."""
+    if not schema.ingredients_column:
+        return not recipe_has_link(recipe)
+    return not recipe_has_link(recipe) and not ingredients_text(recipe)
+
+
+def recipes_manual_notion_backfill(recipes: list[Recipe], schema: DatabaseSchema) -> list[Recipe]:
+    return [recipe for recipe in recipes if recipe_manual_notion_backfill(recipe, schema)]
+
+
 def metadata_column_names(schema: DatabaseSchema) -> list[str]:
     """Filter columns (select / multi_select / status) — not checkboxes or Instructions."""
     return [col.name for col in schema.filter_columns]
