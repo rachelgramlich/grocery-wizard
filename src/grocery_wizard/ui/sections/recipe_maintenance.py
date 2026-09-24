@@ -127,8 +127,9 @@ def render_recipe_maintenance() -> None:
     with st.container(border=True):
         st.markdown("**Backfill missing metadata**")
         st.caption(
-            "Recipes with ingredients but empty Meal / filter columns — filled from "
-            "classification (checkboxes and Instructions are not changed here)."
+            "Fills empty Meal, Cuisine, and meal-appropriate filters (e.g. Dinner Category "
+            "only when Meal is Dinner; Weeknight Friendly for dinners). Instructions, NYT "
+            "sync, and Showstopper are not auto-filled."
         )
         st.write(f"**{len(missing_metadata)}** recipe(s) with gaps in metadata columns.")
         if st.button(

@@ -22,14 +22,28 @@ from src.grocery_wizard.recipes.scraper import ScrapedRecipe, ScrapeError
 
 
 def _schema() -> DatabaseSchema:
-    meal = ColumnInfo(name="Meal", type="select", options=["Dinner", "Dessert"])
+    return _full_schema(filter_columns_only_meal=True)
+
+
+def _full_schema(*, filter_columns_only_meal: bool = False) -> DatabaseSchema:
+    meal = ColumnInfo(name="Meal", type="select", options=["Dinner", "Dessert", "Lunch"])
     weeknight = ColumnInfo(name="Dinner: Weeknight Friendly", type="checkbox", options=[])
+    cuisine = ColumnInfo(name="Cuisine", type="multi_select", options=["Italian"])
+    protein = ColumnInfo(name="Protein", type="multi_select", options=["Chicken"])
+    dinner_category = ColumnInfo(
+        name="Dinner Category",
+        type="multi_select",
+        options=["Pasta"],
+    )
+    filter_columns = [meal]
+    if not filter_columns_only_meal:
+        filter_columns = [meal, cuisine, protein, dinner_category]
     return DatabaseSchema(
         name_column="Name",
         link_column="Link",
         ingredients_column="Ingredients",
         instructions_column="Instructions",
-        filter_columns=[meal],
+        filter_columns=filter_columns,
         checkbox_columns=[weeknight],
         all_columns={
             "Name": ColumnInfo(name="Name", type="title"),
@@ -37,6 +51,9 @@ def _schema() -> DatabaseSchema:
             "Ingredients": ColumnInfo(name="Ingredients", type="rich_text"),
             "Instructions": ColumnInfo(name="Instructions", type="rich_text"),
             "Meal": meal,
+            "Cuisine": cuisine,
+            "Protein": protein,
+            "Dinner Category": dinner_category,
             "Dinner: Weeknight Friendly": weeknight,
         },
     )
@@ -93,18 +110,37 @@ def test_recipe_missing_metadata_predicate() -> None:
     schema = _schema()
     assert recipe_missing_metadata(_recipe(ingredients="1 cup rice", meal=None), schema)
     assert not recipe_missing_metadata(
-        _recipe(ingredients="1 cup rice", meal="Dinner", weeknight=False),
+        _recipe(ingredients="1 cup rice", meal="Dinner", weeknight=True),
         schema,
     )
     assert not recipe_missing_metadata(_recipe(ingredients="", meal=None), schema)
 
 
-def test_unchecked_checkbox_does_not_count_as_metadata_gap() -> None:
+def test_unchecked_weeknight_counts_as_gap_for_dinner() -> None:
     schema = _schema()
-    assert not recipe_missing_metadata(
+    assert recipe_missing_metadata(
         _recipe(ingredients="1 cup rice", meal="Dinner", weeknight=False),
         schema,
     )
+
+
+def test_dessert_skips_protein_and_dinner_category_gaps() -> None:
+    schema = _full_schema()
+    props = {
+        "Meal": "Dessert",
+        "Cuisine": ["Italian"],
+        "Protein": None,
+        "Dinner Category": None,
+        "Dinner: Weeknight Friendly": False,
+    }
+    recipe = Recipe(
+        page_id="page-1",
+        name="Brownies",
+        link="https://example.com/r",
+        ingredients="flour",
+        properties=props,
+    )
+    assert not recipe_missing_metadata(recipe, schema)
 
 
 def test_is_blank_metadata_value() -> None:
@@ -226,4 +262,4 @@ def test_infer_metadata_field_values_uses_classify() -> None:
         updates = infer_metadata_field_values(db, candidate, nyt_client=None)
 
     assert updates.get("Meal") == "Dinner"
-    assert "Dinner: Weeknight Friendly" not in updates
+    assert updates.get("Dinner: Weeknight Friendly") is True
