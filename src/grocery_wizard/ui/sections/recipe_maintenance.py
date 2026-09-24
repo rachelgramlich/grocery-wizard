@@ -26,13 +26,6 @@ from src.grocery_wizard.recipes.recipe_maintenance import (
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.notion_cache import cached_query_recipes, invalidate_notion_cache
 
-_MANUAL_INGREDIENTS_CHECKBOX_KEY = "recipe_maint_notion_manual_ingredients"
-_MANUAL_CHECKBOXES_CHECKBOX_KEY = "recipe_maint_notion_manual_checkboxes"
-_OPEN_PENDING_KEYS = {
-    _MANUAL_INGREDIENTS_CHECKBOX_KEY: "gw_manual_notion_open_pending_ingredients",
-    _MANUAL_CHECKBOXES_CHECKBOX_KEY: "gw_manual_notion_open_pending_checkboxes",
-}
-
 
 def _nyt_client_if_configured() -> NYTCookingClient | None:
     if not credentials_status()["configured"]:
@@ -67,43 +60,19 @@ def _run_backfill_with_progress(
         invalidate_notion_cache()
 
 
-def _queue_notion_open(*, checkbox_key: str) -> None:
-    pending_key = _OPEN_PENDING_KEYS[checkbox_key]
-    st.session_state[pending_key] = True
-
-
-def _render_notion_open_control(
-    *,
-    checkbox_key: str,
-    checkbox_label: str,
-    url: str,
-) -> None:
-    st.checkbox(
-        checkbox_label,
-        key=checkbox_key,
-        on_change=_queue_notion_open,
-        kwargs={"checkbox_key": checkbox_key},
-    )
-    if not st.session_state.get(checkbox_key):
-        return
-
-    st.link_button(
-        "Open filtered recipe database in Notion",
-        url,
-        type="secondary",
-        use_container_width=True,
-    )
-    pending_key = _OPEN_PENDING_KEYS[checkbox_key]
-    if st.session_state.pop(pending_key, False):
-        st.components.v1.html(
-            f"<script>window.open({url!r}, '_blank', 'noopener,noreferrer');</script>",
-            height=0,
-            width=0,
-        )
-
-
 def _preview_count_line(count: int) -> None:
     st.write(f"**{count}** recipe(s) will appear in Notion with this filter.")
+
+
+def _render_open_notion_button(*, label: str, url: str, key: str, disabled: bool) -> None:
+    st.link_button(
+        label,
+        url,
+        type="primary",
+        use_container_width=True,
+        key=key,
+        disabled=disabled,
+    )
 
 
 def render_recipe_maintenance() -> None:
@@ -203,10 +172,11 @@ def render_recipe_maintenance() -> None:
             except Exception as exc:
                 st.error(f"Could not prepare Notion view: {exc}")
             else:
-                _render_notion_open_control(
-                    checkbox_key=_MANUAL_INGREDIENTS_CHECKBOX_KEY,
-                    checkbox_label="Open Notion with this filter (new tab)",
+                _render_open_notion_button(
+                    label="Open in Notion",
                     url=ingredients_view_url,
+                    key="recipe_maint_notion_manual_ingredients",
+                    disabled=not manual_ingredients,
                 )
 
     with st.container(border=True):
@@ -225,8 +195,9 @@ def render_recipe_maintenance() -> None:
             except Exception as exc:
                 st.error(f"Could not prepare Notion view: {exc}")
             else:
-                _render_notion_open_control(
-                    checkbox_key=_MANUAL_CHECKBOXES_CHECKBOX_KEY,
-                    checkbox_label="Open Notion with this filter (new tab)",
+                _render_open_notion_button(
+                    label="Open in Notion",
                     url=checkboxes_view_url,
+                    key="recipe_maint_notion_manual_checkboxes",
+                    disabled=not possibly_missing_checkboxes,
                 )
