@@ -71,17 +71,23 @@ def test_recipe_missing_metadata_predicate() -> None:
     schema = _schema()
     assert recipe_missing_metadata(_recipe(ingredients="1 cup rice", meal=None), schema)
     assert not recipe_missing_metadata(
-        _recipe(ingredients="1 cup rice", meal="Dinner", weeknight=True),
+        _recipe(ingredients="1 cup rice", meal="Dinner", weeknight=False),
         schema,
     )
     assert not recipe_missing_metadata(_recipe(ingredients="", meal=None), schema)
 
 
+def test_unchecked_checkbox_does_not_count_as_metadata_gap() -> None:
+    schema = _schema()
+    assert not recipe_missing_metadata(
+        _recipe(ingredients="1 cup rice", meal="Dinner", weeknight=False),
+        schema,
+    )
+
+
 def test_is_blank_metadata_value() -> None:
     assert is_blank_metadata_value("select", None)
     assert is_blank_metadata_value("multi_select", [])
-    assert is_blank_metadata_value("checkbox", False)
-    assert not is_blank_metadata_value("checkbox", True)
     assert not is_blank_metadata_value("select", "Dinner")
 
 
@@ -151,15 +157,12 @@ def test_run_metadata_backfill_fills_blanks_only() -> None:
 
     with patch(
         "src.grocery_wizard.recipes.recipe_maintenance.infer_metadata_field_values",
-        return_value={"Meal": "Dinner", "Dinner: Weeknight Friendly": True},
+        return_value={"Meal": "Dinner"},
     ):
         summary = run_metadata_backfill(db, [candidate])
 
     assert summary.succeeded == 1
-    db.update_recipe.assert_called_once_with(
-        "page-1",
-        {"Meal": "Dinner", "Dinner: Weeknight Friendly": True},
-    )
+    db.update_recipe.assert_called_once_with("page-1", {"Meal": "Dinner"})
 
 
 def test_infer_metadata_field_values_uses_classify() -> None:
@@ -175,4 +178,4 @@ def test_infer_metadata_field_values_uses_classify() -> None:
         updates = infer_metadata_field_values(db, candidate, nyt_client=None)
 
     assert updates.get("Meal") == "Dinner"
-    assert updates.get("Dinner: Weeknight Friendly") is True
+    assert "Dinner: Weeknight Friendly" not in updates

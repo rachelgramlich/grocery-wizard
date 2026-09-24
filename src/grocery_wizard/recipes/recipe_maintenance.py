@@ -14,7 +14,6 @@ from src.grocery_wizard.integrations.notion import (
     NotionRecipesDB,
     Recipe,
 )
-from src.grocery_wizard.recipes.add_recipe import _weeknight_column_name
 from src.grocery_wizard.recipes.classify import classify_recipe
 from src.grocery_wizard.recipes.scraper import ScrapeError, ingredients_to_text, scrape_recipe
 
@@ -54,8 +53,8 @@ def recipes_missing_ingredients(recipes: list[Recipe], schema: DatabaseSchema) -
 
 
 def metadata_column_names(schema: DatabaseSchema) -> list[str]:
-    """Review columns only — excludes Instructions and other optional text columns."""
-    return [col.name for col in schema.review_columns]
+    """Filter columns (select / multi_select / status) — not checkboxes or Instructions."""
+    return [col.name for col in schema.filter_columns]
 
 
 def is_blank_metadata_value(column_type: str, value: Any) -> bool:
@@ -67,17 +66,16 @@ def is_blank_metadata_value(column_type: str, value: Any) -> bool:
         if not isinstance(value, list):
             return True
         return len(value) == 0 or all(not str(item).strip() for item in value)
-    if column_type == "checkbox":
-        return not bool(value)
     return False
 
 
 def recipe_missing_metadata(recipe: Recipe, schema: DatabaseSchema) -> bool:
+    """Link + populated ingredients, with at least one empty filter/metadata select column."""
     if not recipe_has_link(recipe):
         return False
     if not ingredients_text(recipe):
         return False
-    for col in schema.review_columns:
+    for col in schema.filter_columns:
         current = recipe.properties.get(col.name)
         if is_blank_metadata_value(col.type, current):
             return True
@@ -98,7 +96,7 @@ def _blank_metadata_updates(
     inferred: NotionFieldValues,
 ) -> NotionFieldValues:
     updates: NotionFieldValues = {}
-    for col in schema.review_columns:
+    for col in schema.filter_columns:
         if col.name not in inferred:
             continue
         current = recipe.properties.get(col.name)
@@ -139,14 +137,13 @@ def infer_metadata_field_values(
     schema = db.schema
     url = (recipe.link or "").strip()
     filter_columns = [(col.name, col.type, col.options) for col in schema.filter_columns]
-    weeknight_column = _weeknight_column_name(schema)
     total_minutes = _resolve_total_minutes(url, nyt_client=nyt_client)
     inferred = classify_recipe(
         recipe.name,
         _ingredient_lines(recipe),
         filter_columns,
         total_minutes=total_minutes,
-        weeknight_column=weeknight_column,
+        weeknight_column=None,
     )
     return _blank_metadata_updates(recipe, schema, inferred)
 
