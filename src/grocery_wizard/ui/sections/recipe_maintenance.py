@@ -191,8 +191,8 @@ def render_recipe_maintenance() -> None:
     with st.container(border=True):
         st.markdown("**Write ingredients in Notion**")
         st.caption(
-            "Filter: **Link** is set and **Ingredients** is empty — paste ingredient lists "
-            "while viewing each recipe link."
+            "Filter: **Link** is empty and **Ingredients** is empty — rows we cannot "
+            "auto-backfill; add URLs and ingredient lists by hand in Notion."
         )
         if not schema.ingredients_column:
             st.info("This Notion database has no Ingredients column configured.")

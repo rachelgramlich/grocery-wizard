@@ -11,14 +11,14 @@ _POSSIBLY_MISSING_CHECKBOXES_VIEW_NAME = "Grocery Wizard — possibly missing ch
 
 
 def manual_ingredients_notion_filter(schema: DatabaseSchema) -> dict[str, Any]:
-    """Filter: Link set, Ingredients empty (paste ingredients in Notion)."""
+    """Filter: Link empty and Ingredients empty (cannot auto-scrape; edit in Notion)."""
     link_column = schema.link_column
     ingredients_column = schema.ingredients_column
     if not ingredients_column:
-        return {"property": link_column, "url": {"is_not_empty": True}}
+        return {"property": link_column, "url": {"is_empty": True}}
     return {
         "and": [
-            {"property": link_column, "url": {"is_not_empty": True}},
+            {"property": link_column, "url": {"is_empty": True}},
             {"property": ingredients_column, "rich_text": {"is_empty": True}},
         ],
     }
@@ -29,9 +29,7 @@ def possibly_missing_checkboxes_notion_filter(schema: DatabaseSchema) -> dict[st
     checkbox_columns = schema.checkbox_columns
     if not checkbox_columns:
         return {"property": schema.link_column, "url": {"is_not_empty": True}}
-    clauses = [
-        {"property": col.name, "checkbox": {"equals": False}} for col in checkbox_columns
-    ]
+    clauses = [{"property": col.name, "checkbox": {"equals": False}} for col in checkbox_columns]
     if len(clauses) == 1:
         return clauses[0]
     return {"and": clauses}

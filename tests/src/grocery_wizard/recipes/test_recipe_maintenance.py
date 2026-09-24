@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 
 from src.grocery_wizard.integrations.notion import ColumnInfo, DatabaseSchema, Recipe
 from src.grocery_wizard.recipes.recipe_maintenance import (
+    _resolve_total_minutes,
     infer_metadata_field_values,
     is_blank_metadata_value,
     recipe_manual_ingredients_in_notion,
@@ -62,10 +63,11 @@ def _recipe(
     )
 
 
-def test_recipe_manual_ingredients_matches_auto_scan() -> None:
+def test_recipe_manual_ingredients_requires_empty_link_and_ingredients() -> None:
     schema = _schema()
-    assert recipe_manual_ingredients_in_notion(_recipe(ingredients=""), schema)
-    assert not recipe_manual_ingredients_in_notion(_recipe(ingredients="salt"), schema)
+    assert recipe_manual_ingredients_in_notion(_recipe(link="", ingredients=""), schema)
+    assert not recipe_manual_ingredients_in_notion(_recipe(ingredients=""), schema)
+    assert not recipe_manual_ingredients_in_notion(_recipe(link="", ingredients="salt"), schema)
 
 
 def test_recipe_possibly_missing_all_checkboxes() -> None:
@@ -183,6 +185,32 @@ def test_run_metadata_backfill_fills_blanks_only() -> None:
 
     assert summary.succeeded == 1
     db.update_recipe.assert_called_once_with("page-1", {"Meal": "Dinner"})
+
+
+def test_resolve_total_minutes_continues_when_scrape_blocked() -> None:
+    with patch(
+        "src.grocery_wizard.recipes.recipe_maintenance.scrape_recipe",
+        side_effect=ScrapeError("Could not fetch recipe page: 403 Client Error"),
+    ):
+        minutes = _resolve_total_minutes("https://example.com/r", nyt_client=None)
+
+    assert minutes is None
+
+
+def test_run_metadata_backfill_continues_after_scrape_failure() -> None:
+    schema = _schema()
+    db = MagicMock()
+    db.schema = schema
+    candidate = _recipe(ingredients="1 lb chicken", meal=None)
+
+    with patch(
+        "src.grocery_wizard.recipes.recipe_maintenance.infer_metadata_field_values",
+        side_effect=ScrapeError("Could not fetch recipe page: 403 Client Error"),
+    ):
+        summary = run_metadata_backfill(db, [candidate])
+
+    assert summary.failed == 1
+    db.update_recipe.assert_not_called()
 
 
 def test_infer_metadata_field_values_uses_classify() -> None:
