@@ -53,8 +53,10 @@ def recipes_missing_ingredients(recipes: list[Recipe], schema: DatabaseSchema) -
 
 
 def recipe_manual_ingredients_in_notion(recipe: Recipe, schema: DatabaseSchema) -> bool:
-    """Same rows as automatic ingredients backfill — edit Ingredients in Notion instead."""
-    return recipe_missing_ingredients(recipe, schema)
+    """No link and no ingredients — cannot auto-backfill; edit both in Notion."""
+    if not schema.ingredients_column:
+        return not recipe_has_link(recipe)
+    return not recipe_has_link(recipe) and not ingredients_text(recipe)
 
 
 def recipes_manual_ingredients_in_notion(
@@ -266,7 +268,14 @@ def run_metadata_backfill(
         if on_progress:
             on_progress(f"Inferring metadata: {recipe.name}")
 
-        updates = infer_metadata_field_values(db, recipe, nyt_client=nyt_client)
+        try:
+            updates = infer_metadata_field_values(db, recipe, nyt_client=nyt_client)
+        except Exception as exc:
+            summary.failed += 1
+            if on_progress:
+                on_progress(f"Failed: {recipe.name} — {exc}")
+            continue
+
         if not updates:
             summary.skipped += 1
             if on_progress:

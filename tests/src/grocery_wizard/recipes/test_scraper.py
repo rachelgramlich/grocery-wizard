@@ -344,6 +344,24 @@ def test_atk_fixture_falls_back_to_json_ld_when_heading_points_to_instructions(
     assert scraped.ingredients == ["1 cup balsamic vinegar", "1 tablespoon honey"]
 
 
+def test_scrape_recipe_raises_scrape_error_on_http_failure(monkeypatch) -> None:
+    def fake_get(url, headers=None, timeout=None):
+        class FakeResponse:
+            status_code = 403
+
+            def raise_for_status(self):
+                import requests
+
+                raise requests.HTTPError("403 Client Error: Forbidden", response=self)
+
+        return FakeResponse()
+
+    monkeypatch.setattr("src.grocery_wizard.recipes.scraper.requests.get", fake_get)
+
+    with pytest.raises(ScrapeError, match="Could not fetch recipe page"):
+        scrape_recipe("https://preppykitchen.com/peanut-butter-cookies-recipe/")
+
+
 TIKTOK_HTML = """
 <html>
   <body>

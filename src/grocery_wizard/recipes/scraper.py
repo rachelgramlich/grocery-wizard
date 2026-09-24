@@ -99,12 +99,15 @@ def scrape_recipe(url: str) -> ScrapedRecipe:
     if _is_instagram_url(url):
         return _scrape_instagram(url)
 
-    response = requests.get(
-        url,
-        headers={"User-Agent": USER_AGENT},
-        timeout=REQUEST_TIMEOUT,
-    )
-    response.raise_for_status()
+    try:
+        response = requests.get(
+            url,
+            headers={"User-Agent": USER_AGENT},
+            timeout=REQUEST_TIMEOUT,
+        )
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        raise ScrapeError(f"Could not fetch recipe page: {exc}") from exc
 
     soup = BeautifulSoup(response.content, "html.parser")
     title = _extract_title(soup)

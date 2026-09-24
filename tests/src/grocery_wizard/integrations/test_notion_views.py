@@ -38,7 +38,7 @@ def test_manual_ingredients_notion_filter() -> None:
     filt = manual_ingredients_notion_filter(_schema())
     assert filt == {
         "and": [
-            {"property": "Link", "url": {"is_not_empty": True}},
+            {"property": "Link", "url": {"is_empty": True}},
             {"property": "Ingredients", "rich_text": {"is_empty": True}},
         ],
     }
