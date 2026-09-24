@@ -239,12 +239,19 @@ def test_sync_dry_run_skips_notion_writes(credentials: NytCredentials) -> None:
     db = MagicMock()
     db.find_by_link.return_value = None
 
-    with patch("src.grocery_wizard.recipes.add_recipe.add_prefetched_recipes") as add_mock:
+    with (
+        patch("src.grocery_wizard.recipes.add_recipe.add_prefetched_recipes") as add_mock,
+        patch(
+            "src.grocery_wizard.integrations.nyt_cooking._fetch_nyt_recipe_for_sync",
+            return_value=(30.0, ["1 cup flour", "salt"]),
+        ),
+    ):
         summary = sync_saved_recipes_to_notion(db, client, dry_run=True)
 
     assert summary.total == 1
     assert summary.dry_run == 1
     assert summary.created == 0
+    assert summary.created_recipes[0].ingredient_count == 2
     add_mock.assert_not_called()
 
 
@@ -274,7 +281,13 @@ def test_sync_reports_progress_with_recipe_counts(credentials: NytCredentials) -
         if update.processed:
             updates.append((update.processed, update.total))
 
-    with patch("src.grocery_wizard.recipes.add_recipe.add_prefetched_recipes") as add_mock:
+    with (
+        patch("src.grocery_wizard.recipes.add_recipe.add_prefetched_recipes") as add_mock,
+        patch(
+            "src.grocery_wizard.integrations.nyt_cooking._fetch_nyt_recipe_for_sync",
+            return_value=(None, ["1 cup flour"]),
+        ),
+    ):
         sync_saved_recipes_to_notion(
             db,
             client,
@@ -332,34 +345,68 @@ def test_sync_creates_missing_recipes(credentials: NytCredentials) -> None:
 
     db = MagicMock()
     db.find_by_link.return_value = None
+    ingredients = ["2 cups broth", "1 onion"]
 
-    with patch(
-        "src.grocery_wizard.recipes.add_recipe.add_prefetched_recipes",
-        return_value=[
-            PrefetchedCreateResult(
-                page_id="page-1",
-                name="Fresh Recipe",
-                url="https://cooking.nytimes.com/recipes/42-fresh",
-                field_values={
-                    "Name": "Fresh Recipe",
-                    "Link": "https://cooking.nytimes.com/recipes/42-fresh",
-                },
-            )
-        ],
-    ) as add_mock:
+    with (
+        patch(
+            "src.grocery_wizard.recipes.add_recipe.add_prefetched_recipes",
+            return_value=[
+                PrefetchedCreateResult(
+                    page_id="page-1",
+                    name="Fresh Recipe",
+                    url="https://cooking.nytimes.com/recipes/42-fresh",
+                    field_values={
+                        "Name": "Fresh Recipe",
+                        "Link": "https://cooking.nytimes.com/recipes/42-fresh",
+                        "Ingredients": "2 cups broth\n1 onion",
+                    },
+                )
+            ],
+        ) as add_mock,
+        patch(
+            "src.grocery_wizard.integrations.nyt_cooking._fetch_nyt_recipe_for_sync",
+            return_value=(45.0, ingredients),
+        ),
+    ):
         summary = sync_saved_recipes_to_notion(db, client)
 
     assert summary.created == 1
+    assert summary.created_recipes[0].ingredient_count == 2
     add_mock.assert_called_once()
     args, kwargs = add_mock.call_args
     assert args[1][0] == (
         "Fresh Recipe",
         "https://cooking.nytimes.com/recipes/42-fresh",
-        [],
-        None,
+        ingredients,
+        45.0,
     )
-    assert kwargs["include_ingredients"] is False
+    assert kwargs["include_ingredients"] is True
     assert kwargs["mark_nyt_synced"] is True
+
+
+def test_fetch_nyt_recipe_for_sync_uses_scrape_fallback(credentials: NytCredentials) -> None:
+    from src.grocery_wizard.integrations.nyt_cooking import _fetch_nyt_recipe_for_sync
+    from src.grocery_wizard.recipes.scraper import ScrapedRecipe
+
+    client = NYTCookingClient(credentials, session=MagicMock())
+    url = "https://cooking.nytimes.com/recipes/42-fresh"
+
+    with (
+        patch.object(client, "get_recipe", side_effect=NytAuthError("bad")),
+        patch(
+            "src.grocery_wizard.recipes.scraper.scrape_recipe",
+            return_value=ScrapedRecipe(
+                title="Fresh Recipe",
+                url=url,
+                ingredients=["1 lemon"],
+                total_time_minutes=20.0,
+            ),
+        ),
+    ):
+        total_minutes, ingredients = _fetch_nyt_recipe_for_sync(client, "42", url)
+
+    assert ingredients == ["1 lemon"]
+    assert total_minutes == 20.0
 
 
 def test_prompt_collection_choice_picks_folder(credentials: NytCredentials) -> None:

@@ -447,6 +447,7 @@ class NytCreatedRecipe:
     url: str
     metadata: dict[str, Any]
     flags: list[str] = field(default_factory=list)
+    ingredient_count: int = 0
 
 
 @dataclass
@@ -599,17 +600,20 @@ def _process_saved_recipe_in_sync(
         )
         return
 
+    total_minutes, ingredients = _fetch_nyt_recipe_for_sync(client, saved.id, saved.url)
+
     if dry_run:
         summary.dry_run += 1
-        total_minutes = _fetch_nyt_total_minutes(client, saved.id, saved.url)
         metadata = _metadata_for_recipe(
             db,
             saved.name,
             url,
             mark_nyt_synced=True,
             total_minutes=total_minutes,
+            ingredients=ingredients,
         )
         flags = flag_metadata_issues(saved.name, metadata)
+        ingredient_count = len(ingredients)
         summary.created_recipes.append(
             NytCreatedRecipe(
                 page_id="",
@@ -617,23 +621,27 @@ def _process_saved_recipe_in_sync(
                 url=url,
                 metadata=metadata,
                 flags=flags,
+                ingredient_count=ingredient_count,
             )
         )
+        if ingredient_count:
+            would_add_message = f"Would add: {saved.name} ({ingredient_count} ingredients)"
+        else:
+            would_add_message = f"Would add: {saved.name} (no ingredients found)"
         _notify_sync_progress(
             on_progress,
-            f"Would add: {saved.name}",
+            would_add_message,
             processed=processed,
             total=recipe_total,
         )
         return
 
-    total_minutes = _fetch_nyt_total_minutes(client, saved.id, saved.url)
     results = add_prefetched_recipes(
         db,
-        [(saved.name, url, [], total_minutes)],
+        [(saved.name, url, ingredients, total_minutes)],
         confirm=confirm,
         no_confirm=no_confirm,
-        include_ingredients=False,
+        include_ingredients=True,
         mark_nyt_synced=True,
     )
     if results:
@@ -647,6 +655,7 @@ def _process_saved_recipe_in_sync(
             url=result.url,
             metadata=metadata,
             flags=flags,
+            ingredient_count=len(ingredients),
         )
         summary.created_recipes.append(entry)
         flag_note = f" [{'; '.join(flags)}]" if flags else ""
@@ -737,6 +746,7 @@ def _sync_report_from_summary(summary: NytSyncSummary) -> dict[str, Any]:
                 "url": recipe.url,
                 "metadata": recipe.metadata,
                 "flags": recipe.flags,
+                "ingredient_count": recipe.ingredient_count,
             }
             for recipe in summary.created_recipes
         ],
@@ -803,6 +813,7 @@ def _metadata_for_recipe(
     *,
     mark_nyt_synced: bool = False,
     total_minutes: float | None = None,
+    ingredients: list[str] | None = None,
 ) -> dict[str, Any]:
     from src.grocery_wizard.recipes.classify import classify_recipe
     from src.grocery_wizard.recipes.weeknight import DEFAULT_WEEKNIGHT_COLUMN
@@ -813,7 +824,7 @@ def _metadata_for_recipe(
     )
     inferred = classify_recipe(
         title,
-        [],
+        ingredients or [],
         filter_columns,
         total_minutes=total_minutes,
         weeknight_column=weeknight_column,
@@ -894,7 +905,14 @@ def format_metadata_review(report: dict[str, Any]) -> str:
         return "\n".join(lines)
 
     for index, recipe in enumerate(created, start=1):
-        lines.append(f"{index}. {recipe.get('name', '?')}")
+        name = recipe.get("name", "?")
+        ingredient_count = recipe.get("ingredient_count")
+        if ingredient_count is not None and ingredient_count > 0:
+            lines.append(f"{index}. {name} ({ingredient_count} ingredients)")
+        elif ingredient_count == 0:
+            lines.append(f"{index}. {name} (no ingredients)")
+        else:
+            lines.append(f"{index}. {name}")
         metadata = recipe.get("metadata", {})
         if metadata:
             for key, value in sorted(metadata.items()):
@@ -1147,13 +1165,41 @@ def _fetch_nyt_total_minutes(
     recipe_id: str,
     url: str,
 ) -> float | None:
+    total_minutes, _ingredients = _fetch_nyt_recipe_for_sync(client, recipe_id, url)
+    return total_minutes
+
+
+def _fetch_nyt_recipe_for_sync(
+    client: NYTCookingClient,
+    recipe_id: str,
+    url: str,
+) -> tuple[float | None, list[str]]:
+    """Load timing and ingredients for NYT sync (API first, URL scrape fallback)."""
     resolved_id = recipe_id or _recipe_id_from_url(url) or ""
-    if not resolved_id:
-        return None
-    try:
-        return client.get_recipe(resolved_id).total_time_minutes
-    except NYTCookingError:
-        return None
+    total_minutes: float | None = None
+    ingredients: list[str] = []
+
+    if resolved_id:
+        try:
+            nyt_recipe = client.get_recipe(resolved_id)
+            total_minutes = nyt_recipe.total_time_minutes
+            ingredients = list(nyt_recipe.ingredients)
+        except NYTCookingError:
+            pass
+
+    if not ingredients and url.strip():
+        from src.grocery_wizard.recipes.scraper import ScrapeError, scrape_recipe
+
+        try:
+            scraped = scrape_recipe(url)
+        except ScrapeError:
+            pass
+        else:
+            ingredients = list(scraped.ingredients)
+            if total_minutes is None:
+                total_minutes = scraped.total_time_minutes
+
+    return total_minutes, ingredients
 
 
 def _recipe_id_from_url(url: str) -> str | None:
