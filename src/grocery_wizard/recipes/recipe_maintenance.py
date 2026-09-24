@@ -9,13 +9,18 @@ from typing import Any
 from src.grocery_wizard.ingredients.parsed import is_nyt_cooking_url
 from src.grocery_wizard.ingredients.sync import prepare_ingredients_for_notion
 from src.grocery_wizard.integrations.notion import (
+    ColumnInfo,
     DatabaseSchema,
     NotionFieldValues,
     NotionRecipesDB,
     Recipe,
 )
+from src.grocery_wizard.recipes.add_recipe import _weeknight_column_name
 from src.grocery_wizard.recipes.classify import classify_recipe
 from src.grocery_wizard.recipes.scraper import ScrapeError, ingredients_to_text, scrape_recipe
+from src.grocery_wizard.recipes.weeknight import is_weeknight_friendly
+
+_LUNCH_DINNER_MEALS = frozenset({"Lunch", "Dinner"})
 
 ProgressCallback = Callable[[str], None]
 FractionCallback = Callable[[float], None]
@@ -80,9 +85,74 @@ def recipes_possibly_missing_all_checkboxes(
     return [recipe for recipe in recipes if recipe_possibly_missing_all_checkboxes(recipe, schema)]
 
 
+def normalize_meal_values(value: Any) -> set[str]:
+    if value is None:
+        return set()
+    if isinstance(value, list):
+        return {str(item).strip() for item in value if str(item).strip()}
+    text = str(value).strip()
+    return {text} if text else set()
+
+
+def meal_values_on_recipe(recipe: Recipe, schema: DatabaseSchema) -> set[str]:
+    for col in schema.filter_columns:
+        if col.name.lower() == "meal":
+            return normalize_meal_values(recipe.properties.get(col.name))
+    return set()
+
+
+def metadata_filter_columns_for_meals(
+    schema: DatabaseSchema,
+    meals: set[str],
+) -> list[ColumnInfo]:
+    """Which select/multi columns to scan or fill for a known (or unknown) meal set."""
+    unknown_meal = not meals
+    columns: list[ColumnInfo] = []
+    for col in schema.filter_columns:
+        key = col.name.lower()
+        if key in ("meal", "cuisine"):
+            columns.append(col)
+        elif key == "protein":
+            if unknown_meal or meals & _LUNCH_DINNER_MEALS:
+                columns.append(col)
+        elif key == "dinner category":
+            if unknown_meal or "Dinner" in meals:
+                columns.append(col)
+        elif key == "tags":
+            if unknown_meal or meals != {"Drink"}:
+                columns.append(col)
+        elif unknown_meal or meals & _LUNCH_DINNER_MEALS:
+            columns.append(col)
+    return columns
+
+
+def metadata_checkbox_columns_for_meals(
+    schema: DatabaseSchema,
+    meals: set[str],
+) -> list[ColumnInfo]:
+    """Weeknight friendly only when Meal includes Dinner."""
+    if "Dinner" not in meals:
+        return []
+    weeknight_column = _weeknight_column_name(schema)
+    if not weeknight_column:
+        return []
+    return [col for col in schema.checkbox_columns if col.name == weeknight_column]
+
+
+def metadata_backfill_columns_for_recipe(
+    recipe: Recipe,
+    schema: DatabaseSchema,
+) -> list[ColumnInfo]:
+    meals = meal_values_on_recipe(recipe, schema)
+    return [
+        *metadata_filter_columns_for_meals(schema, meals),
+        *metadata_checkbox_columns_for_meals(schema, meals),
+    ]
+
+
 def metadata_column_names(schema: DatabaseSchema) -> list[str]:
-    """Filter columns (select / multi_select / status) — not checkboxes or Instructions."""
-    return [col.name for col in schema.filter_columns]
+    """Filter column names considered for metadata backfill when meal is unknown."""
+    return [col.name for col in metadata_filter_columns_for_meals(schema, set())]
 
 
 def is_blank_metadata_value(column_type: str, value: Any) -> bool:
@@ -97,15 +167,24 @@ def is_blank_metadata_value(column_type: str, value: Any) -> bool:
     return False
 
 
+def is_blank_checkbox_value(value: Any) -> bool:
+    return not bool(value)
+
+
+def _column_is_blank(col: ColumnInfo, value: Any) -> bool:
+    if col.type == "checkbox":
+        return is_blank_checkbox_value(value)
+    return is_blank_metadata_value(col.type, value)
+
+
 def recipe_missing_metadata(recipe: Recipe, schema: DatabaseSchema) -> bool:
-    """Link + populated ingredients, with at least one empty filter/metadata select column."""
+    """Link + ingredients, with an empty meal-aware metadata column."""
     if not recipe_has_link(recipe):
         return False
     if not ingredients_text(recipe):
         return False
-    for col in schema.filter_columns:
-        current = recipe.properties.get(col.name)
-        if is_blank_metadata_value(col.type, current):
+    for col in metadata_backfill_columns_for_recipe(recipe, schema):
+        if _column_is_blank(col, recipe.properties.get(col.name)):
             return True
     return False
 
@@ -122,18 +201,22 @@ def _blank_metadata_updates(
     recipe: Recipe,
     schema: DatabaseSchema,
     inferred: NotionFieldValues,
+    *,
+    eligible_names: set[str],
 ) -> NotionFieldValues:
     updates: NotionFieldValues = {}
-    for col in schema.filter_columns:
-        if col.name not in inferred:
+    columns_by_name = {col.name: col for col in [*schema.filter_columns, *schema.checkbox_columns]}
+    for name in eligible_names:
+        col = columns_by_name.get(name)
+        if col is None or name not in inferred:
             continue
         current = recipe.properties.get(col.name)
-        if not is_blank_metadata_value(col.type, current):
+        if not _column_is_blank(col, current):
             continue
-        value = inferred[col.name]
+        value = inferred[name]
         if value is None or value in ("", []):
             continue
-        updates[col.name] = value
+        updates[name] = value
     return updates
 
 
@@ -173,7 +256,28 @@ def infer_metadata_field_values(
         total_minutes=total_minutes,
         weeknight_column=None,
     )
-    return _blank_metadata_updates(recipe, schema, inferred)
+
+    meals = meal_values_on_recipe(recipe, schema)
+    meals |= normalize_meal_values(inferred.get("Meal"))
+
+    if "Dinner" in meals:
+        weeknight_column = _weeknight_column_name(schema)
+        if weeknight_column:
+            inferred[weeknight_column] = is_weeknight_friendly(
+                recipe.name,
+                meal="Dinner",
+                total_minutes=total_minutes,
+            )
+
+    eligible_names = {col.name for col in metadata_filter_columns_for_meals(schema, meals)}
+    eligible_names |= {col.name for col in metadata_checkbox_columns_for_meals(schema, meals)}
+
+    return _blank_metadata_updates(
+        recipe,
+        schema,
+        inferred,
+        eligible_names=eligible_names,
+    )
 
 
 def format_backfill_summary(label: str, summary: BackfillSummary) -> str:
