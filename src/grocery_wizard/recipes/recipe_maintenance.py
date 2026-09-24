@@ -52,15 +52,30 @@ def recipes_missing_ingredients(recipes: list[Recipe], schema: DatabaseSchema) -
     return [recipe for recipe in recipes if recipe_missing_ingredients(recipe, schema)]
 
 
-def recipe_manual_notion_backfill(recipe: Recipe, schema: DatabaseSchema) -> bool:
-    """Rows with no link and no ingredients — edit manually in Notion."""
-    if not schema.ingredients_column:
-        return not recipe_has_link(recipe)
-    return not recipe_has_link(recipe) and not ingredients_text(recipe)
+def recipe_manual_ingredients_in_notion(recipe: Recipe, schema: DatabaseSchema) -> bool:
+    """Same rows as automatic ingredients backfill — edit Ingredients in Notion instead."""
+    return recipe_missing_ingredients(recipe, schema)
 
 
-def recipes_manual_notion_backfill(recipes: list[Recipe], schema: DatabaseSchema) -> list[Recipe]:
-    return [recipe for recipe in recipes if recipe_manual_notion_backfill(recipe, schema)]
+def recipes_manual_ingredients_in_notion(
+    recipes: list[Recipe],
+    schema: DatabaseSchema,
+) -> list[Recipe]:
+    return [recipe for recipe in recipes if recipe_manual_ingredients_in_notion(recipe, schema)]
+
+
+def recipe_possibly_missing_all_checkboxes(recipe: Recipe, schema: DatabaseSchema) -> bool:
+    """All review checkboxes unchecked — may be intentional; shown as *possibly* missing."""
+    if not schema.checkbox_columns:
+        return False
+    return all(not bool(recipe.properties.get(col.name)) for col in schema.checkbox_columns)
+
+
+def recipes_possibly_missing_all_checkboxes(
+    recipes: list[Recipe],
+    schema: DatabaseSchema,
+) -> list[Recipe]:
+    return [recipe for recipe in recipes if recipe_possibly_missing_all_checkboxes(recipe, schema)]
 
 
 def metadata_column_names(schema: DatabaseSchema) -> list[str]:

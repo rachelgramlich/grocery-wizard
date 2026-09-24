@@ -8,9 +8,10 @@ from src.grocery_wizard.integrations.notion import ColumnInfo, DatabaseSchema, R
 from src.grocery_wizard.recipes.recipe_maintenance import (
     infer_metadata_field_values,
     is_blank_metadata_value,
-    recipe_manual_notion_backfill,
+    recipe_manual_ingredients_in_notion,
     recipe_missing_ingredients,
     recipe_missing_metadata,
+    recipe_possibly_missing_all_checkboxes,
     recipes_missing_ingredients,
     recipes_missing_metadata,
     run_ingredients_backfill,
@@ -61,11 +62,22 @@ def _recipe(
     )
 
 
-def test_recipe_manual_notion_backfill_predicate() -> None:
+def test_recipe_manual_ingredients_matches_auto_scan() -> None:
     schema = _schema()
-    assert recipe_manual_notion_backfill(_recipe(link="", ingredients=""), schema)
-    assert not recipe_manual_notion_backfill(_recipe(ingredients=""), schema)
-    assert not recipe_manual_notion_backfill(_recipe(ingredients="salt"), schema)
+    assert recipe_manual_ingredients_in_notion(_recipe(ingredients=""), schema)
+    assert not recipe_manual_ingredients_in_notion(_recipe(ingredients="salt"), schema)
+
+
+def test_recipe_possibly_missing_all_checkboxes() -> None:
+    schema = _schema()
+    assert recipe_possibly_missing_all_checkboxes(
+        _recipe(ingredients="x", meal="Dinner", weeknight=False),
+        schema,
+    )
+    assert not recipe_possibly_missing_all_checkboxes(
+        _recipe(ingredients="x", meal="Dinner", weeknight=True),
+        schema,
+    )
 
 
 def test_recipe_missing_ingredients_predicate() -> None:
