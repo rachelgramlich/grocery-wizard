@@ -9,6 +9,7 @@ from src.grocery_wizard.integrations.nyt_cooking import (
     NYTCookingClient,
     NYTCookingError,
     NytRecipeBoxFolder,
+    NytSyncProgressUpdate,
     credentials_status,
     format_metadata_review,
     format_sync_summary,
@@ -106,15 +107,20 @@ def _render_nyt_sync_actions() -> tuple[bool, bool]:
     return run_clicked, dry_run
 
 
+def _sync_progress_label(update: NytSyncProgressUpdate) -> str:
+    if update.total and update.total > 0:
+        return f"{update.processed} / {update.total} recipes"
+    if update.processed:
+        return f"{update.processed} recipe(s) processed"
+    return "Starting sync…"
+
+
 def _execute_nyt_recipe_box_sync(
     *,
     folder: NytRecipeBoxFolder,
     dry_run: bool,
 ) -> None:
     progress_lines: list[str] = []
-
-    def on_progress(message: str) -> None:
-        progress_lines.append(message)
 
     db = get_db()
     client = NYTCookingClient()
@@ -123,6 +129,23 @@ def _execute_nyt_recipe_box_sync(
         "Previewing NYT recipes…" if dry_run else "Syncing NYT recipes to Notion…",
         expanded=True,
     ) as sync_status:
+        with st.container(key="nyt_sync_progress"):
+            progress_bar = st.progress(
+                0.0,
+                text=_sync_progress_label(
+                    NytSyncProgressUpdate(message="", processed=0, total=folder.recipe_count)
+                ),
+            )
+
+        def on_progress(update: NytSyncProgressUpdate) -> None:
+            if update.message:
+                progress_lines.append(update.message)
+            if update.total and update.total > 0:
+                fraction = min(update.processed / update.total, 1.0)
+                progress_bar.progress(fraction, text=_sync_progress_label(update))
+            elif update.processed:
+                progress_bar.progress(0.0, text=_sync_progress_label(update))
+
         try:
             result = run_recipe_box_sync(
                 db,
@@ -131,6 +154,7 @@ def _execute_nyt_recipe_box_sync(
                 collection_label=folder.label,
                 dry_run=dry_run,
                 on_progress=on_progress,
+                expected_recipe_count=folder.recipe_count,
             )
         except NytAuthError as exc:
             sync_status.update(label="NYT sync failed", state="error")
@@ -141,10 +165,22 @@ def _execute_nyt_recipe_box_sync(
             st.error(str(exc))
             return
 
-        for line in progress_lines:
-            st.write(line)
-
         summary = result.summary
+        if summary.total:
+            if folder.recipe_count and folder.recipe_count >= summary.total:
+                final_total = folder.recipe_count
+            else:
+                final_total = summary.total
+            progress_bar.progress(
+                1.0,
+                text=f"{summary.total} / {final_total} recipes",
+            )
+
+        if progress_lines:
+            with st.expander("Sync log", expanded=False):
+                for line in progress_lines:
+                    st.write(line)
+
         outcome_label = format_sync_summary(summary)
         if dry_run:
             outcome_label = outcome_label.replace("Sync complete:", "Preview complete:", 1)
