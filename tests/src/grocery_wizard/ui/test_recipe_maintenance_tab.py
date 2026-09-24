@@ -16,6 +16,10 @@ def test_recipe_maintenance_tab_registered() -> None:
     assert "Write ingredients in Notion" in source
     assert "Review checkbox columns in Notion" in source
     assert "will appear in Notion with this filter" in source
+    assert "st.link_button(" in source
+    assert 'type="primary"' in source
+    assert "Open in Notion" in source
+    assert "Open Notion with this filter" not in source
     assert "Start metadata backfill" in source
 
     app = APP_PATH.read_text(encoding="utf-8")
