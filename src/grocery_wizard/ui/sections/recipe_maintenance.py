@@ -161,7 +161,7 @@ def render_recipe_maintenance() -> None:
             "Recipes with ingredients but empty Meal / filter columns — filled from "
             "classification (checkboxes and Instructions are not changed here)."
         )
-        _preview_count_line(len(missing_metadata))
+        st.write(f"**{len(missing_metadata)}** recipe(s) with gaps in metadata columns.")
         if st.button(
             "Start metadata backfill",
             type="primary",
