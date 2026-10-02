@@ -533,6 +533,7 @@ def _render_meal_count_input() -> int:
             max_value=21,
             step=1,
             key=PLAN_MEAL_COUNT_WIDGET_KEY,
+            on_change=_apply_plan_meal_count_from_widget,
         )
     )
     st.session_state.plan_meal_count = meal_count
@@ -704,23 +705,30 @@ def _render_built_plan_meals(
     _render_save_plan_controls(_current_plan_names(), cached_recipes=all_recipes)
 
 
-def _trim_plan_to_meal_count(meal_count: int) -> None:
-    """In dev mode, keep plan length aligned with the meal-count widget."""
-    if _weekly_plan_mode() != "dev":
-        return
+def _apply_plan_meal_count_from_widget() -> None:
+    """``on_change`` for the meal-count widget (runs before the fragment body)."""
+    st.session_state.plan_meal_count = int(st.session_state[PLAN_MEAL_COUNT_WIDGET_KEY])
+
+
+def _sync_plan_length_to_meal_count(meal_count: int) -> None:
+    """Keep pinned meals and built plan length aligned with the meal-count widget."""
+    _clamp_prebuild_pinned_recipes(max_pins=max(1, int(meal_count)))
     names = _current_plan_names()
-    if len(names) > int(meal_count):
-        _write_plan_names(names[: int(meal_count)])
-        _invalidate_weekly_plan_save_state()
-        _clear_grocery_session_overrides()
-        _clear_grocery_result()
+    if len(names) <= int(meal_count):
+        return
+    _write_plan_names(names[: int(meal_count)])
+    _invalidate_weekly_plan_save_state()
+    _clear_grocery_session_overrides()
+    _clear_grocery_result()
 
 
-def render_meals_section(db: NotionRecipesDB, *, all_recipes: list) -> list[str]:
+def render_meals_section(
+    db: NotionRecipesDB,
+    *,
+    all_recipes: list,
+    meal_count: int,
+) -> list[str]:
     """Render step 1 (meals) and return the current planned recipe names."""
-    _ensure_plan_session_defaults()
-    meal_count = _render_meal_count_input()
-    _trim_plan_to_meal_count(meal_count)
     _render_dev_jump_tools(db)
 
     ingredient_index = _cached_plan_ingredient_index(all_recipes)
