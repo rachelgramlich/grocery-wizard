@@ -17,6 +17,7 @@ from src.grocery_wizard.planning.saved_weekly_plans import (
     normalize_recipe_names,
     saved_plan_week_start,
 )
+from src.grocery_wizard.recipes.recipe_meal_plan_stats import increment_plan_selections
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.grocery_flow import (
     GROCERY_STASH_NOTION_GENERATION_KEY,
@@ -34,7 +35,11 @@ from src.grocery_wizard.ui.grocery_flow import (
     session_pantry_extra as _session_pantry_extra_state,
 )
 from src.grocery_wizard.ui.grocery_helpers import parse_line_items_text
-from src.grocery_wizard.ui.notion_cache import invalidate_saved_plans_cache, notion_cache_generation
+from src.grocery_wizard.ui.notion_cache import (
+    invalidate_notion_cache,
+    invalidate_saved_plans_cache,
+    notion_cache_generation,
+)
 
 if TYPE_CHECKING:
     from src.grocery_wizard.integrations.notion import Recipe
@@ -51,6 +56,14 @@ def _current_plan_names() -> list[str]:
 
 def _write_plan_names(names: list[str]) -> None:
     st.session_state.plan_meals_text = "\n".join(names)
+
+
+def _plan_slot_origins() -> list[str]:
+    return list(st.session_state.get("plan_slot_origins") or [])
+
+
+def _set_plan_slot_origins(origins: list[str]) -> None:
+    st.session_state.plan_slot_origins = list(origins)
 
 
 def _session_pantry_extra() -> set[str]:
@@ -124,6 +137,7 @@ def _reset_weekly_plan_workflow(*, clear_mode: bool = False) -> None:
     for key in (
         "plan_meals_text",
         "plan_rejected_names",
+        "plan_slot_origins",
         "weekly_plan_loaded_name",
         "weekly_plan_last_saved_name",
         "weekly_plan_saved_fingerprint",
@@ -248,6 +262,13 @@ def _commit_weekly_plan_to_notion(
     _sync_weekly_plan_save_state(recipe_names, plan)
     if created:
         invalidate_saved_plans_cache()
+        updated_stats = increment_plan_selections(
+            get_db(),
+            recipe_names,
+            cached_recipes=cached_recipes,
+        )
+        if updated_stats:
+            invalidate_notion_cache()
     return plan
 
 

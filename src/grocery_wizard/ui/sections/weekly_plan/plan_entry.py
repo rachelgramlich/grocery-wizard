@@ -18,6 +18,15 @@ from src.grocery_wizard.planning.meal_planner import (
     suggest_meals,
 )
 from src.grocery_wizard.planning.saved_weekly_plans import load_plan_recipes
+from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
+    filter_recipes_for_manual_pick,
+    increment_suggestion_rejections,
+    meal_plan_status_column_name,
+    origins_after_swap,
+    rejection_names_from_swap,
+    resolve_slot_origins_for_plan,
+    suggestion_rejections_column_name,
+)
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.dev_jumps import (
     DEFAULT_DEV_MEAL_COUNT,
@@ -34,7 +43,7 @@ from src.grocery_wizard.ui.meal_plan_filters import (
     recipes_ingredient_cache_key,
     render_meal_plan_filters,
 )
-from src.grocery_wizard.ui.notion_cache import cached_saved_plans
+from src.grocery_wizard.ui.notion_cache import cached_saved_plans, invalidate_notion_cache
 from src.grocery_wizard.ui.recipe_match import (
     render_unmatched_plan_recipes_help,
     unmatched_plan_recipe_names,
@@ -45,12 +54,26 @@ from src.grocery_wizard.ui.sections.weekly_plan.state import (
     _clear_grocery_session_overrides,
     _current_plan_names,
     _invalidate_weekly_plan_save_state,
+    _plan_slot_origins,
     _render_save_plan_controls,
     _reset_weekly_plan_workflow,
+    _set_plan_slot_origins,
     _weekly_plan_mode,
     _weekly_plan_mode_choices,
     _write_plan_names,
 )
+
+
+def _meal_plan_picker_columns(db: NotionRecipesDB) -> tuple[str | None, str | None]:
+    return (
+        meal_plan_status_column_name(db),
+        suggestion_rejections_column_name(db),
+    )
+
+
+def _manual_pick_recipes(all_recipes: list, db: NotionRecipesDB) -> list:
+    status_column, _ = _meal_plan_picker_columns(db)
+    return filter_recipes_for_manual_pick(all_recipes, status_column=status_column)
 
 
 def _locked_recipes_for_plan_build(*, meal_count: int) -> list[str]:
@@ -187,7 +210,9 @@ def _render_prebuild_recipe_picker(
     ingredient_index: dict[str, set[str]],
 ) -> None:
     """Single expander: filter → pin → repeat, before **Build my plan**."""
-    all_names = sorted({recipe.name for recipe in all_recipes}, key=str.lower)
+    db = get_db()
+    manual_recipes = _manual_pick_recipes(all_recipes, db)
+    all_names = sorted({recipe.name for recipe in manual_recipes}, key=str.lower)
     max_pins = max(1, int(meal_count))
     current = _current_plan_names()
     if "plan_prebuild_pinned_recipes" not in st.session_state and current:
@@ -214,7 +239,7 @@ def _render_prebuild_recipe_picker(
         st.divider()
         st.markdown("**Or filter**")
         _render_filtered_recipe_picker(
-            all_recipes=all_recipes,
+            all_recipes=manual_recipes,
             filter_columns=filter_columns,
             filter_defaults=filter_defaults,
             schema_columns=schema_columns,
@@ -265,12 +290,19 @@ def _slot_manual_picker_fragment(
         def _apply_picked(recipe_name: str) -> None:
             updated = _set_plan_slot_recipe(_current_plan_names(), slot_index, recipe_name)
             _write_plan_names(updated)
+            origins = _plan_slot_origins()
+            while len(origins) < len(updated):
+                origins.append("suggested")
+            origins[slot_index - 1] = "manual"
+            _set_plan_slot_origins(origins)
             _invalidate_weekly_plan_save_state()
             _clear_grocery_session_overrides()
             _clear_grocery_result()
             st.rerun()
 
-        all_names = sorted({recipe.name for recipe in all_recipes}, key=str.lower)
+        db = get_db()
+        pick_pool = _manual_pick_recipes(all_recipes, db)
+        all_names = sorted({recipe.name for recipe in pick_pool}, key=str.lower)
 
         _render_direct_recipe_pick(
             all_names,
@@ -283,7 +315,7 @@ def _slot_manual_picker_fragment(
         st.divider()
         st.markdown("**Or filter**")
         _render_filtered_recipe_picker(
-            all_recipes=all_recipes,
+            all_recipes=pick_pool,
             filter_columns=filter_columns,
             filter_defaults=filter_defaults,
             schema_columns=schema_columns,
@@ -583,6 +615,8 @@ def _render_generate_plan_controls(
     ):
         with st.spinner("Building your meal plan…"):
             locked_for_build = _locked_recipes_for_plan_build(meal_count=int(meal_count))
+            locked_set = set(locked_for_build)
+            status_column, rejections_column = _meal_plan_picker_columns(db)
             plan = suggest_meals(
                 all_recipes,
                 meals=int(meal_count),
@@ -590,8 +624,13 @@ def _render_generate_plan_controls(
                 filters=build_filters,
                 schema_columns=schema.all_columns,
                 ingredient_index=ingredient_index,
+                status_column=status_column,
+                rejections_column=rejections_column,
             )
             _write_plan_names(plan)
+            _set_plan_slot_origins(
+                resolve_slot_origins_for_plan(plan, locked_names=locked_set),
+            )
             st.session_state.plan_rejected_names = []
             _invalidate_weekly_plan_save_state()
             _clear_grocery_session_overrides()
@@ -617,12 +656,15 @@ def _render_built_plan_meals(
     suggestion_pool = filter_recipes(
         all_recipes, week_filters, schema.all_columns, ingredient_index=ingredient_index
     )
+    status_column, rejections_column = _meal_plan_picker_columns(db)
 
     current_plan = _current_plan_names()
     if not current_plan:
         return
 
     def _apply_plan_swap(names_to_replace: list[str]) -> None:
+        origins = _plan_slot_origins()
+        stats_targets = rejection_names_from_swap(current_plan, names_to_replace, origins)
         rejected = set(st.session_state.get("plan_rejected_names", []))
         new_plan, rejected = replace_meals_in_plan(
             current_plan,
@@ -630,8 +672,21 @@ def _render_built_plan_meals(
             all_recipes=all_recipes,
             pool=suggestion_pool,
             rejected_names=rejected,
+            status_column=status_column,
+            rejections_column=rejections_column,
         )
+        if stats_targets:
+            updated_stats = increment_suggestion_rejections(
+                db,
+                stats_targets,
+                cached_recipes=all_recipes,
+            )
+            if updated_stats:
+                invalidate_notion_cache()
         _write_plan_names(new_plan)
+        _set_plan_slot_origins(
+            origins_after_swap(current_plan, names_to_replace, origins, new_plan),
+        )
         st.session_state.plan_rejected_names = sorted(rejected)
         _invalidate_weekly_plan_save_state()
         _clear_grocery_session_overrides()
@@ -677,14 +732,31 @@ def _render_built_plan_meals(
             filters=week_filters,
             schema_columns=schema.all_columns,
             ingredient_index=ingredient_index,
+            status_column=status_column,
+            rejections_column=rejections_column,
         )
         _write_plan_names(plan)
+        origins = _plan_slot_origins()
+        new_origins = [origins[i] if i < len(origins) else "suggested" for i in range(len(plan))]
+        while len(new_origins) < len(plan):
+            new_origins.append("suggested")
+        _set_plan_slot_origins(new_origins[: len(plan)])
         _invalidate_weekly_plan_save_state()
         _clear_grocery_session_overrides()
         _clear_grocery_result()
         st.rerun()
 
     if st.button("Re-generate all meals", key="regenerate_plan"):
+        origins = _plan_slot_origins()
+        stats_targets = rejection_names_from_swap(current_plan, current_plan, origins)
+        if stats_targets:
+            updated_stats = increment_suggestion_rejections(
+                db,
+                stats_targets,
+                cached_recipes=all_recipes,
+            )
+            if updated_stats:
+                invalidate_notion_cache()
         rejected = set(st.session_state.get("plan_rejected_names", []))
         plan = suggest_meals(
             all_recipes,
@@ -694,8 +766,11 @@ def _render_built_plan_meals(
             schema_columns=schema.all_columns,
             rejected_names=rejected,
             ingredient_index=ingredient_index,
+            status_column=status_column,
+            rejections_column=rejections_column,
         )
         _write_plan_names(plan)
+        _set_plan_slot_origins(["suggested"] * len(plan))
         _invalidate_weekly_plan_save_state()
         _clear_grocery_session_overrides()
         _clear_grocery_result()
