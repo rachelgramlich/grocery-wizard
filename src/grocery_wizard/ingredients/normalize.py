@@ -42,6 +42,7 @@ from src.grocery_wizard.ingredients._patterns import (
     _CONJUNCTION_SPLIT_RE,
     _DIMENSION_PREP_SEGMENT_RE,
     _GROCERY_NOUNS,
+    _GROUND_MEATS,
     _INGREDIENT_ALTERNATIVE_RE,
     _INSTRUCTION_ONLY_RE,
     _INSTRUCTION_VERB_RE,
@@ -67,6 +68,33 @@ from src.grocery_wizard.ingredients.parsed import (  # noqa: F401
 )
 from src.grocery_wizard.ingredients.parsed import (
     parse_stored_ingredient as _parse_stored_ingredient,
+)
+
+# Title-bleed splitting: ``chimichurri chicken`` is one product, not two list items.
+_CONDIMENT_MEAT_PREFIXES = frozenset(
+    {
+        "buffalo",
+        "chimichurri",
+        "gochujang",
+        "harissa",
+        "lemon",
+        "lime",
+        "miso",
+        "teriyaki",
+    }
+)
+_MEAT_NOUNS = _GROUND_MEATS | frozenset(
+    {
+        "beef",
+        "chicken",
+        "fish",
+        "pork",
+        "salmon",
+        "shrimp",
+        "tofu",
+        "tuna",
+        "turkey",
+    }
 )
 
 _OIL_PREFIXES = frozenset(
@@ -279,6 +307,12 @@ def _find_grocery_noun_positions(words: list[str]) -> list[int]:
         if word == "cloves" and index + 1 < len(words) and words[index + 1] == "garlic":
             continue
         if word in _GROCERY_NOUNS:
+            if (
+                word in _CONDIMENT_MEAT_PREFIXES
+                and index + 1 < len(words)
+                and words[index + 1] in _MEAT_NOUNS
+            ):
+                continue
             positions.append(index)
     return positions
 

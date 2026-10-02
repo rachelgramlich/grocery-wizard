@@ -294,7 +294,8 @@ _PREP_TRAILING_RE = re.compile(
     r"trimmed|halved|quartered|julienned|cubed|mashed|softened|melted|thawed|rinsed|drained|"
     r"juiced|zested|"
     r"smashed(?:\s+and\s+peeled)?|peeled\s+and\s+grated|minced\s+or\s+grated|"
-    r"(?:\d+(?:/\d+)?\s+)?cut\s+into|fine\s+stems\s+trimmed|left\s+intact"
+    r"(?:\d+(?:/\d+)?\s+)?cut\s+into|fine\s+stems\s+trimmed|left\s+intact|"
+    r"(?:light\s+green(?:\s+\w+)*\s+)?(?:white\s+)?parts\s+only"
     r")(?:\s+.*)?$",
     re.IGNORECASE,
 )
@@ -832,6 +833,24 @@ _DESCRIPTOR_COUNT_UNITS = frozenset(
 )
 
 
+def _purchased_shredded_product(source_line: str, parsed_name: str) -> str | None:
+    """Bagged ``shredded carrots`` etc. — not prep to strip at storage time."""
+    if "," in source_line:
+        return None
+    match = re.search(
+        r"\bshredded\s+([a-z]+(?:\s+[a-z]+)?)\b",
+        source_line,
+        re.IGNORECASE,
+    )
+    if not match:
+        return None
+    product = match.group(1).strip().lower()
+    simplified = parsed_name.strip().lower()
+    if simplified == product or product.endswith(f" {simplified}") or simplified in product:
+        return _prefer_plural_form(f"shredded {match.group(1).strip()}".lower())
+    return None
+
+
 def _build_storage_line(
     parsed: ParsedIngredient,
     original: str,
@@ -841,12 +860,15 @@ def _build_storage_line(
     if not parsed.name:
         return _strip_trailing_prep_commas(original.strip())
 
+    context = source_line or original
     name = _simplify_parsed_name(parsed.name[0].text)
+    purchased_shredded = _purchased_shredded_product(context, name)
+    if purchased_shredded:
+        name = purchased_shredded
     name = _include_size_in_name(parsed, name)
     amounts = list(parsed.amount or [])
     selected = _select_amount(amounts, original)
 
-    context = source_line or original
     if _is_lemon_zest_ingredient(context, name):
         return _format_lemon_zest_storage(_lemon_zest_quantity(context, parsed))
 

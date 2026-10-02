@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+from src.grocery_wizard.ingredients.normalize import normalize_ingredient
 from src.grocery_wizard.ingredients.sync import (
     apply_removals,
     format_ingredients_for_review,
@@ -233,3 +234,18 @@ def test_backfill_preserves_manual_substitution_notes() -> None:
     assert any("see notes" in line for line in lines)
     assert any("to taste" in line.lower() for line in lines)
     assert any(line.startswith("remove:") for line in lines)
+
+
+def test_issue_287_weekly_plan_ingredient_normalization() -> None:
+    """Bagged shredded veg, prepared proteins, and leek trim notes (#287)."""
+    shredded = "shredded carrots"
+    assert prepare_ingredients_for_notion(shredded) == "shredded carrots"
+    assert normalize_ingredient(shredded) == "shredded carrots"
+
+    frozen_chicken = "chimichurri chicken frozen"
+    assert prepare_ingredients_for_notion(frozen_chicken) == "chimichurri chicken frozen"
+    assert normalize_ingredient(frozen_chicken) == "chimichurri chicken frozen"
+
+    leeks = "2 leeks, light green white parts only"
+    assert prepare_ingredients_for_notion(leeks) == "2 leeks"
+    assert normalize_ingredient(leeks) == "leeks"
