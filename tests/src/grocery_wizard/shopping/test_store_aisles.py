@@ -255,6 +255,8 @@ def test_classify_aisle_strips_checklist_prefix(item: str, expected_aisle: str) 
         ("laundry detergent", "household/personal care"),
         ("shaving cream", "household/personal care"),
         ("pumpkin candle", "household/personal care"),
+        ("butter lettuce", "vegetables"),
+        ("2 medium leeks", "vegetables"),
     ],
 )
 def test_classify_aisle_misclassifications(item: str, expected_aisle: str) -> None:
