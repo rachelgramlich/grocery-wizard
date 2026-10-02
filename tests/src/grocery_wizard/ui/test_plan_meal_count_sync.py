@@ -6,7 +6,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.grocery_wizard.ui.sections.weekly_plan import plan_entry, state as weekly_plan_state
+from src.grocery_wizard.ui.sections.weekly_plan import plan_entry
+from src.grocery_wizard.ui.sections.weekly_plan import state as weekly_plan_state
 
 
 class _FakeSessionState:
