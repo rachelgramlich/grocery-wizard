@@ -92,6 +92,23 @@ def recipe_review_widget_key(recipe_name: str) -> str:
     return f"review_ing_{digest}"
 
 
+def recipe_review_save_button_key(recipe_name: str) -> str:
+    digest = hashlib.sha256(recipe_name.strip().lower().encode()).hexdigest()[:16]
+    return f"review_save_{digest}"
+
+
+def recipe_review_has_unsaved_edits(
+    name: str,
+    *,
+    session_state: Any,
+    baseline_review: dict[str, str],
+) -> bool:
+    widget_key = recipe_review_widget_key(name)
+    current = str(session_state.get(widget_key, "") or "")
+    baseline = baseline_review.get(name, "")
+    return current.strip() != baseline.strip()
+
+
 def clear_recipe_review_widget_keys(session_state: Any) -> None:
     for key in list(session_state.keys()):
         if str(key).startswith("review_ing_"):
@@ -124,6 +141,28 @@ def sync_recipe_review_overrides_to_session(
         review[name] = overrides.get(recipe_lookup_key(name), review.get(name, ""))
     session_state["grocery_per_recipe_review"] = review
     return overrides
+
+
+def persist_single_recipe_review_to_notion(
+    db: NotionRecipesDB,
+    *,
+    name: str,
+    overrides: dict[str, str],
+    recipes: list[Recipe],
+    baseline_review: dict[str, str],
+) -> bool:
+    """Persist one recipe when review text differs from baseline.
+
+    Returns True if Notion was updated.
+    """
+    updated = persist_reviewed_ingredients_to_notion(
+        db,
+        selected=[name],
+        overrides=overrides,
+        recipes=recipes,
+        baseline_review=baseline_review,
+    )
+    return updated > 0
 
 
 def persist_reviewed_ingredients_to_notion(
