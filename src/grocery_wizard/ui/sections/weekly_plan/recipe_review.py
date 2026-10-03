@@ -16,6 +16,7 @@ from src.grocery_wizard.ui.grocery_flow import (
     sync_recipe_review_overrides_to_session,
 )
 from src.grocery_wizard.ui.grocery_helpers import parse_line_items_text
+from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.notion_cache import cached_query_recipes, invalidate_notion_cache
 from src.grocery_wizard.ui.recipe_match import (
     render_unmatched_plan_recipes_help,
@@ -72,7 +73,7 @@ def _save_recipe_review_to_notion(
 ) -> None:
     overrides = sync_recipe_review_overrides_to_session(st.session_state, selected)
     baseline = dict(st.session_state.get("grocery_review_baseline") or {})
-    with st.spinner(f"Saving **{name}** to Notion..."):
+    with loading_indicator(f"Saving **{name}** to Notion…"):
         updated = persist_single_recipe_review_to_notion(
             db,
             name=name,
@@ -203,7 +204,7 @@ def _render_per_recipe_review(db: NotionRecipesDB, selected: list[str]) -> None:
     review_recipes = st.session_state.get("grocery_review_recipes")
     if review_recipes is None:
         review_recipes = cached_query_recipes(db)
-    with st.spinner("Building grocery list..."):
+    with loading_indicator("Building grocery list…"):
         result_payload = build_grocery_result_payload(
             db,
             selected,

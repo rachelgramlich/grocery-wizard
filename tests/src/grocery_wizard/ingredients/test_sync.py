@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+from src.grocery_wizard.ingredients.normalize import normalize_ingredient
 from src.grocery_wizard.ingredients.sync import (
     apply_removals,
     format_ingredients_for_review,
@@ -52,6 +53,22 @@ def test_parse_ingredients_text_merges_wrapped_nyt_lines() -> None:
         "2 medium leeks, light green white parts only, halved",
         "Salt and pepper, to taste",
     ]
+
+
+def test_parse_ingredients_text_keeps_distinct_lines_after_comma_descriptor() -> None:
+    """Regression #288: do not merge the next ingredient after a comma descriptor."""
+    text = "edamame, shelled\ncarrots\n1 cup rice"
+    ingredients, _ = parse_ingredients_text(text)
+    assert ingredients == ["edamame, shelled", "carrots", "1 cup rice"]
+
+
+def test_prepare_ingredients_for_notion_keeps_distinct_lines_after_comma_descriptor() -> None:
+    text = "edamame, shelled\ncarrots\n1 cup rice"
+    prepared = prepare_ingredients_for_notion(text)
+    lines = prepared.splitlines()
+    assert "edamame" in lines[0]
+    assert any("carrot" in line for line in lines)
+    assert len(lines) == 3
 
 
 def test_format_ingredients_for_review_merges_wrapped_lines() -> None:
@@ -233,3 +250,28 @@ def test_backfill_preserves_manual_substitution_notes() -> None:
     assert any("see notes" in line for line in lines)
     assert any("to taste" in line.lower() for line in lines)
     assert any(line.startswith("remove:") for line in lines)
+
+
+def test_prepare_expands_legacy_merged_line_not_single_products() -> None:
+    merged = "3 cilantro flat leaves parsley olive oil cloves garlic"
+    prepared_lines = prepare_ingredients_for_notion(merged, force_full_format=True).splitlines()
+    assert "cilantro" in prepared_lines or any("cilantro" in line for line in prepared_lines)
+    assert "garlic" in prepared_lines
+    assert (
+        prepare_ingredients_for_notion("chimichurri chicken frozen") == "chimichurri chicken frozen"
+    )
+
+
+def test_issue_287_weekly_plan_ingredient_normalization() -> None:
+    """Bagged shredded veg, prepared proteins, and leek trim notes (#287)."""
+    shredded = "shredded carrots"
+    assert prepare_ingredients_for_notion(shredded) == "shredded carrots"
+    assert normalize_ingredient(shredded) == "shredded carrots"
+
+    frozen_chicken = "chimichurri chicken frozen"
+    assert prepare_ingredients_for_notion(frozen_chicken) == "chimichurri chicken frozen"
+    assert normalize_ingredient(frozen_chicken) == "chimichurri chicken frozen"
+
+    leeks = "2 leeks, light green white parts only"
+    assert prepare_ingredients_for_notion(leeks) == "2 leeks"
+    assert normalize_ingredient(leeks) == "leeks"

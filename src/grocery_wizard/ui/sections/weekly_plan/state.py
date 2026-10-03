@@ -34,6 +34,7 @@ from src.grocery_wizard.ui.grocery_flow import (
     session_pantry_extra as _session_pantry_extra_state,
 )
 from src.grocery_wizard.ui.grocery_helpers import parse_line_items_text
+from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.notion_cache import invalidate_saved_plans_cache, notion_cache_generation
 
 if TYPE_CHECKING:
@@ -292,7 +293,7 @@ def _render_save_plan_controls(
 
     label = "Save plan to Notion" if mode == "new" else "Save as new plan version"
     if st.button(label, type="secondary", key="save_weekly_plan"):
-        with st.spinner("Saving plan to Notion…"):
+        with loading_indicator("Saving plan to Notion…"):
             plan = _commit_weekly_plan_to_notion(recipe_names, cached_recipes=cached_recipes)
         st.success(f"Plan saved as **{plan.name}**")
         return

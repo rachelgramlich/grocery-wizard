@@ -6,10 +6,14 @@ import streamlit as st
 
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 from src.grocery_wizard.ui.db_access import get_db
+from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.notion_cache import cached_query_recipes
 from src.grocery_wizard.ui.sections.weekly_plan.grocery_wizard import render_grocery_list_section
 from src.grocery_wizard.ui.sections.weekly_plan.plan_entry import (
+    _ensure_plan_session_defaults,
+    _render_meal_count_input,
     _render_weekly_plan_entry,
+    _sync_plan_length_to_meal_count,
     render_meals_section,
 )
 from src.grocery_wizard.ui.sections.weekly_plan.state import (
@@ -19,8 +23,13 @@ from src.grocery_wizard.ui.sections.weekly_plan.state import (
 
 
 @st.fragment(key="weekly_plan_meals")
-def _weekly_plan_meals_fragment(db: NotionRecipesDB, all_recipes: list[Recipe]) -> None:
-    render_meals_section(db, all_recipes=all_recipes)
+def _weekly_plan_meals_fragment(
+    db: NotionRecipesDB,
+    all_recipes: list[Recipe],
+    *,
+    meal_count: int,
+) -> None:
+    render_meals_section(db, all_recipes=all_recipes, meal_count=meal_count)
 
 
 @st.fragment(key="weekly_plan_grocery")
@@ -40,9 +49,13 @@ def render_create_weekly_plan() -> None:
     if not _render_weekly_plan_entry():
         return
 
+    _ensure_plan_session_defaults()
+    meal_count = _render_meal_count_input()
+    _sync_plan_length_to_meal_count(meal_count)
+
     db = get_db()
-    with st.spinner("Loading recipes from Notion…"):
+    with loading_indicator("Loading recipes from Notion…"):
         all_recipes = cached_query_recipes(db)
 
-    _weekly_plan_meals_fragment(db, all_recipes)
+    _weekly_plan_meals_fragment(db, all_recipes, meal_count=meal_count)
     _weekly_plan_grocery_fragment(db, all_recipes)

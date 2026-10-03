@@ -9,7 +9,7 @@ Grocery Wizard treats recipe ingredients in two separate pipelines. They share h
 | Stage | Module | Typical functions |
 | --- | --- | --- |
 | Scrape / read URL | `recipes/scraper.py` | raw HTML → line list |
-| Drop junk & split merges | `ingredients/normalize.py` | `drop_junk_ingredient_lines`, `expand_ingredient_line`, `is_instruction_line`, … |
+| Drop junk & split legacy merges | `ingredients/normalize.py` | `drop_junk_ingredient_lines`, `expand_ingredient_line_if_needed`, `is_instruction_line`, … |
 | Format for Notion | `ingredients/parsed.py` | `format_ingredient_for_storage`, `minimal_clean_for_storage` (NYT) |
 | Orchestration | `ingredients/sync.py` | `prepare_ingredients_for_notion`, `merge_ingredients` |
 

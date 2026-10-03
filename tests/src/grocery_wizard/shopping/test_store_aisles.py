@@ -236,6 +236,9 @@ def test_classify_aisle_strips_checklist_prefix(item: str, expected_aisle: str) 
         ("1 pint grape tomatoes", "vegetables"),
         ("1 pint cherry tomatoes", "vegetables"),
         ("1 bunch broccolini", "vegetables"),
+        ("2 leeks", "vegetables"),
+        ("leeks", "vegetables"),
+        ("2 leeks, light green white parts only", "vegetables"),
         ("pasta for squash", "pasta"),
         ("cheese sticks", "refrigerated"),
         ("pudding vanilla", "dairy/eggs"),
@@ -255,6 +258,8 @@ def test_classify_aisle_strips_checklist_prefix(item: str, expected_aisle: str) 
         ("laundry detergent", "household/personal care"),
         ("shaving cream", "household/personal care"),
         ("pumpkin candle", "household/personal care"),
+        ("butter lettuce", "vegetables"),
+        ("2 medium leeks", "vegetables"),
     ],
 )
 def test_classify_aisle_misclassifications(item: str, expected_aisle: str) -> None:

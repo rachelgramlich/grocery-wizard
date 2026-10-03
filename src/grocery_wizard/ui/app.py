@@ -14,6 +14,7 @@ import streamlit as st
 
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.feedback import render_feedback_controls
+from src.grocery_wizard.ui.loading import loading_indicator, mount_global_loading_banner
 from src.grocery_wizard.ui.notion_cache import (
     invalidate_notion_cache,
     last_recipe_cache_load_seconds,
@@ -77,7 +78,7 @@ def _sync_render_section_from_picker() -> None:
 def _refresh_notion_cache_from_ui() -> None:
     """Invalidate Notion caches; Streamlit reruns after the button callback."""
     st.session_state[_SKIP_PICKER_RENDER_SYNC] = True
-    with st.spinner("Refreshing from Notion…"):
+    with loading_indicator("Refreshing from Notion…"):
         invalidate_notion_cache()
     # Keep picker state aligned with the section we are actually rendering.
     st.session_state["gw_active_tab"] = st.session_state[_GW_RENDER_SECTION]
@@ -105,6 +106,7 @@ def main() -> None:
     )
     inject_app_styles()
     st.title("Grocery Wizard")
+    mount_global_loading_banner()
 
     _init_section_navigation_state()
 
