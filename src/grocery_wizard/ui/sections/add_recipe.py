@@ -227,9 +227,10 @@ def _render_recipe_field_editors(
                 key=widget_key,
             )
         elif field_name == schema.ingredients_column:
+            if widget_key not in st.session_state:
+                st.session_state[widget_key] = value or ""
             edited[field_name] = st.text_area(
                 field_name,
-                value=value or "",
                 height=180,
                 placeholder="One ingredient per line\neggs\n2 cups flour\n1 lb chicken",
                 help="Paste or edit ingredients here. One line per ingredient.",

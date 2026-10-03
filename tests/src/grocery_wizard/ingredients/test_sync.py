@@ -55,6 +55,22 @@ def test_parse_ingredients_text_merges_wrapped_nyt_lines() -> None:
     ]
 
 
+def test_parse_ingredients_text_keeps_distinct_lines_after_comma_descriptor() -> None:
+    """Regression #288: do not merge the next ingredient after a comma descriptor."""
+    text = "edamame, shelled\ncarrots\n1 cup rice"
+    ingredients, _ = parse_ingredients_text(text)
+    assert ingredients == ["edamame, shelled", "carrots", "1 cup rice"]
+
+
+def test_prepare_ingredients_for_notion_keeps_distinct_lines_after_comma_descriptor() -> None:
+    text = "edamame, shelled\ncarrots\n1 cup rice"
+    prepared = prepare_ingredients_for_notion(text)
+    lines = prepared.splitlines()
+    assert "edamame" in lines[0]
+    assert any("carrot" in line for line in lines)
+    assert len(lines) == 3
+
+
 def test_format_ingredients_for_review_merges_wrapped_lines() -> None:
     stored = "Salt\nand pepper, to taste\n2 medium leeks, light green\nwhite parts only"
     display = format_ingredients_for_review(stored)
