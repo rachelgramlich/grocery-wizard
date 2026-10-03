@@ -19,6 +19,7 @@ from src.grocery_wizard.integrations.nyt_cooking import (
     verify_nyt_credentials,
 )
 from src.grocery_wizard.ui.db_access import get_db
+from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.notion_cache import invalidate_notion_cache
 
 
@@ -28,7 +29,7 @@ def _folder_option_label(folder: NytRecipeBoxFolder) -> str:
     return f"{folder.label} ({folder.recipe_count} recipes)"
 
 
-@st.cache_data(show_spinner=False, ttl=300)
+@st.cache_data(show_spinner="Loading NYT recipe folders…", ttl=300)
 def _cached_recipe_box_folders() -> list[NytRecipeBoxFolder]:
     client = NYTCookingClient()
     verify_nyt_credentials(client)
@@ -53,7 +54,9 @@ def _load_nyt_recipe_box_folders() -> list[NytRecipeBoxFolder] | None:
     except NytAuthError as exc:
         st.error(str(exc))
         if st.button("Retry NYT connection", key="nyt_sync_retry_auth"):
-            _cached_recipe_box_folders.clear()
+            with loading_indicator("Reconnecting to NYT Cooking…"):
+                _cached_recipe_box_folders.clear()
+                _cached_recipe_box_folders()
             st.rerun()
         return None
     except NYTCookingError as exc:
@@ -96,7 +99,9 @@ def _render_nyt_sync_actions() -> tuple[bool, bool]:
             key="nyt_sync_refresh_folders",
             width="stretch",
         ):
-            _cached_recipe_box_folders.clear()
+            with loading_indicator("Refreshing NYT folders…"):
+                _cached_recipe_box_folders.clear()
+                _cached_recipe_box_folders()
             st.rerun()
 
     with run_col:

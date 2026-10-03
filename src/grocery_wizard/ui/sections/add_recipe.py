@@ -17,6 +17,7 @@ from src.grocery_wizard.recipes.add_recipe import (
     preview_recipe_urls,
 )
 from src.grocery_wizard.ui.db_access import get_db
+from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.notion_cache import invalidate_notion_cache
 from src.grocery_wizard.ui.nyt_sync import render_nyt_sync_controls
 
@@ -47,7 +48,8 @@ def render_add_recipe() -> None:
             if not urls:
                 st.warning("Paste a recipe URL first.")
             else:
-                st.session_state["preview_recipes"] = _previews_for_ui(db, urls)
+                with loading_indicator("Fetching recipe from URL…"):
+                    st.session_state["preview_recipes"] = _previews_for_ui(db, urls)
                 previews = st.session_state["preview_recipes"]
         _render_previews_for_entry(db, schema, previews, _ENTRY_PATH_URL)
 
@@ -183,8 +185,9 @@ def _render_recipe_review(
                     st.warning("Add ingredients before saving (one per line).")
                     return
 
-            recipe = db.create_recipe(cleaned)
-            invalidate_notion_cache()
+            with loading_indicator("Saving recipe to Notion…"):
+                recipe = db.create_recipe(cleaned)
+                invalidate_notion_cache()
             preview["status"] = "saved"
             preview["saved_name"] = recipe.name
             st.rerun()
