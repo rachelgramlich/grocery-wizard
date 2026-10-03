@@ -20,6 +20,7 @@ from src.grocery_wizard.ui.grocery_helpers import (
     removal_matches_grocery_line,
     render_copy_button,
 )
+from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.notion_cache import cached_query_recipes
 from src.grocery_wizard.ui.sections.weekly_plan.recipe_review import (
     _render_per_recipe_review,
@@ -184,7 +185,7 @@ def render_grocery_list_section(
         )
 
     if st.button("Create grocery list", type="primary", key="create_grocery"):
-        with st.spinner("Preparing ingredient review…"):
+        with loading_indicator("Preparing ingredient review…"):
             _ensure_weekly_plan_saved_before_grocery(current_plan, cached_recipes=all_recipes)
             _clear_grocery_result(clear_pre_extra_items=False)
             _start_recipe_review(
