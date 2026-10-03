@@ -275,7 +275,26 @@ _PREP_ALTERNATIVE_RE = re.compile(
     re.IGNORECASE,
 )
 
-_GROUND_MEATS = frozenset({"beef", "turkey", "pork", "chicken", "lamb", "veal", "sausage", "bison"})
+_PROTEIN_NOUNS = frozenset(
+    {
+        "beef",
+        "bison",
+        "chicken",
+        "fish",
+        "lamb",
+        "pork",
+        "salmon",
+        "sausage",
+        "shrimp",
+        "tofu",
+        "tuna",
+        "turkey",
+        "veal",
+    }
+)
+
+# Meats that may follow ``ground`` in a product name (e.g. ground turkey).
+_GROUND_MEATS = _PROTEIN_NOUNS
 
 _TOMATO_PREP_FORMS = frozenset(
     {"diced", "crushed", "stewed", "fire-roasted", "whole", "whole peeled"}

@@ -236,6 +236,16 @@ def test_backfill_preserves_manual_substitution_notes() -> None:
     assert any(line.startswith("remove:") for line in lines)
 
 
+def test_prepare_expands_legacy_merged_line_not_single_products() -> None:
+    merged = "3 cilantro flat leaves parsley olive oil cloves garlic"
+    prepared_lines = prepare_ingredients_for_notion(merged, force_full_format=True).splitlines()
+    assert "cilantro" in prepared_lines or any("cilantro" in line for line in prepared_lines)
+    assert "garlic" in prepared_lines
+    assert (
+        prepare_ingredients_for_notion("chimichurri chicken frozen") == "chimichurri chicken frozen"
+    )
+
+
 def test_issue_287_weekly_plan_ingredient_normalization() -> None:
     """Bagged shredded veg, prepared proteins, and leek trim notes (#287)."""
     shredded = "shredded carrots"
