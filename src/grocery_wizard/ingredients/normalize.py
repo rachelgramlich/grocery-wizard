@@ -50,6 +50,7 @@ from src.grocery_wizard.ingredients._patterns import (
     _MERGED_QTY_SPLIT_RE,
     _METADATA_LINE_RE,
     _PREP_WORDS,
+    _PROTEIN_NOUNS,
     _RECIPE_STEP_RE,
     _SIZES,
     _TORTILLA_PREFIXES,
@@ -69,6 +70,19 @@ from src.grocery_wizard.ingredients.parsed import (
     parse_stored_ingredient as _parse_stored_ingredient,
 )
 
+# Title-bleed splitting: ``chimichurri chicken`` is one product, not two list items.
+_CONDIMENT_MEAT_PREFIXES = frozenset(
+    {
+        "buffalo",
+        "chimichurri",
+        "gochujang",
+        "harissa",
+        "lemon",
+        "lime",
+        "miso",
+        "teriyaki",
+    }
+)
 _OIL_PREFIXES = frozenset(
     {
         "canola",
@@ -279,8 +293,48 @@ def _find_grocery_noun_positions(words: list[str]) -> list[int]:
         if word == "cloves" and index + 1 < len(words) and words[index + 1] == "garlic":
             continue
         if word in _GROCERY_NOUNS:
+            if (
+                word in _CONDIMENT_MEAT_PREFIXES
+                and index + 1 < len(words)
+                and words[index + 1] in _PROTEIN_NOUNS
+            ):
+                continue
             positions.append(index)
     return positions
+
+
+def _is_condiment_protein_product_line(line: str) -> bool:
+    """Prepared products like ``chimichurri chicken frozen`` — one grocery item."""
+    stripped = line.strip()
+    if not stripped:
+        return False
+    _, rest = _strip_leading_amount_prefix(stripped)
+    words = rest.lower().split()
+    return len(words) >= 2 and words[0] in _CONDIMENT_MEAT_PREFIXES and words[1] in _PROTEIN_NOUNS
+
+
+def should_expand_ingredient_line(line: str) -> bool:
+    """Return True when one text line likely encodes multiple grocery items (legacy scrape)."""
+    stripped = line.strip()
+    if not stripped or is_junk_ingredient(stripped):
+        return False
+    if _is_condiment_protein_product_line(stripped):
+        return False
+    if len(_split_trailing_appended_ingredient(stripped)) > 1:
+        return True
+    if _CONJUNCTION_SPLIT_RE.search(stripped):
+        return True
+    if count_grocery_nouns(stripped) >= 2:
+        return True
+    return looks_like_merged_ingredient_line(stripped)
+
+
+def expand_ingredient_line_if_needed(line: str) -> list[str]:
+    """Split merged scrape lines; leave one-line-per-ingredient Notion rows unchanged."""
+    if should_expand_ingredient_line(line):
+        return expand_ingredient_line(line)
+    text = _normalize_unicode_fractions(_normalize_unicode_dashes(line.strip()))
+    return [text] if text else []
 
 
 def _starts_with_measure_unit(words: list[str]) -> bool:

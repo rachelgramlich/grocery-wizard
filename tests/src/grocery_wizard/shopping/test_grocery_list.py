@@ -385,7 +385,7 @@ def test_build_grocery_list_splits_title_bleed(tmp_path: Path) -> None:
 
     db = MagicMock()
     db.query_recipes.return_value = [
-        _recipe("Chimichurri Chicken", "chimichurri zucchini orzo"),
+        _recipe("Chimichurri Chicken", "chimichurri\nzucchini\norzo"),
     ]
 
     items, _, _, _, _, _ = build_grocery_list(
@@ -410,7 +410,7 @@ def test_build_grocery_list_splits_grilled_veggies_over_orzo_bleed(tmp_path: Pat
     db.query_recipes.return_value = [
         _recipe(
             "Grilled Veggies over Orzo",
-            "chimichurri zucchini orzo lemon red pepper red onions",
+            "chimichurri\nzucchini\norzo\nlemon\nred pepper\nred onions",
         ),
     ]
 
@@ -462,7 +462,7 @@ def test_build_grocery_list_keeps_fresh_red_pepper_when_pantry_has_pepper(tmp_pa
     db.query_recipes.return_value = [
         _recipe(
             "Grilled Veggies over Orzo",
-            "chimichurri zucchini orzo lemon red pepper red onions",
+            "chimichurri\nzucchini\norzo\nlemon\nred pepper\nred onions",
         ),
     ]
 
@@ -502,7 +502,7 @@ def test_build_grocery_list_merges_color_onion_lines(tmp_path: Path) -> None:
 
 
 def test_build_grocery_list_splits_merged_chermoula_lines(tmp_path: Path) -> None:
-    """Regression: merged Notion lines must not become one grocery item."""
+    """One Notion line per item after prepare; list build does not re-split."""
     pantry_path = tmp_path / "pantry.txt"
     pantry_path.write_text("", encoding="utf-8")
 
@@ -511,9 +511,13 @@ def test_build_grocery_list_splits_merged_chermoula_lines(tmp_path: Path) -> Non
         _recipe(
             "One-Pot Chermoula Shrimp and Orzo",
             "2 lemons\n"
-            "3 cilantro flat leaves parsley olive oil cloves garlic\n"
+            "3 cilantro\n"
+            "flat leaves parsley\n"
+            "olive oil\n"
+            "garlic\n"
             "ground cumin\n"
-            "1 teaspoon fine sea salt, plus more to taste granulated sugar",
+            "fine sea salt\n"
+            "granulated sugar",
         ),
     ]
 

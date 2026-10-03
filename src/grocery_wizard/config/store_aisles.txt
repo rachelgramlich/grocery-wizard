@@ -104,6 +104,7 @@ cabbage
 fennel
 leeks
 leek
+leeks
 scallion
 scallions
 radish
