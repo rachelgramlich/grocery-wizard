@@ -193,6 +193,24 @@ def test_plan_meal_count_persists_separate_from_widget_key() -> None:
     assert 'PLAN_MEAL_COUNT_WIDGET_KEY = "plan_meal_count_input"' in state_source
 
 
+def test_meal_count_widget_outside_meals_fragment() -> None:
+    """Issue #284: meal count changes must rerun the full weekly-plan tab, not only the fragment."""
+    flow_source = (UI_ROOT / "sections" / "weekly_plan" / "flow.py").read_text(encoding="utf-8")
+    assert "_render_meal_count_input()" in flow_source
+    assert "_sync_plan_length_to_meal_count(meal_count)" in flow_source
+    meals_fn = flow_source.split("def _weekly_plan_meals_fragment", 1)[1].split("\ndef ", 1)[0]
+    assert "_render_meal_count_input" not in meals_fn
+
+
+def test_plan_length_syncs_when_meal_count_drops() -> None:
+    """Issue #284: lowering meal count trims built meals and clamps pre-build pins."""
+    source = ui_source()
+    sync_fn = source.split("def _sync_plan_length_to_meal_count", 1)[1].split("\ndef ", 1)[0]
+    assert "_clamp_prebuild_pinned_recipes" in sync_fn
+    assert "_weekly_plan_mode()" not in sync_fn
+    assert "names[: int(meal_count)]" in sync_fn
+
+
 def test_prebuild_recipe_picker_before_build_my_plan() -> None:
     """Issue #223: single pre-build manual expander; no pin multiselect or week filter row."""
     source = ui_source()
