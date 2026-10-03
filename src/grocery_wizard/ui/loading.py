@@ -6,6 +6,10 @@ from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 
 import streamlit as st
+from streamlit.runtime.scriptrunner_utils.script_run_context import (
+    ThreadState,
+    get_script_run_ctx,
+)
 
 GW_BUSY_MESSAGE_KEY = "gw_busy_message"
 _BANNER_PLACEHOLDER_KEY = "gw_loading_banner_placeholder"
@@ -22,7 +26,21 @@ def _banner_placeholder() -> st.delta_generator.DeltaGenerator | None:
     return slot if slot is not None else None
 
 
+def _can_update_global_banner() -> bool:
+    """Fragment reruns cannot write to the app-level banner slot created in ``main()``."""
+    ctx = get_script_run_ctx(suppress_warning=True)
+    if ctx is None:
+        return False
+    if ctx.fragment_ids_this_run:
+        return False
+    if ThreadState.get().fragment_id is not None:
+        return False
+    return _banner_placeholder() is not None
+
+
 def _refresh_global_banner() -> None:
+    if not _can_update_global_banner():
+        return
     placeholder = _banner_placeholder()
     if placeholder is None:
         return
