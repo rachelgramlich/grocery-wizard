@@ -7,7 +7,7 @@ description: Hands-on Streamlit app review → findings report → grouped GitHu
 
 **Scope:** Manually exercise the **Grocery Wizard Streamlit UI** end-to-end, return a structured findings report, and (when the user asks) file grouped GitHub issues. **Do not implement fixes** in this turn unless the user explicitly asks after issues exist.
 
-**Chained workflow:** Findings capture here → issue creation follows **`.cursor/commands/create-issues.md`** (same bug/backlog rules, labels, and `gh` usage).
+**Chained workflow:** Findings capture here → issue creation follows **`.cursor/commands/shared/create-issues.md`** (same bug/backlog rules, labels, and `gh` usage).
 
 ## Prerequisites
 

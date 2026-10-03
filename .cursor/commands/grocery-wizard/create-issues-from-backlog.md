@@ -88,15 +88,15 @@ PY
 
 ## Planning rules (same as `/create-issues`)
 
-Follow **`.cursor/commands/create-issues.md`** — **Planning rules** section:
+Follow **`.cursor/commands/shared/create-issues.md`** — **Planning rules** section:
 
 1. **Kind:** **bug** if broken/incorrect behavior, crashes, or regressions; else **enhancement** backlog.
-2. **Area** (`gw-area-*`): **ui**, **parser**, **shopping**, **recipes**, **cli**, **other** — see area table in `.cursor/commands/work-on-issue.md`.
+2. **Area** (`gw-area-*`): **ui**, **parser**, **shopping**, **recipes**, **cli**, **other** — see area table in **`AGENTS.md`**.
 3. **Grouping:** Merge notes that share **kind + area** and can ship in one PR. Split when area differs or bug vs feature differs.
 4. Use **Surface** / **Context** lines from the backlog when inferring area.
 5. **Duplicates:** Before proposing a new issue, search open issues (`gh issue list` / `gh search issues`) when the note looks like an existing report; call out likely duplicates in the plan.
 
-Valid areas match the table in `.cursor/commands/work-on-issue.md`.
+Valid areas match the table in **`AGENTS.md`**.
 
 ## Your task
 
@@ -123,7 +123,7 @@ Ask the user to **edit or approve** the list (add/remove/merge/split/reword). **
 
 ### 3. Create (after approval)
 
-Create issues with **`gh`** using the same templates and labels as **`/create-issues`**:
+Create issues with **`gh`** using the same templates and labels as **`/create-issues`** (see **`AGENTS.md`**):
 
 - Enhancements: `grocery-wizard` + `gw-area-<area>`; body sections **Description**, **Expected behavior & manual test hints**, **Area**.
 - Bugs: `--label bug` (+ area label when clear); mirror **`bug_report.yml`** sections.

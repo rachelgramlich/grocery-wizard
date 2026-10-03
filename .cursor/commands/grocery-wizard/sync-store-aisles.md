@@ -7,7 +7,7 @@ description: Reconcile store_aisles.txt keywords against every normalized ingred
 
 **Scope:** Pull **all** recipe ingredients from Notion, normalize to unique grocery item names (no amounts or prep), find names not covered by `src/grocery_wizard/config/store_aisles.txt`, add missing keywords on a branch, and open a PR when placement is clear or after the user confirms uncertain items.
 
-**Area:** **shopping** + **parser** + **recipes** — see `.cursor/commands/work-on-issue.md` area → files table.
+**Area:** **shopping** + **parser** + **recipes** — see **`AGENTS.md`** area → files table.
 
 **Config file:** `src/grocery_wizard/config/store_aisles.txt` (format and walk order: `src/grocery_wizard/README.md` § Grocery list aisle order).
 
