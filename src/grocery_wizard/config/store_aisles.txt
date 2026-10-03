@@ -76,6 +76,7 @@ grape tomatoes
 cherry tomatoes
 grape tomato
 cherry tomato
+butter lettuce
 lettuce
 spinach
 kale
@@ -101,6 +102,7 @@ peas
 bean sprouts
 cabbage
 fennel
+leeks
 leek
 scallion
 scallions
