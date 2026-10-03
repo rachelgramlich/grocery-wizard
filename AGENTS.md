@@ -15,7 +15,7 @@
 | **`/sync-store-aisles`** | Notion → `store_aisles.txt` keyword sync (`.cursor/commands/grocery-wizard/sync-store-aisles.md`) |
 | *(automatic)* **`tidy-first` skill** | While implementing work: tidy inline, **S** vs **B** in separate commits; may file follow-up issues for **B** spotted during tidy (not in **S** commits) |
 
-**Layout:** Shared commands symlink **`.cursor/commands/shared/`** → `rg-ai`. Grocery-only commands in **`.cursor/commands/grocery-wizard/`**. **Command-only workflows** must not duplicate the same name under `.cursor/skills/` (see **`/create-command`**).
+**Layout:** [rg-ai](https://github.com/rachelgramlich/rg-ai) **git submodule** at **`.cursor/rg-ai`**. Shared slash files via **`.cursor/commands/shared/`** → `.cursor/rg-ai/.cursor/commands`. Grocery-only commands in **`.cursor/commands/grocery-wizard/`**. After clone or new worktree: **`git submodule update --init --recursive`** once if `/` doesn’t list shared commands. **Command-only workflows** must not duplicate the same name under `.cursor/skills/` (see **`/create-command`**).
 
 ### Labels and areas (for `/create-issues`, `/work-on-issue`)
 
