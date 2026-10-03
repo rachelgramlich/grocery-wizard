@@ -4,6 +4,7 @@ from src.grocery_wizard.ingredients.normalize import (
     aggregate_amounts,
     clean_ingredient_line_for_storage,
     expand_ingredient_line,
+    expand_ingredient_line_if_needed,
     filter_ingredient_key,
     filter_ingredient_keys,
     is_instruction_line,
@@ -136,6 +137,14 @@ def test_normalize_ingredient_empty() -> None:
 )
 def test_expand_ingredient_line(raw: str, expected: list[str]) -> None:
     assert expand_ingredient_line(raw) == expected
+
+
+def test_expand_ingredient_line_if_needed_leaves_one_line_per_ingredient() -> None:
+    assert expand_ingredient_line_if_needed("chimichurri chicken frozen") == [
+        "chimichurri chicken frozen"
+    ]
+    assert expand_ingredient_line_if_needed("2 leeks") == ["2 leeks"]
+    assert len(expand_ingredient_line_if_needed("chimichurri zucchini orzo")) >= 2
 
 
 def test_expand_ingredient_line_does_not_split_color_variants() -> None:

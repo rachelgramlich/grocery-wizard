@@ -35,7 +35,8 @@ _PREP_SUFFIX_RE = re.compile(
     r"unpeeled(?:\s+but\s+[^,]+)?|"
     r"beaten|chopped|diced|minced|sliced|grated|shredded|crushed|peeled|seeded|cored|"
     r"trimmed|halved|quartered|julienned|cubed|mashed|softened|melted|thawed|rinsed|drained|"
-    r"smashed(?:\s+and\s+peeled)?|peeled\s+and\s+grated|minced\s+or\s+grated"
+    r"smashed(?:\s+and\s+peeled)?|peeled\s+and\s+grated|minced\s+or\s+grated|"
+    r"(?:light\s+green(?:\s+\w+)*\s+)?(?:white\s+)?parts\s+only"
     r")(?:\s+.*)?$",
     re.IGNORECASE,
 )

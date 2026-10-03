@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 
 from src.grocery_wizard.ingredients.normalize import (
-    expand_ingredient_line,
+    expand_ingredient_line_if_needed,
     is_instruction_line,
     is_junk_ingredient,
     is_metadata_line,
@@ -46,7 +46,7 @@ def split_ingredients_text(text: str) -> str:
         if is_directive(line):
             output_lines.append(line)
             continue
-        output_lines.extend(expand_ingredient_line(line))
+        output_lines.extend(expand_ingredient_line_if_needed(line))
     return ingredients_to_text(output_lines)
 
 

@@ -2,7 +2,7 @@
 
 Grocery list pipeline (dev/debug failure points):
 
-1. **Per-recipe Notion lines** → ``expand_ingredient_line`` / normalize → ``collected``
+1. **Per-recipe Notion lines** → normalize (one storage line = one item) → ``collected``
 2. **Aggregate + format** → base ``grocery_items`` (amount merge, pantry exclusion)
 3. **Session merges** → re-add pantry, recurring template, extras, run removals, user edits
 4. **Sort** → ``sort_grocery_items`` → final export list
@@ -36,7 +36,6 @@ from pathlib import Path
 
 from src.grocery_wizard.ingredients.normalize import (
     aggregate_amounts,
-    expand_ingredient_line,
     normalize_ingredient,
     parse_amount,
     should_show_amount,
@@ -456,28 +455,31 @@ def _collect_ingredient_line(
     Pantry items are routed to *excluded_pantry* instead of *collected*.
     Ingredient lines are expected to be pre-cleaned at Notion ingest time.
     """
-    for part in expand_ingredient_line(line):
-        _name, amount = parse_amount(part)
-        display_name = normalize_ingredient(part) or _name
-        if not display_name:
-            continue
-        keeps_amount = amount and not amount.startswith(("head:", "clove:", "zest:"))
-        if keeps_amount and not should_show_amount(amount, part):
-            amount = None
-        if exclude_pantry and is_pantry_item(display_name, pantry):
-            if display_name not in excluded_pantry:
-                excluded_pantry.append(display_name)
-            continue
-        key = _grocery_collection_key(display_name)
-        if key in collected:
-            existing_name, amounts = collected[key]
-            display_name = _prefer_onion_display_name(existing_name, display_name)
-            amounts.append(amount)
-            collected[key] = (display_name, amounts)
-        else:
-            collected[key] = (display_name, [amount])
-        if recipe_name and provenance is not None:
-            provenance.setdefault(key, set()).add(recipe_name)
+    stripped_line = line.strip()
+    if not stripped_line:
+        return
+    part = stripped_line
+    _name, amount = parse_amount(part)
+    display_name = normalize_ingredient(part) or _name
+    if not display_name:
+        return
+    keeps_amount = amount and not amount.startswith(("head:", "clove:", "zest:"))
+    if keeps_amount and not should_show_amount(amount, part):
+        amount = None
+    if exclude_pantry and is_pantry_item(display_name, pantry):
+        if display_name not in excluded_pantry:
+            excluded_pantry.append(display_name)
+        return
+    key = _grocery_collection_key(display_name)
+    if key in collected:
+        existing_name, amounts = collected[key]
+        display_name = _prefer_onion_display_name(existing_name, display_name)
+        amounts.append(amount)
+        collected[key] = (display_name, amounts)
+    else:
+        collected[key] = (display_name, [amount])
+    if recipe_name and provenance is not None:
+        provenance.setdefault(key, set()).add(recipe_name)
 
 
 def _build_item_provenance(

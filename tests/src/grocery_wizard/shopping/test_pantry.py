@@ -154,6 +154,12 @@ def test_peanut_butter_not_matched_by_dairy_butter_pantry() -> None:
     assert is_pantry_item("peanut butter", {"peanut butter"})
 
 
+def test_butter_lettuce_not_matched_by_dairy_butter_pantry() -> None:
+    assert not is_pantry_item("butter lettuce", {"butter"})
+    assert is_pantry_item("butter lettuce", {"butter lettuce"})
+    assert is_pantry_item("butter lettuce", {"lettuce"})
+
+
 def test_cauliflower_rice_not_matched_by_rice_pantry() -> None:
     pantry = {"rice"}
     assert not is_pantry_item("cauliflower rice", pantry)
