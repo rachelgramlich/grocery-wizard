@@ -17,6 +17,10 @@ from src.grocery_wizard.integrations.notion import (
 )
 from src.grocery_wizard.recipes.add_recipe import _weeknight_column_name
 from src.grocery_wizard.recipes.classify import classify_recipe
+from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
+    filter_columns_for_recipe_classify,
+    is_meal_plan_tracking_column,
+)
 from src.grocery_wizard.recipes.scraper import ScrapeError, ingredients_to_text, scrape_recipe
 from src.grocery_wizard.recipes.weeknight import is_weeknight_friendly
 
@@ -109,6 +113,8 @@ def metadata_filter_columns_for_meals(
     unknown_meal = not meals
     columns: list[ColumnInfo] = []
     for col in schema.filter_columns:
+        if is_meal_plan_tracking_column(col.name):
+            continue
         key = col.name.lower()
         if key in ("meal", "cuisine"):
             columns.append(col)
@@ -247,7 +253,7 @@ def infer_metadata_field_values(
 ) -> NotionFieldValues:
     schema = db.schema
     url = (recipe.link or "").strip()
-    filter_columns = [(col.name, col.type, col.options) for col in schema.filter_columns]
+    filter_columns = filter_columns_for_recipe_classify(schema.filter_columns)
     total_minutes = _resolve_total_minutes(url, nyt_client=nyt_client)
     inferred = classify_recipe(
         recipe.name,

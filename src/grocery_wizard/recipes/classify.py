@@ -221,7 +221,11 @@ def classify_recipe(
     results: NotionFieldValues = {}
     meal_options: list[str] | None = None
 
+    from src.grocery_wizard.recipes.recipe_meal_plan_stats import is_meal_plan_tracking_column
+
     for column_name, column_type, options in filter_columns:
+        if is_meal_plan_tracking_column(column_name):
+            continue
         value = classify_column(column_name, title, ingredients, allowed_options=options)
         if column_type == "multi_select" and value is not None:
             results[column_name] = [value]

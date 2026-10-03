@@ -144,6 +144,16 @@ Use **`just grocery-ui`** for weekly planning. Default filters in the UI match t
 
 Suggestions maximize variety across **Protein**, **Dinner Category**, and **Cuisine**. Plans are stored in Notion; the app also writes `{"recipes": ["Name1", ...]}` to `.local/grocery_wizard/week_plan.json` for session hints.
 
+Optional **Recipes** database columns (add manually in Notion; override names via env if needed):
+
+| Column | Type | Purpose |
+| --- | --- | --- |
+| `Rejection count` | Number | Lifetime count when you swap away an auto-suggested slot |
+| `Selection count` | Number | Incremented when a saved weekly plan is written to Notion |
+| `Meal plan status` | Select | `Active` (default), `Favorite` (boosted in auto-pick), `Paused` (manual pick only), `Deprecated` (hidden from pickers) |
+
+Env overrides: `GROCERY_WIZARD_SUGGESTION_REJECTIONS_COLUMN`, `GROCERY_WIZARD_PLAN_SELECTIONS_COLUMN`, `GROCERY_WIZARD_MEAL_PLAN_STATUS_COLUMN`.
+
 ## Configuration vs local data
 
 Committed config lives in the package; per-week data stays local:

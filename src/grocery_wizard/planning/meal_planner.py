@@ -27,6 +27,11 @@ from src.grocery_wizard.integrations.notion import (
     Recipe,
     recipe_lookup_key,
 )
+from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
+    filter_recipes_for_auto_suggest,
+    pick_weight_rejection_penalty,
+    pick_weight_status_multiplier,
+)
 
 DIVERSITY_COLUMNS = ("Protein", "Dinner Category", "Cuisine")
 
@@ -208,11 +213,21 @@ def _effective_top_k(candidate_count: int) -> int:
     return min(scaled, TOP_K_DIVERSE_MAX, candidate_count)
 
 
-def _pick_weight(recipe: Recipe, selected: list[Recipe], recent_names: set[str]) -> float:
+def _pick_weight(
+    recipe: Recipe,
+    selected: list[Recipe],
+    recent_names: set[str],
+    *,
+    status_column: str | None = None,
+    rejections_column: str | None = None,
+) -> float:
     score = float(_diversity_total(recipe, selected))
     if recipe.name in recent_names:
         score = max(0.0, score - RECENT_PLAN_PENALTY)
-    return max(1.0, score + 1.0)
+    score = max(1.0, score + 1.0)
+    score *= pick_weight_status_multiplier(recipe, status_column=status_column)
+    score -= pick_weight_rejection_penalty(recipe, rejections_column=rejections_column)
+    return max(1.0, score)
 
 
 def eligible_suggestion_pool(
@@ -234,6 +249,8 @@ def pick_diverse_recipe(
     *,
     top_k: int | None = None,
     recent_names: set[str] | None = None,
+    status_column: str | None = None,
+    rejections_column: str | None = None,
 ) -> Recipe:
     """Pick a recipe favoring variety, weighted-random among top diverse options."""
     if not candidates:
@@ -257,7 +274,19 @@ def pick_diverse_recipe(
     k = top_k if top_k is not None else _effective_top_k(len(scored))
     top = scored[: min(k, len(scored))]
     recipes, weights = zip(
-        *((recipe, _pick_weight(recipe, selected, recent)) for recipe, _ in top),
+        *(
+            (
+                recipe,
+                _pick_weight(
+                    recipe,
+                    selected,
+                    recent,
+                    status_column=status_column,
+                    rejections_column=rejections_column,
+                ),
+            )
+            for recipe, _ in top
+        ),
         strict=True,
     )
     return random.choices(list(recipes), weights=list(weights), k=1)[0]
@@ -268,6 +297,8 @@ def select_diverse_meals(
     count: int,
     *,
     recent_names: set[str] | None = None,
+    status_column: str | None = None,
+    rejections_column: str | None = None,
 ) -> list[Recipe]:
     """Select up to count recipes with diversified protein, category, and cuisine."""
     remaining = list(pool)
@@ -275,7 +306,13 @@ def select_diverse_meals(
     for _ in range(count):
         if not remaining:
             break
-        pick = pick_diverse_recipe(remaining, selected, recent_names=recent_names)
+        pick = pick_diverse_recipe(
+            remaining,
+            selected,
+            recent_names=recent_names,
+            status_column=status_column,
+            rejections_column=rejections_column,
+        )
         selected.append(pick)
         remaining = [recipe for recipe in remaining if recipe.page_id != pick.page_id]
     return selected
@@ -322,6 +359,8 @@ def suggest_meals(
     rejected_names: set[str] | None = None,
     recent_names: set[str] | None = None,
     ingredient_index: dict[str, set[str]] | None = None,
+    status_column: str | None = None,
+    rejections_column: str | None = None,
 ) -> list[str]:
     """Suggest a meal plan: locked recipes first, then diverse auto-filled slots."""
     active_filters = filters if filters is not None else default_filters(schema_columns)
@@ -338,13 +377,20 @@ def suggest_meals(
         locked_name_set,
         session_rejected,
     )
+    pool = filter_recipes_for_auto_suggest(pool, status_column=status_column)
 
     recent = recent_names if recent_names is not None else load_recent_plan_names()
 
     remaining_slots = meals - len(locked_recipes)
     suggested: list[str] = []
     if remaining_slots > 0 and pool:
-        picked = select_diverse_meals(pool, remaining_slots, recent_names=recent)
+        picked = select_diverse_meals(
+            pool,
+            remaining_slots,
+            recent_names=recent,
+            status_column=status_column,
+            rejections_column=rejections_column,
+        )
         suggested = [recipe.name for recipe in picked]
 
     return [recipe.name for recipe in locked_recipes] + suggested
@@ -358,6 +404,8 @@ def replace_meals_in_plan(
     pool: list[Recipe],
     rejected_names: set[str] | None = None,
     recent_names: set[str] | None = None,
+    status_column: str | None = None,
+    rejections_column: str | None = None,
 ) -> tuple[list[str], set[str]]:
     """Swap named meals for diverse alternatives, tracking rejected names for the session."""
     if not names_to_replace:
@@ -378,7 +426,10 @@ def replace_meals_in_plan(
         plan_recipes = [
             recipe_by_name[plan_name] for plan_name in accepted_names if plan_name in recipe_by_name
         ]
-        candidates = eligible_suggestion_pool(pool, accepted_names, session_rejected)
+        candidates = filter_recipes_for_auto_suggest(
+            eligible_suggestion_pool(pool, accepted_names, session_rejected),
+            status_column=status_column,
+        )
         old_recipe = recipe_by_name.get(name)
         if old_recipe is not None:
             without_old = [recipe for recipe in candidates if recipe.page_id != old_recipe.page_id]
@@ -388,7 +439,13 @@ def replace_meals_in_plan(
         if not candidates:
             continue
 
-        replacement = pick_diverse_recipe(candidates, plan_recipes, recent_names=recent)
+        replacement = pick_diverse_recipe(
+            candidates,
+            plan_recipes,
+            recent_names=recent,
+            status_column=status_column,
+            rejections_column=rejections_column,
+        )
         updated[index] = replacement.name
 
     return updated, session_rejected

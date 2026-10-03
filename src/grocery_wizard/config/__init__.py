@@ -65,6 +65,18 @@ class Config(BaseSettings):
         default=None,
         validation_alias="GROCERY_WIZARD_NYT_SYNCED_COLUMN",
     )
+    suggestion_rejections_column: str | None = Field(
+        default=None,
+        validation_alias="GROCERY_WIZARD_SUGGESTION_REJECTIONS_COLUMN",
+    )
+    plan_selections_column: str | None = Field(
+        default=None,
+        validation_alias="GROCERY_WIZARD_PLAN_SELECTIONS_COLUMN",
+    )
+    meal_plan_status_column: str | None = Field(
+        default=None,
+        validation_alias="GROCERY_WIZARD_MEAL_PLAN_STATUS_COLUMN",
+    )
 
     @field_validator(
         "notion_api_key",
@@ -78,6 +90,9 @@ class Config(BaseSettings):
         "ingredients_column",
         "instructions_column",
         "nyt_synced_column",
+        "suggestion_rejections_column",
+        "plan_selections_column",
+        "meal_plan_status_column",
         mode="before",
     )
     @classmethod

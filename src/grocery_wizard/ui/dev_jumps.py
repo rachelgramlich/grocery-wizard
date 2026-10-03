@@ -99,6 +99,7 @@ def sync_dev_manual_multiselect(session_state: Any) -> None:
     session_state["plan_meals_text"] = "\n".join(manual)
     session_state["plan_prebuild_pinned_recipes"] = list(manual)
     session_state.pop("plan_rejected_names", None)
+    session_state.pop("plan_slot_origins", None)
     session_state.pop("weekly_plan_last_saved_name", None)
     session_state.pop("weekly_plan_saved_fingerprint", None)
 
@@ -159,6 +160,7 @@ def commit_dev_jump(
     clear_grocery_flow_state(session_state)
     session_state["plan_meals_text"] = "\n".join(cleaned)
     session_state.pop("plan_rejected_names", None)
+    session_state.pop("plan_slot_origins", None)
     session_state.pop("weekly_plan_last_saved_name", None)
     session_state.pop("weekly_plan_saved_fingerprint", None)
 
