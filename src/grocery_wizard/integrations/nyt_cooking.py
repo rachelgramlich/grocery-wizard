@@ -816,9 +816,10 @@ def _metadata_for_recipe(
     ingredients: list[str] | None = None,
 ) -> dict[str, Any]:
     from src.grocery_wizard.recipes.classify import classify_recipe
+    from src.grocery_wizard.recipes.recipe_meal_plan_stats import filter_columns_for_recipe_classify
     from src.grocery_wizard.recipes.weeknight import DEFAULT_WEEKNIGHT_COLUMN
 
-    filter_columns = [(col.name, col.type, col.options) for col in db.schema.filter_columns]
+    filter_columns = filter_columns_for_recipe_classify(db.schema.filter_columns)
     weeknight_column = (
         DEFAULT_WEEKNIGHT_COLUMN if DEFAULT_WEEKNIGHT_COLUMN in db.schema.all_columns else None
     )
@@ -1071,10 +1072,11 @@ def reclassify_nyt_synced_recipes(
 ) -> NytReclassifySummary:
     """Re-run Meal and Weeknight Friendly for NYT-synced recipes in Notion."""
     from src.grocery_wizard.recipes.classify import classify_recipe
+    from src.grocery_wizard.recipes.recipe_meal_plan_stats import filter_columns_for_recipe_classify
 
     nyt_column = _require_nyt_synced_column(db)
     weeknight_column = _weeknight_column_for_reclassify(db)
-    filter_columns = [(col.name, col.type, col.options) for col in db.schema.filter_columns]
+    filter_columns = filter_columns_for_recipe_classify(db.schema.filter_columns)
     summary = NytReclassifySummary()
 
     for recipe in db.query_recipes():

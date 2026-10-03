@@ -7,11 +7,33 @@ from typing import TYPE_CHECKING
 from src.grocery_wizard.integrations.notion import Recipe, recipe_lookup_key
 
 if TYPE_CHECKING:
-    from src.grocery_wizard.integrations.notion import NotionRecipesDB
+    from src.grocery_wizard.integrations.notion import ColumnInfo, NotionRecipesDB
 
-DEFAULT_SUGGESTION_REJECTIONS_COLUMN = "Suggestion rejections"
-DEFAULT_PLAN_SELECTIONS_COLUMN = "Plan selections"
+DEFAULT_REJECTION_COUNT_COLUMN = "Rejection count"
+DEFAULT_SELECTION_COUNT_COLUMN = "Selection count"
 DEFAULT_MEAL_PLAN_STATUS_COLUMN = "Meal plan status"
+
+# Legacy names (pre-rename); still recognized when reading schema / env overrides.
+LEGACY_REJECTION_COUNT_COLUMN = "Suggestion rejections"
+LEGACY_SELECTION_COUNT_COLUMN = "Plan selections"
+
+
+def meal_plan_tracking_column_names() -> frozenset[str]:
+    """Notion columns owned by meal-plan stats — never auto-classified or backfilled."""
+    return frozenset(
+        {
+            DEFAULT_REJECTION_COUNT_COLUMN,
+            DEFAULT_SELECTION_COUNT_COLUMN,
+            DEFAULT_MEAL_PLAN_STATUS_COLUMN,
+            LEGACY_REJECTION_COUNT_COLUMN,
+            LEGACY_SELECTION_COUNT_COLUMN,
+        }
+    )
+
+
+def is_meal_plan_tracking_column(column_name: str) -> bool:
+    return column_name in meal_plan_tracking_column_names()
+
 
 STATUS_ACTIVE = "Active"
 STATUS_FAVORITE = "Favorite"
@@ -35,10 +57,10 @@ def _configured_column_name(configured: str | None, default: str) -> str:
     return (configured or default).strip()
 
 
-def suggestion_rejections_column_name(db: NotionRecipesDB) -> str | None:
+def rejection_count_column_name(db: NotionRecipesDB) -> str | None:
     name = _configured_column_name(
         db._config.suggestion_rejections_column,
-        DEFAULT_SUGGESTION_REJECTIONS_COLUMN,
+        DEFAULT_REJECTION_COUNT_COLUMN,
     )
     column = db.schema.all_columns.get(name)
     if column and column.type == "number":
@@ -46,10 +68,10 @@ def suggestion_rejections_column_name(db: NotionRecipesDB) -> str | None:
     return None
 
 
-def plan_selections_column_name(db: NotionRecipesDB) -> str | None:
+def selection_count_column_name(db: NotionRecipesDB) -> str | None:
     name = _configured_column_name(
         db._config.plan_selections_column,
-        DEFAULT_PLAN_SELECTIONS_COLUMN,
+        DEFAULT_SELECTION_COUNT_COLUMN,
     )
     column = db.schema.all_columns.get(name)
     if column and column.type == "number":
@@ -146,18 +168,38 @@ def pick_weight_rejection_penalty(
     return count * REJECTION_PICK_PENALTY
 
 
+def _legacy_number_column(db: NotionRecipesDB, legacy_name: str) -> str | None:
+    column = db.schema.all_columns.get(legacy_name)
+    if column and column.type == "number":
+        return legacy_name
+    return None
+
+
+def filter_columns_for_recipe_classify(
+    filter_columns: list[ColumnInfo],
+) -> list[tuple[str, str, list[str]]]:
+    """Drop meal-plan tracking selects from classify / metadata inference."""
+    return [
+        (col.name, col.type, col.options)
+        for col in filter_columns
+        if not is_meal_plan_tracking_column(col.name)
+    ]
+
+
 def _recipe_by_name(recipes: list[Recipe]) -> dict[str, Recipe]:
     return {recipe_lookup_key(recipe.name): recipe for recipe in recipes}
 
 
-def increment_suggestion_rejections(
+def increment_rejection_count(
     db: NotionRecipesDB,
     recipe_names: set[str] | list[str],
     *,
     cached_recipes: list[Recipe] | None = None,
 ) -> int:
     """Increment rejection counter for each named recipe. Returns number of Notion updates."""
-    column = suggestion_rejections_column_name(db)
+    column = rejection_count_column_name(db)
+    if column is None:
+        column = _legacy_number_column(db, LEGACY_REJECTION_COUNT_COLUMN)
     if column is None or not recipe_names:
         return 0
     rows = cached_recipes if cached_recipes is not None else db.query_recipes()
@@ -173,14 +215,16 @@ def increment_suggestion_rejections(
     return updated
 
 
-def increment_plan_selections(
+def increment_selection_count(
     db: NotionRecipesDB,
     recipe_names: list[str],
     *,
     cached_recipes: list[Recipe] | None = None,
 ) -> int:
     """Increment plan selection counter once per recipe name. Returns number of Notion updates."""
-    column = plan_selections_column_name(db)
+    column = selection_count_column_name(db)
+    if column is None:
+        column = _legacy_number_column(db, LEGACY_SELECTION_COUNT_COLUMN)
     if column is None or not recipe_names:
         return 0
     rows = cached_recipes if cached_recipes is not None else db.query_recipes()
@@ -249,3 +293,10 @@ def origins_after_swap(
         if before in replace_set and before != after:
             origins[index] = "suggested"
     return origins[: len(updated_names)]
+
+
+# Backward-compatible aliases (PR #296 names).
+increment_suggestion_rejections = increment_rejection_count
+increment_plan_selections = increment_selection_count
+suggestion_rejections_column_name = rejection_count_column_name
+plan_selections_column_name = selection_count_column_name

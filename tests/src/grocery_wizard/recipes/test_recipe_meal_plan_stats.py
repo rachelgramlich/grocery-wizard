@@ -7,8 +7,8 @@ from unittest.mock import MagicMock
 from src.grocery_wizard.integrations.notion import Recipe
 from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
     DEFAULT_MEAL_PLAN_STATUS_COLUMN,
-    DEFAULT_PLAN_SELECTIONS_COLUMN,
-    DEFAULT_SUGGESTION_REJECTIONS_COLUMN,
+    DEFAULT_REJECTION_COUNT_COLUMN,
+    DEFAULT_SELECTION_COUNT_COLUMN,
     STATUS_DEPRECATED,
     STATUS_FAVORITE,
     STATUS_PAUSED,
@@ -35,7 +35,7 @@ def _recipe(
     if status is not None:
         props[DEFAULT_MEAL_PLAN_STATUS_COLUMN] = status
     if rejections is not None:
-        props[DEFAULT_SUGGESTION_REJECTIONS_COLUMN] = rejections
+        props[DEFAULT_REJECTION_COUNT_COLUMN] = rejections
     return Recipe(page_id=f"id-{name}", name=name, link=None, ingredients=None, properties=props)
 
 
@@ -45,8 +45,8 @@ def _mock_db(*, columns: dict | None = None) -> MagicMock:
     db._config.plan_selections_column = None
     db._config.meal_plan_status_column = None
     default_columns = {
-        DEFAULT_SUGGESTION_REJECTIONS_COLUMN: MagicMock(type="number"),
-        DEFAULT_PLAN_SELECTIONS_COLUMN: MagicMock(type="number"),
+        DEFAULT_REJECTION_COUNT_COLUMN: MagicMock(type="number"),
+        DEFAULT_SELECTION_COUNT_COLUMN: MagicMock(type="number"),
         DEFAULT_MEAL_PLAN_STATUS_COLUMN: MagicMock(type="select"),
     }
     db.schema.all_columns = columns if columns is not None else default_columns
@@ -94,7 +94,7 @@ def test_pick_weight_favorite_and_rejections() -> None:
         == 2.0
     )
     assert (
-        pick_weight_rejection_penalty(noisy, rejections_column=DEFAULT_SUGGESTION_REJECTIONS_COLUMN)
+        pick_weight_rejection_penalty(noisy, rejections_column=DEFAULT_REJECTION_COUNT_COLUMN)
         == 3.0
     )
 
@@ -107,20 +107,20 @@ def test_increment_suggestion_rejections_updates_notion() -> None:
     assert updated == 1
     db.update_recipe.assert_called_once_with(
         recipe.page_id,
-        {DEFAULT_SUGGESTION_REJECTIONS_COLUMN: 3},
+        {DEFAULT_REJECTION_COUNT_COLUMN: 3},
     )
 
 
 def test_increment_plan_selections_dedupes_names() -> None:
     db = _mock_db()
     recipe = _recipe("Soup")
-    recipe.properties[DEFAULT_PLAN_SELECTIONS_COLUMN] = 1
+    recipe.properties[DEFAULT_SELECTION_COUNT_COLUMN] = 1
     db.query_recipes.return_value = [recipe]
     updated = increment_plan_selections(db, ["Soup", "Soup"], cached_recipes=[recipe])
     assert updated == 1
     db.update_recipe.assert_called_once_with(
         recipe.page_id,
-        {DEFAULT_PLAN_SELECTIONS_COLUMN: 2},
+        {DEFAULT_SELECTION_COUNT_COLUMN: 2},
     )
 
 

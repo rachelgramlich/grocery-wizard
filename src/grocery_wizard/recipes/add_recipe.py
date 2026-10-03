@@ -15,6 +15,10 @@ from src.grocery_wizard.integrations.notion import (
 )
 from src.grocery_wizard.lib.prompts import confirm_no_default
 from src.grocery_wizard.recipes.classify import classify_recipe
+from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
+    filter_columns_for_recipe_classify,
+    is_meal_plan_tracking_column,
+)
 from src.grocery_wizard.recipes.scraper import (
     ScrapedRecipe,
     ScrapeError,
@@ -49,7 +53,9 @@ def ordered_recipe_field_names(schema: DatabaseSchema) -> list[str]:
         names.append(schema.ingredients_column)
     if schema.instructions_column:
         names.append(schema.instructions_column)
-    names.extend(col.name for col in schema.review_columns)
+    names.extend(
+        col.name for col in schema.review_columns if not is_meal_plan_tracking_column(col.name)
+    )
     return names
 
 
@@ -88,7 +94,7 @@ def field_values_from_scrape(
     url: str,
     scraped: ScrapedRecipe,
 ) -> NotionFieldValues:
-    filter_columns = [(col.name, col.type, col.options) for col in schema.filter_columns]
+    filter_columns = filter_columns_for_recipe_classify(schema.filter_columns)
     weeknight_column = _weeknight_column_name(schema)
     inferred = classify_recipe(
         scraped.title,
@@ -188,7 +194,7 @@ def add_prefetched_recipes(
             print(f"Skipping duplicate URL (already in Notion as '{existing.name}'): {url}")
             continue
 
-        filter_columns = [(col.name, col.type, col.options) for col in schema.filter_columns]
+        filter_columns = filter_columns_for_recipe_classify(schema.filter_columns)
         weeknight_column = _weeknight_column_name(schema)
         inferred = classify_recipe(
             title,
@@ -321,7 +327,9 @@ def _review_fields(
         ordered_fields.append(schema.ingredients_column)
     if schema.instructions_column:
         ordered_fields.append(schema.instructions_column)
-    ordered_fields.extend(col.name for col in schema.review_columns)
+    ordered_fields.extend(
+        col.name for col in schema.review_columns if not is_meal_plan_tracking_column(col.name)
+    )
 
     for field_name in ordered_fields:
         if field_name not in field_values and field_name not in schema.all_columns:
