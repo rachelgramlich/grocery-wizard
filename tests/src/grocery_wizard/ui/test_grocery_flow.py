@@ -13,6 +13,8 @@ from src.grocery_wizard.ui.grocery_flow import (
     default_pre_build_grocery_options,
     fetch_recipe_review_text,
     persist_reviewed_ingredients_to_notion,
+    persist_single_recipe_review_to_notion,
+    recipe_review_has_unsaved_edits,
     recipe_review_widget_key,
     stash_grocery_result,
     stash_recipe_review,
@@ -89,6 +91,35 @@ def test_stash_recipe_review_uses_formatted_text(monkeypatch: pytest.MonkeyPatch
     assert session["grocery_review_baseline"]["Soup"] == "formatted:raw"
     assert session["grocery_review_recipes"] == recipes
     assert session[stale_key] == "formatted:raw"
+
+
+def test_recipe_review_has_unsaved_edits_compares_widget_to_baseline() -> None:
+    session = {recipe_review_widget_key("Soup"): "2 cups flour\n"}
+    assert recipe_review_has_unsaved_edits(
+        "Soup",
+        session_state=session,
+        baseline_review={"Soup": "1 cup flour\n"},
+    )
+    session[recipe_review_widget_key("Soup")] = "1 cup flour\n"
+    assert not recipe_review_has_unsaved_edits(
+        "Soup",
+        session_state=session,
+        baseline_review={"Soup": "1 cup flour\n"},
+    )
+
+
+def test_persist_single_recipe_review_delegates_to_batch_helper() -> None:
+    db = MagicMock()
+    db.schema.ingredients_column = "Ingredients"
+    recipe = _recipe("Soup", ingredients="1 cup flour")
+    assert persist_single_recipe_review_to_notion(
+        db,
+        name="Soup",
+        overrides={"soup": "2 cups flour\n"},
+        recipes=[recipe],
+        baseline_review={"Soup": "1 cup flour\n"},
+    )
+    db.update_recipe.assert_called_once()
 
 
 def test_persist_reviewed_ingredients_to_notion_updates_changed_recipes() -> None:

@@ -20,17 +20,22 @@ def test_per_recipe_review_initializes_widget_keys_without_value_param() -> None
     review_block = source.split("def _render_per_recipe_review", 1)[1].split(
         "def render_create_weekly_plan", 1
     )[0]
-    assert 'st.form("recipe_review_form"' in review_block
-    assert "st.form_submit_button" in review_block
+    assert 'st.form("recipe_review_form"' not in review_block
+    assert (
+        'st.button(\n        "Build final list"' in review_block
+        or '"Build final list"' in review_block
+    )
     assert "sync_recipe_review_overrides_to_session" in review_block
-    assert "Save ingredient edits to Notion" in review_block
+    assert '"Save to Notion"' in review_block
+    assert "recipe_review_save_button_key" in review_block
+    assert "recipe_review_has_unsaved_edits" in review_block
     assert "if widget_key not in st.session_state:" in review_block
     assert "st.session_state[widget_key] = original_text" in review_block
     assert "value=original_text" not in review_block
     assert "recipe_review_widget_key" in review_block
     assert "sync_recipe_review_overrides_to_session" in review_block
-    assert "Save ingredient edits to Notion" in review_block
     assert "render_unmatched_plan_recipes_help" in review_block
+    assert "grocery_review_save_flash" in review_block
 
 
 def test_final_step_meals_and_grocery_use_separate_fingerprints() -> None:
