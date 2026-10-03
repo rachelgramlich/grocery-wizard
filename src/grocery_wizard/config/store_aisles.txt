@@ -102,6 +102,7 @@ bean sprouts
 cabbage
 fennel
 leek
+leeks
 scallion
 scallions
 radish
