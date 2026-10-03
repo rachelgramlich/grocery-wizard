@@ -1,0 +1,3 @@
+[submodule ".cursor/rg-ai"]
+	path = .cursor/rg-ai
+	url = https://github.com/rachelgramlich/rg-ai.git
