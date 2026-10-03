@@ -39,6 +39,7 @@ from src.grocery_wizard.ui.dev_jumps import (
     resolve_dev_jump_meal_names,
     sync_dev_manual_multiselect,
 )
+from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.meal_plan_filters import (
     recipes_ingredient_cache_key,
     render_meal_plan_filters,
@@ -146,7 +147,8 @@ def _render_direct_recipe_pick(
         if not direct_picked:
             st.warning("Choose a recipe first.")
         else:
-            on_apply(direct_picked)
+            with loading_indicator("Applying recipe…"):
+                on_apply(direct_picked)
 
 
 def _render_filtered_recipe_picker(
@@ -197,7 +199,8 @@ def _render_filtered_recipe_picker(
             if not picked:
                 st.warning("Choose a recipe from the filtered list first.")
             else:
-                on_apply(picked)
+                with loading_indicator("Applying recipe…"):
+                    on_apply(picked)
 
 
 def _render_prebuild_recipe_picker(
@@ -528,9 +531,10 @@ def _render_weekly_plan_entry() -> bool:
         st.session_state.weekly_plan_mode = choice
         _reset_weekly_plan_workflow(clear_mode=False)
         if choice == "saved" and selected_plan_name:
-            st.session_state.plan_meals_text = "\n".join(
-                load_plan_recipes(selected_plan_name, recipes_db=get_db())
-            )
+            with loading_indicator("Loading saved plan from Notion…"):
+                st.session_state.plan_meals_text = "\n".join(
+                    load_plan_recipes(selected_plan_name, recipes_db=get_db())
+                )
             st.session_state.weekly_plan_loaded_name = selected_plan_name
         elif choice == "new":
             st.session_state.plan_meals_text = ""
@@ -565,6 +569,7 @@ def _render_meal_count_input() -> int:
             max_value=21,
             step=1,
             key=PLAN_MEAL_COUNT_WIDGET_KEY,
+            on_change=_apply_plan_meal_count_from_widget,
         )
     )
     st.session_state.plan_meal_count = meal_count
@@ -613,7 +618,7 @@ def _render_generate_plan_controls(
         key="build_plan",
         help="Keeps pinned meals and suggests diverse recipes for any open slots.",
     ):
-        with st.spinner("Building your meal plan…"):
+        with loading_indicator("Building your meal plan…"):
             locked_for_build = _locked_recipes_for_plan_build(meal_count=int(meal_count))
             locked_set = set(locked_for_build)
             status_column, rejections_column = _meal_plan_picker_columns(db)
@@ -663,34 +668,35 @@ def _render_built_plan_meals(
         return
 
     def _apply_plan_swap(names_to_replace: list[str]) -> None:
-        origins = _plan_slot_origins()
-        stats_targets = rejection_names_from_swap(current_plan, names_to_replace, origins)
-        rejected = set(st.session_state.get("plan_rejected_names", []))
-        new_plan, rejected = replace_meals_in_plan(
-            current_plan,
-            names_to_replace,
-            all_recipes=all_recipes,
-            pool=suggestion_pool,
-            rejected_names=rejected,
-            status_column=status_column,
-            rejections_column=rejections_column,
-        )
-        if stats_targets:
-            updated_stats = increment_suggestion_rejections(
-                db,
-                stats_targets,
-                cached_recipes=all_recipes,
+        with loading_indicator("Updating your meals…"):
+            origins = _plan_slot_origins()
+            stats_targets = rejection_names_from_swap(current_plan, names_to_replace, origins)
+            rejected = set(st.session_state.get("plan_rejected_names", []))
+            new_plan, rejected = replace_meals_in_plan(
+                current_plan,
+                names_to_replace,
+                all_recipes=all_recipes,
+                pool=suggestion_pool,
+                rejected_names=rejected,
+                status_column=status_column,
+                rejections_column=rejections_column,
             )
-            if updated_stats:
-                invalidate_notion_cache()
-        _write_plan_names(new_plan)
-        _set_plan_slot_origins(
-            origins_after_swap(current_plan, names_to_replace, origins, new_plan),
-        )
-        st.session_state.plan_rejected_names = sorted(rejected)
-        _invalidate_weekly_plan_save_state()
-        _clear_grocery_session_overrides()
-        _clear_grocery_result()
+            if stats_targets:
+                updated_stats = increment_suggestion_rejections(
+                    db,
+                    stats_targets,
+                    cached_recipes=all_recipes,
+                )
+                if updated_stats:
+                    invalidate_notion_cache()
+            _write_plan_names(new_plan)
+            _set_plan_slot_origins(
+                origins_after_swap(current_plan, names_to_replace, origins, new_plan),
+            )
+            st.session_state.plan_rejected_names = sorted(rejected)
+            _invalidate_weekly_plan_save_state()
+            _clear_grocery_session_overrides()
+            _clear_grocery_result()
         st.rerun()
 
     st.markdown("#### 1b. Your meals")
@@ -725,77 +731,88 @@ def _render_built_plan_meals(
     if len(current_plan) < int(meal_count) and st.button(
         "Fill remaining slots", key="fill_remaining_plan"
     ):
-        plan = suggest_meals(
-            all_recipes,
-            meals=int(meal_count),
-            locked_names=current_plan,
-            filters=week_filters,
-            schema_columns=schema.all_columns,
-            ingredient_index=ingredient_index,
-            status_column=status_column,
-            rejections_column=rejections_column,
-        )
-        _write_plan_names(plan)
-        origins = _plan_slot_origins()
-        new_origins = [origins[i] if i < len(origins) else "suggested" for i in range(len(plan))]
-        while len(new_origins) < len(plan):
-            new_origins.append("suggested")
-        _set_plan_slot_origins(new_origins[: len(plan)])
-        _invalidate_weekly_plan_save_state()
-        _clear_grocery_session_overrides()
-        _clear_grocery_result()
+        with loading_indicator("Filling remaining meal slots…"):
+            plan = suggest_meals(
+                all_recipes,
+                meals=int(meal_count),
+                locked_names=current_plan,
+                filters=week_filters,
+                schema_columns=schema.all_columns,
+                ingredient_index=ingredient_index,
+                status_column=status_column,
+                rejections_column=rejections_column,
+            )
+            _write_plan_names(plan)
+            origins = _plan_slot_origins()
+            new_origins = [
+                origins[i] if i < len(origins) else "suggested" for i in range(len(plan))
+            ]
+            while len(new_origins) < len(plan):
+                new_origins.append("suggested")
+            _set_plan_slot_origins(new_origins[: len(plan)])
+            _invalidate_weekly_plan_save_state()
+            _clear_grocery_session_overrides()
+            _clear_grocery_result()
         st.rerun()
 
     if st.button("Re-generate all meals", key="regenerate_plan"):
-        origins = _plan_slot_origins()
-        stats_targets = rejection_names_from_swap(current_plan, current_plan, origins)
-        if stats_targets:
-            updated_stats = increment_suggestion_rejections(
-                db,
-                stats_targets,
-                cached_recipes=all_recipes,
+        with loading_indicator("Re-generating your meal plan…"):
+            origins = _plan_slot_origins()
+            stats_targets = rejection_names_from_swap(current_plan, current_plan, origins)
+            if stats_targets:
+                updated_stats = increment_suggestion_rejections(
+                    db,
+                    stats_targets,
+                    cached_recipes=all_recipes,
+                )
+                if updated_stats:
+                    invalidate_notion_cache()
+            rejected = set(st.session_state.get("plan_rejected_names", []))
+            plan = suggest_meals(
+                all_recipes,
+                meals=int(meal_count),
+                locked_names=[],
+                filters=week_filters,
+                schema_columns=schema.all_columns,
+                rejected_names=rejected,
+                ingredient_index=ingredient_index,
+                status_column=status_column,
+                rejections_column=rejections_column,
             )
-            if updated_stats:
-                invalidate_notion_cache()
-        rejected = set(st.session_state.get("plan_rejected_names", []))
-        plan = suggest_meals(
-            all_recipes,
-            meals=int(meal_count),
-            locked_names=[],
-            filters=week_filters,
-            schema_columns=schema.all_columns,
-            rejected_names=rejected,
-            ingredient_index=ingredient_index,
-            status_column=status_column,
-            rejections_column=rejections_column,
-        )
-        _write_plan_names(plan)
-        _set_plan_slot_origins(["suggested"] * len(plan))
-        _invalidate_weekly_plan_save_state()
-        _clear_grocery_session_overrides()
-        _clear_grocery_result()
+            _write_plan_names(plan)
+            _set_plan_slot_origins(["suggested"] * len(plan))
+            _invalidate_weekly_plan_save_state()
+            _clear_grocery_session_overrides()
+            _clear_grocery_result()
         st.rerun()
 
     _render_save_plan_controls(_current_plan_names(), cached_recipes=all_recipes)
 
 
-def _trim_plan_to_meal_count(meal_count: int) -> None:
-    """In dev mode, keep plan length aligned with the meal-count widget."""
-    if _weekly_plan_mode() != "dev":
-        return
+def _apply_plan_meal_count_from_widget() -> None:
+    """``on_change`` for the meal-count widget (runs before the fragment body)."""
+    st.session_state.plan_meal_count = int(st.session_state[PLAN_MEAL_COUNT_WIDGET_KEY])
+
+
+def _sync_plan_length_to_meal_count(meal_count: int) -> None:
+    """Keep pinned meals and built plan length aligned with the meal-count widget."""
+    _clamp_prebuild_pinned_recipes(max_pins=max(1, int(meal_count)))
     names = _current_plan_names()
-    if len(names) > int(meal_count):
-        _write_plan_names(names[: int(meal_count)])
-        _invalidate_weekly_plan_save_state()
-        _clear_grocery_session_overrides()
-        _clear_grocery_result()
+    if len(names) <= int(meal_count):
+        return
+    _write_plan_names(names[: int(meal_count)])
+    _invalidate_weekly_plan_save_state()
+    _clear_grocery_session_overrides()
+    _clear_grocery_result()
 
 
-def render_meals_section(db: NotionRecipesDB, *, all_recipes: list) -> list[str]:
+def render_meals_section(
+    db: NotionRecipesDB,
+    *,
+    all_recipes: list,
+    meal_count: int,
+) -> list[str]:
     """Render step 1 (meals) and return the current planned recipe names."""
-    _ensure_plan_session_defaults()
-    meal_count = _render_meal_count_input()
-    _trim_plan_to_meal_count(meal_count)
     _render_dev_jump_tools(db)
 
     ingredient_index = _cached_plan_ingredient_index(all_recipes)

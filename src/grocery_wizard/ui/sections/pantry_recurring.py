@@ -25,6 +25,7 @@ from src.grocery_wizard.shopping.store_aisles import (
     classify_aisle,
     load_store_aisles,
 )
+from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.notion_cache import cached_pantry_entries, invalidate_notion_cache
 
 _PANTRY_AISLE_CAPTION = "Grouped by store walk order—the same aisle headings as your grocery list."
@@ -134,7 +135,9 @@ def _render_pantry_items_with_inline_remove(
                 help=f"Remove “{name}” from pantry",
                 type="secondary",
             ):
-                if on_remove(name):
+                with loading_indicator("Updating pantry…"):
+                    removed = on_remove(name)
+                if removed:
                     st.rerun()
                 else:
                     st.warning(f"Could not remove “{name}”.")
@@ -255,7 +258,9 @@ def _render_pantry_add_form(*, aisle_config: StoreAisleConfig) -> None:
                 st.warning("Enter an item name.")
             else:
                 section_label = aisle_label(new_pantry_aisle, config=aisle_config)
-                if _append_pantry_item_idempotent(name, section_label=section_label):
+                with loading_indicator("Adding to pantry…"):
+                    added = _append_pantry_item_idempotent(name, section_label=section_label)
+                if added:
                     st.success(f"Added “{name}” to pantry ({section_label}).")
                     st.rerun()
                 else:
@@ -267,7 +272,8 @@ def _render_pantry_section() -> None:
     st.caption(_PANTRY_AISLE_CAPTION)
     aisle_config = load_store_aisles()
     try:
-        pantry_entries = _load_pantry_entries_from_notion()
+        with loading_indicator("Loading pantry from Notion…"):
+            pantry_entries = _load_pantry_entries_from_notion()
     except ValueError as exc:
         st.error(str(exc))
         pantry_entries = []

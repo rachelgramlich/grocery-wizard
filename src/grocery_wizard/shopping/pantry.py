@@ -73,6 +73,7 @@ _NOT_DAIRY_BUTTER_PHRASES = frozenset(
         "cashew butter",
         "sunflower butter",
         "cookie butter",
+        "butter lettuce",
     }
 )
 
