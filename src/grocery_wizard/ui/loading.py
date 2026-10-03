@@ -4,14 +4,11 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
-from typing import TypeVar
 
 import streamlit as st
 
 GW_BUSY_MESSAGE_KEY = "gw_busy_message"
 _BANNER_PLACEHOLDER_KEY = "gw_loading_banner_placeholder"
-
-_T = TypeVar("_T")
 
 
 def mount_global_loading_banner() -> None:
@@ -50,7 +47,7 @@ def loading_indicator(message: str) -> Iterator[None]:
         _refresh_global_banner()
 
 
-def run_with_loading(message: str, action: Callable[[], _T]) -> _T:
+def run_with_loading[T](message: str, action: Callable[[], T]) -> T:
     """Run ``action`` inside :func:`loading_indicator`."""
     with loading_indicator(message):
         return action()
