@@ -290,7 +290,7 @@ _TO_TASTE_RE = re.compile(r"\bto taste\b", re.IGNORECASE)
 
 _PREP_TRAILING_RE = re.compile(
     r",\s*(?:"
-    r"beaten|chopped|diced|minced|sliced|grated|shredded|crushed|peeled|seeded|cored|"
+    r"beaten|chopped|diced|minced|sliced|grated|shredded|crushed|peeled|seeded|shelled|cored|"
     r"trimmed|halved|quartered|julienned|cubed|mashed|softened|melted|thawed|rinsed|drained|"
     r"juiced|zested|"
     r"smashed(?:\s+and\s+peeled)?|peeled\s+and\s+grated|minced\s+or\s+grated|"

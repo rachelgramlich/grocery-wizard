@@ -261,6 +261,46 @@ def test_build_grocery_list_keeps_named_beans_when_pantry_has_modifier_or_generi
     assert f"{variety} beans" not in excluded
 
 
+def test_build_grocery_list_edamame_on_buy_list_when_pantry_has_frozen_only(
+    tmp_path: Path,
+) -> None:
+    pantry_path = tmp_path / "pantry.txt"
+    pantry_path.write_text("frozen edamame\n", encoding="utf-8")
+
+    db = MagicMock()
+    db.query_recipes.return_value = [_recipe("Bowl", "2 cups edamame")]
+
+    items, excluded, _sync, _missing, _, _ = build_grocery_list(
+        db,
+        recipe_names=["Bowl"],
+        pantry_path=pantry_path,
+        exclude_pantry=True,
+    )
+
+    assert items == ["edamame"]
+    assert "edamame" not in excluded
+
+
+def test_build_grocery_list_edamame_comma_shelled_excluded_when_pantry_has_edamame(
+    tmp_path: Path,
+) -> None:
+    pantry_path = tmp_path / "pantry.txt"
+    pantry_path.write_text("edamame\n", encoding="utf-8")
+
+    db = MagicMock()
+    db.query_recipes.return_value = [_recipe("Bowl", "edamame, shelled")]
+
+    items, excluded, _sync, _missing, _, _ = build_grocery_list(
+        db,
+        recipe_names=["Bowl"],
+        pantry_path=pantry_path,
+        exclude_pantry=True,
+    )
+
+    assert items == []
+    assert excluded == ["edamame"]
+
+
 def test_build_grocery_list_never_scrapes_with_empty_ingredients(tmp_path: Path) -> None:
     """build_grocery_list must never call scrape_recipe, even when ingredients are empty."""
     pantry_path = tmp_path / "pantry.txt"
