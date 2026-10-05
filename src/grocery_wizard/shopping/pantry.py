@@ -64,6 +64,9 @@ _GENERIC_BEANS_PANTRY = frozenset({"bean", "beans"})
 _GENERIC_RICE_PANTRY = frozenset({"rice"})
 _NOT_ACTUAL_RICE_PHRASES = frozenset({"cauliflower rice", "riced cauliflower"})
 
+# Pantry ``frozen …`` / ``canned …`` are specific products — not plain last-word staples.
+_PANTRY_SPECIFIC_PRODUCT_PREFIXES = frozenset({"canned", "frozen"})
+
 # Spreads named ``… butter`` are not dairy butter on the pantry list.
 _NOT_DAIRY_BUTTER_PHRASES = frozenset(
     {
@@ -86,6 +89,16 @@ def _is_named_bean_ingredient(ingredient_name: str) -> bool:
     """True for grocery items like ``black beans`` (not a single word ``beans``)."""
     words = ingredient_name.split()
     return len(words) >= 2 and words[-1] in ("bean", "beans")
+
+
+def _pantry_last_word_match(ingredient_name: str, pantry_item_norm: str) -> bool:
+    """True when a single-word ingredient matches the last word of a pantry phrase."""
+    name_words = ingredient_name.split()
+    item_words = pantry_item_norm.split()
+    if len(name_words) != 1 or len(item_words) <= 1 or item_words[-1] != name_words[0]:
+        return False
+    prefix = item_words[0]
+    return not (prefix in _PANTRY_SPECIFIC_PRODUCT_PREFIXES and prefix not in name_words)
 
 
 def _skip_pantry_phrase_match(ingredient_name: str, pantry_item_norm: str) -> bool:
@@ -141,10 +154,8 @@ def is_pantry_item(normalized: str, pantry: set[str]) -> bool:
         # when it equals the *last* word of a multi-word pantry phrase
         # (e.g. "olive oil", "vegetable oil").  This avoids re-introducing
         # broad false positives like "beef" matching "beef stock".
-        if len(name_words) == 1:
-            item_words = item_norm.split()
-            if len(item_words) > 1 and item_words[-1] == name_words[0]:
-                return True
+        if _pantry_last_word_match(name, item_norm):
+            return True
     return False
 
 
