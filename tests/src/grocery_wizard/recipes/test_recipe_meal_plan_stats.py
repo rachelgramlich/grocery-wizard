@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from src.grocery_wizard.integrations.notion import Recipe
+from src.grocery_wizard.integrations.notion import NOTION_CLEAR_SELECT, Recipe
 from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
     DEFAULT_MEAL_PLAN_STATUS_COLUMN,
     DEFAULT_REJECTION_COUNT_COLUMN,
@@ -23,6 +23,7 @@ from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
     rejection_names_from_swap,
     resolve_slot_origins_for_plan,
     suggestion_rejections_column_name,
+    sync_plan_selection_stats,
 )
 
 
@@ -109,6 +110,48 @@ def test_increment_suggestion_rejections_updates_notion() -> None:
     db.update_recipe.assert_called_once_with(
         recipe.page_id,
         {DEFAULT_REJECTION_COUNT_COLUMN: 3},
+    )
+
+
+def test_sync_plan_selection_stats_adds_and_removes() -> None:
+    db = _mock_db()
+    soup = _recipe("Soup")
+    soup.properties[DEFAULT_SELECTION_COUNT_COLUMN] = 1
+    salad = _recipe("Salad")
+    db.query_recipes.return_value = [soup, salad]
+    updated = sync_plan_selection_stats(
+        db,
+        ("Soup",),
+        ["Salad"],
+        cached_recipes=[soup, salad],
+    )
+    assert updated == 2
+    assert db.update_recipe.call_count == 2
+    db.update_recipe.assert_any_call(
+        soup.page_id,
+        {
+            DEFAULT_SELECTION_COUNT_COLUMN: 0,
+            DEFAULT_MEAL_PLAN_STATUS_COLUMN: NOTION_CLEAR_SELECT,
+        },
+    )
+    db.update_recipe.assert_any_call(
+        salad.page_id,
+        {
+            DEFAULT_SELECTION_COUNT_COLUMN: 1,
+            DEFAULT_MEAL_PLAN_STATUS_COLUMN: STATUS_ACTIVE,
+        },
+    )
+
+
+def test_sync_plan_selection_stats_keeps_favorite_when_count_zero() -> None:
+    db = _mock_db()
+    soup = _recipe("Soup", status=STATUS_FAVORITE)
+    soup.properties[DEFAULT_SELECTION_COUNT_COLUMN] = 1
+    db.query_recipes.return_value = [soup]
+    sync_plan_selection_stats(db, ("Soup",), [], cached_recipes=[soup])
+    db.update_recipe.assert_called_once_with(
+        soup.page_id,
+        {DEFAULT_SELECTION_COUNT_COLUMN: 0},
     )
 
 

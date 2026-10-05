@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 __all__ = [
+    "NOTION_CLEAR_SELECT",
     "ColumnInfo",
     "DatabaseSchema",
     "NotionFieldValues",
@@ -105,6 +106,13 @@ def _normalize_recipe_field_values(
 
 
 DEFAULT_NYT_SYNCED_COLUMN = "Synced from NYT recipe box"
+
+
+class _NotionClearSelect:
+    """Sentinel: clear a Notion select/status property on update."""
+
+
+NOTION_CLEAR_SELECT = _NotionClearSelect()
 
 
 class NotionRecipesDB:
@@ -295,7 +303,7 @@ class NotionRecipesDB:
         properties = {
             name: self._to_notion_property(name, value)
             for name, value in field_values.items()
-            if value is not None
+            if value is not None or value is NOTION_CLEAR_SELECT
         }
         page = self._client.pages.update(page_id=page_id, properties=properties)
         return self._page_to_recipe(page)
@@ -391,11 +399,15 @@ class NotionRecipesDB:
         if column.type in ("rich_text", "text"):
             return {"rich_text": [{"text": {"content": str(value)}}]}
         if column.type == "select":
+            if value is NOTION_CLEAR_SELECT:
+                return {"select": None}
             return {"select": {"name": str(value)}}
         if column.type == "multi_select":
             values = value if isinstance(value, list) else [value]
             return {"multi_select": [{"name": str(v)} for v in values]}
         if column.type == "status":
+            if value is NOTION_CLEAR_SELECT:
+                return {"status": None}
             return {"status": {"name": str(value)}}
         if column.type == "checkbox":
             return {"checkbox": bool(value)}

@@ -185,8 +185,9 @@ def render_grocery_list_section(
         )
 
     if st.button("Create grocery list", type="primary", key="create_grocery"):
+        if not _ensure_weekly_plan_saved_before_grocery(current_plan, cached_recipes=all_recipes):
+            return
         with loading_indicator("Preparing ingredient review…"):
-            _ensure_weekly_plan_saved_before_grocery(current_plan, cached_recipes=all_recipes)
             _clear_grocery_result(clear_pre_extra_items=False)
             _start_recipe_review(
                 current_plan,

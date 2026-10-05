@@ -10,9 +10,12 @@ from src.grocery_wizard.config import Config, load_config
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe, recipe_lookup_key
 from src.grocery_wizard.integrations.notion_table import NotionDatabase, NotionPageRow
 from src.grocery_wizard.planning.saved_weekly_plans import (
+    CANONICAL_PLAN_VERSION,
+    PlanSaveOutcome,
     SavedWeeklyPlan,
     SaveWeekChoice,
-    format_plan_name,
+    WeeklyPlanSaveResult,
+    canonical_plan_name,
     normalize_recipe_names,
     saved_plan_week_start,
 )
@@ -293,8 +296,12 @@ class NotionWeeklyPlansDB:
     def list_plans(self) -> list[SavedWeeklyPlan]:
         recipe_names_by_id = self._recipe_names_by_page_id()
         plans = self._plans_from_rows(self._db.query_all_pages(), recipe_names_by_id)
-        plans.sort(key=lambda plan: (plan.week_start, plan.version), reverse=True)
-        return plans
+        by_week: dict[date, SavedWeeklyPlan] = {}
+        for plan in plans:
+            current = by_week.get(plan.week_start)
+            if current is None or plan.version > current.version:
+                by_week[plan.week_start] = plan
+        return sorted(by_week.values(), key=lambda plan: plan.week_start, reverse=True)
 
     def load_plan_recipes(self, plan_name: str) -> list[str]:
         for plan in self.list_plans():
@@ -302,14 +309,28 @@ class NotionWeeklyPlansDB:
                 return list(plan.recipes)
         return []
 
+    def find_plan_for_week(self, week_start: date) -> SavedWeeklyPlan | None:
+        recipe_names_by_id = self._recipe_names_by_page_id()
+        week_filter = {
+            "property": PLAN_WEEK_START_COLUMN,
+            "date": {"equals": week_start.isoformat()},
+        }
+        plans = self._plans_from_rows(
+            self._db.query_all_pages(filter=week_filter),
+            recipe_names_by_id,
+        )
+        if not plans:
+            return None
+        return max(plans, key=lambda plan: plan.version)
+
     def find_matching_plan(
         self,
         week_start: date,
         recipes: tuple[str, ...],
     ) -> SavedWeeklyPlan | None:
-        for plan in self.list_plans():
-            if plan.week_start == week_start and plan.recipes == recipes:
-                return plan
+        existing = self.find_plan_for_week(week_start)
+        if existing is not None and existing.recipes == recipes:
+            return existing
         return None
 
     def next_plan_version(self, week_start: date) -> int:
@@ -323,7 +344,7 @@ class NotionWeeklyPlansDB:
         reference_date: date | None = None,
         week_choice: SaveWeekChoice | None = None,
         cached_recipes: list[Recipe] | None = None,
-    ) -> tuple[SavedWeeklyPlan, bool]:
+    ) -> WeeklyPlanSaveResult:
         from datetime import UTC, datetime
 
         when = reference_date or datetime.now(tz=UTC).date()
@@ -347,29 +368,37 @@ class NotionWeeklyPlansDB:
             self._db.query_all_pages(filter=week_filter),
             recipe_names_by_id,
         )
-        for plan in plans:
-            if plan.week_start == week_start and plan.recipes == recipes:
-                return plan, False
+        canonical = max(plans, key=lambda plan: plan.version) if plans else None
+        previous = canonical.recipes if canonical is not None else ()
 
-        existing_for_week = [plan for plan in plans if plan.week_start == week_start]
-        version = max((plan.version for plan in existing_for_week), default=0) + 1
-        name = format_plan_name(week_start, version)
+        if canonical is not None and canonical.recipes == recipes:
+            return WeeklyPlanSaveResult(canonical, "unchanged", previous)
+
         relation_ids: list[str] = []
         for recipe_name in recipes:
             page_id = page_id_by_name.get(recipe_lookup_key(recipe_name))
             if page_id:
                 relation_ids.append(page_id)
+
+        name = canonical_plan_name(week_start)
         props = {
             **self._db.property_payload(PLAN_NAME_COLUMN, name),
             **self._db.property_payload(PLAN_WEEK_START_COLUMN, week_start.isoformat()),
-            **self._db.property_payload(PLAN_VERSION_COLUMN, version),
+            **self._db.property_payload(PLAN_VERSION_COLUMN, CANONICAL_PLAN_VERSION),
             **self._db.property_payload(PLAN_RECIPES_COLUMN, relation_ids),
         }
-        row = self._db.create_page(props)
+
+        if canonical is not None and canonical.page_id:
+            row = self._db.update_page(canonical.page_id, props)
+            outcome: PlanSaveOutcome = "updated"
+        else:
+            row = self._db.create_page(props)
+            outcome = "created"
+
         plan = self._row_to_plan(row, recipe_names_by_id)
         if plan is None:
-            raise RuntimeError("Failed to read plan after Notion create")
-        return plan, True
+            raise RuntimeError("Failed to read plan after Notion write")
+        return WeeklyPlanSaveResult(plan, outcome, previous)
 
     def _plans_from_rows(
         self,
@@ -409,6 +438,7 @@ class NotionWeeklyPlansDB:
             version=version,
             name=str(name).strip(),
             recipes=tuple(recipe_names),
+            page_id=row.page_id,
         )
 
     def _recipe_names_by_page_id(self) -> dict[str, str]:

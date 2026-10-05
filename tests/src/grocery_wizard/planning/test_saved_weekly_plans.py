@@ -6,6 +6,8 @@ from datetime import date
 from pathlib import Path
 
 from src.grocery_wizard.planning.saved_weekly_plans import (
+    CANONICAL_PLAN_VERSION,
+    canonical_plan_name,
     ensure_saved_weekly_plan,
     format_plan_name,
     list_saved_plans,
@@ -19,6 +21,10 @@ from src.grocery_wizard.planning.saved_weekly_plans import (
 
 def test_format_plan_name() -> None:
     assert format_plan_name(date(2026, 9, 13), 1) == "2026-09-13_plan_v1"
+
+
+def test_canonical_plan_name() -> None:
+    assert canonical_plan_name(date(2026, 9, 13)) == "2026-09-13_plan"
 
 
 def test_week_start_sunday() -> None:
@@ -54,51 +60,51 @@ def test_saved_plan_week_start_tuesday_requires_choice() -> None:
 
 def test_ensure_saved_plan_uses_week_start_in_csv(tmp_path: Path) -> None:
     path = tmp_path / "saved_weekly_plans.csv"
-    plan, created = ensure_saved_weekly_plan(
+    result = ensure_saved_weekly_plan(
         ["Pasta", "Curry"],
         reference_date=date(2026, 9, 14),
         path=path,
     )
 
-    assert created is True
-    assert plan.week_start == date(2026, 9, 13)
-    assert plan.name == "2026-09-13_plan_v1"
-    assert plan.recipes == ("Pasta", "Curry")
+    assert result.outcome == "created"
+    assert result.previous_recipes == ()
+    assert result.plan.week_start == date(2026, 9, 13)
+    assert result.plan.name == "2026-09-13_plan"
+    assert result.plan.version == CANONICAL_PLAN_VERSION
+    assert result.plan.recipes == ("Pasta", "Curry")
 
 
 def test_ensure_saved_plan_dedupes_same_week_and_recipes(tmp_path: Path) -> None:
     path = tmp_path / "saved_weekly_plans.csv"
-    first, created_first = ensure_saved_weekly_plan(
+    first = ensure_saved_weekly_plan(
         ["A"],
         reference_date=date(2026, 9, 14),
         path=path,
     )
-    second, created_second = ensure_saved_weekly_plan(
+    second = ensure_saved_weekly_plan(
         ["A"],
         reference_date=date(2026, 9, 15),
         week_choice="this_week",
         path=path,
     )
 
-    assert created_first is True
-    assert created_second is False
-    assert first.name == second.name
+    assert first.outcome == "created"
+    assert second.outcome == "unchanged"
+    assert first.plan.name == second.plan.name
     assert len(list_saved_plans(path=path)) == 1
 
 
-def test_different_recipes_same_week_get_next_version(tmp_path: Path) -> None:
+def test_different_recipes_same_week_updates_row(tmp_path: Path) -> None:
     path = tmp_path / "saved_weekly_plans.csv"
     ensure_saved_weekly_plan(["A"], reference_date=date(2026, 9, 14), path=path)
-    second, created = ensure_saved_weekly_plan(
-        ["B", "C"], reference_date=date(2026, 9, 14), path=path
-    )
+    second = ensure_saved_weekly_plan(["B", "C"], reference_date=date(2026, 9, 14), path=path)
 
-    assert created is True
-    assert second.version == 2
-    assert second.name == "2026-09-13_plan_v2"
-    assert load_plan_recipes("2026-09-13_plan_v2", path=path) == ["B", "C"]
-    assert load_plan_recipes("2026-09-13_plan_v1", path=path) == ["A"]
-    assert len(list_saved_plans(path=path)) == 2
+    assert second.outcome == "updated"
+    assert second.previous_recipes == ("A",)
+    assert second.plan.name == "2026-09-13_plan"
+    assert second.plan.recipes == ("B", "C")
+    assert load_plan_recipes("2026-09-13_plan", path=path) == ["B", "C"]
+    assert len(list_saved_plans(path=path)) == 1
 
 
 def test_next_plan_version_on_empty_file(tmp_path: Path) -> None:
@@ -112,15 +118,15 @@ def test_list_saved_plans_newest_first(tmp_path: Path) -> None:
     ensure_saved_weekly_plan(["New"], reference_date=date(2026, 9, 14), path=path)
 
     names = [plan.name for plan in list_saved_plans(path=path)]
-    assert names == ["2026-09-13_plan_v1", "2026-08-30_plan_v1"]
+    assert names == ["2026-09-13_plan", "2026-08-30_plan"]
 
 
 def test_ensure_saved_plan_thursday_uses_upcoming_week(tmp_path: Path) -> None:
     path = tmp_path / "saved_weekly_plans.csv"
-    plan, created = ensure_saved_weekly_plan(
+    result = ensure_saved_weekly_plan(
         ["Soup"],
         reference_date=date(2026, 9, 17),
         path=path,
     )
-    assert created is True
-    assert plan.week_start == date(2026, 9, 20)
+    assert result.outcome == "created"
+    assert result.plan.week_start == date(2026, 9, 20)
