@@ -3,16 +3,21 @@
 from __future__ import annotations
 
 __all__ = [
+    "PlanSaveOutcome",
     "SaveWeekChoice",
     "SavedWeeklyPlan",
+    "WeeklyPlanSaveResult",
+    "canonical_plan_name",
     "ensure_saved_weekly_plan",
     "find_matching_plan",
+    "find_plan_for_week",
     "format_plan_name",
     "list_saved_plans",
     "load_plan_recipes",
     "needs_save_week_choice",
     "next_plan_version",
     "normalize_recipe_names",
+    "plan_recipe_lookup_keys",
     "saved_plan_week_start",
     "week_start_sunday",
 ]
@@ -29,9 +34,11 @@ if TYPE_CHECKING:
     from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 
 SaveWeekChoice = Literal["this_week", "next_week"]
+PlanSaveOutcome = Literal["created", "updated", "unchanged"]
 
 RECIPE_SEPARATOR = "|"
 CSV_FIELDNAMES = ("date", "version", "name", "recipes")
+CANONICAL_PLAN_VERSION = 1
 
 
 @dataclass(frozen=True)
@@ -42,6 +49,14 @@ class SavedWeeklyPlan:
     version: int
     name: str
     recipes: tuple[str, ...]
+    page_id: str | None = None
+
+
+@dataclass(frozen=True)
+class WeeklyPlanSaveResult:
+    plan: SavedWeeklyPlan
+    outcome: PlanSaveOutcome
+    previous_recipes: tuple[str, ...]
 
 
 def week_start_sunday(d: date) -> date:
@@ -75,25 +90,20 @@ def saved_plan_week_start(
 
 
 def format_plan_name(week_start: date, version: int) -> str:
+    """Legacy versioned name (read from older Notion rows)."""
     return f"{week_start.isoformat()}_plan_v{version}"
+
+
+def canonical_plan_name(week_start: date) -> str:
+    return f"{week_start.isoformat()}_plan"
 
 
 def normalize_recipe_names(recipe_names: list[str]) -> tuple[str, ...]:
     return tuple(name.strip() for name in recipe_names if name.strip())
 
 
-def prior_week_recipe_lookup_keys(
-    week_start: date,
-    plans: list[SavedWeeklyPlan],
-) -> frozenset[str]:
-    """Recipe names already on any saved plan version for ``week_start`` (lookup keys)."""
-    keys: set[str] = set()
-    for plan in plans:
-        if plan.week_start != week_start:
-            continue
-        for name in plan.recipes:
-            keys.add(recipe_lookup_key(name))
-    return frozenset(keys)
+def plan_recipe_lookup_keys(recipe_names: list[str] | tuple[str, ...]) -> frozenset[str]:
+    return frozenset(recipe_lookup_key(name) for name in recipe_names)
 
 
 def _parse_week_start(raw: str) -> date:
@@ -152,14 +162,50 @@ def _list_saved_plans_csv(path: Path) -> list[SavedWeeklyPlan]:
     return plans
 
 
+def _canonical_plan_for_week(
+    plans: list[SavedWeeklyPlan],
+    week_start: date,
+) -> SavedWeeklyPlan | None:
+    week_plans = [plan for plan in plans if plan.week_start == week_start]
+    if not week_plans:
+        return None
+    return max(week_plans, key=lambda plan: plan.version)
+
+
+def _dedupe_plans_one_per_week(plans: list[SavedWeeklyPlan]) -> list[SavedWeeklyPlan]:
+    by_week: dict[date, SavedWeeklyPlan] = {}
+    for plan in plans:
+        current = by_week.get(plan.week_start)
+        if current is None or plan.version > current.version:
+            by_week[plan.week_start] = plan
+    return sorted(by_week.values(), key=lambda plan: plan.week_start, reverse=True)
+
+
+def _write_saved_plans_csv(path: Path, plans: list[SavedWeeklyPlan]) -> None:
+    _ensure_csv_header(path)
+    ordered = sorted(plans, key=lambda plan: (plan.week_start, plan.version))
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=CSV_FIELDNAMES)
+        writer.writeheader()
+        for plan in ordered:
+            writer.writerow(
+                {
+                    "date": plan.week_start.isoformat(),
+                    "version": str(plan.version),
+                    "name": plan.name,
+                    "recipes": _encode_recipes(plan.recipes),
+                }
+            )
+
+
 def list_saved_plans(
     *,
     path: Path | None = None,
     recipes_db: NotionRecipesDB | None = None,
 ) -> list[SavedWeeklyPlan]:
-    """Return saved plans newest-first (by week start, then version)."""
+    """Return saved plans newest-first, one canonical row per week."""
     if path is not None:
-        return _list_saved_plans_csv(path)
+        return _dedupe_plans_one_per_week(_list_saved_plans_csv(path))
     from src.grocery_wizard.integrations.notion_household import NotionWeeklyPlansDB
 
     return NotionWeeklyPlansDB(recipes_db=recipes_db).list_plans()
@@ -182,6 +228,20 @@ def load_plan_recipes(
     return NotionWeeklyPlansDB(recipes_db=recipes_db).load_plan_recipes(plan_name)
 
 
+def find_plan_for_week(
+    week_start: date,
+    *,
+    path: Path | None = None,
+    recipes_db: NotionRecipesDB | None = None,
+) -> SavedWeeklyPlan | None:
+    """Return the canonical saved plan for ``week_start``, if any."""
+    if path is not None:
+        return _canonical_plan_for_week(_list_saved_plans_csv(path), week_start)
+    from src.grocery_wizard.integrations.notion_household import NotionWeeklyPlansDB
+
+    return NotionWeeklyPlansDB(recipes_db=recipes_db).find_plan_for_week(week_start)
+
+
 def find_matching_plan(
     week_start: date,
     recipes: tuple[str, ...],
@@ -190,14 +250,10 @@ def find_matching_plan(
     recipes_db: NotionRecipesDB | None = None,
 ) -> SavedWeeklyPlan | None:
     """Return an existing plan with the same Sunday week start and recipe list."""
-    if path is not None:
-        for plan in _list_saved_plans_csv(path):
-            if plan.week_start == week_start and plan.recipes == recipes:
-                return plan
-        return None
-    from src.grocery_wizard.integrations.notion_household import NotionWeeklyPlansDB
-
-    return NotionWeeklyPlansDB(recipes_db=recipes_db).find_matching_plan(week_start, recipes)
+    existing = find_plan_for_week(week_start, path=path, recipes_db=recipes_db)
+    if existing is not None and existing.recipes == recipes:
+        return existing
+    return None
 
 
 def next_plan_version(
@@ -206,7 +262,7 @@ def next_plan_version(
     path: Path | None = None,
     recipes_db: NotionRecipesDB | None = None,
 ) -> int:
-    """Next version number for a new distinct recipe list in the given week."""
+    """Legacy helper — new saves use :data:`CANONICAL_PLAN_VERSION` only."""
     if path is not None:
         existing = [plan for plan in _list_saved_plans_csv(path) if plan.week_start == week_start]
         return max((plan.version for plan in existing), default=0) + 1
@@ -231,12 +287,8 @@ def ensure_saved_weekly_plan(
     cached_recipes: list[Recipe] | None = None,
     path: Path | None = None,
     recipes_db: NotionRecipesDB | None = None,
-) -> tuple[SavedWeeklyPlan, bool, frozenset[str]]:
-    """Persist a plan when missing for this week+recipes.
-
-    The third value is recipe lookup keys already saved for ``week_start`` before this
-    call (empty when the week had no prior plan versions).
-    """
+) -> WeeklyPlanSaveResult:
+    """Create or update the single saved plan row for the target week."""
     if path is None:
         from src.grocery_wizard.integrations.notion_household import NotionWeeklyPlansDB
 
@@ -253,30 +305,24 @@ def ensure_saved_weekly_plan(
     if not recipes:
         raise ValueError("recipe_names must not be empty")
 
-    week_plans = [plan for plan in _list_saved_plans_csv(path) if plan.week_start == week_start]
-    prior_keys = prior_week_recipe_lookup_keys(week_start, week_plans)
+    all_plans = _list_saved_plans_csv(path)
+    canonical = _canonical_plan_for_week(all_plans, week_start)
+    previous = canonical.recipes if canonical is not None else ()
 
-    existing = find_matching_plan(week_start, recipes, path=path)
-    if existing is not None:
-        return existing, False, prior_keys
+    if canonical is not None and canonical.recipes == recipes:
+        return WeeklyPlanSaveResult(canonical, "unchanged", previous)
 
-    version = next_plan_version(week_start, path=path)
-    name = format_plan_name(week_start, version)
+    name = canonical_plan_name(week_start)
     plan = SavedWeeklyPlan(
         week_start=week_start,
-        version=version,
+        version=CANONICAL_PLAN_VERSION,
         name=name,
         recipes=recipes,
+        page_id=canonical.page_id if canonical is not None else None,
     )
-    _ensure_csv_header(path)
-    with path.open("a", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=CSV_FIELDNAMES)
-        writer.writerow(
-            {
-                "date": plan.week_start.isoformat(),
-                "version": str(plan.version),
-                "name": plan.name,
-                "recipes": _encode_recipes(plan.recipes),
-            }
-        )
-    return plan, True, prior_keys
+    remaining = [row for row in all_plans if row.week_start != week_start]
+    remaining.append(plan)
+    _write_saved_plans_csv(path, remaining)
+
+    outcome: PlanSaveOutcome = "created" if canonical is None else "updated"
+    return WeeklyPlanSaveResult(plan, outcome, previous)

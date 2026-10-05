@@ -8,19 +8,19 @@ from typing import TYPE_CHECKING
 import streamlit as st
 
 from src.grocery_wizard.config import WEEK_PLAN_PATH
+from src.grocery_wizard.integrations.notion import recipe_lookup_key
 from src.grocery_wizard.planning.meal_planner import save_week_plan
 from src.grocery_wizard.planning.saved_weekly_plans import (
     SavedWeeklyPlan,
     SaveWeekChoice,
+    WeeklyPlanSaveResult,
     ensure_saved_weekly_plan,
+    find_plan_for_week,
     needs_save_week_choice,
     normalize_recipe_names,
     saved_plan_week_start,
 )
-from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
-    increment_plan_selections,
-    recipe_names_for_selection_increment,
-)
+from src.grocery_wizard.recipes.recipe_meal_plan_stats import sync_plan_selection_stats
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.grocery_flow import (
     GROCERY_STASH_NOTION_GENERATION_KEY,
@@ -52,6 +52,8 @@ _WEEKLY_PLAN_MODES = ("new", "saved", "dev")
 _SAVE_WEEK_CHOICE_KEY = "weekly_plan_save_week_choice"
 # Widget key for meal count; ``plan_meal_count`` persists when the weekly tab is not rendered.
 PLAN_MEAL_COUNT_WIDGET_KEY = "plan_meal_count_input"
+_OVERWRITE_CONFIRM_FP_KEY = "weekly_plan_overwrite_confirm_fingerprint"
+_RUN_GROCERY_AFTER_OVERWRITE_KEY = "weekly_plan_run_grocery_after_overwrite"
 
 
 def _current_plan_names() -> list[str]:
@@ -241,6 +243,8 @@ def _matching_saved_plan(recipe_names: list[str]) -> SavedWeeklyPlan | None:
 def _invalidate_weekly_plan_save_state() -> None:
     st.session_state.pop("weekly_plan_last_saved_name", None)
     st.session_state.pop("weekly_plan_saved_fingerprint", None)
+    st.session_state.pop(_OVERWRITE_CONFIRM_FP_KEY, None)
+    st.session_state.pop(_RUN_GROCERY_AFTER_OVERWRITE_KEY, None)
 
 
 def _sync_weekly_plan_save_state(recipe_names: list[str], plan: SavedWeeklyPlan) -> None:
@@ -250,76 +254,146 @@ def _sync_weekly_plan_save_state(recipe_names: list[str], plan: SavedWeeklyPlan)
     )
 
 
-def _increment_selection_counts_for_new_plan(
+def _overwrite_confirm_fingerprint(recipe_names: list[str]) -> tuple[str, ...]:
+    return _weekly_plan_fingerprint(recipe_names, _resolve_save_week_start())
+
+
+def _weekly_plan_overwrite_confirmed(recipe_names: list[str]) -> bool:
+    return st.session_state.get(_OVERWRITE_CONFIRM_FP_KEY) == _overwrite_confirm_fingerprint(
+        recipe_names
+    )
+
+
+def _weekly_plan_save_would_replace(
+    recipe_names: list[str],
+) -> tuple[bool, SavedWeeklyPlan | None]:
+    recipes = normalize_recipe_names(recipe_names)
+    if not recipes:
+        return False, None
+    week_start = _resolve_save_week_start()
+    existing = find_plan_for_week(week_start, recipes_db=get_db())
+    if existing is None or existing.recipes == recipes:
+        return False, existing
+    return True, existing
+
+
+def _plan_recipe_diff_markdown(
+    *,
+    previous: tuple[str, ...],
+    new_names: list[str],
+) -> tuple[list[str], list[str]]:
+    new_keys = {recipe_lookup_key(name) for name in new_names}
+    old_keys = {recipe_lookup_key(name) for name in previous}
+    removed = [name for name in previous if recipe_lookup_key(name) not in new_keys]
+    added = [name for name in new_names if recipe_lookup_key(name) not in old_keys]
+    return removed, added
+
+
+def _render_weekly_plan_overwrite_prompt(
+    recipe_names: list[str],
+    existing: SavedWeeklyPlan,
+    *,
+    confirm_button_key: str,
+) -> None:
+    removed, added = _plan_recipe_diff_markdown(previous=existing.recipes, new_names=recipe_names)
+    st.warning(
+        f"This will **replace** the saved plan for the week of "
+        f"**{existing.week_start.isoformat()}** in Notion "
+        f"({len(existing.recipes)} meals saved now → {len(recipe_names)} in your list)."
+    )
+    if removed:
+        st.markdown("**Removing:** " + ", ".join(removed))
+    if added:
+        st.markdown("**Adding:** " + ", ".join(added))
+    if st.button("Replace saved plan for this week", type="primary", key=confirm_button_key):
+        st.session_state[_OVERWRITE_CONFIRM_FP_KEY] = _overwrite_confirm_fingerprint(recipe_names)
+        st.rerun()
+
+
+def _apply_weekly_plan_save_result(
+    result: WeeklyPlanSaveResult,
     recipe_names: list[str],
     *,
-    prior_week_recipe_lookup_keys: frozenset[str],
     cached_recipes: list[Recipe] | None,
 ) -> None:
-    names = recipe_names_for_selection_increment(
-        recipe_names,
-        prior_week_recipe_lookup_keys=prior_week_recipe_lookup_keys,
-    )
-    if not names:
+    save_week_plan(recipe_names, WEEK_PLAN_PATH)
+    _sync_weekly_plan_save_state(recipe_names, result.plan)
+    if result.outcome == "unchanged":
         return
-    updated_stats = increment_plan_selections(
+    invalidate_saved_plans_cache()
+    updated_stats = sync_plan_selection_stats(
         get_db(),
-        names,
+        result.previous_recipes,
+        recipe_names,
         cached_recipes=cached_recipes,
     )
     if updated_stats:
         invalidate_notion_cache()
+    st.session_state.pop(_OVERWRITE_CONFIRM_FP_KEY, None)
+
+
+def _persist_weekly_plan_to_notion(
+    recipe_names: list[str],
+    *,
+    cached_recipes: list[Recipe] | None = None,
+    require_overwrite_confirm: bool = True,
+    overwrite_confirm_key: str = "weekly_plan_confirm_overwrite",
+) -> SavedWeeklyPlan | None:
+    """Write the plan to Notion unless blocked on overwrite confirmation."""
+    if _weekly_plan_mode() == "dev" or not recipe_names:
+        return None
+    if _matching_saved_plan(recipe_names) is not None:
+        return _matching_saved_plan(recipe_names)
+
+    would_replace, existing = _weekly_plan_save_would_replace(recipe_names)
+    if (
+        require_overwrite_confirm
+        and would_replace
+        and existing is not None
+        and not _weekly_plan_overwrite_confirmed(recipe_names)
+    ):
+        _render_weekly_plan_overwrite_prompt(
+            recipe_names,
+            existing,
+            confirm_button_key=overwrite_confirm_key,
+        )
+        return None
+
+    result = ensure_saved_weekly_plan(
+        recipe_names,
+        recipes_db=get_db(),
+        week_choice=_save_week_choice(),
+        cached_recipes=cached_recipes,
+    )
+    _apply_weekly_plan_save_result(result, recipe_names, cached_recipes=cached_recipes)
+    return result.plan
 
 
 def _commit_weekly_plan_to_notion(
     recipe_names: list[str],
     *,
     cached_recipes: list[Recipe] | None = None,
-) -> SavedWeeklyPlan:
+) -> SavedWeeklyPlan | None:
     """Ensure plan exists in Notion and refresh local week_plan.json for diversity hints."""
-    plan, created, prior_keys = ensure_saved_weekly_plan(
-        recipe_names,
-        recipes_db=get_db(),
-        week_choice=_save_week_choice(),
-        cached_recipes=cached_recipes,
-    )
-    save_week_plan(recipe_names, WEEK_PLAN_PATH)
-    _sync_weekly_plan_save_state(recipe_names, plan)
-    if created:
-        invalidate_saved_plans_cache()
-        _increment_selection_counts_for_new_plan(
-            recipe_names,
-            prior_week_recipe_lookup_keys=prior_keys,
-            cached_recipes=cached_recipes,
-        )
-    return plan
+    return _persist_weekly_plan_to_notion(recipe_names, cached_recipes=cached_recipes)
 
 
 def _ensure_weekly_plan_saved_before_grocery(
     recipe_names: list[str],
     *,
     cached_recipes: list[Recipe] | None = None,
-) -> None:
-    """Auto-save meal plan when entering grocery flow if not already stored for this week."""
+) -> bool:
+    """Auto-save before grocery. Returns False when overwrite confirmation is pending."""
     if _weekly_plan_mode() == "dev" or not recipe_names:
-        return
+        return True
     if _matching_saved_plan(recipe_names) is not None:
-        return
-    plan, created, prior_keys = ensure_saved_weekly_plan(
+        return True
+    plan = _persist_weekly_plan_to_notion(
         recipe_names,
-        recipes_db=get_db(),
-        week_choice=_save_week_choice(),
         cached_recipes=cached_recipes,
+        overwrite_confirm_key="weekly_plan_confirm_overwrite_grocery",
     )
-    save_week_plan(recipe_names, WEEK_PLAN_PATH)
-    _sync_weekly_plan_save_state(recipe_names, plan)
-    if created:
-        invalidate_saved_plans_cache()
-        _increment_selection_counts_for_new_plan(
-            recipe_names,
-            prior_week_recipe_lookup_keys=prior_keys,
-            cached_recipes=cached_recipes,
-        )
+    return plan is not None
 
 
 def _render_save_plan_controls(
@@ -339,11 +413,25 @@ def _render_save_plan_controls(
         st.success(f"Plan saved as **{existing.name}**")
         return
 
-    label = "Save plan to Notion" if mode == "new" else "Save as new plan version"
+    would_replace, existing = _weekly_plan_save_would_replace(recipe_names)
+    if (
+        would_replace
+        and existing is not None
+        and not _weekly_plan_overwrite_confirmed(recipe_names)
+    ):
+        _render_weekly_plan_overwrite_prompt(
+            recipe_names,
+            existing,
+            confirm_button_key="weekly_plan_confirm_overwrite_save",
+        )
+        return
+
+    label = "Save plan to Notion"
     if st.button(label, type="secondary", key="save_weekly_plan"):
         with loading_indicator("Saving plan to Notion…"):
             plan = _commit_weekly_plan_to_notion(recipe_names, cached_recipes=cached_recipes)
-        st.success(f"Plan saved as **{plan.name}**")
+        if plan is not None:
+            st.success(f"Plan saved as **{plan.name}**")
         return
 
 

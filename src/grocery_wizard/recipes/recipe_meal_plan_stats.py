@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from src.grocery_wizard.integrations.notion import Recipe, recipe_lookup_key
+from src.grocery_wizard.integrations.notion import NOTION_CLEAR_SELECT, Recipe, recipe_lookup_key
 
 if TYPE_CHECKING:
     from src.grocery_wizard.integrations.notion import ColumnInfo, NotionRecipesDB
@@ -224,21 +224,79 @@ def increment_rejection_count(
     return updated
 
 
-def recipe_names_for_selection_increment(
-    recipe_names: list[str],
+def _selection_count_value(recipe: Recipe, selection_column: str) -> int:
+    raw = recipe.properties.get(selection_column)
+    if raw is None:
+        return 0
+    try:
+        return max(0, int(float(raw)))
+    except (TypeError, ValueError):
+        return 0
+
+
+def sync_plan_selection_stats(
+    db: NotionRecipesDB,
+    previous_recipes: tuple[str, ...],
+    new_recipes: list[str],
     *,
-    prior_week_recipe_lookup_keys: frozenset[str] | set[str],
-) -> list[str]:
-    """Names that should +1 selection count for a new plan save this week."""
-    eligible: list[str] = []
-    seen: set[str] = set()
-    for name in recipe_names:
-        key = recipe_lookup_key(name)
-        if key in seen or key in prior_week_recipe_lookup_keys:
+    cached_recipes: list[Recipe] | None = None,
+) -> int:
+    """Apply selection count + meal-plan status deltas when a weekly plan is saved."""
+    selection_column = selection_count_column_name(db)
+    if selection_column is None:
+        selection_column = _legacy_number_column(db, LEGACY_SELECTION_COUNT_COLUMN)
+    status_column = meal_plan_status_column_name(db)
+    if selection_column is None and status_column is None:
+        return 0
+
+    old_keys = {recipe_lookup_key(name) for name in previous_recipes}
+    new_names_by_key: dict[str, str] = {}
+    for name in new_recipes:
+        new_names_by_key[recipe_lookup_key(name)] = name
+    new_keys = set(new_names_by_key)
+    added_keys = new_keys - old_keys
+    removed_keys = old_keys - new_keys
+    if not added_keys and not removed_keys:
+        return 0
+
+    removed_names_by_key = {recipe_lookup_key(name): name for name in previous_recipes}
+
+    rows = cached_recipes if cached_recipes is not None else db.query_recipes()
+    by_name = _recipe_by_name(rows)
+    updated = 0
+
+    for key in added_keys | removed_keys:
+        lookup_name = new_names_by_key.get(key) or removed_names_by_key.get(key)
+        if lookup_name is None:
             continue
-        seen.add(key)
-        eligible.append(name)
-    return eligible
+        recipe = by_name.get(recipe_lookup_key(lookup_name))
+        if recipe is None:
+            continue
+        updates: dict[str, object] = {}
+        if selection_column is not None:
+            current = _selection_count_value(recipe, selection_column)
+            if key in added_keys:
+                updates[selection_column] = current + 1
+            elif key in removed_keys:
+                updates[selection_column] = max(0, current - 1)
+        if status_column is not None:
+            if key in added_keys and meal_plan_status_is_empty(recipe, status_column=status_column):
+                updates[status_column] = STATUS_ACTIVE
+            elif key in removed_keys and selection_column is not None:
+                next_count = updates.get(
+                    selection_column,
+                    _selection_count_value(recipe, selection_column),
+                )
+                if (
+                    int(next_count) == 0
+                    and meal_plan_status(recipe, status_column=status_column) == STATUS_ACTIVE
+                ):
+                    updates[status_column] = NOTION_CLEAR_SELECT
+        if not updates:
+            continue
+        db.update_recipe(recipe.page_id, updates)
+        updated += 1
+    return updated
 
 
 def increment_selection_count(
@@ -340,5 +398,6 @@ def origins_after_swap(
 # Backward-compatible aliases (PR #296 names).
 increment_suggestion_rejections = increment_rejection_count
 increment_plan_selections = increment_selection_count
+sync_plan_selections = sync_plan_selection_stats
 suggestion_rejections_column_name = rejection_count_column_name
 plan_selections_column_name = selection_count_column_name
