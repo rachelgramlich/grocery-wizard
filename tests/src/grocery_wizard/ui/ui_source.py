@@ -21,6 +21,7 @@ _UI_MODULE_PATHS = (
     "grocery_helpers.py",
     "grocery_flow.py",
     "meal_plan_filters.py",
+    "meal_plan_status_ui.py",
 )
 
 

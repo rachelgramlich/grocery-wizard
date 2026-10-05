@@ -50,6 +50,8 @@ Area from label `gw-area-<name>` or `### Area` in the issue body.
 
 When preflight succeeds: **browser smoke** required — `just grocery-ui` (or `uv run streamlit run src/grocery_wizard/ui/app.py`), then user spot-check in chat before `gh pr comment` sign-off (unless user delegates full UAT).
 
+**Notion UAT cleanup:** If browser smoke **writes** to Notion (status, ingredients, plans, pantry, etc.), **undo every test change before sign-off** — same UI/API path, restore prior values, and say what you reverted in chat/PR. Prefer read-only smoke when a write is not required to prove the feature.
+
 Always state in chat and PR: **`Browser smoke: ran`**, **`Browser smoke: skipped — <reason>`**, or **`Browser smoke: N/A (non-UI)`**.
 
 Skills (committed): `.cursor/skills/tidy-first/SKILL.md` (mirrored under `.agents/skills/tidy-first/`). Do **not** add a `tidy-project` skill — it collides with the **`/tidy-project`** command in Cursor’s `/` menu.

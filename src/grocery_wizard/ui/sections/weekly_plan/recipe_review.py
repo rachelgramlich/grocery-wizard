@@ -245,7 +245,8 @@ def _render_per_recipe_review(db: NotionRecipesDB, selected: list[str]) -> None:
     st.session_state.pop("grocery_review_baseline", None)
     st.session_state.pop("grocery_review_save_flash", None)
     for key in list(st.session_state.keys()):
-        if str(key).startswith("review_ing_") or str(key).startswith("review_save_"):
+        key_str = str(key)
+        if key_str.startswith(("review_ing_", "review_save_")):
             st.session_state.pop(key, None)
     _clear_grocery_pre_extra_items()
     st.rerun()
