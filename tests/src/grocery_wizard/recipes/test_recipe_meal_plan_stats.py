@@ -9,6 +9,7 @@ from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
     DEFAULT_MEAL_PLAN_STATUS_COLUMN,
     DEFAULT_REJECTION_COUNT_COLUMN,
     DEFAULT_SELECTION_COUNT_COLUMN,
+    STATUS_ACTIVE,
     STATUS_DEPRECATED,
     STATUS_FAVORITE,
     STATUS_PAUSED,
@@ -129,7 +130,22 @@ def test_increment_plan_selections_dedupes_names() -> None:
     assert updated == 1
     db.update_recipe.assert_called_once_with(
         recipe.page_id,
-        {DEFAULT_SELECTION_COUNT_COLUMN: 2},
+        {
+            DEFAULT_SELECTION_COUNT_COLUMN: 2,
+            DEFAULT_MEAL_PLAN_STATUS_COLUMN: STATUS_ACTIVE,
+        },
+    )
+
+
+def test_increment_plan_selections_does_not_overwrite_existing_status() -> None:
+    db = _mock_db()
+    recipe = _recipe("Soup", status=STATUS_PAUSED)
+    db.query_recipes.return_value = [recipe]
+    updated = increment_plan_selections(db, ["Soup"], cached_recipes=[recipe])
+    assert updated == 1
+    db.update_recipe.assert_called_once_with(
+        recipe.page_id,
+        {DEFAULT_SELECTION_COUNT_COLUMN: 1},
     )
 
 

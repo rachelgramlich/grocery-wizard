@@ -168,6 +168,23 @@ def test_cauliflower_rice_not_matched_by_rice_pantry() -> None:
     assert is_pantry_item("rice", pantry)
 
 
+def test_frozen_pantry_product_does_not_exclude_plain_last_word_ingredient() -> None:
+    pantry = {"frozen edamame", "canned tomatoes"}
+    assert not is_pantry_item("edamame", pantry)
+    assert not is_pantry_item("tomatoes", pantry)
+    assert is_pantry_item("frozen edamame", pantry)
+    assert is_pantry_item("canned tomatoes", pantry)
+
+
+def test_edamame_comma_shelled_matches_pantry_edamame() -> None:
+    from src.grocery_wizard.ingredients.normalize import normalize_ingredient
+
+    pantry = {"edamame"}
+    assert normalize_ingredient("edamame, shelled") == "edamame"
+    assert is_pantry_item(normalize_ingredient("edamame, shelled"), pantry)
+    assert is_pantry_item("shelled edamame", pantry)
+
+
 def test_append_and_remove_pantry_item(tmp_path: Path) -> None:
     path = tmp_path / "pantry.txt"
     path.write_text("# --- Spices ---\nsalt\n", encoding="utf-8")
