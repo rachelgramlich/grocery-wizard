@@ -17,7 +17,10 @@ from src.grocery_wizard.planning.saved_weekly_plans import (
     normalize_recipe_names,
     saved_plan_week_start,
 )
-from src.grocery_wizard.recipes.recipe_meal_plan_stats import increment_plan_selections
+from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
+    increment_plan_selections,
+    recipe_names_for_selection_increment,
+)
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.grocery_flow import (
     GROCERY_STASH_NOTION_GENERATION_KEY,
@@ -247,13 +250,34 @@ def _sync_weekly_plan_save_state(recipe_names: list[str], plan: SavedWeeklyPlan)
     )
 
 
+def _increment_selection_counts_for_new_plan(
+    recipe_names: list[str],
+    *,
+    prior_week_recipe_lookup_keys: frozenset[str],
+    cached_recipes: list[Recipe] | None,
+) -> None:
+    names = recipe_names_for_selection_increment(
+        recipe_names,
+        prior_week_recipe_lookup_keys=prior_week_recipe_lookup_keys,
+    )
+    if not names:
+        return
+    updated_stats = increment_plan_selections(
+        get_db(),
+        names,
+        cached_recipes=cached_recipes,
+    )
+    if updated_stats:
+        invalidate_notion_cache()
+
+
 def _commit_weekly_plan_to_notion(
     recipe_names: list[str],
     *,
     cached_recipes: list[Recipe] | None = None,
 ) -> SavedWeeklyPlan:
     """Ensure plan exists in Notion and refresh local week_plan.json for diversity hints."""
-    plan, created = ensure_saved_weekly_plan(
+    plan, created, prior_keys = ensure_saved_weekly_plan(
         recipe_names,
         recipes_db=get_db(),
         week_choice=_save_week_choice(),
@@ -263,13 +287,11 @@ def _commit_weekly_plan_to_notion(
     _sync_weekly_plan_save_state(recipe_names, plan)
     if created:
         invalidate_saved_plans_cache()
-        updated_stats = increment_plan_selections(
-            get_db(),
+        _increment_selection_counts_for_new_plan(
             recipe_names,
+            prior_week_recipe_lookup_keys=prior_keys,
             cached_recipes=cached_recipes,
         )
-        if updated_stats:
-            invalidate_notion_cache()
     return plan
 
 
@@ -283,7 +305,7 @@ def _ensure_weekly_plan_saved_before_grocery(
         return
     if _matching_saved_plan(recipe_names) is not None:
         return
-    plan, created = ensure_saved_weekly_plan(
+    plan, created, prior_keys = ensure_saved_weekly_plan(
         recipe_names,
         recipes_db=get_db(),
         week_choice=_save_week_choice(),
@@ -293,6 +315,11 @@ def _ensure_weekly_plan_saved_before_grocery(
     _sync_weekly_plan_save_state(recipe_names, plan)
     if created:
         invalidate_saved_plans_cache()
+        _increment_selection_counts_for_new_plan(
+            recipe_names,
+            prior_week_recipe_lookup_keys=prior_keys,
+            cached_recipes=cached_recipes,
+        )
 
 
 def _render_save_plan_controls(

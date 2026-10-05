@@ -23,6 +23,8 @@ from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
+from src.grocery_wizard.integrations.notion import recipe_lookup_key
+
 if TYPE_CHECKING:
     from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 
@@ -78,6 +80,20 @@ def format_plan_name(week_start: date, version: int) -> str:
 
 def normalize_recipe_names(recipe_names: list[str]) -> tuple[str, ...]:
     return tuple(name.strip() for name in recipe_names if name.strip())
+
+
+def prior_week_recipe_lookup_keys(
+    week_start: date,
+    plans: list[SavedWeeklyPlan],
+) -> frozenset[str]:
+    """Recipe names already on any saved plan version for ``week_start`` (lookup keys)."""
+    keys: set[str] = set()
+    for plan in plans:
+        if plan.week_start != week_start:
+            continue
+        for name in plan.recipes:
+            keys.add(recipe_lookup_key(name))
+    return frozenset(keys)
 
 
 def _parse_week_start(raw: str) -> date:
@@ -215,8 +231,12 @@ def ensure_saved_weekly_plan(
     cached_recipes: list[Recipe] | None = None,
     path: Path | None = None,
     recipes_db: NotionRecipesDB | None = None,
-) -> tuple[SavedWeeklyPlan, bool]:
-    """Persist a plan when missing for this week+recipes."""
+) -> tuple[SavedWeeklyPlan, bool, frozenset[str]]:
+    """Persist a plan when missing for this week+recipes.
+
+    The third value is recipe lookup keys already saved for ``week_start`` before this
+    call (empty when the week had no prior plan versions).
+    """
     if path is None:
         from src.grocery_wizard.integrations.notion_household import NotionWeeklyPlansDB
 
@@ -233,9 +253,12 @@ def ensure_saved_weekly_plan(
     if not recipes:
         raise ValueError("recipe_names must not be empty")
 
+    week_plans = [plan for plan in _list_saved_plans_csv(path) if plan.week_start == week_start]
+    prior_keys = prior_week_recipe_lookup_keys(week_start, week_plans)
+
     existing = find_matching_plan(week_start, recipes, path=path)
     if existing is not None:
-        return existing, False
+        return existing, False, prior_keys
 
     version = next_plan_version(week_start, path=path)
     name = format_plan_name(week_start, version)
@@ -256,4 +279,4 @@ def ensure_saved_weekly_plan(
                 "recipes": _encode_recipes(plan.recipes),
             }
         )
-    return plan, True
+    return plan, True, prior_keys

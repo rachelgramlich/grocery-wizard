@@ -149,7 +149,7 @@ Optional **Recipes** database columns (add manually in Notion; override names vi
 | Column | Type | Purpose |
 | --- | --- | --- |
 | `Rejection count` | Number | Lifetime count when you swap away an auto-suggested slot |
-| `Selection count` | Number | Incremented when a saved weekly plan is written to Notion |
+| `Selection count` | Number | +1 when a recipe first appears on any saved plan for that week (new versions only count newly added recipes) |
 | `Meal plan status` | Select | `Active` (default), `Favorite` (boosted in auto-pick), `Paused` (manual pick only), `Deprecated` (hidden from pickers) |
 
 Env overrides: `GROCERY_WIZARD_SUGGESTION_REJECTIONS_COLUMN`, `GROCERY_WIZARD_PLAN_SELECTIONS_COLUMN`, `GROCERY_WIZARD_MEAL_PLAN_STATUS_COLUMN`.

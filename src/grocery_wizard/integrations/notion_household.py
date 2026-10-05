@@ -323,8 +323,10 @@ class NotionWeeklyPlansDB:
         reference_date: date | None = None,
         week_choice: SaveWeekChoice | None = None,
         cached_recipes: list[Recipe] | None = None,
-    ) -> tuple[SavedWeeklyPlan, bool]:
+    ) -> tuple[SavedWeeklyPlan, bool, frozenset[str]]:
         from datetime import UTC, datetime
+
+        from src.grocery_wizard.planning.saved_weekly_plans import prior_week_recipe_lookup_keys
 
         when = reference_date or datetime.now(tz=UTC).date()
         week_start = saved_plan_week_start(when, week_choice=week_choice)
@@ -347,11 +349,12 @@ class NotionWeeklyPlansDB:
             self._db.query_all_pages(filter=week_filter),
             recipe_names_by_id,
         )
+        existing_for_week = [plan for plan in plans if plan.week_start == week_start]
+        prior_keys = prior_week_recipe_lookup_keys(week_start, existing_for_week)
         for plan in plans:
             if plan.week_start == week_start and plan.recipes == recipes:
-                return plan, False
+                return plan, False, prior_keys
 
-        existing_for_week = [plan for plan in plans if plan.week_start == week_start]
         version = max((plan.version for plan in existing_for_week), default=0) + 1
         name = format_plan_name(week_start, version)
         relation_ids: list[str] = []
@@ -369,7 +372,7 @@ class NotionWeeklyPlansDB:
         plan = self._row_to_plan(row, recipe_names_by_id)
         if plan is None:
             raise RuntimeError("Failed to read plan after Notion create")
-        return plan, True
+        return plan, True, prior_keys
 
     def _plans_from_rows(
         self,

@@ -215,6 +215,23 @@ def increment_rejection_count(
     return updated
 
 
+def recipe_names_for_selection_increment(
+    recipe_names: list[str],
+    *,
+    prior_week_recipe_lookup_keys: frozenset[str] | set[str],
+) -> list[str]:
+    """Names that should +1 selection count for a new plan save this week."""
+    eligible: list[str] = []
+    seen: set[str] = set()
+    for name in recipe_names:
+        key = recipe_lookup_key(name)
+        if key in seen or key in prior_week_recipe_lookup_keys:
+            continue
+        seen.add(key)
+        eligible.append(name)
+    return eligible
+
+
 def increment_selection_count(
     db: NotionRecipesDB,
     recipe_names: list[str],

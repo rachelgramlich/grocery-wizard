@@ -19,6 +19,7 @@ from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
     origins_after_swap,
     pick_weight_rejection_penalty,
     pick_weight_status_multiplier,
+    recipe_names_for_selection_increment,
     rejection_names_from_swap,
     resolve_slot_origins_for_plan,
     suggestion_rejections_column_name,
@@ -109,6 +110,14 @@ def test_increment_suggestion_rejections_updates_notion() -> None:
         recipe.page_id,
         {DEFAULT_REJECTION_COUNT_COLUMN: 3},
     )
+
+
+def test_recipe_names_for_selection_increment_skips_prior_week() -> None:
+    prior = frozenset({"soup"})
+    assert recipe_names_for_selection_increment(
+        ["Soup", "Salad", "Salad"],
+        prior_week_recipe_lookup_keys=prior,
+    ) == ["Salad"]
 
 
 def test_increment_plan_selections_dedupes_names() -> None:
