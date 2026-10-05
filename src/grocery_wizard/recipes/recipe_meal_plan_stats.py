@@ -90,6 +90,15 @@ def meal_plan_status_column_name(db: NotionRecipesDB) -> str | None:
     return None
 
 
+def meal_plan_status_is_empty(recipe: Recipe, *, status_column: str | None) -> bool:
+    if not status_column:
+        return False
+    raw = recipe.properties.get(status_column)
+    if raw is None:
+        return True
+    return str(raw).strip() == ""
+
+
 def meal_plan_status(recipe: Recipe, *, status_column: str | None) -> str:
     if not status_column:
         return STATUS_ACTIVE
@@ -221,11 +230,18 @@ def increment_selection_count(
     *,
     cached_recipes: list[Recipe] | None = None,
 ) -> int:
-    """Increment plan selection counter once per recipe name. Returns number of Notion updates."""
-    column = selection_count_column_name(db)
-    if column is None:
-        column = _legacy_number_column(db, LEGACY_SELECTION_COUNT_COLUMN)
-    if column is None or not recipe_names:
+    """Increment plan selection counter once per recipe name.
+
+    When the selection count bumps, also sets Meal plan status to Active if that
+    select is empty — the only automatic write path for status (no bulk backfill).
+    """
+    selection_column = selection_count_column_name(db)
+    if selection_column is None:
+        selection_column = _legacy_number_column(db, LEGACY_SELECTION_COUNT_COLUMN)
+    status_column = meal_plan_status_column_name(db)
+    if selection_column is None and status_column is None:
+        return 0
+    if not recipe_names:
         return 0
     rows = cached_recipes if cached_recipes is not None else db.query_recipes()
     by_name = _recipe_by_name(rows)
@@ -239,9 +255,18 @@ def increment_selection_count(
         recipe = by_name.get(key)
         if recipe is None:
             continue
-        raw = recipe.properties.get(column)
-        current = 0 if raw is None else int(float(raw))
-        db.update_recipe(recipe.page_id, {column: current + 1})
+        updates: dict[str, object] = {}
+        if selection_column is not None:
+            raw = recipe.properties.get(selection_column)
+            current = 0 if raw is None else int(float(raw))
+            updates[selection_column] = current + 1
+        if status_column is not None and meal_plan_status_is_empty(
+            recipe, status_column=status_column
+        ):
+            updates[status_column] = STATUS_ACTIVE
+        if not updates:
+            continue
+        db.update_recipe(recipe.page_id, updates)
         updated += 1
     return updated
 
