@@ -9,11 +9,13 @@ APP_FILE = str(APP_PATH)
 
 def test_weekly_plan_has_per_meal_swap_buttons() -> None:
     source = ui_source()
-    assert '"Swap"' in source
+    assert '"Quick swap"' in source
     assert 'key=f"swap_meal_{index}"' in source
-    assert "meal_col, swap_col = st.columns([8, 1])" in source
+    assert "meal_col, actions_col = st.columns([7, 3])" in source
     assert "_apply_plan_swap" in source
     assert "replace_meals_in_plan(" in source
+    assert "_render_slot_manual_popover" in source
+    assert 'st.popover(\n        "Choose manually"' in source
 
 
 def test_weekly_plan_regenerate_preserves_rejected_names() -> None:
@@ -32,8 +34,8 @@ def test_weekly_plan_has_no_bulk_edit_manually_expander() -> None:
 
 def test_scratch_plan_slot_first_manual_picker() -> None:
     source = ui_source()
-    assert "Choose recipe manually" in source
-    assert "_render_slot_manual_picker" in source
+    assert "Choose manually" in source
+    assert "_render_slot_manual_popover" in source
     assert "plan_prebuild_filter" in source
     assert (
         "week_level_plan_filter_columns"
@@ -50,7 +52,7 @@ def test_manual_picker_recipe_first_then_or_filter() -> None:
     """Issue #220: direct recipe pick before optional per-slot filters."""
     source = ui_source()
     manual = source.split("def _slot_manual_picker_fragment", 1)[1].split(
-        "def _render_slot_manual_picker", 1
+        "def _render_slot_manual_popover", 1
     )[0]
     assert "plan_slot_direct_pick_" in manual
     assert 'st.markdown("**Or filter**")' in manual
@@ -89,8 +91,8 @@ def test_weekly_plan_build_shows_per_meal_swap() -> None:
     assert build_buttons, "Build my plan button missing"
     build_buttons[0].click().run(timeout=60)
 
-    swap_buttons = [b for b in at.button if b.label == "Swap"]
-    assert len(swap_buttons) >= 1, "Expected at least one per-meal Swap button"
+    swap_buttons = [b for b in at.button if b.label == "Quick swap"]
+    assert len(swap_buttons) >= 1, "Expected at least one per-meal Quick swap button"
 
     regen = [b for b in at.button if b.label == "Re-generate all meals"]
     assert regen, "Re-generate all meals button missing"
@@ -136,7 +138,12 @@ def test_dev_mode_exposes_collapsed_dev_tools_expander() -> None:
 
 def test_post_build_collapses_generate_controls() -> None:
     source = ui_source()
-    assert 'st.expander("Adjust filters or rebuild plan", expanded=False)' in source
+    meals_fn = source.split("def render_meals_section", 1)[1].split("\ndef ", 1)[0]
+    assert 'st.expander("1a. Build your meal list"' in meals_fn
+    assert "expanded=expanded_1a" in meals_fn
+    assert "Adjust filters or rebuild plan" not in source
+    assert "Change filters & rebuild" in source
+    assert "PLAN_FORCE_OPEN_1A_KEY" in source
     assert "plan_last_week_filters" in source
 
 
@@ -244,7 +251,7 @@ def test_prebuild_recipe_picker_before_build_my_plan() -> None:
 
 def test_post_build_slot_manual_picker_caption() -> None:
     source = ui_source()
-    slot = source.split("def _render_slot_manual_picker", 1)[1].split(
+    slot = source.split("def _render_slot_manual_popover", 1)[1].split(
         "def _render_dev_jump_tools", 1
     )[0]
     assert "Filters apply to this meal slot only." in slot
