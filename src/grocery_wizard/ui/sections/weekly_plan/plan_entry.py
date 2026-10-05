@@ -734,8 +734,14 @@ def _render_built_plan_meals(
                     ingredient_index=ingredient_index,
                 )
 
-    plan_actions = st.columns(3)
-    with plan_actions[0]:
+    fill_remaining = len(current_plan) < int(meal_count)
+    if fill_remaining:
+        col_filter, col_regen, col_fill, _col_spacer = st.columns([2, 2, 2, 4], gap="small")
+    else:
+        col_filter, col_regen, _col_spacer = st.columns([2, 2, 6], gap="small")
+        col_fill = None
+
+    with col_filter:
         if st.button(
             "Change filters & rebuild",
             key="plan_jump_to_builder",
@@ -743,33 +749,7 @@ def _render_built_plan_meals(
         ):
             st.session_state[PLAN_FORCE_OPEN_1A_KEY] = True
             st.rerun()
-    with plan_actions[1]:
-        fill_remaining = len(current_plan) < int(meal_count)
-        if fill_remaining and st.button("Fill remaining slots", key="fill_remaining_plan"):
-            with loading_indicator("Filling remaining meal slots…"):
-                plan = suggest_meals(
-                    all_recipes,
-                    meals=int(meal_count),
-                    locked_names=current_plan,
-                    filters=week_filters,
-                    schema_columns=schema.all_columns,
-                    ingredient_index=ingredient_index,
-                    status_column=status_column,
-                    rejections_column=rejections_column,
-                )
-                _write_plan_names(plan)
-                origins = _plan_slot_origins()
-                new_origins = [
-                    origins[i] if i < len(origins) else "suggested" for i in range(len(plan))
-                ]
-                while len(new_origins) < len(plan):
-                    new_origins.append("suggested")
-                _set_plan_slot_origins(new_origins[: len(plan)])
-                _invalidate_weekly_plan_save_state()
-                _clear_grocery_session_overrides()
-                _clear_grocery_result()
-            st.rerun()
-    with plan_actions[2]:
+    with col_regen:
         if st.button("Re-generate all meals", key="regenerate_plan"):
             with loading_indicator("Re-generating your meal plan…"):
                 origins = _plan_slot_origins()
@@ -800,6 +780,33 @@ def _render_built_plan_meals(
                 _clear_grocery_session_overrides()
                 _clear_grocery_result()
             st.rerun()
+    if col_fill is not None:
+        with col_fill:
+            if st.button("Fill remaining slots", key="fill_remaining_plan"):
+                with loading_indicator("Filling remaining meal slots…"):
+                    plan = suggest_meals(
+                        all_recipes,
+                        meals=int(meal_count),
+                        locked_names=current_plan,
+                        filters=week_filters,
+                        schema_columns=schema.all_columns,
+                        ingredient_index=ingredient_index,
+                        status_column=status_column,
+                        rejections_column=rejections_column,
+                    )
+                    _write_plan_names(plan)
+                    origins = _plan_slot_origins()
+                    new_origins = [
+                        origins[i] if i < len(origins) else "suggested"
+                        for i in range(len(plan))
+                    ]
+                    while len(new_origins) < len(plan):
+                        new_origins.append("suggested")
+                    _set_plan_slot_origins(new_origins[: len(plan)])
+                    _invalidate_weekly_plan_save_state()
+                    _clear_grocery_session_overrides()
+                    _clear_grocery_result()
+                st.rerun()
 
     _render_save_plan_controls(_current_plan_names(), cached_recipes=all_recipes)
 

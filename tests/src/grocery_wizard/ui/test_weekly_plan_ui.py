@@ -143,6 +143,7 @@ def test_post_build_collapses_generate_controls() -> None:
     assert "expanded=expanded_1a" in meals_fn
     assert "Adjust filters or rebuild plan" not in source
     assert "Change filters & rebuild" in source
+    assert "col_filter, col_regen" in source
     assert "PLAN_FORCE_OPEN_1A_KEY" in source
     assert "plan_last_week_filters" in source
 
