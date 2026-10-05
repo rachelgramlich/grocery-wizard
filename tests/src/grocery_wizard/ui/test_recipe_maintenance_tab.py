@@ -22,7 +22,9 @@ def test_recipe_maintenance_tab_registered() -> None:
     assert "Open Notion with this filter" not in source
     assert "Start metadata backfill" in source
     assert "### Meal plan status" in source
+    assert "_render_meal_plan_status_section" in source
     assert "Apply meal plan status" in source
+    assert source.index("### Meal plan status") < source.index("### Automatic backfill")
 
     app = APP_PATH.read_text(encoding="utf-8")
     assert "elif active_tab == _TAB_MAINTENANCE:" in app
