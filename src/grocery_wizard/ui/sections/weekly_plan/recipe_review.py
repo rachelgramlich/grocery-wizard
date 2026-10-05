@@ -17,6 +17,10 @@ from src.grocery_wizard.ui.grocery_flow import (
 )
 from src.grocery_wizard.ui.grocery_helpers import parse_line_items_text
 from src.grocery_wizard.ui.loading import loading_indicator
+from src.grocery_wizard.ui.meal_plan_status_ui import (
+    render_meal_plan_status_for_recipe,
+    render_meal_plan_status_unavailable,
+)
 from src.grocery_wizard.ui.notion_cache import cached_query_recipes, invalidate_notion_cache
 from src.grocery_wizard.ui.recipe_match import (
     render_unmatched_plan_recipes_help,
@@ -109,9 +113,10 @@ def _render_per_recipe_review(db: NotionRecipesDB, selected: list[str]) -> None:
     st.markdown("### Review ingredients")
     st.caption(
         "Each recipe's ingredients are listed in collapsible sections below. "
-        "Open a recipe to edit lines, **Save to Notion** when ready, then use "
-        "**Build final list** once every recipe looks correct."
+        "Open a recipe to edit lines, adjust **Meal plan status** or **Save to Notion** "
+        "when ready, then use **Build final list** once every recipe looks correct."
     )
+    render_meal_plan_status_unavailable(db)
     if dev_mode:
         st.caption(
             "Dev mode: ingredient edits apply to this week's list only (Notion save disabled)."
@@ -120,6 +125,7 @@ def _render_per_recipe_review(db: NotionRecipesDB, selected: list[str]) -> None:
     _render_recipe_review_save_flash()
 
     review_recipes = st.session_state.get("grocery_review_recipes") or cached_query_recipes(db)
+    recipes_by_name = {recipe_lookup_key(recipe.name): recipe for recipe in review_recipes}
     render_unmatched_plan_recipes_help(
         unmatched_plan_recipe_names(selected, review_recipes),
         context="grocery",
@@ -148,6 +154,20 @@ def _render_per_recipe_review(db: NotionRecipesDB, selected: list[str]) -> None:
                 )
             else:
                 st.caption("Matches last saved baseline for this recipe.")
+
+            recipe_row = recipes_by_name.get(recipe_lookup_key(name))
+            if recipe_row is not None:
+                render_meal_plan_status_for_recipe(
+                    db,
+                    recipe_row,
+                    scope="review",
+                    disabled=dev_mode,
+                    disabled_reason=(
+                        "Dev mode: meal-plan status changes are disabled (Notion writes off)."
+                        if dev_mode
+                        else None
+                    ),
+                )
 
             if not dev_mode and st.button(
                 "Save to Notion",
@@ -245,7 +265,8 @@ def _render_per_recipe_review(db: NotionRecipesDB, selected: list[str]) -> None:
     st.session_state.pop("grocery_review_baseline", None)
     st.session_state.pop("grocery_review_save_flash", None)
     for key in list(st.session_state.keys()):
-        if str(key).startswith("review_ing_") or str(key).startswith("review_save_"):
+        key_str = str(key)
+        if key_str.startswith(("review_ing_", "review_save_", "meal_plan_status_")):
             st.session_state.pop(key, None)
     _clear_grocery_pre_extra_items()
     st.rerun()
