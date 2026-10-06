@@ -1,4 +1,4 @@
-"""Pantry staples and recurring weekly template tab."""
+"""Pantry page: recurring items and staples blocks."""
 
 from __future__ import annotations
 
@@ -45,9 +45,9 @@ def _pantry_already_has(name: str, entries: list) -> bool:
     )
 
 
-def _append_pantry_item_idempotent(name: str, *, section_label: str) -> bool:
+def _append_pantry_item_idempotent(name: str, *, aisle_label: str) -> bool:
     """Return True when the item is in the pantry after this call (added or already present)."""
-    if append_pantry_item(name, section=section_label):
+    if append_pantry_item(name, section=aisle_label):
         invalidate_notion_cache()
         return True
     if _pantry_already_has(name, _load_pantry_entries_from_notion()):
@@ -179,14 +179,14 @@ def _render_remove_picker(
                 st.warning(f"Could not remove “{pick}”.")
 
 
-def _render_recurring_weekly_section() -> None:
+def _render_recurring_block() -> None:
     st.markdown("### Recurring weekly items")
     template = load_recurring_weekly_items()
     if template:
         _render_markdown_item_list(template, item_class="gw-recurring-item")
         _render_remove_picker(
             items=template,
-            key="recurring_tab_remove_pick",
+            key="pantry_recurring_remove_pick",
             label="Remove a recurring item",
             on_remove=remove_recurring_weekly_item,
         )
@@ -215,7 +215,7 @@ def _render_pantry_table(
     search_query: str,
     on_remove: Callable[[str], bool],
 ) -> None:
-    """Grouped pantry list by store aisle with search and collapsible sections."""
+    """Grouped pantry list by store aisle with search and collapsible aisle groups."""
     grouped_aisles = _group_pantry_items_by_store_aisle(pantry_entries, config=aisle_config)
     visible_aisles = _filter_grouped_pantry_aisles(grouped_aisles, search_query)
     searching = bool(search_query.strip())
@@ -257,17 +257,17 @@ def _render_pantry_add_form(*, aisle_config: StoreAisleConfig) -> None:
             if not name:
                 st.warning("Enter an item name.")
             else:
-                section_label = aisle_label(new_pantry_aisle, config=aisle_config)
+                aisle_name = aisle_label(new_pantry_aisle, config=aisle_config)
                 with loading_indicator("Adding to pantry…"):
-                    added = _append_pantry_item_idempotent(name, section_label=section_label)
+                    added = _append_pantry_item_idempotent(name, aisle_label=aisle_name)
                 if added:
-                    st.success(f"Added “{name}” to pantry ({section_label}).")
+                    st.success(f"Added “{name}” to pantry ({aisle_name}).")
                     st.rerun()
                 else:
                     st.warning("Could not add — empty name or already in pantry.")
 
 
-def _render_pantry_section() -> None:
+def _render_staples_block() -> None:
     st.markdown("### Pantry")
     st.caption(_PANTRY_AISLE_CAPTION)
     aisle_config = load_store_aisles()
@@ -281,7 +281,7 @@ def _render_pantry_section() -> None:
     search_query = st.text_input(
         "Search pantry",
         placeholder="Filter by item name…",
-        key="pantry_tab_search",
+        key="pantry_staples_search",
     )
     _render_pantry_table(
         pantry_entries,
@@ -298,6 +298,6 @@ def render_pantry_and_recurring() -> None:
         "Pantry items are assumed on hand when building grocery lists."
     )
 
-    _render_recurring_weekly_section()
+    _render_recurring_block()
     st.divider()
-    _render_pantry_section()
+    _render_staples_block()

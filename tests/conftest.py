@@ -54,7 +54,7 @@ def _notion_test_doubles(monkeypatch: pytest.MonkeyPatch) -> None:
         load_recurring,
     )
     monkeypatch.setattr(
-        "src.grocery_wizard.ui.sections.pantry_recurring.load_recurring_weekly_items",
+        "src.grocery_wizard.ui.pages.pantry_recurring.load_recurring_weekly_items",
         load_recurring,
     )
 
@@ -77,11 +77,11 @@ def _notion_test_doubles(monkeypatch: pytest.MonkeyPatch) -> None:
         "src.grocery_wizard.ui.db_access",
         "src.grocery_wizard.ui.app",
         "src.grocery_wizard.ui.nyt_sync",
-        "src.grocery_wizard.ui.sections.add_recipe",
-        "src.grocery_wizard.ui.sections.weekly_plan.flow",
-        "src.grocery_wizard.ui.sections.weekly_plan.plan_entry",
-        "src.grocery_wizard.ui.sections.weekly_plan.grocery_wizard",
-        "src.grocery_wizard.ui.sections.weekly_plan.state",
+        "src.grocery_wizard.ui.pages.add_recipe",
+        "src.grocery_wizard.ui.pages.weekly_plan.flow",
+        "src.grocery_wizard.ui.pages.weekly_plan.plan_entry",
+        "src.grocery_wizard.ui.pages.weekly_plan.grocery_list_ui",
+        "src.grocery_wizard.ui.pages.weekly_plan.state",
     )
     for module_path in get_db_targets:
         monkeypatch.setattr(f"{module_path}.get_db", _fake_get_db, raising=False)

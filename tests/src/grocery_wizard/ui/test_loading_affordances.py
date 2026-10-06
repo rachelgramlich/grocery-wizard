@@ -22,7 +22,7 @@ def test_long_actions_use_loading_indicator() -> None:
 
 
 def test_add_recipe_slow_paths_use_loading_indicator() -> None:
-    add_recipe = (UI_ROOT / "sections" / "add_recipe.py").read_text(encoding="utf-8")
+    add_recipe = (UI_ROOT / "pages" / "add_recipe.py").read_text(encoding="utf-8")
     assert "Fetching recipe from URL" in add_recipe
     assert "Saving recipe to Notion" in add_recipe
     assert "loading_indicator" in add_recipe

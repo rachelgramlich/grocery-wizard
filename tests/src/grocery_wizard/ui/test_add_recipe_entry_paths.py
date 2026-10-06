@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from ui_source import UI_ROOT, ui_source
 
-_ADD_RECIPE_SOURCE = (UI_ROOT / "sections" / "add_recipe.py").read_text(encoding="utf-8")
+_ADD_RECIPE_SOURCE = (UI_ROOT / "pages" / "add_recipe.py").read_text(encoding="utf-8")
 
 
 def test_add_recipe_surfaces_three_entry_paths_without_collapsed_expanders() -> None:

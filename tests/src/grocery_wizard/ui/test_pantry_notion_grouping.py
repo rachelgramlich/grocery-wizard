@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from src.grocery_wizard.shopping.store_aisles import load_store_aisles
-from src.grocery_wizard.ui.sections.pantry_recurring import (
+from src.grocery_wizard.ui.pages.pantry_recurring import (
     _filter_grouped_pantry_aisles,
     _group_pantry_items_by_store_aisle,
     _pantry_display_aisle_label,

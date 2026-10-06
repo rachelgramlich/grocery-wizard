@@ -73,7 +73,7 @@ Grocery Wizard is a package under `src/grocery_wizard/`. Folders group code by *
 | Folder | Key files | Responsibility |
 |--------|-----------|----------------|
 | `cli/` | `main.py`, `deprecated.py` | Removed-command hints only (product is Streamlit) |
-| `ui/` | `app.py`, `sections/`, `notion_cache.py` | Streamlit app: segmented sections (weekly plan, add recipe, pantry & recurring) |
+| `ui/` | `app.py`, `pages/`, `ids.py`, `notion_cache.py` | Streamlit app: segmented pages (see `docs/ui-map.md`) |
 | `config/` | `__init__.py`, `store_aisles.txt` | Env settings and committed store walk order |
 | `integrations/` | `notion.py`, `notion_household.py`, `nyt_cooking.py` | Notion API; pantry/recurring/plans DBs; NYT sync |
 | `recipes/` | `scraper.py`, `classify.py`, `add_recipe.py` | Scrape URLs, classify metadata, save new recipes |

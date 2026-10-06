@@ -7,7 +7,7 @@ from ui_source import APP_PATH, UI_ROOT
 
 def test_add_recipe_ingredients_text_area_uses_session_state_not_value_kwarg() -> None:
     """Keyed text_area must not pass value= so reruns keep edited lines (e.g. after Refresh)."""
-    source = (UI_ROOT / "sections" / "add_recipe.py").read_text(encoding="utf-8")
+    source = (UI_ROOT / "pages" / "add_recipe.py").read_text(encoding="utf-8")
     ingredients_block = source.split("schema.ingredients_column:", 1)[1].split(
         "schema.instructions_column:", 1
     )[0]

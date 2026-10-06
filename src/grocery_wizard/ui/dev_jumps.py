@@ -14,6 +14,7 @@ from src.grocery_wizard.ui.grocery_flow import (
     stash_grocery_result,
     stash_recipe_review,
 )
+from src.grocery_wizard.ui.ids import DEV_JUMP_BLOCK_ID
 
 DEFAULT_DEV_MEAL_COUNT = 1
 _DEV_MEAL_PICK_SEED = 142
@@ -47,20 +48,27 @@ def dev_jump_display_title(target: DevJumpTarget) -> str:
 
 DEV_JUMP_CAPTIONS: dict[DevJumpTarget, str] = {
     DevJumpTarget.MEALS_FILLED: (
-        "Meal plan list (section **1. Meals**) — pick recipes in the multiselect (updates "
-        "meals live) or use **auto** for the default sample."
+        f"Block **{DEV_JUMP_BLOCK_ID[DevJumpTarget.MEALS_FILLED.value]}** (1. Meals) — "
+        "pick recipes in the multiselect (updates meals live) or use **auto** "
+        "for the default sample."
     ),
     DevJumpTarget.PRE_BUILD_GROCERY: (
-        "Grocery setup (section **2. Grocery list**) — options expander and "
-        "**Create grocery list**."
+        f"Block **{DEV_JUMP_BLOCK_ID[DevJumpTarget.PRE_BUILD_GROCERY.value]}** (2. Grocery list) — "
+        "options expander and **Create grocery list**."
     ),
     DevJumpTarget.PER_RECIPE_REVIEW: (
-        "Per-recipe ingredient review — edit lines in expanders before the list is built."
+        f"Block **{DEV_JUMP_BLOCK_ID[DevJumpTarget.PER_RECIPE_REVIEW.value]}** — "
+        "edit ingredient lines in expanders before the list is built."
     ),
     DevJumpTarget.GROCERY_RESULT: (
-        "Final list — built grocery list with re-add/remove, copy, and meals."
+        f"Block **{DEV_JUMP_BLOCK_ID[DevJumpTarget.GROCERY_RESULT.value]}** — "
+        "built grocery list with re-add/remove, copy, and meals."
     ),
 }
+
+
+def dev_jump_block_id(target: DevJumpTarget) -> str:
+    return DEV_JUMP_BLOCK_ID[target.value]
 
 
 def dev_manual_recipes_fingerprint(names: list[str]) -> tuple[str, ...]:

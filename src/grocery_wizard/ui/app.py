@@ -14,27 +14,36 @@ import streamlit as st
 
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.feedback import render_feedback_controls
+from src.grocery_wizard.ui.ids import (
+    CONTROL_GLOBAL_FEEDBACK,
+    CONTROL_GLOBAL_PAGE_PICKER,
+    CONTROL_GLOBAL_REFRESH,
+    PAGE_SLUG_ADD,
+    PAGE_SLUG_MAINTENANCE,
+    PAGE_SLUG_PANTRY,
+    PAGE_SLUG_WEEKLY,
+    control_streamlit_key,
+)
 from src.grocery_wizard.ui.loading import loading_indicator, mount_global_loading_banner
 from src.grocery_wizard.ui.notion_cache import (
     invalidate_notion_cache,
     last_recipe_cache_load_seconds,
 )
-from src.grocery_wizard.ui.sections.add_recipe import render_add_recipe
-from src.grocery_wizard.ui.sections.pantry_recurring import render_pantry_and_recurring
-from src.grocery_wizard.ui.sections.recipe_maintenance import render_recipe_maintenance
-from src.grocery_wizard.ui.sections.weekly_plan import render_create_weekly_plan
-from src.grocery_wizard.ui.styles import inject_app_styles
-from src.grocery_wizard.ui.tabs import (
-    _TAB_ADD,
-    _TAB_CONTAINER_KEYS,
-    _TAB_MAINTENANCE,
-    _TAB_PANTRY,
-    _TAB_WEEKLY,
-    _UI_TABS,
+from src.grocery_wizard.ui.pages import (
+    PAGE_LABEL_WEEKLY,
+    PAGE_PICKER_LABELS,
+    page_label_for_slug,
+    page_slug_for_label,
 )
+from src.grocery_wizard.ui.pages.add_recipe import render_add_recipe
+from src.grocery_wizard.ui.pages.pantry_recurring import render_pantry_and_recurring
+from src.grocery_wizard.ui.pages.recipe_maintenance import render_recipe_maintenance
+from src.grocery_wizard.ui.pages.weekly_plan import render_create_weekly_plan
+from src.grocery_wizard.ui.styles import inject_app_styles
 
-_GW_RENDER_SECTION = "gw_render_section"
+_GW_RENDER_PAGE_SLUG = "gw_render_page_slug"
 _SKIP_PICKER_RENDER_SYNC = "gw_skip_picker_render_sync"
+_PAGE_PICKER_SESSION_KEY = control_streamlit_key(CONTROL_GLOBAL_PAGE_PICKER)
 
 # Re-export for tests and AppTest entry points that import from app.
 __all__ = [
@@ -54,25 +63,30 @@ def _notion_load_caption() -> str:
     return f"Last full recipe load: {load_seconds:.2f}s"
 
 
-def _init_section_navigation_state() -> None:
-    if "gw_active_tab" not in st.session_state:
-        st.session_state["gw_active_tab"] = _TAB_WEEKLY
-    if _GW_RENDER_SECTION not in st.session_state:
-        st.session_state[_GW_RENDER_SECTION] = st.session_state["gw_active_tab"]
+def _init_page_navigation_state() -> None:
+    if _PAGE_PICKER_SESSION_KEY not in st.session_state:
+        st.session_state[_PAGE_PICKER_SESSION_KEY] = PAGE_LABEL_WEEKLY
+    if _GW_RENDER_PAGE_SLUG not in st.session_state:
+        st.session_state[_GW_RENDER_PAGE_SLUG] = page_slug_for_label(
+            st.session_state[_PAGE_PICKER_SESSION_KEY]
+        )
 
 
-def _on_active_tab_change() -> None:
-    st.session_state[_GW_RENDER_SECTION] = st.session_state["gw_active_tab"]
+def _on_active_page_change() -> None:
+    label = st.session_state[_PAGE_PICKER_SESSION_KEY]
+    st.session_state[_GW_RENDER_PAGE_SLUG] = page_slug_for_label(label)
 
 
-def _sync_render_section_from_picker() -> None:
-    """Keep body section aligned when the picker changes without on_change."""
+def _sync_render_page_from_picker() -> None:
+    """Keep body page aligned when the picker changes without on_change."""
     if st.session_state.get(_SKIP_PICKER_RENDER_SYNC):
         st.session_state[_SKIP_PICKER_RENDER_SYNC] = False
         return
-    picker_tab = st.session_state.get("gw_active_tab")
-    if picker_tab and picker_tab != st.session_state.get(_GW_RENDER_SECTION):
-        st.session_state[_GW_RENDER_SECTION] = picker_tab
+    picker_label = st.session_state.get(_PAGE_PICKER_SESSION_KEY)
+    if picker_label:
+        picker_slug = page_slug_for_label(picker_label)
+        if picker_slug != st.session_state.get(_GW_RENDER_PAGE_SLUG):
+            st.session_state[_GW_RENDER_PAGE_SLUG] = picker_slug
 
 
 def _refresh_notion_cache_from_ui() -> None:
@@ -80,8 +94,10 @@ def _refresh_notion_cache_from_ui() -> None:
     st.session_state[_SKIP_PICKER_RENDER_SYNC] = True
     with loading_indicator("Refreshing from Notion…"):
         invalidate_notion_cache()
-    # Keep picker state aligned with the section we are actually rendering.
-    st.session_state["gw_active_tab"] = st.session_state[_GW_RENDER_SECTION]
+    slug = st.session_state[_GW_RENDER_PAGE_SLUG]
+    label = page_label_for_slug(slug)
+    if label is not None:
+        st.session_state[_PAGE_PICKER_SESSION_KEY] = label
 
 
 def _render_notion_cache_controls() -> None:
@@ -89,7 +105,7 @@ def _render_notion_cache_controls() -> None:
     with refresh_col:
         st.button(
             "Refresh from Notion",
-            key="notion_cache_refresh",
+            key=control_streamlit_key(CONTROL_GLOBAL_REFRESH),
             type="secondary",
             use_container_width=True,
             help="Reload recipes, pantry, and saved plans from Notion",
@@ -108,32 +124,34 @@ def main() -> None:
     st.title("Grocery Wizard")
     mount_global_loading_banner()
 
-    _init_section_navigation_state()
+    _init_page_navigation_state()
 
     _render_notion_cache_controls()
-    render_feedback_controls(surface=st.session_state.get(_GW_RENDER_SECTION))
+    render_feedback_controls(
+        surface=st.session_state.get(_GW_RENDER_PAGE_SLUG),
+        control_id=CONTROL_GLOBAL_FEEDBACK,
+    )
 
     st.segmented_control(
-        "Section",
-        _UI_TABS,
-        key="gw_active_tab",
+        "Page",
+        PAGE_PICKER_LABELS,
+        key=_PAGE_PICKER_SESSION_KEY,
         label_visibility="collapsed",
         persist_state="session",
-        on_change=_on_active_tab_change,
+        on_change=_on_active_page_change,
     )
-    _sync_render_section_from_picker()
+    _sync_render_page_from_picker()
 
-    active_tab = st.session_state[_GW_RENDER_SECTION]
-    section_key = _TAB_CONTAINER_KEYS.get(active_tab, "unknown")
+    active_slug = st.session_state[_GW_RENDER_PAGE_SLUG]
 
-    with st.container(key=f"gw_section_{section_key}"):
-        if active_tab == _TAB_WEEKLY:
+    with st.container(key=f"gw_page_{active_slug}"):
+        if active_slug == PAGE_SLUG_WEEKLY:
             render_create_weekly_plan()
-        elif active_tab == _TAB_ADD:
+        elif active_slug == PAGE_SLUG_ADD:
             render_add_recipe()
-        elif active_tab == _TAB_PANTRY:
+        elif active_slug == PAGE_SLUG_PANTRY:
             render_pantry_and_recurring()
-        elif active_tab == _TAB_MAINTENANCE:
+        elif active_slug == PAGE_SLUG_MAINTENANCE:
             render_recipe_maintenance()
 
 
