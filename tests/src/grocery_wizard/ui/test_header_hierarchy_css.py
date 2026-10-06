@@ -17,6 +17,8 @@ _REQUIRED_TYPOGRAPHY_FRAGMENTS = (
     '[data-testid="stMarkdownContainer"] h4',
     "p:has(> strong:only-child)",
     "p.gw-meal-slot-label",
+    "p.gw-plan-week-actions",
+    ":has(p.gw-meal-slot-label)",
     '[data-testid="stExpander"] summary',
 )
 

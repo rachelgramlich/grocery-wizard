@@ -132,6 +132,40 @@
             font-weight: inherit;
         }
 
+        /* Weekly plan meal + week actions: show full button labels (no ellipsis). */
+        p.gw-plan-week-actions {
+            display: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:last-child [data-testid="stElementContainer"],
+        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:last-child .stButton,
+        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:last-child [data-testid="stPopover"],
+        [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions) [data-testid="stElementContainer"],
+        [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions) .stButton {
+            width: auto !important;
+            min-width: max-content !important;
+            max-width: none !important;
+            flex: 0 0 auto !important;
+        }
+
+        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:last-child button,
+        [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions) button {
+            width: auto !important;
+            min-width: max-content !important;
+            max-width: none !important;
+        }
+
+        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:last-child button p,
+        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:last-child button span,
+        [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions) button p,
+        [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions) button span {
+            overflow: visible !important;
+            text-overflow: clip !important;
+            white-space: nowrap !important;
+        }
+
         /* Avoid painting all spans (breaks primary buttons and tag chips). */
         .stApp span:not(.stButton span):not([data-baseweb="tag"] span):not([data-tag] span) {
             color: inherit;

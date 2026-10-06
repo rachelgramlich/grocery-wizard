@@ -11,7 +11,8 @@ def test_weekly_plan_has_per_meal_swap_buttons() -> None:
     source = ui_source()
     assert '"Quick swap"' in source
     assert 'key=f"swap_meal_{index}"' in source
-    assert "meal_col, actions_col = st.columns([7, 3])" in source
+    assert "meal_col, actions_col = st.columns([5, 5])" in source
+    assert 'key=f"meal_slot_action_row_{index}"' in source
     assert "_apply_plan_swap" in source
     assert "replace_meals_in_plan(" in source
     assert "_render_slot_manual_popover" in source
@@ -143,7 +144,7 @@ def test_post_build_collapses_generate_controls() -> None:
     assert "expanded=expanded_1a" in meals_fn
     assert "Adjust filters or rebuild plan" not in source
     assert "Change filters & rebuild" in source
-    assert "col_filter, col_regen" in source
+    assert 'key="plan_week_action_row"' in source
     assert "PLAN_FORCE_OPEN_1A_KEY" in source
     assert "plan_last_week_filters" in source
 
