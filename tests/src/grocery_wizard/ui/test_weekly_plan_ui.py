@@ -12,11 +12,14 @@ def test_weekly_plan_has_per_meal_swap_buttons() -> None:
     assert '"Quick swap"' in source
     assert 'key=f"swap_meal_{index}"' in source
     assert "meal_col, actions_col = st.columns([1, 1]" in source
-    assert 'width="content"' in source.split("def _render_slot_manual_popover", 1)[1].split(
-        "def _render_dev_jump_tools", 1
-    )[0]
+    assert (
+        'width="content"'
+        in source.split("def _render_slot_manual_popover", 1)[1].split(
+            "def _render_dev_jump_tools", 1
+        )[0]
+    )
     assert "gw-meal-slot-recipe" in source
-    assert 'f\'<span class="gw-meal-slot-title">{index}.</span> \'' in source
+    assert "f'<span class=\"gw-meal-slot-title\">{index}.</span> '" in source
     assert "gw-meal-slot-list" in source
     assert 'key=f"meal_slot_action_row_{index}"' in source
     assert "_apply_plan_swap" in source
@@ -171,7 +174,7 @@ def test_dev_mode_auto_continues_without_continue_button() -> None:
 
 
 def test_weekly_plan_mode_choices_always_includes_dev() -> None:
-    source = (UI_ROOT / "sections" / "weekly_plan" / "state.py").read_text(encoding="utf-8")
+    source = (UI_ROOT / "pages" / "weekly_plan" / "state.py").read_text(encoding="utf-8")
     choices_fn = source.split("def _weekly_plan_mode_choices", 1)[1].split(
         "def _weekly_plan_mode", 1
     )[0]
@@ -204,13 +207,13 @@ def test_plan_meal_count_persists_separate_from_widget_key() -> None:
     )[0]
     assert "PLAN_MEAL_COUNT_WIDGET_KEY not in st.session_state" in sync_fn
     assert "st.session_state.plan_meal_count" in sync_fn
-    state_source = (UI_ROOT / "sections" / "weekly_plan" / "state.py").read_text(encoding="utf-8")
+    state_source = (UI_ROOT / "pages" / "weekly_plan" / "state.py").read_text(encoding="utf-8")
     assert 'PLAN_MEAL_COUNT_WIDGET_KEY = "plan_meal_count_input"' in state_source
 
 
 def test_meal_count_widget_outside_meals_fragment() -> None:
     """Issue #284: meal count changes must rerun the full weekly-plan tab, not only the fragment."""
-    flow_source = (UI_ROOT / "sections" / "weekly_plan" / "flow.py").read_text(encoding="utf-8")
+    flow_source = (UI_ROOT / "pages" / "weekly_plan" / "flow.py").read_text(encoding="utf-8")
     assert "_render_meal_count_input()" in flow_source
     assert "_sync_plan_length_to_meal_count(meal_count)" in flow_source
     meals_fn = flow_source.split("def _weekly_plan_meals_fragment", 1)[1].split("\ndef ", 1)[0]

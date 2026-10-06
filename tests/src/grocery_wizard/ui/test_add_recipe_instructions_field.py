@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from ui_source import UI_ROOT
 
-_ADD_RECIPE_SOURCE = (UI_ROOT / "sections" / "add_recipe.py").read_text(encoding="utf-8")
+_ADD_RECIPE_SOURCE = (UI_ROOT / "pages" / "add_recipe.py").read_text(encoding="utf-8")
 
 
 def test_add_recipe_review_form_includes_instructions_text_area() -> None:

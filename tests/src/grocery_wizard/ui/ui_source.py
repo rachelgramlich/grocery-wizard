@@ -9,18 +9,20 @@ APP_PATH = UI_ROOT / "app.py"
 
 _UI_MODULE_PATHS = (
     "app.py",
-    "tabs.py",
-    "sections/weekly_plan/state.py",
-    "sections/weekly_plan/plan_entry.py",
-    "sections/weekly_plan/recipe_review.py",
-    "sections/weekly_plan/flow.py",
-    "sections/weekly_plan/grocery_wizard.py",
-    "sections/add_recipe.py",
-    "sections/pantry_recurring.py",
-    "sections/recipe_maintenance.py",
+    "ids.py",
+    "pages/__init__.py",
+    "pages/weekly_plan/state.py",
+    "pages/weekly_plan/plan_entry.py",
+    "pages/weekly_plan/recipe_review.py",
+    "pages/weekly_plan/flow.py",
+    "pages/weekly_plan/grocery_list_ui.py",
+    "pages/add_recipe.py",
+    "pages/pantry_recurring.py",
+    "pages/recipe_maintenance.py",
     "grocery_helpers.py",
     "grocery_flow.py",
     "meal_plan_filters.py",
+    "meal_plan_status_ui.py",
 )
 
 
@@ -29,5 +31,10 @@ def ui_source() -> str:
     return "\n\n".join(chunks)
 
 
+def pantry_page_source() -> str:
+    return (UI_ROOT / "pages" / "pantry_recurring.py").read_text(encoding="utf-8")
+
+
+# Back-compat alias for older tests and docs during transition.
 def pantry_tab_source() -> str:
-    return (UI_ROOT / "sections" / "pantry_recurring.py").read_text(encoding="utf-8")
+    return pantry_page_source()

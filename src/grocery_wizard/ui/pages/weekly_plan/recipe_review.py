@@ -18,15 +18,15 @@ from src.grocery_wizard.ui.grocery_flow import (
 from src.grocery_wizard.ui.grocery_helpers import parse_line_items_text
 from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.notion_cache import cached_query_recipes, invalidate_notion_cache
-from src.grocery_wizard.ui.recipe_match import (
-    render_unmatched_plan_recipes_help,
-    unmatched_plan_recipe_names,
-)
-from src.grocery_wizard.ui.sections.weekly_plan.state import (
+from src.grocery_wizard.ui.pages.weekly_plan.state import (
     _clear_grocery_pre_extra_items,
     _clear_grocery_result,
     _session_pantry_extra,
     _weekly_plan_mode,
+)
+from src.grocery_wizard.ui.recipe_match import (
+    render_unmatched_plan_recipes_help,
+    unmatched_plan_recipe_names,
 )
 
 
@@ -245,7 +245,8 @@ def _render_per_recipe_review(db: NotionRecipesDB, selected: list[str]) -> None:
     st.session_state.pop("grocery_review_baseline", None)
     st.session_state.pop("grocery_review_save_flash", None)
     for key in list(st.session_state.keys()):
-        if str(key).startswith("review_ing_") or str(key).startswith("review_save_"):
+        key_str = str(key)
+        if key_str.startswith(("review_ing_", "review_save_")):
             st.session_state.pop(key, None)
     _clear_grocery_pre_extra_items()
     st.rerun()

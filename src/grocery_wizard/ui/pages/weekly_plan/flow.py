@@ -1,4 +1,4 @@
-"""Orchestrates the Create weekly plan tab."""
+"""Orchestrates the Create weekly plan page."""
 
 from __future__ import annotations
 
@@ -8,15 +8,15 @@ from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.notion_cache import cached_query_recipes
-from src.grocery_wizard.ui.sections.weekly_plan.grocery_wizard import render_grocery_list_section
-from src.grocery_wizard.ui.sections.weekly_plan.plan_entry import (
+from src.grocery_wizard.ui.pages.weekly_plan.grocery_list_ui import render_grocery_list_section
+from src.grocery_wizard.ui.pages.weekly_plan.plan_entry import (
     _ensure_plan_session_defaults,
     _render_meal_count_input,
     _render_weekly_plan_entry,
     _sync_plan_length_to_meal_count,
     render_meals_section,
 )
-from src.grocery_wizard.ui.sections.weekly_plan.state import (
+from src.grocery_wizard.ui.pages.weekly_plan.state import (
     _current_plan_names,
     _invalidate_stale_grocery_result,
 )

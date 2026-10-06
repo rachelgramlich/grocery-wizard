@@ -45,11 +45,7 @@ from src.grocery_wizard.ui.meal_plan_filters import (
     render_meal_plan_filters,
 )
 from src.grocery_wizard.ui.notion_cache import cached_saved_plans, invalidate_notion_cache
-from src.grocery_wizard.ui.recipe_match import (
-    render_unmatched_plan_recipes_help,
-    unmatched_plan_recipe_names,
-)
-from src.grocery_wizard.ui.sections.weekly_plan.state import (
+from src.grocery_wizard.ui.pages.weekly_plan.state import (
     PLAN_FORCE_OPEN_1A_KEY,
     PLAN_MEAL_COUNT_WIDGET_KEY,
     _clear_grocery_result,
@@ -63,6 +59,10 @@ from src.grocery_wizard.ui.sections.weekly_plan.state import (
     _weekly_plan_mode,
     _weekly_plan_mode_choices,
     _write_plan_names,
+)
+from src.grocery_wizard.ui.recipe_match import (
+    render_unmatched_plan_recipes_help,
+    unmatched_plan_recipe_names,
 )
 
 
@@ -720,13 +720,16 @@ def _render_built_plan_meals(
                 f'<span class="gw-meal-slot-recipe">{html.escape(name)}</span></p>',
                 unsafe_allow_html=True,
             )
-        with actions_col, st.container(
-            key=f"meal_slot_action_row_{index}",
-            horizontal=True,
-            gap="small",
-            wrap=False,
-            width="content",
-            horizontal_alignment="left",
+        with (
+            actions_col,
+            st.container(
+                key=f"meal_slot_action_row_{index}",
+                horizontal=True,
+                gap="small",
+                wrap=False,
+                width="content",
+                horizontal_alignment="left",
+            ),
         ):
             if st.button(
                 "Quick swap",
@@ -762,8 +765,7 @@ def _render_built_plan_meals(
                 key="plan_jump_to_builder",
                 width="content",
                 help=(
-                    "Opens plan builder: adjust week filters or pinned meals, "
-                    "then Build my plan."
+                    "Opens plan builder: adjust week filters or pinned meals, then Build my plan."
                 ),
             ):
                 st.session_state[PLAN_FORCE_OPEN_1A_KEY] = True
@@ -771,9 +773,7 @@ def _render_built_plan_meals(
             if st.button("Re-generate all meals", key="regenerate_plan", width="content"):
                 with loading_indicator("Re-generating your meal plan…"):
                     origins = _plan_slot_origins()
-                    stats_targets = rejection_names_from_swap(
-                        current_plan, current_plan, origins
-                    )
+                    stats_targets = rejection_names_from_swap(current_plan, current_plan, origins)
                     if stats_targets:
                         updated_stats = increment_suggestion_rejections(
                             db,
@@ -817,8 +817,7 @@ def _render_built_plan_meals(
                     _write_plan_names(plan)
                     origins = _plan_slot_origins()
                     new_origins = [
-                        origins[i] if i < len(origins) else "suggested"
-                        for i in range(len(plan))
+                        origins[i] if i < len(origins) else "suggested" for i in range(len(plan))
                     ]
                     while len(new_origins) < len(plan):
                         new_origins.append("suggested")

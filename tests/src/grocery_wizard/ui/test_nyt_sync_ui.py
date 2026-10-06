@@ -10,7 +10,7 @@ from ui_source import APP_PATH
 def test_nyt_sync_controls_only_on_add_recipe_tab() -> None:
     app = APP_PATH.read_text(encoding="utf-8")
     assert "render_nyt_sync_controls" not in app
-    add_recipe = (APP_PATH.parent / "sections" / "add_recipe.py").read_text(encoding="utf-8")
+    add_recipe = (APP_PATH.parent / "pages" / "add_recipe.py").read_text(encoding="utf-8")
     assert "render_nyt_sync_controls()" in add_recipe
 
 

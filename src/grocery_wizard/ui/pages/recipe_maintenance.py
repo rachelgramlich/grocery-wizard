@@ -1,4 +1,4 @@
-"""Recipe maintenance tab — batch backfill for Notion recipe rows."""
+"""Recipe maintenance page — batch backfill for Notion recipe rows."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ from collections.abc import Callable
 
 import streamlit as st
 
+from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe, recipe_lookup_key
 from src.grocery_wizard.integrations.notion_views import (
     ensure_manual_ingredients_notion_view_url,
     ensure_possibly_missing_checkboxes_notion_view_url,
@@ -24,6 +25,11 @@ from src.grocery_wizard.recipes.recipe_maintenance import (
     run_metadata_backfill,
 )
 from src.grocery_wizard.ui.db_access import get_db
+from src.grocery_wizard.ui.meal_plan_status_ui import (
+    meal_plan_status_editor_context,
+    render_meal_plan_status_for_recipe,
+    render_meal_plan_status_unavailable,
+)
 from src.grocery_wizard.ui.notion_cache import cached_query_recipes, invalidate_notion_cache
 
 
@@ -64,6 +70,35 @@ def _preview_count_line(count: int) -> None:
     st.write(f"**{count}** recipe(s) will appear in Notion with this filter.")
 
 
+def _render_meal_plan_status_section(db: NotionRecipesDB, recipes: list[Recipe]) -> None:
+    """Standalone flow: pick a recipe and update Notion meal-plan rotation status."""
+    st.markdown("### Meal plan status")
+    st.caption(
+        "Set **Active**, **Favorite**, **Paused**, or **Deprecated** for any recipe in Notion. "
+        "This does not change your weekly meal list — only how recipes appear in future planning."
+    )
+    with st.container(border=True):
+        render_meal_plan_status_unavailable(db)
+        status_context = meal_plan_status_editor_context(db)
+        if status_context is not None and recipes:
+            recipe_names = sorted({recipe.name for recipe in recipes}, key=str.casefold)
+            selected_name = st.selectbox(
+                "Recipe",
+                options=recipe_names,
+                key="recipe_maint_meal_plan_status_recipe",
+            )
+            by_name = {recipe_lookup_key(recipe.name): recipe for recipe in recipes}
+            selected_recipe = by_name.get(recipe_lookup_key(selected_name))
+            if selected_recipe is not None:
+                render_meal_plan_status_for_recipe(
+                    db,
+                    selected_recipe,
+                    scope="maintenance",
+                )
+        elif status_context is not None:
+            st.info("No recipes in Notion yet.")
+
+
 def _render_open_notion_button(*, label: str, url: str, key: str, disabled: bool) -> None:
     st.link_button(
         label,
@@ -90,6 +125,8 @@ def render_recipe_maintenance() -> None:
     manual_ingredients = recipes_manual_ingredients_in_notion(recipes, schema)
     possibly_missing_checkboxes = recipes_possibly_missing_all_checkboxes(recipes, schema)
     checkbox_names = [col.name for col in schema.checkbox_columns]
+
+    _render_meal_plan_status_section(db, recipes)
 
     st.markdown("### Automatic backfill")
 
