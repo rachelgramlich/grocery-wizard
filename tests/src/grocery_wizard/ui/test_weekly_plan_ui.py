@@ -11,7 +11,10 @@ def test_weekly_plan_has_per_meal_swap_buttons() -> None:
     source = ui_source()
     assert '"Quick swap"' in source
     assert 'key=f"swap_meal_{index}"' in source
-    assert "meal_col, actions_col = st.columns([7, 3]" in source
+    assert "meal_col, actions_col = st.columns([1, 1]" in source
+    assert 'width="content"' in source.split("def _render_slot_manual_popover", 1)[1].split(
+        "def _render_dev_jump_tools", 1
+    )[0]
     assert "gw-meal-slot-recipe" in source
     assert 'key=f"meal_slot_action_row_{index}"' in source
     assert "_apply_plan_swap" in source

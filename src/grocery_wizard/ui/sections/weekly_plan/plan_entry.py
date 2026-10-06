@@ -347,6 +347,8 @@ def _render_slot_manual_popover(
     with st.popover(
         "Choose manually",
         help="Pick a recipe for this meal slot (search or filter)",
+        width="content",
+        wrap=False,
     ):
         st.caption("Filters apply to this meal slot only.")
         _slot_manual_picker_fragment(slot_index)(
@@ -708,12 +710,13 @@ def _render_built_plan_meals(
         context="meals",
     )
     for index, name in enumerate(current_plan, start=1):
-        meal_col, actions_col = st.columns([7, 3], vertical_alignment="top")
+        # Ratio is a hint; theme CSS sizes the action column to its buttons.
+        meal_col, actions_col = st.columns([1, 1], vertical_alignment="top")
         with meal_col:
             st.markdown(
                 f'<p class="gw-meal-slot-label">'
-                f'<span class="gw-meal-slot-title">Meal {index}</span> — '
-                f'<span class="gw-meal-slot-recipe">{html.escape(name)}</span></p>',
+                f'<span class="gw-meal-slot-title">Meal {index}</span></p>'
+                f'<p class="gw-meal-slot-recipe">{html.escape(name)}</p>',
                 unsafe_allow_html=True,
             )
         with actions_col, st.container(
