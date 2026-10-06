@@ -708,11 +708,12 @@ def _render_built_plan_meals(
         context="meals",
     )
     for index, name in enumerate(current_plan, start=1):
-        meal_col, actions_col = st.columns([5, 5])
+        meal_col, actions_col = st.columns([7, 3], vertical_alignment="top")
         with meal_col:
             st.markdown(
                 f'<p class="gw-meal-slot-label">'
-                f'<span class="gw-meal-slot-title">Meal {index}</span> — {html.escape(name)}</p>',
+                f'<span class="gw-meal-slot-title">Meal {index}</span> — '
+                f'<span class="gw-meal-slot-recipe">{html.escape(name)}</span></p>',
                 unsafe_allow_html=True,
             )
         with actions_col, st.container(

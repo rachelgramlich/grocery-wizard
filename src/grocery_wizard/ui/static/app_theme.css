@@ -125,11 +125,32 @@
             font-weight: var(--gw-heading-meal-weight);
             line-height: 1.35;
             margin: 0.35rem 0 0.15rem 0;
+            max-width: 100%;
+            overflow-wrap: anywhere;
+            word-break: break-word;
         }
 
         p.gw-meal-slot-label .gw-meal-slot-title {
             color: inherit;
             font-weight: inherit;
+        }
+
+        p.gw-meal-slot-label .gw-meal-slot-recipe {
+            color: inherit;
+            font-weight: inherit;
+        }
+
+        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) {
+            align-items: flex-start !important;
+        }
+
+        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:first-child {
+            min-width: 0 !important;
+        }
+
+        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:first-child [data-testid="stMarkdownContainer"] {
+            min-width: 0 !important;
+            max-width: 100% !important;
         }
 
         /* Weekly plan meal + week actions: show full button labels (no ellipsis). */
