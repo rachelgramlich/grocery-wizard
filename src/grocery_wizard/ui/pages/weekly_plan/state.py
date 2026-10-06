@@ -170,6 +170,11 @@ def _weekly_plan_mode() -> str | None:
     return mode
 
 
+def _weekly_plan_persists_tracking_stats_to_notion() -> bool:
+    """Meal-plan tracking columns (rejection/selection/status) skip Notion in dev mode."""
+    return _weekly_plan_mode() != "dev"
+
+
 def _weekly_plan_reference_date() -> date:
     return datetime.now(tz=UTC).date()
 

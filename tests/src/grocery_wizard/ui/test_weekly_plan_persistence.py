@@ -50,3 +50,16 @@ def test_weekly_plan_entry_app_test_smoke() -> None:
 
     radios = [r for r in at.radio if r.label == "Weekly plan session"]
     assert radios, "Weekly plan session radio missing"
+
+
+def test_dev_mode_skips_notion_rejection_increments() -> None:
+    source = ui_source()
+    assert "_weekly_plan_persists_tracking_stats_to_notion" in source
+    swap = source.split("def _apply_plan_swap", 1)[1].split('st.markdown("#### 1b. Your meals"', 1)[
+        0
+    ]
+    assert "stats_targets and _weekly_plan_persists_tracking_stats_to_notion()" in swap
+    regen = source.split('st.button("Re-generate all meals"', 1)[1].split(
+        "_write_plan_names(plan)", 1
+    )[0]
+    assert "stats_targets and _weekly_plan_persists_tracking_stats_to_notion()" in regen

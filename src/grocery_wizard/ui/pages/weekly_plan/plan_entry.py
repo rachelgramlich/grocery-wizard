@@ -58,6 +58,7 @@ from src.grocery_wizard.ui.pages.weekly_plan.state import (
     _set_plan_slot_origins,
     _weekly_plan_mode,
     _weekly_plan_mode_choices,
+    _weekly_plan_persists_tracking_stats_to_notion,
     _write_plan_names,
 )
 from src.grocery_wizard.ui.recipe_match import (
@@ -686,7 +687,7 @@ def _render_built_plan_meals(
                 status_column=status_column,
                 rejections_column=rejections_column,
             )
-            if stats_targets:
+            if stats_targets and _weekly_plan_persists_tracking_stats_to_notion():
                 updated_stats = increment_suggestion_rejections(
                     db,
                     stats_targets,
@@ -774,7 +775,7 @@ def _render_built_plan_meals(
                 with loading_indicator("Re-generating your meal plan…"):
                     origins = _plan_slot_origins()
                     stats_targets = rejection_names_from_swap(current_plan, current_plan, origins)
-                    if stats_targets:
+                    if stats_targets and _weekly_plan_persists_tracking_stats_to_notion():
                         updated_stats = increment_suggestion_rejections(
                             db,
                             stats_targets,
