@@ -1,4 +1,4 @@
-"""Recipe maintenance tab — batch backfill for Notion recipe rows."""
+"""Recipe maintenance page — batch backfill for Notion recipe rows."""
 
 from __future__ import annotations
 

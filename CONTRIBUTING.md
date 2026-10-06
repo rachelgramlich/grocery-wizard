@@ -311,7 +311,7 @@ with pytest.raises(MyError, match="message"):
 
 ### UI source paths
 
-Streamlit UI regression tests read concatenated sources via `tests/src/grocery_wizard/ui/ui_source.py`. Import `APP_PATH`, `UI_ROOT`, `ui_source()`, and `pantry_tab_source()` from that module (or `from ui_source import …` inside `tests/src/grocery_wizard/ui/`). Do not duplicate `Path(...)/app.py` literals across test files.
+Streamlit UI regression tests read concatenated sources via `tests/src/grocery_wizard/ui/ui_source.py`. Import `APP_PATH`, `UI_ROOT`, `ui_source()`, and `pantry_page_source()` from that module (or `from ui_source import …` inside `tests/src/grocery_wizard/ui/`). UI page/block/control IDs live in `docs/ui-map.md` and `src/grocery_wizard/ui/ids.py`. Do not duplicate `Path(...)/app.py` literals across test files.
 
 ### String literals in tests
 

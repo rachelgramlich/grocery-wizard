@@ -28,7 +28,7 @@ def test_feedback_submit_appends_to_backlog(tmp_path: Path) -> None:
     def _app() -> None:
         from src.grocery_wizard.ui.feedback import render_feedback_controls
 
-        render_feedback_controls(surface="Weekly recipe generation")
+        render_feedback_controls(surface="weekly")
 
     with patch(
         "src.grocery_wizard.ui.feedback.append_feedback",
@@ -46,13 +46,13 @@ def test_feedback_submit_appends_to_backlog(tmp_path: Path) -> None:
     entries = read_feedback_backlog(backlog)
     assert len(entries) == 1
     assert entries[0]["text"] == "Papercut: button hard to see"
-    assert entries[0]["surface"] == "Weekly recipe generation"
+    assert entries[0]["surface"] == "weekly"
     assert any("Thanks" in s.value for s in at.success)
 
 
-def test_feedback_control_placed_before_section_picker() -> None:
+def test_feedback_control_placed_before_page_picker() -> None:
     app = APP_PATH.read_text(encoding="utf-8")
     main_body = app.split("def main() -> None:")[1].split('if __name__ == "__main__"')[0]
     feedback_idx = main_body.index("render_feedback_controls")
-    picker_idx = main_body.index('key="gw_active_tab"')
+    picker_idx = main_body.index("st.segmented_control(")
     assert feedback_idx < picker_idx

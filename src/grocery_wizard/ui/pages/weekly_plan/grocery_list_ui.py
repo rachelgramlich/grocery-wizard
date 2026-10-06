@@ -22,11 +22,11 @@ from src.grocery_wizard.ui.grocery_helpers import (
 )
 from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.notion_cache import cached_query_recipes
-from src.grocery_wizard.ui.sections.weekly_plan.recipe_review import (
+from src.grocery_wizard.ui.pages.weekly_plan.recipe_review import (
     _render_per_recipe_review,
     _start_recipe_review,
 )
-from src.grocery_wizard.ui.sections.weekly_plan.state import (
+from src.grocery_wizard.ui.pages.weekly_plan.state import (
     _clear_grocery_result,
     _ensure_weekly_plan_saved_before_grocery,
     _grocery_pre_extra_items_widget_key,

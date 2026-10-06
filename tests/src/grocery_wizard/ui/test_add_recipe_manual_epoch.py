@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from ui_source import UI_ROOT
 
-_ADD_RECIPE_SOURCE = (UI_ROOT / "sections" / "add_recipe.py").read_text(encoding="utf-8")
+_ADD_RECIPE_SOURCE = (UI_ROOT / "pages" / "add_recipe.py").read_text(encoding="utf-8")
 
 
 def test_manual_recipe_start_bumps_epoch_for_widget_keys() -> None:

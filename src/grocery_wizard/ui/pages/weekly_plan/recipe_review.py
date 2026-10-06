@@ -18,15 +18,15 @@ from src.grocery_wizard.ui.grocery_flow import (
 from src.grocery_wizard.ui.grocery_helpers import parse_line_items_text
 from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.notion_cache import cached_query_recipes, invalidate_notion_cache
-from src.grocery_wizard.ui.recipe_match import (
-    render_unmatched_plan_recipes_help,
-    unmatched_plan_recipe_names,
-)
-from src.grocery_wizard.ui.sections.weekly_plan.state import (
+from src.grocery_wizard.ui.pages.weekly_plan.state import (
     _clear_grocery_pre_extra_items,
     _clear_grocery_result,
     _session_pantry_extra,
     _weekly_plan_mode,
+)
+from src.grocery_wizard.ui.recipe_match import (
+    render_unmatched_plan_recipes_help,
+    unmatched_plan_recipe_names,
 )
 
 

@@ -1,4 +1,4 @@
-"""Add-recipe tab."""
+"""Add Recipe page blocks (URL, manual, NYT)."""
 
 from __future__ import annotations
 
@@ -17,13 +17,14 @@ from src.grocery_wizard.recipes.add_recipe import (
     preview_recipe_urls,
 )
 from src.grocery_wizard.ui.db_access import get_db
+from src.grocery_wizard.ui.ids import BLOCK_ADD_MANUAL, BLOCK_ADD_NYT, BLOCK_ADD_URL
 from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.notion_cache import invalidate_notion_cache
 from src.grocery_wizard.ui.nyt_sync import render_nyt_sync_controls
 
-_ENTRY_PATH_URL = "url"
-_ENTRY_PATH_MANUAL = "manual"
-_ENTRY_PATH_NYT = "nyt"
+_ENTRY_PATH_URL = BLOCK_ADD_URL.removeprefix("add.")
+_ENTRY_PATH_MANUAL = BLOCK_ADD_MANUAL.removeprefix("add.")
+_ENTRY_PATH_NYT = BLOCK_ADD_NYT.removeprefix("add.")
 _MANUAL_RECIPE_EPOCH_KEY = "add_recipe_manual_epoch"
 
 

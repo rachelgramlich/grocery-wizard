@@ -5,10 +5,12 @@ from __future__ import annotations
 import streamlit as st
 
 from src.grocery_wizard.lib.feedback_backlog import append_feedback
+from src.grocery_wizard.ui.ids import control_streamlit_key
 
 _FEEDBACK_NOTE_KEY = "gw_feedback_note"
 _FEEDBACK_FLASH_OK = "gw_feedback_flash_ok"
 _FEEDBACK_WARN_EMPTY = "gw_feedback_warn_empty"
+_FEEDBACK_SUBMIT_KEY = "gw_feedback_submit"
 
 
 def _submit_feedback(*, surface: str | None) -> None:
@@ -23,9 +25,14 @@ def _submit_feedback(*, surface: str | None) -> None:
     st.session_state[_FEEDBACK_NOTE_KEY] = ""
 
 
-def render_feedback_controls(*, surface: str | None = None) -> None:
-    """Global feedback expander; writes append-only markdown inbox under ``.local/``."""
-    with st.expander("Send feedback", expanded=False):
+def render_feedback_controls(
+    *,
+    surface: str | None = None,
+    control_id: str | None = None,
+) -> None:
+    """Global feedback expander; ``surface`` is usually the active page slug."""
+    expander_key = control_streamlit_key(control_id) if control_id else "gw_feedback"
+    with st.expander("Send feedback", expanded=False, key=expander_key):
         st.caption("Bugs, ideas, and papercuts — saved locally on this machine for later triage.")
         if st.session_state.pop(_FEEDBACK_FLASH_OK, False):
             st.success("Thanks — your note was saved.")
@@ -42,7 +49,7 @@ def render_feedback_controls(*, surface: str | None = None) -> None:
         )
         st.button(
             "Submit feedback",
-            key="gw_feedback_submit",
+            key=_FEEDBACK_SUBMIT_KEY,
             type="secondary",
             on_click=_submit_feedback,
             kwargs={"surface": surface},

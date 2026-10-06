@@ -45,11 +45,7 @@ from src.grocery_wizard.ui.meal_plan_filters import (
     render_meal_plan_filters,
 )
 from src.grocery_wizard.ui.notion_cache import cached_saved_plans, invalidate_notion_cache
-from src.grocery_wizard.ui.recipe_match import (
-    render_unmatched_plan_recipes_help,
-    unmatched_plan_recipe_names,
-)
-from src.grocery_wizard.ui.sections.weekly_plan.state import (
+from src.grocery_wizard.ui.pages.weekly_plan.state import (
     PLAN_MEAL_COUNT_WIDGET_KEY,
     _clear_grocery_result,
     _clear_grocery_session_overrides,
@@ -62,6 +58,10 @@ from src.grocery_wizard.ui.sections.weekly_plan.state import (
     _weekly_plan_mode,
     _weekly_plan_mode_choices,
     _write_plan_names,
+)
+from src.grocery_wizard.ui.recipe_match import (
+    render_unmatched_plan_recipes_help,
+    unmatched_plan_recipe_names,
 )
 
 
