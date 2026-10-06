@@ -709,6 +709,7 @@ def _render_built_plan_meals(
         unmatched_plan_recipe_names(current_plan, all_recipes),
         context="meals",
     )
+    st.markdown('<p class="gw-meal-slot-list" aria-hidden="true"></p>', unsafe_allow_html=True)
     for index, name in enumerate(current_plan, start=1):
         # Ratio is a hint; theme CSS sizes the action column to its buttons.
         meal_col, actions_col = st.columns([1, 1], vertical_alignment="top")

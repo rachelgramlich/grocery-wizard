@@ -119,6 +119,12 @@
             font-weight: inherit;
         }
 
+        p.gw-meal-slot-list {
+            display: none;
+            margin: 0;
+            padding: 0;
+        }
+
         p.gw-meal-slot-label {
             color: var(--gw-heading-meal-color);
             font-size: var(--gw-heading-meal-size);
@@ -130,6 +136,8 @@
             overflow-wrap: anywhere;
             word-break: break-word;
             white-space: normal;
+            padding-left: 1.35rem;
+            text-indent: -1.35rem;
         }
 
         p.gw-meal-slot-label .gw-meal-slot-title {
@@ -141,6 +149,10 @@
         p.gw-meal-slot-label .gw-meal-slot-recipe {
             color: inherit;
             font-weight: inherit;
+        }
+
+        [data-testid="stVerticalBlock"]:has(p.gw-meal-slot-list) [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) {
+            margin-left: 1.25rem !important;
         }
 
         [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) {

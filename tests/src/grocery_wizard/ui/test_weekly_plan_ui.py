@@ -17,6 +17,7 @@ def test_weekly_plan_has_per_meal_swap_buttons() -> None:
     )[0]
     assert "gw-meal-slot-recipe" in source
     assert 'f\'<span class="gw-meal-slot-title">{index}.</span> \'' in source
+    assert "gw-meal-slot-list" in source
     assert 'key=f"meal_slot_action_row_{index}"' in source
     assert "_apply_plan_swap" in source
     assert "replace_meals_in_plan(" in source
