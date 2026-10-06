@@ -715,8 +715,8 @@ def _render_built_plan_meals(
         with meal_col:
             st.markdown(
                 f'<p class="gw-meal-slot-label">'
-                f'<span class="gw-meal-slot-title">Meal {index}</span></p>'
-                f'<p class="gw-meal-slot-recipe">{html.escape(name)}</p>',
+                f'<span class="gw-meal-slot-title">{index}.</span> '
+                f'<span class="gw-meal-slot-recipe">{html.escape(name)}</span></p>',
                 unsafe_allow_html=True,
             )
         with actions_col, st.container(

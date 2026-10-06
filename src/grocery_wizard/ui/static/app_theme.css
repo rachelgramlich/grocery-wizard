@@ -126,26 +126,21 @@
             line-height: 1.35;
             margin: 0.35rem 0 0.15rem 0;
             max-width: 100%;
+            overflow: visible;
             overflow-wrap: anywhere;
             word-break: break-word;
+            white-space: normal;
         }
 
         p.gw-meal-slot-label .gw-meal-slot-title {
             color: inherit;
             font-weight: inherit;
+            white-space: nowrap;
         }
 
-        p.gw-meal-slot-recipe {
-            color: var(--gw-heading-meal-color);
-            font-size: var(--gw-heading-meal-size);
-            font-weight: var(--gw-heading-meal-weight);
-            line-height: 1.35;
-            margin: 0 0 0.35rem 0;
-            max-width: 100%;
-            overflow: visible;
-            overflow-wrap: anywhere;
-            word-break: break-word;
-            white-space: normal;
+        p.gw-meal-slot-label .gw-meal-slot-recipe {
+            color: inherit;
+            font-weight: inherit;
         }
 
         [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) {
@@ -174,8 +169,7 @@
             overflow: visible !important;
         }
 
-        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:first-child p.gw-meal-slot-label,
-        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:first-child p.gw-meal-slot-recipe {
+        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:first-child p.gw-meal-slot-label {
             overflow: visible !important;
             text-overflow: unset !important;
             white-space: normal !important;
