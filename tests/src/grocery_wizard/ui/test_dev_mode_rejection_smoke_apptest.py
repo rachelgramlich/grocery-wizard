@@ -62,7 +62,7 @@ def test_dev_mode_quick_swap_does_not_increment_rejection_count(
     assert auto_jump, "Dev jump Meals filled: auto missing"
     auto_jump[0].click().run(timeout=120)
 
-    plan_text = str(at.session_state.get("plan_meals_text") or "").strip()
+    plan_text = str(at.session_state["plan_meals_text"]).strip()
     assert plan_text, "Dev jump should populate plan_meals_text"
     swapped_away = plan_text.splitlines()[0].strip()
 
@@ -75,6 +75,5 @@ def test_dev_mode_quick_swap_does_not_increment_rejection_count(
 
     after = _rejection_count_for_recipe_name(swapped_away)
     assert after == before, (
-        f"Dev mode Quick swap changed Rejection count for {swapped_away!r}: "
-        f"{before} → {after}"
+        f"Dev mode Quick swap changed Rejection count for {swapped_away!r}: {before} → {after}"
     )
