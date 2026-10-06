@@ -52,6 +52,7 @@ _WEEKLY_PLAN_MODES = ("new", "saved", "dev")
 _SAVE_WEEK_CHOICE_KEY = "weekly_plan_save_week_choice"
 # Widget key for meal count; ``plan_meal_count`` persists when the weekly tab is not rendered.
 PLAN_MEAL_COUNT_WIDGET_KEY = "plan_meal_count_input"
+PLAN_FORCE_OPEN_1A_KEY = "plan_force_open_1a"
 _OVERWRITE_CONFIRM_FP_KEY = "weekly_plan_overwrite_confirm_fingerprint"
 _RUN_GROCERY_AFTER_OVERWRITE_KEY = "weekly_plan_run_grocery_after_overwrite"
 

@@ -119,17 +119,120 @@
             font-weight: inherit;
         }
 
+        p.gw-meal-slot-list {
+            display: none;
+            margin: 0;
+            padding: 0;
+        }
+
         p.gw-meal-slot-label {
             color: var(--gw-heading-meal-color);
             font-size: var(--gw-heading-meal-size);
             font-weight: var(--gw-heading-meal-weight);
             line-height: 1.35;
             margin: 0.35rem 0 0.15rem 0;
+            max-width: 100%;
+            overflow: visible;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            white-space: normal;
+            padding-left: 1.35rem;
+            text-indent: -1.35rem;
         }
 
         p.gw-meal-slot-label .gw-meal-slot-title {
             color: inherit;
             font-weight: inherit;
+            white-space: nowrap;
+        }
+
+        p.gw-meal-slot-label .gw-meal-slot-recipe {
+            color: inherit;
+            font-weight: inherit;
+        }
+
+        [data-testid="stVerticalBlock"]:has(p.gw-meal-slot-list) [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) {
+            margin-left: 1.25rem !important;
+        }
+
+        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) {
+            align-items: flex-start !important;
+            gap: 0.75rem !important;
+        }
+
+        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:first-child {
+            flex: 1 1 0 !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+        }
+
+        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:last-child {
+            flex: 0 0 auto !important;
+            width: auto !important;
+            min-width: max-content !important;
+            overflow: visible !important;
+        }
+
+        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:first-child [data-testid="stMarkdownContainer"],
+        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:first-child [data-testid="stElementContainer"],
+        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:first-child [data-testid="stVerticalBlock"] {
+            min-width: 0 !important;
+            max-width: 100% !important;
+            overflow: visible !important;
+        }
+
+        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:first-child p.gw-meal-slot-label {
+            overflow: visible !important;
+            text-overflow: unset !important;
+            white-space: normal !important;
+        }
+
+        [class*="st-key-meal_slot_action_row"],
+        [class*="st-key-meal_slot_action_row"] [data-testid="stHorizontalBlock"] {
+            width: auto !important;
+            min-width: max-content !important;
+            flex: 0 0 auto !important;
+        }
+
+        /* Weekly plan meal + week actions: show full button labels (no ellipsis). */
+        p.gw-plan-week-actions {
+            display: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:last-child [data-testid="stElementContainer"],
+        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:last-child .stButton,
+        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:last-child .stPopover,
+        [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions) [data-testid="stElementContainer"],
+        [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions) .stButton {
+            width: auto !important;
+            min-width: max-content !important;
+            max-width: none !important;
+            flex: 0 0 auto !important;
+        }
+
+        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:last-child button,
+        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:last-child .stPopover button,
+        [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions) button {
+            width: auto !important;
+            min-width: max-content !important;
+            max-width: none !important;
+        }
+
+        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:last-child .stPopover button {
+            min-width: 11.25rem !important;
+        }
+
+        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:last-child button p,
+        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:last-child button span,
+        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:last-child .stPopover button p,
+        [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:last-child .stPopover button span,
+        [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions) button p,
+        [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions) button span {
+            overflow: visible !important;
+            text-overflow: clip !important;
+            white-space: nowrap !important;
         }
 
         /* Avoid painting all spans (breaks primary buttons and tag chips). */

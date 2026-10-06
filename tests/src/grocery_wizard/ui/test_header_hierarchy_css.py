@@ -16,7 +16,15 @@ _REQUIRED_TYPOGRAPHY_FRAGMENTS = (
     '[data-testid="stMarkdownContainer"] h3',
     '[data-testid="stMarkdownContainer"] h4',
     "p:has(> strong:only-child)",
+    "p.gw-meal-slot-list",
     "p.gw-meal-slot-label",
+    "text-indent: -1.35rem",
+    "p.gw-meal-slot-label .gw-meal-slot-recipe",
+    ':has(p.gw-meal-slot-label) [data-testid="stColumn"]:first-child',
+    ':has(p.gw-meal-slot-label) [data-testid="stColumn"]:last-child',
+    "st-key-meal_slot_action_row",
+    "p.gw-plan-week-actions",
+    ":has(p.gw-meal-slot-label)",
     '[data-testid="stExpander"] summary',
 )
 

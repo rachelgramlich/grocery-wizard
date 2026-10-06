@@ -46,6 +46,7 @@ from src.grocery_wizard.ui.meal_plan_filters import (
 )
 from src.grocery_wizard.ui.notion_cache import cached_saved_plans, invalidate_notion_cache
 from src.grocery_wizard.ui.pages.weekly_plan.state import (
+    PLAN_FORCE_OPEN_1A_KEY,
     PLAN_MEAL_COUNT_WIDGET_KEY,
     _clear_grocery_result,
     _clear_grocery_session_overrides,
@@ -334,7 +335,7 @@ def _slot_manual_picker_fragment(
     return _render
 
 
-def _render_slot_manual_picker(
+def _render_slot_manual_popover(
     *,
     slot_index: int,
     all_recipes: list,
@@ -343,7 +344,12 @@ def _render_slot_manual_picker(
     schema_columns: dict[str, ColumnInfo],
     ingredient_index: dict[str, set[str]],
 ) -> None:
-    with st.expander("Choose recipe manually", expanded=False):
+    with st.popover(
+        "Choose manually",
+        help="Pick a recipe for this meal slot (search or filter)",
+        width="content",
+        wrap=False,
+    ):
         st.caption("Filters apply to this meal slot only.")
         _slot_manual_picker_fragment(slot_index)(
             all_recipes=all_recipes,
@@ -588,11 +594,13 @@ def _render_generate_plan_controls(
     all_recipes: list,
     meal_count: int,
     ingredient_index: dict[str, set[str]],
+    show_section_heading: bool = True,
 ) -> MealPlanFilters:
     schema = db.schema
     filter_defaults = default_filters(schema.all_columns)
 
-    st.markdown("#### 1a. Build your meal list")
+    if show_section_heading:
+        st.markdown("#### 1a. Build your meal list")
     st.caption(
         "Optionally pin meals you already know, then **Build my plan** auto-fills the rest. "
         "Per-meal filters are available under each meal after you build."
@@ -701,15 +709,36 @@ def _render_built_plan_meals(
         unmatched_plan_recipe_names(current_plan, all_recipes),
         context="meals",
     )
+    st.markdown('<p class="gw-meal-slot-list" aria-hidden="true"></p>', unsafe_allow_html=True)
     for index, name in enumerate(current_plan, start=1):
-        meal_col, swap_col = st.columns([8, 1])
+        # Ratio is a hint; theme CSS sizes the action column to its buttons.
+        meal_col, actions_col = st.columns([1, 1], vertical_alignment="top")
         with meal_col:
             st.markdown(
                 f'<p class="gw-meal-slot-label">'
-                f'<span class="gw-meal-slot-title">Meal {index}</span> — {html.escape(name)}</p>',
+                f'<span class="gw-meal-slot-title">{index}.</span> '
+                f'<span class="gw-meal-slot-recipe">{html.escape(name)}</span></p>',
                 unsafe_allow_html=True,
             )
-            _render_slot_manual_picker(
+        with (
+            actions_col,
+            st.container(
+                key=f"meal_slot_action_row_{index}",
+                horizontal=True,
+                gap="small",
+                wrap=False,
+                width="content",
+                horizontal_alignment="left",
+            ),
+        ):
+            if st.button(
+                "Quick swap",
+                key=f"swap_meal_{index}",
+                width="content",
+                help="Suggest a different recipe from this week's filter pool",
+            ):
+                _apply_plan_swap([name])
+            _render_slot_manual_popover(
                 slot_index=index,
                 all_recipes=all_recipes,
                 filter_columns=filter_columns,
@@ -717,71 +746,86 @@ def _render_built_plan_meals(
                 schema_columns=schema.all_columns,
                 ingredient_index=ingredient_index,
             )
-        with swap_col:
+
+    fill_remaining = len(current_plan) < int(meal_count)
+    with st.container(key="plan_week_action_row"):
+        st.markdown(
+            '<p class="gw-plan-week-actions" aria-hidden="true"></p>',
+            unsafe_allow_html=True,
+        )
+        with st.container(
+            horizontal=True,
+            gap="medium",
+            wrap=False,
+            width="content",
+            horizontal_alignment="left",
+        ):
             if st.button(
-                "Swap",
-                key=f"swap_meal_{index}",
-                help="Pick a different recipe for this meal",
+                "Change filters & rebuild",
+                key="plan_jump_to_builder",
+                width="content",
+                help=(
+                    "Opens plan builder: adjust week filters or pinned meals, then Build my plan."
+                ),
             ):
-                _apply_plan_swap([name])
-
-    if len(current_plan) < int(meal_count) and st.button(
-        "Fill remaining slots", key="fill_remaining_plan"
-    ):
-        with loading_indicator("Filling remaining meal slots…"):
-            plan = suggest_meals(
-                all_recipes,
-                meals=int(meal_count),
-                locked_names=current_plan,
-                filters=week_filters,
-                schema_columns=schema.all_columns,
-                ingredient_index=ingredient_index,
-                status_column=status_column,
-                rejections_column=rejections_column,
-            )
-            _write_plan_names(plan)
-            origins = _plan_slot_origins()
-            new_origins = [
-                origins[i] if i < len(origins) else "suggested" for i in range(len(plan))
-            ]
-            while len(new_origins) < len(plan):
-                new_origins.append("suggested")
-            _set_plan_slot_origins(new_origins[: len(plan)])
-            _invalidate_weekly_plan_save_state()
-            _clear_grocery_session_overrides()
-            _clear_grocery_result()
-        st.rerun()
-
-    if st.button("Re-generate all meals", key="regenerate_plan"):
-        with loading_indicator("Re-generating your meal plan…"):
-            origins = _plan_slot_origins()
-            stats_targets = rejection_names_from_swap(current_plan, current_plan, origins)
-            if stats_targets:
-                updated_stats = increment_suggestion_rejections(
-                    db,
-                    stats_targets,
-                    cached_recipes=all_recipes,
-                )
-                if updated_stats:
-                    invalidate_notion_cache()
-            rejected = set(st.session_state.get("plan_rejected_names", []))
-            plan = suggest_meals(
-                all_recipes,
-                meals=int(meal_count),
-                locked_names=[],
-                filters=week_filters,
-                schema_columns=schema.all_columns,
-                rejected_names=rejected,
-                ingredient_index=ingredient_index,
-                status_column=status_column,
-                rejections_column=rejections_column,
-            )
-            _write_plan_names(plan)
-            _set_plan_slot_origins(["suggested"] * len(plan))
-            _invalidate_weekly_plan_save_state()
-            _clear_grocery_session_overrides()
-            _clear_grocery_result()
-        st.rerun()
+                st.session_state[PLAN_FORCE_OPEN_1A_KEY] = True
+                st.rerun()
+            if st.button("Re-generate all meals", key="regenerate_plan", width="content"):
+                with loading_indicator("Re-generating your meal plan…"):
+                    origins = _plan_slot_origins()
+                    stats_targets = rejection_names_from_swap(current_plan, current_plan, origins)
+                    if stats_targets:
+                        updated_stats = increment_suggestion_rejections(
+                            db,
+                            stats_targets,
+                            cached_recipes=all_recipes,
+                        )
+                        if updated_stats:
+                            invalidate_notion_cache()
+                    rejected = set(st.session_state.get("plan_rejected_names", []))
+                    plan = suggest_meals(
+                        all_recipes,
+                        meals=int(meal_count),
+                        locked_names=[],
+                        filters=week_filters,
+                        schema_columns=schema.all_columns,
+                        rejected_names=rejected,
+                        ingredient_index=ingredient_index,
+                        status_column=status_column,
+                        rejections_column=rejections_column,
+                    )
+                    _write_plan_names(plan)
+                    _set_plan_slot_origins(["suggested"] * len(plan))
+                    _invalidate_weekly_plan_save_state()
+                    _clear_grocery_session_overrides()
+                    _clear_grocery_result()
+                st.rerun()
+            if fill_remaining and st.button(
+                "Fill remaining slots", key="fill_remaining_plan", width="content"
+            ):
+                with loading_indicator("Filling remaining meal slots…"):
+                    plan = suggest_meals(
+                        all_recipes,
+                        meals=int(meal_count),
+                        locked_names=current_plan,
+                        filters=week_filters,
+                        schema_columns=schema.all_columns,
+                        ingredient_index=ingredient_index,
+                        status_column=status_column,
+                        rejections_column=rejections_column,
+                    )
+                    _write_plan_names(plan)
+                    origins = _plan_slot_origins()
+                    new_origins = [
+                        origins[i] if i < len(origins) else "suggested" for i in range(len(plan))
+                    ]
+                    while len(new_origins) < len(plan):
+                        new_origins.append("suggested")
+                    _set_plan_slot_origins(new_origins[: len(plan)])
+                    _invalidate_weekly_plan_save_state()
+                    _clear_grocery_session_overrides()
+                    _clear_grocery_result()
+                st.rerun()
 
     _render_save_plan_controls(_current_plan_names(), cached_recipes=all_recipes)
 
@@ -816,37 +860,35 @@ def render_meals_section(
     current_plan = _current_plan_names()
     fallback_filters = default_filters(db.schema.all_columns)
     stored_filters = st.session_state.get("plan_last_week_filters", fallback_filters)
+    has_plan = bool(current_plan)
+    force_open_1a = st.session_state.pop(PLAN_FORCE_OPEN_1A_KEY, False)
+    expanded_1a = (not has_plan) or force_open_1a
 
-    if current_plan:
-        _render_built_plan_meals(
-            db,
-            all_recipes=all_recipes,
-            meal_count=meal_count,
-            week_filters=stored_filters,
-            ingredient_index=ingredient_index,
-        )
-        with st.expander("Adjust filters or rebuild plan", expanded=False):
+    if has_plan:
+        with st.expander("1a. Build your meal list", expanded=expanded_1a):
             week_filters = _render_generate_plan_controls(
                 db,
                 all_recipes=all_recipes,
                 meal_count=meal_count,
                 ingredient_index=ingredient_index,
+                show_section_heading=False,
             )
-            st.session_state.plan_last_week_filters = week_filters
     else:
         week_filters = _render_generate_plan_controls(
             db,
             all_recipes=all_recipes,
             meal_count=meal_count,
             ingredient_index=ingredient_index,
+            show_section_heading=True,
         )
-        st.session_state.plan_last_week_filters = week_filters
-        _render_built_plan_meals(
-            db,
-            all_recipes=all_recipes,
-            meal_count=meal_count,
-            week_filters=week_filters,
-            ingredient_index=ingredient_index,
-        )
+    st.session_state.plan_last_week_filters = week_filters
+
+    _render_built_plan_meals(
+        db,
+        all_recipes=all_recipes,
+        meal_count=meal_count,
+        week_filters=stored_filters if has_plan else week_filters,
+        ingredient_index=ingredient_index,
+    )
 
     return _current_plan_names()
