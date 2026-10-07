@@ -108,7 +108,7 @@ def _render_notion_cache_controls() -> None:
             key=control_streamlit_key(CONTROL_GLOBAL_REFRESH),
             type="secondary",
             use_container_width=True,
-            help="Reload recipes, pantry, and saved plans from Notion",
+            help="Reload recipes, pantry, saved plans, and database column options from Notion",
             on_click=_refresh_notion_cache_from_ui,
         )
         st.caption(_notion_load_caption())
