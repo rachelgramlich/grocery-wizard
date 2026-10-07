@@ -5,7 +5,12 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 from src.grocery_wizard.config import Config
-from src.grocery_wizard.integrations.notion_table import NotionDatabase
+from src.grocery_wizard.integrations.notion_table import (
+    NOTION_TEXT_BLOCK_MAX_LEN,
+    NotionDatabase,
+    build_notion_rich_text,
+    write_notion_property,
+)
 
 
 def _config(*, data_source_id: str | None = "configured-recipe-ds") -> Config:
@@ -17,6 +22,32 @@ def _config(*, data_source_id: str | None = "configured-recipe-ds") -> Config:
         notion_weekly_meal_plans_database_id="plans-db",
         notion_data_source_id=data_source_id,
     )
+
+
+def test_build_notion_rich_text_empty() -> None:
+    assert build_notion_rich_text("") == {"rich_text": []}
+    assert build_notion_rich_text(None) == {"rich_text": []}
+
+
+def test_build_notion_rich_text_single_segment() -> None:
+    text = "a" * 100
+    assert build_notion_rich_text(text) == {"rich_text": [{"text": {"content": text}}]}
+
+
+def test_build_notion_rich_text_chunks_over_limit() -> None:
+    text = "x" * (NOTION_TEXT_BLOCK_MAX_LEN + 448)
+    payload = build_notion_rich_text(text)
+    segments = payload["rich_text"]
+    assert len(segments) == 2
+    assert len(segments[0]["text"]["content"]) == NOTION_TEXT_BLOCK_MAX_LEN
+    assert len(segments[1]["text"]["content"]) == 448
+    assert segments[0]["text"]["content"] + segments[1]["text"]["content"] == text
+
+
+def test_write_notion_property_rich_text_uses_chunks() -> None:
+    text = "y" * (NOTION_TEXT_BLOCK_MAX_LEN * 2 + 1)
+    payload = write_notion_property("rich_text", text)
+    assert len(payload["rich_text"]) == 3
 
 
 def test_create_page_parents_row_under_data_source() -> None:
