@@ -22,6 +22,7 @@ from notion_client import Client
 
 from src.grocery_wizard.config import Config
 from src.grocery_wizard.integrations.notion_data_source import resolve_notion_data_source_id
+from src.grocery_wizard.integrations.notion_table import build_notion_rich_text
 
 # Values accepted by ``create_recipe`` / ``update_recipe`` keyed by Notion column name.
 # Strings map to title/url/text/select/status; lists to multi_select; bool to checkbox;
@@ -397,7 +398,7 @@ class NotionRecipesDB:
         if column.type == "url":
             return {"url": str(value)}
         if column.type in ("rich_text", "text"):
-            return {"rich_text": [{"text": {"content": str(value)}}]}
+            return build_notion_rich_text(value)
         if column.type == "select":
             if value is NOTION_CLEAR_SELECT:
                 return {"select": None}
