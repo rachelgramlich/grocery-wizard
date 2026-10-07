@@ -9,6 +9,7 @@ import streamlit as st
 
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 from src.grocery_wizard.planning.saved_weekly_plans import SavedWeeklyPlan, list_saved_plans
+from src.grocery_wizard.ui.db_access import get_db
 
 if TYPE_CHECKING:
     from src.grocery_wizard.integrations.notion_household import PantryEntry
@@ -39,6 +40,7 @@ def invalidate_notion_cache() -> None:
     """Drop cached Notion reads after a write or when the user requests refresh."""
     st.session_state[_GENERATION_KEY] = notion_cache_generation() + 1
     invalidate_saved_plans_cache()
+    get_db.clear()
     st.cache_data.clear()
 
 
