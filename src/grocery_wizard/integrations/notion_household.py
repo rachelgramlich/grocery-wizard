@@ -54,7 +54,7 @@ def resolve_pantry_aisle_column(column_types: dict[str, str]) -> str:
 
 PLAN_NAME_COLUMN = "Name"
 PLAN_WEEK_START_COLUMN = "Week start"
-PLAN_VERSION_COLUMN = "Version"
+LEGACY_PLAN_VERSION_COLUMN = "Version"
 PLAN_RECIPES_COLUMN = "Recipes"
 
 
@@ -384,7 +384,6 @@ class NotionWeeklyPlansDB:
         props = {
             **self._db.property_payload(PLAN_NAME_COLUMN, name),
             **self._db.property_payload(PLAN_WEEK_START_COLUMN, week_start.isoformat()),
-            **self._db.property_payload(PLAN_VERSION_COLUMN, CANONICAL_PLAN_VERSION),
             **self._db.property_payload(PLAN_RECIPES_COLUMN, relation_ids),
         }
 
@@ -399,6 +398,17 @@ class NotionWeeklyPlansDB:
         if plan is None:
             raise RuntimeError("Failed to read plan after Notion write")
         return WeeklyPlanSaveResult(plan, outcome, previous)
+
+    def _plan_version_from_row(self, row: NotionPageRow) -> int:
+        if LEGACY_PLAN_VERSION_COLUMN not in self._db.column_types:
+            return CANONICAL_PLAN_VERSION
+        version_raw = self._db.read(row, LEGACY_PLAN_VERSION_COLUMN)
+        if version_raw is None:
+            return CANONICAL_PLAN_VERSION
+        try:
+            return int(version_raw)
+        except (TypeError, ValueError):
+            return CANONICAL_PLAN_VERSION
 
     def _plans_from_rows(
         self,
@@ -421,12 +431,11 @@ class NotionWeeklyPlansDB:
         if not name or not str(name).strip():
             return None
         week_raw = self._db.read(row, PLAN_WEEK_START_COLUMN)
-        version_raw = self._db.read(row, PLAN_VERSION_COLUMN)
         try:
             week_start = date.fromisoformat(str(week_raw).strip())
-            version = int(version_raw) if version_raw is not None else 0
         except (TypeError, ValueError):
             return None
+        version = self._plan_version_from_row(row)
         relation_ids = self._db.read(row, PLAN_RECIPES_COLUMN) or []
         recipe_names: list[str] = []
         for page_id in relation_ids:
