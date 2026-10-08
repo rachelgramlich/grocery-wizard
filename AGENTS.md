@@ -42,7 +42,7 @@
 
 Area from label `gw-area-<name>` or `### Area` in the issue body.
 
-**UI vocabulary:** **page** / **block** / **control** and dot IDs (`weekly.grocery_pre_build`, `global.global.refresh`, …) — see **`docs/ui-map.md`**. Say **store aisle** for aisle grouping (not “section”).
+**UI vocabulary:** **page** / **block** / **control** and dot IDs (`weekly.grocery_pre_build`, `global.global.refresh`, …) — see **`docs/ui-map.md`**. Weekly tab rail, collapse, and happy path: **`docs/weekly-flow-ui.md`**. Say **store aisle** for aisle grouping (not “section”).
 
 **UI tests:** import `APP_PATH`, `UI_ROOT`, `ui_source`, `pantry_page_source` from `tests/src/grocery_wizard/ui/ui_source.py` — no ad-hoc path literals.
 

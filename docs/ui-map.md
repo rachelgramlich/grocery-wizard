@@ -2,6 +2,8 @@
 
 Vocabulary for issues, feedback, tests, and agents.
 
+**Weekly tab behavior** (rail, collapse, happy path): see [`weekly-flow-ui.md`](weekly-flow-ui.md).
+
 ## Terms
 
 | Term | Meaning |
@@ -37,18 +39,20 @@ Constants: `src/grocery_wizard/ui/ids.py`, labels: `src/grocery_wizard/ui/pages/
 
 ### `weekly` (order matters)
 
-| Block ID | UI |
-|----------|-----|
+Rail steps (user-facing, not numbered): **Get started** → **Plan meals** → **Grocery list** (includes review + copy). Details: [`weekly-flow-ui.md`](weekly-flow-ui.md).
+
+| Block ID | UI (internal / legacy labels) |
+|----------|-------------------------------|
 | `weekly.plan_start` | How do you want to start? |
-| `weekly.meals` | 1. Meals |
-| `weekly.meals.build` | 1a. Build your meal list |
-| `weekly.meals.list` | 1b. Your meals |
-| `weekly.meals.save` | 1c. Save your plan |
-| `weekly.grocery_pre_build` | 2. Grocery list |
-| `weekly.grocery_recipe_review` | Review ingredients |
-| `weekly.grocery_result` | Built list |
-| `weekly.grocery_result.summary` | Summary (build result) |
-| `weekly.grocery_result.customize` | Customize list |
+| `weekly.meals` | Plan meals — meal count |
+| `weekly.meals.build` | Plan meals — build / pin / **Build my plan** |
+| `weekly.meals.list` | Plan meals — your meals (swap) |
+| `weekly.meals.save` | Plan meals — save to Notion |
+| `weekly.grocery_pre_build` | Grocery list — pre-build options |
+| `weekly.grocery_recipe_review` | Grocery list — review ingredients (main path) |
+| `weekly.grocery_result` | Grocery list — built list |
+| `weekly.grocery_result.summary` | Grocery list — summary (build result) |
+| `weekly.grocery_result.customize` | Grocery list — customize / copy |
 
 ### `add`
 
