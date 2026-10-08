@@ -128,6 +128,12 @@ def pick_default_recipe_names(
     return [recipe.name for recipe in shuffled[:meal_count]]
 
 
+def _set_dev_jump_rail_step(step_value: str) -> None:
+    from src.grocery_wizard.ui.pages.weekly_plan.step_ui import WeeklyRailStep, set_expanded_step
+
+    set_expanded_step(WeeklyRailStep(step_value))
+
+
 def clear_grocery_flow_state(session_state: Any) -> None:
     """Drop grocery result, review UI, and run-scoped pantry/recurring overrides."""
     for key in (
@@ -172,7 +178,12 @@ def commit_dev_jump(
     session_state.pop("weekly_plan_last_saved_name", None)
     session_state.pop("weekly_plan_saved_fingerprint", None)
 
-    if target in (DevJumpTarget.MEALS_FILLED, DevJumpTarget.PRE_BUILD_GROCERY):
+    if target == DevJumpTarget.MEALS_FILLED:
+        _set_dev_jump_rail_step("plan_meals")
+        return cleaned
+
+    if target == DevJumpTarget.PRE_BUILD_GROCERY:
+        _set_dev_jump_rail_step("grocery_list")
         return cleaned
 
     grocery_options = default_pre_build_grocery_options(session_state)
@@ -180,10 +191,12 @@ def commit_dev_jump(
 
     if target == DevJumpTarget.PER_RECIPE_REVIEW:
         stash_recipe_review(session_state, cleaned, recipes, grocery_options)
+        _set_dev_jump_rail_step("grocery_list")
         return cleaned
 
     if target == DevJumpTarget.GROCERY_RESULT:
         stash_grocery_result(session_state, db, cleaned, grocery_options, recipes=recipes)
+        _set_dev_jump_rail_step("grocery_list")
         return cleaned
 
     return cleaned

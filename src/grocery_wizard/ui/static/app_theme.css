@@ -577,3 +577,37 @@
         [data-testid="stToolbar"] {
             height: 0;
         }
+
+        /* Weekly tab step rail and block state (#328). */
+        p.gw-weekly-rail-anchor,
+        p.gw-weekly-block-anchor {
+            display: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        [data-testid="stVerticalBlock"]:has(p.gw-weekly-rail-anchor) {
+            margin-bottom: 0.35rem !important;
+        }
+
+        [data-testid="stVerticalBlock"]:has(p.gw-weekly-block-anchor[data-gw-weekly-state="done"]:not([data-gw-weekly-expanded="true"])) {
+            opacity: 0.82;
+        }
+
+        [data-testid="stVerticalBlock"]:has(p.gw-weekly-block-anchor[data-gw-weekly-state="upcoming"]) {
+            opacity: 0.55;
+        }
+
+        [class*="st-key-weekly_block_"]:has(
+            p.gw-weekly-block-anchor[data-gw-weekly-state="active"][data-gw-weekly-expanded="true"]
+        ) {
+            border-left: 3px solid var(--gw-accent);
+            padding-left: 0.65rem;
+            margin-left: 0.15rem;
+        }
+
+        [class*="st-key-weekly_block_"]:has(
+            p.gw-weekly-block-anchor[data-gw-weekly-expanded="false"]
+        ) {
+            padding-left: 0.35rem;
+        }

@@ -15,6 +15,7 @@ _UI_MODULE_PATHS = (
     "pages/weekly_plan/plan_entry.py",
     "pages/weekly_plan/recipe_review.py",
     "pages/weekly_plan/flow.py",
+    "pages/weekly_plan/step_ui.py",
     "pages/weekly_plan/grocery_list_ui.py",
     "pages/add_recipe.py",
     "pages/pantry_recurring.py",

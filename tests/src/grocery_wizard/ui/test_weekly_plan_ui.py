@@ -158,9 +158,14 @@ def test_post_build_collapses_generate_controls() -> None:
     assert "plan_last_week_filters" in source
 
 
-def test_weekly_tab_step_caption() -> None:
+def test_weekly_tab_step_rail() -> None:
     source = ui_source()
-    assert "**Steps:** 1. Meals → 2. Grocery list" in source
+    assert "**Steps:** 1. Meals → 2. Grocery list" not in source
+    assert "render_weekly_step_rail" in source
+    assert "Get started" in source
+    assert "Plan meals" in source
+    assert "Grocery list" in source
+    assert "gw-weekly-block-anchor" in source
 
 
 def test_dev_mode_auto_continues_without_continue_button() -> None:
