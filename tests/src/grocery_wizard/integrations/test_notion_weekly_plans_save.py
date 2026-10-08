@@ -8,7 +8,6 @@ from unittest.mock import MagicMock, patch
 from src.grocery_wizard.integrations.notion import Recipe
 from src.grocery_wizard.integrations.notion_household import NotionWeeklyPlansDB
 from src.grocery_wizard.integrations.notion_table import NotionPageRow
-from src.grocery_wizard.planning.saved_weekly_plans import CANONICAL_PLAN_VERSION
 
 
 @patch("src.grocery_wizard.integrations.notion_household.NotionRecipesDB")
@@ -67,4 +66,4 @@ def test_ensure_plan_writes_without_version_column(
     assert "Version" not in props
     assert props["Name"] == plan_name
     assert result.outcome == "created"
-    assert result.plan.version == CANONICAL_PLAN_VERSION
+    assert result.plan.name == plan_name

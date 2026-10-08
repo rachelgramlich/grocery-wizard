@@ -10,7 +10,6 @@ from src.grocery_wizard.config import Config, load_config
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe, recipe_lookup_key
 from src.grocery_wizard.integrations.notion_table import NotionDatabase, NotionPageRow
 from src.grocery_wizard.planning.saved_weekly_plans import (
-    CANONICAL_PLAN_VERSION,
     PlanSaveOutcome,
     SavedWeeklyPlan,
     SaveWeekChoice,
@@ -54,8 +53,29 @@ def resolve_pantry_aisle_column(column_types: dict[str, str]) -> str:
 
 PLAN_NAME_COLUMN = "Name"
 PLAN_WEEK_START_COLUMN = "Week start"
-LEGACY_PLAN_VERSION_COLUMN = "Version"
 PLAN_RECIPES_COLUMN = "Recipes"
+
+
+def _prefer_plan_for_week(plans: list[SavedWeeklyPlan], week_start: date) -> SavedWeeklyPlan | None:
+    """Pick one plan row when Notion has duplicates for the same week (legacy data)."""
+    week_plans = [plan for plan in plans if plan.week_start == week_start]
+    if not week_plans:
+        return None
+    expected = canonical_plan_name(week_start)
+    for plan in week_plans:
+        if plan.name == expected:
+            return plan
+    return week_plans[0]
+
+
+def _dedupe_plans_by_week(plans: list[SavedWeeklyPlan]) -> list[SavedWeeklyPlan]:
+    by_week: dict[date, SavedWeeklyPlan] = {}
+    for plan in sorted(
+        plans,
+        key=lambda p: (p.name == canonical_plan_name(p.week_start), p.name),
+    ):
+        by_week[plan.week_start] = plan
+    return sorted(by_week.values(), key=lambda plan: plan.week_start, reverse=True)
 
 
 def _section_header(label: str | None) -> str | None:
@@ -296,12 +316,7 @@ class NotionWeeklyPlansDB:
     def list_plans(self) -> list[SavedWeeklyPlan]:
         recipe_names_by_id = self._recipe_names_by_page_id()
         plans = self._plans_from_rows(self._db.query_all_pages(), recipe_names_by_id)
-        by_week: dict[date, SavedWeeklyPlan] = {}
-        for plan in plans:
-            current = by_week.get(plan.week_start)
-            if current is None or plan.version > current.version:
-                by_week[plan.week_start] = plan
-        return sorted(by_week.values(), key=lambda plan: plan.week_start, reverse=True)
+        return _dedupe_plans_by_week(plans)
 
     def load_plan_recipes(self, plan_name: str) -> list[str]:
         for plan in self.list_plans():
@@ -319,23 +334,7 @@ class NotionWeeklyPlansDB:
             self._db.query_all_pages(filter=week_filter),
             recipe_names_by_id,
         )
-        if not plans:
-            return None
-        return max(plans, key=lambda plan: plan.version)
-
-    def find_matching_plan(
-        self,
-        week_start: date,
-        recipes: tuple[str, ...],
-    ) -> SavedWeeklyPlan | None:
-        existing = self.find_plan_for_week(week_start)
-        if existing is not None and existing.recipes == recipes:
-            return existing
-        return None
-
-    def next_plan_version(self, week_start: date) -> int:
-        existing = [plan for plan in self.list_plans() if plan.week_start == week_start]
-        return max((plan.version for plan in existing), default=0) + 1
+        return _prefer_plan_for_week(plans, week_start)
 
     def ensure_plan(
         self,
@@ -368,7 +367,7 @@ class NotionWeeklyPlansDB:
             self._db.query_all_pages(filter=week_filter),
             recipe_names_by_id,
         )
-        canonical = max(plans, key=lambda plan: plan.version) if plans else None
+        canonical = _prefer_plan_for_week(plans, week_start)
         previous = canonical.recipes if canonical is not None else ()
 
         if canonical is not None and canonical.recipes == recipes:
@@ -399,17 +398,6 @@ class NotionWeeklyPlansDB:
             raise RuntimeError("Failed to read plan after Notion write")
         return WeeklyPlanSaveResult(plan, outcome, previous)
 
-    def _plan_version_from_row(self, row: NotionPageRow) -> int:
-        if LEGACY_PLAN_VERSION_COLUMN not in self._db.column_types:
-            return CANONICAL_PLAN_VERSION
-        version_raw = self._db.read(row, LEGACY_PLAN_VERSION_COLUMN)
-        if version_raw is None:
-            return CANONICAL_PLAN_VERSION
-        try:
-            return int(version_raw)
-        except (TypeError, ValueError):
-            return CANONICAL_PLAN_VERSION
-
     def _plans_from_rows(
         self,
         rows: list[NotionPageRow],
@@ -435,7 +423,6 @@ class NotionWeeklyPlansDB:
             week_start = date.fromisoformat(str(week_raw).strip())
         except (TypeError, ValueError):
             return None
-        version = self._plan_version_from_row(row)
         relation_ids = self._db.read(row, PLAN_RECIPES_COLUMN) or []
         recipe_names: list[str] = []
         for page_id in relation_ids:
@@ -444,7 +431,6 @@ class NotionWeeklyPlansDB:
                 recipe_names.append(recipe_name)
         return SavedWeeklyPlan(
             week_start=week_start,
-            version=version,
             name=str(name).strip(),
             recipes=tuple(recipe_names),
             page_id=row.page_id,
