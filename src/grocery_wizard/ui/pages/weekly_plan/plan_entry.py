@@ -61,6 +61,10 @@ from src.grocery_wizard.ui.pages.weekly_plan.state import (
     _weekly_plan_persists_tracking_stats_to_notion,
     _write_plan_names,
 )
+from src.grocery_wizard.ui.pages.weekly_plan.step_ui import (
+    WeeklyRailStep,
+    set_expanded_step,
+)
 from src.grocery_wizard.ui.recipe_match import (
     render_unmatched_plan_recipes_help,
     unmatched_plan_recipe_names,
@@ -472,8 +476,11 @@ def _render_weekly_plan_entry() -> bool:
         detail = f" — loaded **{loaded}**" if mode == "saved" and loaded else ""
         st.info(f"**{labels[mode]}**{detail}")
         if st.button("Change how I started", key="weekly_plan_change_mode"):
+            from src.grocery_wizard.ui.pages.weekly_plan.step_ui import clear_expanded_step_override
+
             _reset_weekly_plan_workflow(clear_mode=True)
             st.session_state.weekly_plan_mode_choice = "new"
+            clear_expanded_step_override()
             st.rerun()
         return True
 
@@ -523,6 +530,7 @@ def _render_weekly_plan_entry() -> bool:
 
     if choice == "dev":
         st.session_state.weekly_plan_mode = "dev"
+        set_expanded_step(WeeklyRailStep.PLAN_MEALS)
         _reset_weekly_plan_workflow(clear_mode=False)
         st.session_state.plan_meals_text = ""
         st.session_state.plan_meal_count = 1
@@ -533,6 +541,7 @@ def _render_weekly_plan_entry() -> bool:
         if choice == "saved" and not saved_plans:
             return False
         st.session_state.weekly_plan_mode = choice
+        set_expanded_step(WeeklyRailStep.PLAN_MEALS)
         _reset_weekly_plan_workflow(clear_mode=False)
         if choice == "saved" and selected_plan_name:
             with loading_indicator("Loading saved plan from Notion…"):
