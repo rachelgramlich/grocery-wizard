@@ -545,10 +545,11 @@ def _render_weekly_plan_entry() -> bool:
         _reset_weekly_plan_workflow(clear_mode=False)
         if choice == "saved" and selected_plan_name:
             with loading_indicator("Loading saved plan from Notion…"):
-                st.session_state.plan_meals_text = "\n".join(
-                    load_plan_recipes(selected_plan_name, recipes_db=get_db())
-                )
+                loaded_recipes = load_plan_recipes(selected_plan_name, recipes_db=get_db())
+                st.session_state.plan_meals_text = "\n".join(loaded_recipes)
             st.session_state.weekly_plan_loaded_name = selected_plan_name
+            st.session_state.plan_meal_count = max(1, len(loaded_recipes))
+            st.session_state.pop(PLAN_MEAL_COUNT_WIDGET_KEY, None)
         elif choice == "new":
             st.session_state.plan_meals_text = ""
             st.session_state.plan_meal_count = load_config().default_meals

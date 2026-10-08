@@ -115,6 +115,11 @@ def clear_expanded_step_override() -> None:
     st.session_state.pop(WEEKLY_EXPANDED_STEP_KEY, None)
 
 
+def collapse_after_plan_saved_to_notion() -> None:
+    """Drop rail expand override so plan meals collapses and grocery step opens (#329)."""
+    clear_expanded_step_override()
+
+
 def _render_block_anchor(
     step: WeeklyRailStep,
     *,

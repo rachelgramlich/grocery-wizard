@@ -31,6 +31,7 @@ from src.grocery_wizard.ui.pages.weekly_plan.state import (
     _ensure_weekly_plan_saved_before_grocery,
     _grocery_pre_extra_items_widget_key,
 )
+from src.grocery_wizard.ui.pages.weekly_plan.step_ui import clear_expanded_step_override
 
 
 def _build_result_added_items(result: dict) -> list[str]:
@@ -187,6 +188,7 @@ def render_grocery_list_section(
     if st.button("Create grocery list", type="primary", key="create_grocery"):
         if not _ensure_weekly_plan_saved_before_grocery(current_plan, cached_recipes=all_recipes):
             return
+        clear_expanded_step_override()
         with loading_indicator("Preparing ingredient review…"):
             _clear_grocery_result(clear_pre_extra_items=False)
             _start_recipe_review(

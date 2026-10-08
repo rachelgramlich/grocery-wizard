@@ -323,6 +323,11 @@ def _apply_weekly_plan_save_result(
 ) -> None:
     save_week_plan(recipe_names, WEEK_PLAN_PATH)
     _sync_weekly_plan_save_state(recipe_names, result.plan)
+    from src.grocery_wizard.ui.pages.weekly_plan.step_ui import (
+        collapse_after_plan_saved_to_notion,
+    )
+
+    collapse_after_plan_saved_to_notion()
     if result.outcome == "unchanged":
         return
     invalidate_saved_plans_cache()
@@ -443,6 +448,7 @@ def _render_save_plan_controls(
             plan = _commit_weekly_plan_to_notion(recipe_names, cached_recipes=cached_recipes)
         if plan is not None:
             st.success(f"Plan saved as **{plan.name}**")
+            st.rerun()
         return
 
 
