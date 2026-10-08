@@ -433,7 +433,13 @@ def _render_save_plan_controls(
         return
 
     label = "Save plan to Notion"
-    if st.button(label, type="secondary", key="save_weekly_plan"):
+    if st.button(
+        label,
+        type="primary",
+        key="save_weekly_plan",
+        use_container_width=True,
+        help="Writes this week's meals to Notion so you can reuse the plan later.",
+    ):
         with loading_indicator("Saving plan to Notion…"):
             plan = _commit_weekly_plan_to_notion(recipe_names, cached_recipes=cached_recipes)
         if plan is not None:

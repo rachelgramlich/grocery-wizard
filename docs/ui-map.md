@@ -43,6 +43,7 @@ Constants: `src/grocery_wizard/ui/ids.py`, labels: `src/grocery_wizard/ui/pages/
 | `weekly.meals` | 1. Meals |
 | `weekly.meals.build` | 1a. Build your meal list |
 | `weekly.meals.list` | 1b. Your meals |
+| `weekly.meals.save` | 1c. Save your plan |
 | `weekly.grocery_pre_build` | 2. Grocery list |
 | `weekly.grocery_recipe_review` | Review ingredients |
 | `weekly.grocery_result` | Built list |
