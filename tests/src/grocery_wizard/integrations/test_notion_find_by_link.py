@@ -70,9 +70,7 @@ def test_find_by_link_uses_notion_url_filter() -> None:
 def test_to_notion_property_chunks_long_rich_text() -> None:
     db = _minimal_db()
     db.schema = _schema()
-    db.schema.all_columns["Instructions"] = ColumnInfo(
-        name="Instructions", type="rich_text"
-    )
+    db.schema.all_columns["Instructions"] = ColumnInfo(name="Instructions", type="rich_text")
     payload = db._to_notion_property("Instructions", "z" * 2448)
     assert len(payload["rich_text"]) == 2
     assert len(payload["rich_text"][0]["text"]["content"]) == 2000
