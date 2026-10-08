@@ -19,9 +19,9 @@ Pantry staples, recurring weekly items, and saved weekly meal plans live in **No
 |------|-----------------|------------|
 | Pantry staples | Pantry | **Name** (title), **Store Aisle** or **Aisle** (select — labels from `store_aisles.txt`) |
 | Recurring weekly items | Recurring | **Name** (title) only |
-| Saved weekly meal plans | Weekly plans | **Name**, **Week start**, **Version**, **Recipes** (relation → Recipes) |
+| Saved weekly meal plans | Weekly plans | **Name**, **Week start**, **Recipes** (relation → Recipes) |
 
-Plan **Name** is the sole identifier (e.g. `2026-09-13_plan_v1`); no slug column.
+Plan **Name** is the sole identifier (e.g. `2026-09-13_plan`); no slug column.
 
 Current-week session state may still use `.local/grocery_wizard/week_plan.json` (gitignored) until fully Notion-backed for “this session” if needed.
 

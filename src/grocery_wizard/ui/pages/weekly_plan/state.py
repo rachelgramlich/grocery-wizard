@@ -240,7 +240,6 @@ def _matching_saved_plan(recipe_names: list[str]) -> SavedWeeklyPlan | None:
         return None
     return SavedWeeklyPlan(
         week_start=week_start,
-        version=0,
         name=str(saved_name),
         recipes=recipes,
     )
