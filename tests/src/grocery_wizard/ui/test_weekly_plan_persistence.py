@@ -34,6 +34,10 @@ def test_create_grocery_auto_saves_plan_if_missing() -> None:
 def test_explicit_save_plan_button_after_meals() -> None:
     source = ui_source()
     assert 'key="save_weekly_plan"' in source
+    save_button = source.split('key="save_weekly_plan"', 1)[0].rsplit("st.button", 1)[1]
+    assert 'type="primary"' in save_button
+    assert "#### 1c. Save your plan" in source
+    assert 'key="weekly_meals_save"' in source
     assert "Replace saved plan for this week" in source
     assert "_render_save_plan_controls(_current_plan_names(), cached_recipes=all_recipes)" in source
 

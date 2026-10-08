@@ -828,7 +828,14 @@ def _render_built_plan_meals(
                     _clear_grocery_result()
                 st.rerun()
 
-    _render_save_plan_controls(_current_plan_names(), cached_recipes=all_recipes)
+    st.divider()
+    st.markdown("#### 1c. Save your plan")
+    st.caption(
+        "When your meal list looks good, save it to Notion. "
+        "That finishes this step before you build a grocery list."
+    )
+    with st.container(key="weekly_meals_save"):
+        _render_save_plan_controls(_current_plan_names(), cached_recipes=all_recipes)
 
 
 def _apply_plan_meal_count_from_widget() -> None:
