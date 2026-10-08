@@ -580,7 +580,8 @@
 
         /* Weekly tab step rail and block state (#328). */
         p.gw-weekly-rail-anchor,
-        p.gw-weekly-block-anchor {
+        p.gw-weekly-block-anchor,
+        p.gw-weekly-sub-block-anchor {
             display: none;
             margin: 0;
             padding: 0;

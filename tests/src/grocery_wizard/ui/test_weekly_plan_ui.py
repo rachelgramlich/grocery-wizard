@@ -131,7 +131,7 @@ def test_dev_mode_exposes_collapsed_dev_tools_expander() -> None:
     assert "DEV_MANUAL_RECIPES_KEY" in source
     assert 'st.markdown("#### Meals filled")' not in source
     assert '"Choose recipes manually"' in source
-    assert '"Final list"' in source
+    assert '"Dev: Final list"' in source
     dev_section = source.split('st.expander("Dev tools"', 1)[1].split(
         "def _render_weekly_plan_entry", 1
     )[0]
@@ -139,11 +139,15 @@ def test_dev_mode_exposes_collapsed_dev_tools_expander() -> None:
     assert "for step in DEV_JUMP_FLOW_ORDER:\n            _dev_jump_bullet(step)" in dev_section
     bullets_end = dev_section.index("all_names = sorted")
     assert dev_section.index("for step in DEV_JUMP_FLOW_ORDER") < bullets_end
-    assert dev_section.index("Meals filled: auto") < dev_section.index('label="Pre-build grocery"')
-    assert dev_section.index('label="Pre-build grocery"') < dev_section.index(
-        'label="Per-recipe review"'
+    assert dev_section.index("Meals filled: auto") < dev_section.index(
+        'label="Dev: Pre-build grocery"'
     )
-    assert dev_section.index('label="Per-recipe review"') < dev_section.index('label="Final list"')
+    assert dev_section.index('label="Dev: Pre-build grocery"') < dev_section.index(
+        'label="Dev: Per-recipe review"'
+    )
+    assert dev_section.index('label="Dev: Per-recipe review"') < dev_section.index(
+        'label="Dev: Final list"'
+    )
 
 
 def test_post_build_collapses_generate_controls() -> None:
@@ -276,7 +280,9 @@ def test_post_build_slot_manual_picker_caption() -> None:
 def test_grocery_list_extra_items_before_create_button() -> None:
     """Issue #121 / #131: Extra items in their own expander before Create grocery list."""
     source = ui_source()
-    section = source.split("### 2. Grocery list", 1)[1].split("def _render_grocery_result", 1)[0]
+    section = source.split("def render_grocery_list_section", 1)[1].split(
+        "def _render_grocery_result", 1
+    )[0]
 
     create_idx = section.index('if st.button("Create grocery list"')
     assert 'with st.expander("Pantry & Recurring Items"' in section
@@ -290,6 +296,22 @@ def test_grocery_list_extra_items_before_create_button() -> None:
         'with st.expander("Add extra items"', 1
     )[0]
     assert "_grocery_pre_extra_items_widget_key()" not in pantry_block
+
+
+def test_grocery_stage_uses_sub_block_anchors_and_scroll() -> None:
+    """Issue #330: grocery sub-stages share rail step 3 with scroll hooks."""
+    grocery_source = (UI_ROOT / "pages" / "weekly_plan" / "grocery_list_ui.py").read_text(
+        encoding="utf-8"
+    )
+    review_source = (UI_ROOT / "pages" / "weekly_plan" / "recipe_review.py").read_text(
+        encoding="utf-8"
+    )
+    assert "### 2. Grocery list" not in grocery_source
+    assert "render_weekly_sub_block_anchor(BLOCK_WEEKLY_GROCERY_PRE_BUILD)" in grocery_source
+    assert "queue_weekly_scroll(BLOCK_WEEKLY_GROCERY_RECIPE_REVIEW)" in grocery_source
+    assert "render_weekly_sub_block_anchor(BLOCK_WEEKLY_GROCERY_RECIPE_REVIEW)" in review_source
+    assert "queue_weekly_scroll(BLOCK_WEEKLY_GROCERY_RESULT)" in review_source
+    assert 'st.expander("Summary (build result)", expanded=False)' in grocery_source
 
 
 def test_cached_plan_ingredient_index_rebuilds_when_value_missing() -> None:

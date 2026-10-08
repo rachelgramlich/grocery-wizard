@@ -16,6 +16,10 @@ from src.grocery_wizard.ui.grocery_flow import (
     sync_recipe_review_overrides_to_session,
 )
 from src.grocery_wizard.ui.grocery_helpers import parse_line_items_text
+from src.grocery_wizard.ui.ids import (
+    BLOCK_WEEKLY_GROCERY_RECIPE_REVIEW,
+    BLOCK_WEEKLY_GROCERY_RESULT,
+)
 from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.notion_cache import cached_query_recipes, invalidate_notion_cache
 from src.grocery_wizard.ui.pages.weekly_plan.state import (
@@ -23,6 +27,12 @@ from src.grocery_wizard.ui.pages.weekly_plan.state import (
     _clear_grocery_result,
     _session_pantry_extra,
     _weekly_plan_mode,
+)
+from src.grocery_wizard.ui.pages.weekly_plan.step_ui import (
+    WeeklyRailStep,
+    queue_weekly_scroll,
+    render_weekly_sub_block_anchor,
+    set_expanded_step,
 )
 from src.grocery_wizard.ui.recipe_match import (
     render_unmatched_plan_recipes_help,
@@ -101,12 +111,13 @@ def _save_recipe_review_to_notion(
 
 def _render_per_recipe_review(db: NotionRecipesDB, selected: list[str]) -> None:
     """Show one expandable text editor per recipe; build final list on confirmation."""
+    render_weekly_sub_block_anchor(BLOCK_WEEKLY_GROCERY_RECIPE_REVIEW)
     review: dict[str, str] = st.session_state.grocery_per_recipe_review
     opts: dict = st.session_state.grocery_review_options
     baseline = dict(st.session_state.get("grocery_review_baseline") or review)
     dev_mode = _weekly_plan_mode() == "dev"
 
-    st.markdown("### Review ingredients")
+    st.markdown("**Review ingredients**")
     st.caption(
         "Each recipe's ingredients are listed in collapsible sections below. "
         "Open a recipe to edit lines, **Save to Notion** when ready, then use "
@@ -249,4 +260,6 @@ def _render_per_recipe_review(db: NotionRecipesDB, selected: list[str]) -> None:
         if key_str.startswith(("review_ing_", "review_save_")):
             st.session_state.pop(key, None)
     _clear_grocery_pre_extra_items()
+    set_expanded_step(WeeklyRailStep.GROCERY_LIST)
+    queue_weekly_scroll(BLOCK_WEEKLY_GROCERY_RESULT)
     st.rerun()
