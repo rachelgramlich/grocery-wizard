@@ -41,11 +41,11 @@ from src.grocery_wizard.ui.pages.weekly_plan.state import (
 )
 from src.grocery_wizard.ui.pages.weekly_plan.step_ui import (
     WeeklyRailStep,
+    clear_expanded_step_override,
     queue_weekly_scroll,
     render_weekly_sub_block_anchor,
     set_expanded_step,
 )
-from src.grocery_wizard.ui.pages.weekly_plan.step_ui import clear_expanded_step_override
 
 
 def _build_result_added_items(result: dict) -> list[str]:
