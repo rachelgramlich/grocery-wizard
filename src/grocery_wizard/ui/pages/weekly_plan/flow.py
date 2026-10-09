@@ -22,6 +22,7 @@ from src.grocery_wizard.ui.pages.weekly_plan.state import (
 )
 from src.grocery_wizard.ui.pages.weekly_plan.step_ui import (
     WeeklyRailStep,
+    render_weekly_scroll_into_view,
     render_weekly_step_rail,
     weekly_plan_has_started,
     weekly_step_block,
@@ -85,3 +86,5 @@ def render_create_weekly_plan() -> None:
     with weekly_step_block(WeeklyRailStep.GROCERY_LIST, recipe_names=recipe_names) as show_grocery:
         if show_grocery:
             _weekly_plan_grocery_fragment(db, all_recipes)
+
+    render_weekly_scroll_into_view()

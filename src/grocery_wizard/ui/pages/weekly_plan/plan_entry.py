@@ -39,6 +39,7 @@ from src.grocery_wizard.ui.dev_jumps import (
     resolve_dev_jump_meal_names,
     sync_dev_manual_multiselect,
 )
+from src.grocery_wizard.ui.ids import BLOCK_WEEKLY_MEALS
 from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.meal_plan_filters import (
     recipes_ingredient_cache_key,
@@ -64,6 +65,7 @@ from src.grocery_wizard.ui.pages.weekly_plan.state import (
 )
 from src.grocery_wizard.ui.pages.weekly_plan.step_ui import (
     WeeklyRailStep,
+    queue_weekly_scroll,
     set_expanded_step,
 )
 from src.grocery_wizard.ui.recipe_match import (
@@ -475,19 +477,19 @@ def _render_dev_jump_tools(db: NotionRecipesDB) -> None:
         )
         _dev_jump_button(
             DevJumpTarget.PRE_BUILD_GROCERY,
-            label="Pre-build grocery",
+            label="Dev: Pre-build grocery",
             key_suffix="btn_pre_build",
             names=jump_names,
         )
         _dev_jump_button(
             DevJumpTarget.PER_RECIPE_REVIEW,
-            label="Per-recipe review",
+            label="Dev: Per-recipe review",
             key_suffix="btn_review",
             names=jump_names,
         )
         _dev_jump_button(
             DevJumpTarget.GROCERY_RESULT,
-            label="Final list",
+            label="Dev: Final list",
             key_suffix="btn_final_list",
             names=jump_names,
         )
@@ -584,6 +586,7 @@ def _render_weekly_plan_entry() -> bool:
             st.session_state.plan_meals_text = ""
             st.session_state.plan_meal_count = load_config().default_meals
             st.session_state.pop(PLAN_MEAL_COUNT_WIDGET_KEY, None)
+        queue_weekly_scroll(BLOCK_WEEKLY_MEALS)
         st.rerun()
 
     return False
@@ -687,6 +690,7 @@ def _render_generate_plan_controls(
             _clear_grocery_session_overrides()
             _clear_grocery_result()
             st.session_state.plan_last_week_filters = build_filters
+        queue_weekly_scroll(BLOCK_WEEKLY_MEALS)
         st.rerun()
 
     return build_filters

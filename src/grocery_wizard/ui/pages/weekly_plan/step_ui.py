@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Iterator
 from contextlib import contextmanager
 from enum import StrEnum
@@ -20,6 +21,7 @@ from src.grocery_wizard.ui.pages.weekly_plan.state import (
 )
 
 WEEKLY_EXPANDED_STEP_KEY = "weekly_expanded_step"
+WEEKLY_SCROLL_TARGET_KEY = "weekly_scroll_target"
 
 WeeklyStepState = Literal["active", "done", "upcoming"]
 
@@ -120,6 +122,75 @@ def collapse_after_plan_saved_to_notion() -> None:
     clear_expanded_step_override()
 
 
+def queue_weekly_scroll(block_id: str) -> None:
+    """Scroll to a block anchor on the next run (see ``render_weekly_scroll_into_view``)."""
+    st.session_state[WEEKLY_SCROLL_TARGET_KEY] = block_id
+
+
+def render_weekly_sub_block_anchor(block_id: str) -> None:
+    """Hidden marker for grocery sub-stages within a rail step."""
+    st.markdown(
+        (
+            f'<p class="gw-weekly-sub-block-anchor" '
+            f'data-gw-block-id="{block_id}" '
+            f'aria-hidden="true"></p>'
+        ),
+        unsafe_allow_html=True,
+    )
+
+
+def grocery_rail_subcaption() -> str | None:
+    if st.session_state.get("grocery_result"):
+        return "Your list"
+    if st.session_state.get("grocery_per_recipe_review") is not None:
+        return "Review ingredients"
+    return None
+
+
+def render_weekly_scroll_into_view() -> None:
+    block_id = st.session_state.pop(WEEKLY_SCROLL_TARGET_KEY, None)
+    if not block_id:
+        return
+    payload = json.dumps(block_id)
+    st.iframe(
+        f"""
+        <script>
+        (function () {{
+          const blockId = {payload};
+          function findAnchor() {{
+            return document.parentDocument.querySelector(
+              'p.gw-weekly-sub-block-anchor[data-gw-block-id="' + blockId + '"],' +
+              'p.gw-weekly-block-anchor[data-gw-block-id="' + blockId + '"]'
+            );
+          }}
+          function scrollTarget() {{
+            const anchor = findAnchor();
+            if (!anchor) {{
+              return false;
+            }}
+            const block = anchor.closest('[data-testid="stVerticalBlock"]');
+            if (block) {{
+              block.scrollIntoView({{ behavior: 'smooth', block: 'start' }});
+              return true;
+            }}
+            return false;
+          }}
+          if (!scrollTarget()) {{
+            let tries = 0;
+            const timer = setInterval(function () {{
+              tries += 1;
+              if (scrollTarget() || tries > 25) {{
+                clearInterval(timer);
+              }}
+            }}, 100);
+          }}
+        }})();
+        </script>
+        """,
+        height=1,
+    )
+
+
 def _render_block_anchor(
     step: WeeklyRailStep,
     *,
@@ -174,6 +245,8 @@ def _render_collapsed_summary(step: WeeklyRailStep) -> None:
     if step == WeeklyRailStep.GROCERY_LIST:
         if _grocery_list_done():
             st.caption("Grocery list built. Expand to review or copy.")
+        elif st.session_state.get("grocery_per_recipe_review") is not None:
+            st.caption("Review ingredients, then build your final list.")
         else:
             st.caption("Build your grocery list when meals are ready.")
 
@@ -223,6 +296,9 @@ def render_weekly_step_rail(*, recipe_names: list[str]) -> None:
 
     expanded_step = effective_expanded_step(recipe_names=recipe_names)
     st.markdown('<p class="gw-weekly-rail-anchor" aria-hidden="true"></p>', unsafe_allow_html=True)
+    subcaption = grocery_rail_subcaption()
+    if subcaption:
+        st.caption(subcaption)
     cols = st.columns(len(RAIL_STEP_ORDER))
     for col, step in zip(cols, RAIL_STEP_ORDER, strict=True):
         segment_state = _rail_segment_state(
@@ -238,4 +314,5 @@ def render_weekly_step_rail(*, recipe_names: list[str]) -> None:
                 type="primary" if segment_state == "active" else "secondary",
             ):
                 set_expanded_step(step)
+                queue_weekly_scroll(_BLOCK_ID_BY_STEP[step])
                 st.rerun()
