@@ -45,7 +45,25 @@ def test_app_theme_css_includes_weekly_rail_hooks() -> None:
     for fragment in (
         "gw-weekly-rail-anchor",
         "gw-weekly-block-anchor",
+        "gw-weekly-sub-block-anchor",
         "data-gw-weekly-state",
         "st-key-weekly_block_",
     ):
         assert fragment in css
+
+
+def test_grocery_rail_subcaption(monkeypatch) -> None:
+    session: dict = {}
+    monkeypatch.setattr(step_ui.st, "session_state", session, raising=False)
+    assert step_ui.grocery_rail_subcaption() is None
+    session["grocery_per_recipe_review"] = {"tacos": "beans"}
+    assert step_ui.grocery_rail_subcaption() == "Review ingredients"
+    session["grocery_result"] = {"items": []}
+    assert step_ui.grocery_rail_subcaption() == "Your list"
+
+
+def test_queue_weekly_scroll_stores_block_id(monkeypatch) -> None:
+    session: dict = {}
+    monkeypatch.setattr(step_ui.st, "session_state", session, raising=False)
+    step_ui.queue_weekly_scroll("weekly.grocery_result")
+    assert session[step_ui.WEEKLY_SCROLL_TARGET_KEY] == "weekly.grocery_result"

@@ -20,6 +20,13 @@ from src.grocery_wizard.ui.grocery_helpers import (
     removal_matches_grocery_line,
     render_copy_button,
 )
+from src.grocery_wizard.ui.ids import (
+    BLOCK_WEEKLY_GROCERY_PRE_BUILD,
+    BLOCK_WEEKLY_GROCERY_RECIPE_REVIEW,
+    BLOCK_WEEKLY_GROCERY_RESULT,
+    BLOCK_WEEKLY_GROCERY_RESULT_CUSTOMIZE,
+    BLOCK_WEEKLY_GROCERY_RESULT_SUMMARY,
+)
 from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.notion_cache import cached_query_recipes
 from src.grocery_wizard.ui.pages.weekly_plan.recipe_review import (
@@ -30,6 +37,13 @@ from src.grocery_wizard.ui.pages.weekly_plan.state import (
     _clear_grocery_result,
     _ensure_weekly_plan_saved_before_grocery,
     _grocery_pre_extra_items_widget_key,
+    _weekly_plan_mode,
+)
+from src.grocery_wizard.ui.pages.weekly_plan.step_ui import (
+    WeeklyRailStep,
+    queue_weekly_scroll,
+    render_weekly_sub_block_anchor,
+    set_expanded_step,
 )
 
 
@@ -75,22 +89,23 @@ def _render_build_result_summary(result: dict) -> None:
     added_items = _build_result_added_items(result)
     excluded: list[str] = list(result.get("excluded") or [])
 
-    st.markdown("### Summary (build result)")
-    col_added, col_removed = st.columns(2)
-    with col_added:
-        st.markdown("**Added: recurring items and pasted extras**")
-        if added_items:
-            for item in added_items:
-                st.write(f"- {item}")
-        else:
-            st.write("_None_")
-    with col_removed:
-        st.markdown("**Removed: items in the pantry**")
-        if excluded:
-            for item in excluded:
-                st.write(f"- {item}")
-        else:
-            st.write("_None_")
+    render_weekly_sub_block_anchor(BLOCK_WEEKLY_GROCERY_RESULT_SUMMARY)
+    with st.expander("Summary (build result)", expanded=False):
+        col_added, col_removed = st.columns(2)
+        with col_added:
+            st.markdown("**Added: recurring items and pasted extras**")
+            if added_items:
+                for item in added_items:
+                    st.write(f"- {item}")
+            else:
+                st.write("_None_")
+        with col_removed:
+            st.markdown("**Removed: items in the pantry**")
+            if excluded:
+                for item in excluded:
+                    st.write(f"- {item}")
+            else:
+                st.write("_None_")
 
 
 def _render_adjust_this_week_list(result: dict) -> None:
@@ -138,10 +153,7 @@ def render_grocery_list_section(
     all_recipes: list[Recipe],
     current_plan: list[str],
 ) -> None:
-    """Render step 2 (grocery list): result, review, or pre-build controls."""
-    st.divider()
-    st.markdown("### 2. Grocery list")
-
+    """Render grocery list sub-stages (pre-build, review, result) within rail step 3."""
     if st.session_state.get("grocery_result"):
         _render_grocery_result()
         return
@@ -153,6 +165,8 @@ def render_grocery_list_section(
     if not current_plan:
         st.caption("Build a meal plan above to continue.")
         return
+
+    render_weekly_sub_block_anchor(BLOCK_WEEKLY_GROCERY_PRE_BUILD)
 
     pre_build_defaults = default_pre_build_grocery_options(st.session_state)
     default_recurring = pre_build_defaults.default_recurring
@@ -197,10 +211,13 @@ def render_grocery_list_section(
                 default_recurring=default_recurring,
                 extra_items_text=extra_items_text,
             )
+        set_expanded_step(WeeklyRailStep.GROCERY_LIST)
+        queue_weekly_scroll(BLOCK_WEEKLY_GROCERY_RECIPE_REVIEW)
         st.rerun()
 
 
 def _render_grocery_result() -> None:
+    render_weekly_sub_block_anchor(BLOCK_WEEKLY_GROCERY_RESULT)
     result = st.session_state.grocery_result
     items: list[str] = result["items"]
     excluded: list[str] = result["excluded"]
@@ -244,10 +261,16 @@ def _render_grocery_result() -> None:
         final_items,
     )
     if aligned_provenance:
-        with st.expander("Item sources (which recipe each item came from)"):
+        sources_label = (
+            "Dev: item sources"
+            if _weekly_plan_mode() == "dev"
+            else "Item sources (which recipe each item came from)"
+        )
+        with st.expander(sources_label, expanded=False):
             st.text(format_item_provenance(aligned_provenance))
 
     if final_items or meal_names:
+        render_weekly_sub_block_anchor(BLOCK_WEEKLY_GROCERY_RESULT_CUSTOMIZE)
         db = get_db()
         meals = meal_entries_with_links(meal_names, cached_query_recipes(db))
         meals_copy_text = format_meals_copy_text(meals)
