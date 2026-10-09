@@ -117,6 +117,11 @@ def clear_expanded_step_override() -> None:
     st.session_state.pop(WEEKLY_EXPANDED_STEP_KEY, None)
 
 
+def collapse_after_plan_saved_to_notion() -> None:
+    """Drop rail expand override so plan meals collapses and grocery step opens (#329)."""
+    clear_expanded_step_override()
+
+
 def queue_weekly_scroll(block_id: str) -> None:
     """Scroll to a block anchor on the next run (see ``render_weekly_scroll_into_view``)."""
     st.session_state[WEEKLY_SCROLL_TARGET_KEY] = block_id

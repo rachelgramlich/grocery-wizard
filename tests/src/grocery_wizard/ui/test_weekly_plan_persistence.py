@@ -2,7 +2,37 @@
 
 from __future__ import annotations
 
-from ui_source import APP_PATH, ui_source
+from ui_source import APP_PATH, UI_ROOT, ui_source
+
+
+def test_saved_plan_continue_sets_meal_count_from_loaded_recipes() -> None:
+    source = ui_source()
+    entry = source.split("def _render_weekly_plan_entry", 1)[1].split(
+        "def _ensure_plan_session_defaults", 1
+    )[0]
+    assert "loaded_recipes = load_plan_recipes" in entry
+    assert "plan_meal_count = max(1, len(loaded_recipes))" in entry
+    assert "PLAN_MEAL_COUNT_WIDGET_KEY" in entry
+
+
+def test_plan_save_collapses_rail_expand_override() -> None:
+    state_source = (UI_ROOT / "pages" / "weekly_plan" / "state.py").read_text(encoding="utf-8")
+    apply_fn = state_source.split("def _apply_weekly_plan_save_result", 1)[1].split(
+        "def _persist_weekly_plan_to_notion", 1
+    )[0]
+    assert "collapse_after_plan_saved_to_notion" in apply_fn
+    save_controls = state_source.split("def _render_save_plan_controls", 1)[1].split(
+        "def _invalidate_stale_grocery_result", 1
+    )[0]
+    assert "st.rerun()" in save_controls
+
+
+def test_create_grocery_clears_rail_override_after_plan_saved() -> None:
+    source = (UI_ROOT / "pages" / "weekly_plan" / "grocery_list_ui.py").read_text(encoding="utf-8")
+    section = source.split('if st.button("Create grocery list"', 1)[1].split(
+        "with loading_indicator", 1
+    )[0]
+    assert "clear_expanded_step_override" in section
 
 
 def test_saved_plan_build_keeps_loaded_recipes_by_default() -> None:

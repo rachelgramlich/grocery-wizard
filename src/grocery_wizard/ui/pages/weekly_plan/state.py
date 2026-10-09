@@ -53,6 +53,7 @@ _SAVE_WEEK_CHOICE_KEY = "weekly_plan_save_week_choice"
 # Widget key for meal count; ``plan_meal_count`` persists when the weekly tab is not rendered.
 PLAN_MEAL_COUNT_WIDGET_KEY = "plan_meal_count_input"
 PLAN_FORCE_OPEN_1A_KEY = "plan_force_open_1a"
+PLAN_BUILDER_POPOVER_KEY = "plan_builder_popover"
 _OVERWRITE_CONFIRM_FP_KEY = "weekly_plan_overwrite_confirm_fingerprint"
 _RUN_GROCERY_AFTER_OVERWRITE_KEY = "weekly_plan_run_grocery_after_overwrite"
 
@@ -323,6 +324,11 @@ def _apply_weekly_plan_save_result(
 ) -> None:
     save_week_plan(recipe_names, WEEK_PLAN_PATH)
     _sync_weekly_plan_save_state(recipe_names, result.plan)
+    from src.grocery_wizard.ui.pages.weekly_plan.step_ui import (
+        collapse_after_plan_saved_to_notion,
+    )
+
+    collapse_after_plan_saved_to_notion()
     if result.outcome == "unchanged":
         return
     invalidate_saved_plans_cache()
@@ -443,6 +449,7 @@ def _render_save_plan_controls(
             plan = _commit_weekly_plan_to_notion(recipe_names, cached_recipes=cached_recipes)
         if plan is not None:
             st.success(f"Plan saved as **{plan.name}**")
+            st.rerun()
         return
 
 

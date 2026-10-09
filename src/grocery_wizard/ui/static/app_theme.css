@@ -205,7 +205,8 @@
         [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:last-child .stButton,
         [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:last-child .stPopover,
         [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions) [data-testid="stElementContainer"],
-        [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions) .stButton {
+        [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions) .stButton,
+        [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions) .stPopover {
             width: auto !important;
             min-width: max-content !important;
             max-width: none !important;
@@ -214,10 +215,15 @@
 
         [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:last-child button,
         [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:last-child .stPopover button,
-        [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions) button {
+        [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions) button,
+        [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions) .stPopover button {
             width: auto !important;
             min-width: max-content !important;
             max-width: none !important;
+        }
+
+        [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions) .stPopover button {
+            min-width: 11.25rem !important;
         }
 
         [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:last-child .stPopover button {
@@ -229,7 +235,9 @@
         [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:last-child .stPopover button p,
         [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) [data-testid="stColumn"]:last-child .stPopover button span,
         [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions) button p,
-        [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions) button span {
+        [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions) button span,
+        [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions) .stPopover button p,
+        [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions) .stPopover button span {
             overflow: visible !important;
             text-overflow: clip !important;
             white-space: nowrap !important;
