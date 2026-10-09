@@ -149,10 +149,13 @@ def test_dev_mode_exposes_collapsed_dev_tools_expander() -> None:
 def test_post_build_collapses_generate_controls() -> None:
     source = ui_source()
     meals_fn = source.split("def render_meals_section", 1)[1].split("\ndef ", 1)[0]
-    assert 'st.expander("1a. Build your meal list"' in meals_fn
-    assert "expanded=expanded_1a" in meals_fn
-    assert "Adjust filters or rebuild plan" not in source
-    assert "Change filters & rebuild" in source
+    assert 'st.expander("1a. Build your meal list"' not in meals_fn
+    assert "PLAN_BUILDER_POPOVER_KEY" in meals_fn
+    popover_fn = source.split("def _render_plan_builder_popover", 1)[1].split(
+        "def _render_slot_manual_popover", 1
+    )[0]
+    assert 'st.popover(\n        "Build your meal list"' in popover_fn
+    assert "Change filters & rebuild" not in source
     assert 'key="plan_week_action_row"' in source
     assert "PLAN_FORCE_OPEN_1A_KEY" in source
     assert "plan_last_week_filters" in source

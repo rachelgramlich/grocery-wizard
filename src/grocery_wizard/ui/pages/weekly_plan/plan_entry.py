@@ -46,6 +46,7 @@ from src.grocery_wizard.ui.meal_plan_filters import (
 )
 from src.grocery_wizard.ui.notion_cache import cached_saved_plans, invalidate_notion_cache
 from src.grocery_wizard.ui.pages.weekly_plan.state import (
+    PLAN_BUILDER_POPOVER_KEY,
     PLAN_FORCE_OPEN_1A_KEY,
     PLAN_MEAL_COUNT_WIDGET_KEY,
     _clear_grocery_result,
@@ -340,6 +341,35 @@ def _slot_manual_picker_fragment(
     return _render
 
 
+def _render_plan_builder_popover(
+    db: NotionRecipesDB,
+    *,
+    all_recipes: list,
+    meal_count: int,
+    ingredient_index: dict[str, set[str]],
+) -> MealPlanFilters:
+    """Post-build meal builder in a secondary popover (matches per-meal Choose manually)."""
+    schema = db.schema
+    fallback = st.session_state.get("plan_last_week_filters") or default_filters(schema.all_columns)
+    with st.popover(
+        "Build your meal list",
+        help="Pin meals, adjust filters, and rebuild your plan",
+        width="content",
+        wrap=False,
+        key=PLAN_BUILDER_POPOVER_KEY,
+    ):
+        filters = _render_generate_plan_controls(
+            db,
+            all_recipes=all_recipes,
+            meal_count=meal_count,
+            ingredient_index=ingredient_index,
+            show_section_heading=False,
+        )
+        st.session_state.plan_last_week_filters = filters
+        return filters
+    return fallback
+
+
 def _render_slot_manual_popover(
     *,
     slot_index: int,
@@ -611,7 +641,7 @@ def _render_generate_plan_controls(
     filter_defaults = default_filters(schema.all_columns)
 
     if show_section_heading:
-        st.markdown("#### 1a. Build your meal list")
+        st.markdown("#### Build your meal list")
     st.caption(
         "Optionally pin meals you already know, then **Build my plan** auto-fills the rest. "
         "Per-meal filters are available under each meal after you build."
@@ -771,16 +801,12 @@ def _render_built_plan_meals(
             width="content",
             horizontal_alignment="left",
         ):
-            if st.button(
-                "Change filters & rebuild",
-                key="plan_jump_to_builder",
-                width="content",
-                help=(
-                    "Opens plan builder: adjust week filters or pinned meals, then Build my plan."
-                ),
-            ):
-                st.session_state[PLAN_FORCE_OPEN_1A_KEY] = True
-                st.rerun()
+            _render_plan_builder_popover(
+                db,
+                all_recipes=all_recipes,
+                meal_count=meal_count,
+                ingredient_index=ingredient_index,
+            )
             if st.button("Re-generate all meals", key="regenerate_plan", width="content"):
                 with loading_indicator("Re-generating your meal plan…"):
                     origins = _plan_slot_origins()
@@ -879,18 +905,18 @@ def render_meals_section(
     fallback_filters = default_filters(db.schema.all_columns)
     stored_filters = st.session_state.get("plan_last_week_filters", fallback_filters)
     has_plan = bool(current_plan)
-    force_open_1a = st.session_state.pop(PLAN_FORCE_OPEN_1A_KEY, False)
-    expanded_1a = (not has_plan) or force_open_1a
+    if st.session_state.pop(PLAN_FORCE_OPEN_1A_KEY, False):
+        st.session_state[PLAN_BUILDER_POPOVER_KEY] = True
 
     if has_plan:
-        with st.expander("1a. Build your meal list", expanded=expanded_1a):
-            week_filters = _render_generate_plan_controls(
-                db,
-                all_recipes=all_recipes,
-                meal_count=meal_count,
-                ingredient_index=ingredient_index,
-                show_section_heading=False,
-            )
+        _render_built_plan_meals(
+            db,
+            all_recipes=all_recipes,
+            meal_count=meal_count,
+            week_filters=stored_filters,
+            ingredient_index=ingredient_index,
+        )
+        week_filters = st.session_state.get("plan_last_week_filters", stored_filters)
     else:
         week_filters = _render_generate_plan_controls(
             db,
@@ -899,14 +925,13 @@ def render_meals_section(
             ingredient_index=ingredient_index,
             show_section_heading=True,
         )
+        _render_built_plan_meals(
+            db,
+            all_recipes=all_recipes,
+            meal_count=meal_count,
+            week_filters=week_filters,
+            ingredient_index=ingredient_index,
+        )
     st.session_state.plan_last_week_filters = week_filters
-
-    _render_built_plan_meals(
-        db,
-        all_recipes=all_recipes,
-        meal_count=meal_count,
-        week_filters=stored_filters if has_plan else week_filters,
-        ingredient_index=ingredient_index,
-    )
 
     return _current_plan_names()
