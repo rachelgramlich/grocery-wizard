@@ -23,7 +23,9 @@ from src.grocery_wizard.shopping.store_aisles import (
     StoreAisleConfig,
     aisle_label,
     classify_aisle,
+    is_legacy_notion_aisle_label,
     load_store_aisles,
+    resolve_pantry_aisle_id,
 )
 from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.notion_cache import cached_pantry_entries, invalidate_notion_cache
@@ -65,9 +67,13 @@ def _remove_pantry_item_and_invalidate(name: str) -> bool:
 
 def _pantry_display_aisle_label(entry: object, *, config: StoreAisleConfig) -> str:
     stored = str(getattr(entry, "section", None) or "").strip()
-    if stored:
+    name = str(getattr(entry, "name", ""))
+    if stored and not is_legacy_notion_aisle_label(stored):
+        resolved = resolve_pantry_aisle_id(stored, config=config)
+        if resolved is not None:
+            return aisle_label(resolved, config=config)
         return stored
-    aisle_id = classify_aisle(str(getattr(entry, "name", "")), config=config)
+    aisle_id = classify_aisle(name, config=config)
     return aisle_label(aisle_id, config=config)
 
 
@@ -248,8 +254,8 @@ def _render_pantry_add_form(*, aisle_config: StoreAisleConfig) -> None:
             "Store aisle",
             options=list(aisle_config.aisle_order),
             format_func=lambda aisle_id: aisle_label(aisle_id, config=aisle_config),
-            index=list(aisle_config.aisle_order).index("dry goods")
-            if "dry goods" in aisle_config.aisle_order
+            index=list(aisle_config.aisle_order).index("sauces/condiments")
+            if "sauces/condiments" in aisle_config.aisle_order
             else 0,
         )
         if st.form_submit_button("Add to pantry", type="primary"):

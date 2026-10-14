@@ -8,6 +8,7 @@ __all__ = [
     "canonical_pantry_section_label",
     "group_grocery_items_by_aisle",
     "ingredient_name",
+    "is_legacy_notion_aisle_label",
     "load_store_aisles",
     "pantry_aisle_for_item",
     "pantry_aisle_section_labels",
@@ -24,6 +25,21 @@ from pathlib import Path
 from src.grocery_wizard.config import STORE_AISLES_PATH
 from src.grocery_wizard.ingredients.normalize import parse_amount
 from src.grocery_wizard.shopping.line_items import strip_checklist_prefix
+
+# Notion rows may still use labels from before the dry-goods split.
+_LEGACY_NOTION_AISLE_LABELS = frozenset(
+    {
+        "dry goods / cans / cereal / rice",
+        "dry goods",
+        "canned drinks",
+        "crackers & cookies",
+        "snacks",
+        "nuts & dried fruit",
+        "rice grains & cereal",
+        "pasta & noodles",
+        "canned goods",
+    }
+)
 
 _SECTION_HEADER_RE = re.compile(r"^#\s*---\s*(?P<id>.+?)(?::\s*(?P<label>.+?))?\s*---\s*$")
 
@@ -138,10 +154,23 @@ def _strip_prep_suffix(name: str) -> str:
     return text
 
 
+def _aisle_classification_name(item: str) -> str:
+    """Ingredient name for keyword matching (keep phrases like ``bay leaves``)."""
+    cleaned = strip_checklist_prefix(item)
+    stripped = cleaned.strip().lower()
+    name_part, _amount = parse_amount(cleaned)
+    # ``parse_amount`` treats trailing ``leaves`` as a count unit (``2 leaves``).
+    if stripped.endswith(" leaves") and len(stripped.split()) >= 2:
+        base = stripped
+    else:
+        base = (name_part or stripped).lower()
+    return _strip_prep_suffix(base)
+
+
 def classify_aisle(item: str, *, config: StoreAisleConfig | None = None) -> str:
     """Classify a grocery list item into a store aisle."""
     cfg = config or load_store_aisles()
-    name = _strip_prep_suffix(ingredient_name(item)).lower()
+    name = _aisle_classification_name(item)
     if not name:
         return "other"
 
@@ -215,6 +244,13 @@ def aisle_label(aisle: str, *, config: StoreAisleConfig | None = None) -> str:
     return cfg.aisle_labels.get(aisle, aisle.title())
 
 
+def is_legacy_notion_aisle_label(section: str | None) -> bool:
+    """True when a Notion pantry aisle value predates a store-aisle taxonomy change."""
+    if section is None or not str(section).strip():
+        return False
+    return str(section).strip().lower() in _LEGACY_NOTION_AISLE_LABELS
+
+
 def resolve_pantry_aisle_id(
     section: str | None,
     *,
@@ -245,6 +281,8 @@ def pantry_aisle_for_item(
     cfg = config or load_store_aisles()
     stored = str(section).strip() if section is not None else ""
     if stored:
+        if is_legacy_notion_aisle_label(stored):
+            return classify_aisle(item_name, config=cfg)
         return resolve_pantry_aisle_id(stored, config=cfg) or "other"
     return classify_aisle(item_name, config=cfg)
 

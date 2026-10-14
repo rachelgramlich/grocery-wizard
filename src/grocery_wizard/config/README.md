@@ -48,4 +48,6 @@ Optional: `NOTION_DATA_SOURCE_ID` — force a specific data source when a Notion
 
 ### Pantry `Aisle` select options
 
-When you create the pantry database, add an **Aisle** column (legacy **Section** still works). Option labels should match the display labels in `store_aisles.txt`. Reclassify rows by editing keywords in `store_aisles.txt` and updating aisle values in Notion (or via the Streamlit pantry UI).
+When you create the pantry database, add an **Aisle** column (legacy **Section** still works). Option labels should match the display labels in `store_aisles.txt` (section headers use `# --- aisle_id: Notion label ---`).
+
+After you change aisle sections or labels in `store_aisles.txt`, run **`just sync-pantry-aisles`** to push select options to Notion and remap rows from keyword classification. **Refresh from Notion** in the UI only reloads pantry rows; it does not update aisle definitions.

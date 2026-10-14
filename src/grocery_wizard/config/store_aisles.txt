@@ -40,6 +40,9 @@ bird's-eye chile
 bird’s-eye chile
 calabrian chiles
 thai chile
+thai green chile
+green chile
+green chiles
 tomatillo
 tomatillos
 romaine heart
@@ -104,7 +107,6 @@ cabbage
 fennel
 leeks
 leek
-leeks
 scallion
 scallions
 radish
@@ -121,39 +123,6 @@ purslane
 shiso
 perilla
 greens
-
-# --- coffee: Coffee & tea ---
-nondairy creamer
-creamer
-coffee beans
-coffee
-espresso
-tea
-matcha
-
-# --- pasta: Pasta & noodles ---
-dried lasagna sheets
-lasagna sheets
-pasta for
-gnocchi
-orecchiette
-cavatappi
-farfalle
-fusilli
-ziti
-pastina
-pasta
-spaghetti
-penne
-rigatoni
-fettuccine
-linguine
-orzo
-noodle
-noodles
-ramen
-tortellini
-ravioli
 
 # --- refrigerated: Refrigerated (cheese/tofu) ---
 basil pesto
@@ -195,7 +164,35 @@ kimchi
 sauerkraut
 chimichurri
 
-# --- canned drinks: Canned drinks ---
+# --- coffee: Coffee & tea ---
+nondairy creamer
+creamer
+coffee beans
+coffee
+espresso
+tea
+matcha
+
+# --- snacks/crackers: Crackers chips & snacks ---
+graham cracker
+ritz cracker
+cracker
+crackers
+biscuit
+biscuits
+tamarind candy straws
+potato chips
+tortilla chips
+pita chips
+popcorn
+pretzel
+pretzels
+trail mix
+protein bar
+chips
+snack
+
+# --- drinks: Drinks ---
 apple cider
 sparkling water
 ginger ale
@@ -222,7 +219,6 @@ half and half
 greek yogurt
 greek yoghurt
 cottage cheese
-cream cheese
 crema
 milk
 yogurt
@@ -242,223 +238,6 @@ paper towels
 toilet paper
 soap
 sponge
-
-# --- bakery: Bakery ---
-packaged puff pastry
-puff pastry
-crusty bread
-english muffin
-hot dog bun
-hamburger bun
-dinner roll
-baguette
-corn tortilla
-corn tortillas
-tortilla
-pita
-naan
-roti
-bagel
-bread
-bun
-roll
-croissant
-
-# --- dry goods: Dry goods / cans / cereal / rice ---
-thai red curry paste
-red curry paste
-chile-garlic paste
-chile crisp
-chili crunch
-aji amarillo paste
-aji panca paste
-chinese sesame paste
-sesame paste
-sambal belacan
-sambal oelek
-harissa paste
-harissa
-fermented soybean paste
-chipotle chiles in adobo
-worcestershire sauce
-oyster sauce
-shaoxing wine
-dry white vermouth
-dry white wine
-whole-grain mustard
-dijon mustard
-mayonnaise
-ketchup
-jarred salsa verde
-salsa verde
-pickled pepperoncini
-pickles
-jarred capers
-capers
-pitted kalamata olives
-kalamata olives
-castelvetrano olives
-thai seasoning sauce
-taco seasoning
-tajín
-tajin
-chamoy
-apricot preserves
-dry breadcrumbs
-nori sheets
-neutral oil
-sunflower oil
-safflower oil
-nonstick spray
-cooking oil spray
-thai red curry sauce
-teriyaki sauce
-buffalo sauce
-hot sauce
-curry sauce
-thai green chile
-green chile
-green chiles
-canned peaches
-canned corn
-raspberry jam
-strawberry jam
-blueberry jam
-peanut butter
-applesauce
-coconut oil
-avocado oil
-extra-virgin olive oil
-evoo
-olive oil
-vegetable oil
-canola oil
-sesame oil
-chicken broth
-beef broth
-vegetable broth
-chicken stock
-beef stock
-vegetable stock
-kashmiri red chile powder
-smoky chile powder
-whole dried chiles
-dried pequin chiles
-birdseye chilies
-red-pepper flakes
-garam masala
-ground cardamom
-ground coriander
-ground cloves
-allspice
-coriander seeds
-whole coriander seeds
-whole black peppercorns
-sichuan peppercorns
-whole star anise
-saffron
-sumac
-za'atar
-za’atar
-aleppo
-poppy seeds
-gochujang
-artichoke hearts
-coconut milk
-tomato paste
-tomato sauce
-diced tomatoes
-crushed tomatoes
-canned tomatoes
-white beans
-black beans
-kidney beans
-chickpeas
-garbanzo
-lentils
-split peas
-brown rice
-jasmine rice
-basmati rice
-wild rice
-rice
-quinoa
-couscous
-farro
-barley
-bulgur
-oats
-oatmeal
-cereal
-granola
-broth
-stock
-beans
-seaweed
-jam
-canned
-vinegar
-wine vinegar
-balsamic vinegar
-soy sauce
-tamari
-sriracha
-tahini
-bouillon
-cooking spray
-sesame seed
-agave
-red pepper flake
-black pepper
-paprika
-smoked paprika
-cumin
-cinnamon
-nutmeg
-oregano
-turmeric
-cayenne
-chili powder
-curry powder
-italian seasoning
-bay leaf
-bay leaves
-pepper
-salt
-
-# --- baking: Baking ---
-sweetened condensed milk
-bittersweet chocolate
-dark chocolate
-pumpkin purée
-pumpkin puree
-unbaked pie crust
-demerara sugar
-unsweetened cocoa
-cocoa
-tapioca starch
-flax seed
-vanilla paste
-vanilla
-chocolate chips
-baking powder
-baking soda
-powdered sugar
-brown sugar
-granulated sugar
-all-purpose flour
-bread flour
-cake flour
-vanilla extract
-cocoa powder
-flour
-sugar
-cornstarch
-yeast
-honey
-maple syrup
-molasses
-vanilla bean paste
 
 # --- meat/fish: Meat & fish ---
 salt-packed anchovies
@@ -505,17 +284,28 @@ lamb
 steak
 poultry
 
-# --- crackers/cookies: Crackers & cookies ---
-graham cracker
-ritz cracker
-cookie
-cookies
-cracker
-crackers
-biscuit
-biscuits
+# --- bakery: Bakery ---
+packaged puff pastry
+puff pastry
+crusty bread
+english muffin
+hot dog bun
+hamburger bun
+dinner roll
+baguette
+corn tortilla
+corn tortillas
+tortilla
+pita
+naan
+roti
+bagel
+bread
+bun
+roll
+croissant
 
-# --- nuts/dried fruit: Nuts & dried fruit ---
+# --- nuts/desserts: Nuts dessert & dried fruit ---
 toasted unsweetened coconut flakes
 unsweetened coconut flakes
 dry coconut flakes
@@ -541,6 +331,236 @@ dates
 prune
 prunes
 dried fruit
+bittersweet chocolate
+dark chocolate
+chocolate chips
+cookie
+cookies
+
+# --- oils & vinegars: Oils & vinegars ---
+neutral oil
+sunflower oil
+safflower oil
+nonstick spray
+cooking oil spray
+cooking spray
+coconut oil
+avocado oil
+extra-virgin olive oil
+evoo
+olive oil
+vegetable oil
+canola oil
+sesame oil
+apple cider vinegar
+vinegar
+wine vinegar
+balsamic vinegar
+
+# --- cereal: Cereal & granola ---
+oats
+oatmeal
+cereal
+granola
+granola bar
+
+# --- spices: Spices & seasonings ---
+taco seasoning
+kashmiri red chile powder
+smoky chile powder
+whole dried chiles
+dried pequin chiles
+birdseye chilies
+red-pepper flakes
+red pepper flake
+garam masala
+ground cardamom
+ground coriander
+ground cloves
+allspice
+coriander seeds
+whole coriander seeds
+whole black peppercorns
+sichuan peppercorns
+whole star anise
+saffron
+sumac
+za'atar
+za’atar
+aleppo
+poppy seeds
+sesame seed
+black pepper
+paprika
+smoked paprika
+cumin
+cinnamon
+nutmeg
+oregano
+turmeric
+cayenne
+chili powder
+curry powder
+italian seasoning
+bay leaves
+bay leaf
+pepper
+salt
+
+# --- pasta/grains: Pasta grains & rice ---
+dried lasagna sheets
+lasagna sheets
+pasta for
+gnocchi
+orecchiette
+cavatappi
+farfalle
+fusilli
+ziti
+pastina
+pasta
+spaghetti
+penne
+rigatoni
+fettuccine
+linguine
+orzo
+noodle
+noodles
+ramen
+tortellini
+ravioli
+lentils
+split peas
+brown rice
+jasmine rice
+basmati rice
+wild rice
+rice
+quinoa
+couscous
+farro
+barley
+bulgur
+
+# --- baking: Baking ---
+dry breadcrumbs
+agave
+sweetened condensed milk
+pumpkin purée
+pumpkin puree
+unbaked pie crust
+demerara sugar
+unsweetened cocoa
+cocoa
+tapioca starch
+flax seed
+vanilla paste
+vanilla
+baking powder
+baking soda
+powdered sugar
+brown sugar
+granulated sugar
+all-purpose flour
+bread flour
+cake flour
+vanilla extract
+cocoa powder
+flour
+sugar
+cornstarch
+yeast
+honey
+maple syrup
+molasses
+vanilla bean paste
+
+# --- sauces/condiments: Sauces & condiments ---
+thai red curry paste
+red curry paste
+chile-garlic paste
+chile crisp
+chili crunch
+aji amarillo paste
+aji panca paste
+chinese sesame paste
+sesame paste
+sambal belacan
+sambal oelek
+harissa paste
+harissa
+fermented soybean paste
+chipotle chiles in adobo
+worcestershire sauce
+oyster sauce
+shaoxing wine
+dry white vermouth
+dry white wine
+whole-grain mustard
+dijon mustard
+mayonnaise
+ketchup
+jarred salsa verde
+salsa verde
+pickled pepperoncini
+pickles
+jarred capers
+capers
+pitted kalamata olives
+kalamata olives
+castelvetrano olives
+thai seasoning sauce
+tajín
+tajin
+chamoy
+apricot preserves
+nori sheets
+thai red curry sauce
+teriyaki sauce
+buffalo sauce
+hot sauce
+curry sauce
+raspberry jam
+strawberry jam
+blueberry jam
+peanut butter
+applesauce
+gochujang
+soy sauce
+tamari
+sriracha
+tahini
+jam
+seaweed
+
+# --- canned goods: Canned goods soups & broths ---
+canned peaches
+canned corn
+chicken bouillon
+chicken broth
+beef broth
+vegetable broth
+chicken stock
+beef stock
+vegetable stock
+broth
+stock
+bouillon
+artichoke hearts
+coconut milk
+tomato paste
+tomato sauce
+diced tomatoes
+crushed tomatoes
+canned tomatoes
+white beans
+black beans
+kidney beans
+chickpeas
+garbanzo
+canned
+beans
 
 # --- frozen: Frozen ---
 eomuk
@@ -556,20 +576,6 @@ frozen berries
 ice cream
 frozen
 popsicle
-
-# --- snacks: Snacks ---
-tamarind candy straws
-potato chips
-tortilla chips
-pita chips
-popcorn
-pretzel
-pretzels
-trail mix
-granola bar
-protein bar
-chips
-snack
 
 # --- other: Other ---
 # Catch-all for unmatched items (no keywords).
