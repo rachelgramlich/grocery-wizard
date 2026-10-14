@@ -23,9 +23,9 @@ def test_append_item_creates_notion_page_with_name_and_aisle(mock_notion_db: Mag
     pantry._db = db_instance
     pantry._aisle_column = "Store Aisle"
 
-    assert pantry.append_item("soy sauce", section="Dry goods")
+    assert pantry.append_item("soy sauce", section="Dry goods / cans / cereal / rice")
 
     db_instance.create_page.assert_called_once()
     props = db_instance.create_page.call_args[0][0]
     assert props["Name"]["title"][0]["text"]["content"] == "soy sauce"
-    assert props["Store Aisle"]["select"]["name"].startswith("Dry goods")
+    assert props["Store Aisle"]["select"]["name"] == "Sauces & condiments"

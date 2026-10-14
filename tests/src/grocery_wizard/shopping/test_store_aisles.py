@@ -11,6 +11,7 @@ from src.grocery_wizard.shopping.store_aisles import (
     canonical_pantry_section_label,
     classify_aisle,
     group_grocery_items_by_aisle,
+    is_legacy_notion_aisle_label,
     load_store_aisles,
     pantry_aisle_for_item,
     parse_store_aisles_file,
@@ -47,11 +48,16 @@ def test_load_store_aisles_uses_committed_config() -> None:
         "household/personal care"
     )
     assert config.aisle_order.index("household/personal care") < config.aisle_order.index("bakery")
-    assert config.aisle_order.index("bakery") < config.aisle_order.index("dry goods")
+    assert config.aisle_order.index("bakery") < config.aisle_order.index("oils & vinegars")
+    assert config.aisle_order.index("oils & vinegars") < config.aisle_order.index("spices")
+    assert config.aisle_order.index("spices") < config.aisle_order.index("sauces/condiments")
+    assert config.aisle_order.index("sauces/condiments") < config.aisle_order.index("canned goods")
+    assert config.aisle_order.index("canned goods") < config.aisle_order.index("rice & grains")
+    assert config.aisle_order.index("rice & grains") < config.aisle_order.index("baking")
     assert config.aisle_order.index("household/personal care") < config.aisle_order.index(
         "meat/fish"
     )
-    assert config.aisle_order.index("dry goods") < config.aisle_order.index("meat/fish")
+    assert config.aisle_order.index("baking") < config.aisle_order.index("meat/fish")
     assert config.aisle_order.index("meat/fish") < config.aisle_order.index("frozen")
     assert config.aisle_labels["flowers"] == "Flowers"
     assert config.aisle_labels["household/personal care"] == "Household and personal care"
@@ -60,7 +66,9 @@ def test_load_store_aisles_uses_committed_config() -> None:
     assert "banana" in config.aisle_keywords["fruit"]
     assert "onion" in config.aisle_keywords["vegetables"]
     assert "apple cider" in config.aisle_keywords["canned drinks"]
-    assert "peanut butter" in config.aisle_keywords["dry goods"]
+    assert "peanut butter" in config.aisle_keywords["sauces/condiments"]
+    assert "cumin" in config.aisle_keywords["spices"]
+    assert "olive oil" in config.aisle_keywords["oils & vinegars"]
 
 
 def test_load_store_aisles_warns_when_file_missing(
@@ -95,19 +103,19 @@ def test_load_store_aisles_reloads_after_file_changes(tmp_path: Path) -> None:
     [
         ("1 lb chicken breast", "meat/fish"),
         ("1 pound loose sweet italian sausage or sausage links", "meat/fish"),
-        ("2 cans artichoke hearts", "dry goods"),
+        ("2 cans artichoke hearts", "canned goods"),
         ("avocados", "fruit"),
         ("edamame", "vegetables"),
         ("lemons", "fruit"),
         ("mini cucumbers", "vegetables"),
         ("salmon / tuna", "meat/fish"),
         ("scallions", "vegetables"),
-        ("seaweed sheets", "dry goods"),
+        ("seaweed sheets", "sauces/condiments"),
         ("onions", "vegetables"),
         ("3 cloves garlic", "vegetables"),
         ("bananas", "fruit"),
         ("berries", "fruit"),
-        ("2 cans white beans", "dry goods"),
+        ("2 cans white beans", "canned goods"),
         ("1 lb spaghetti", "pasta"),
         ("eggs", "dairy/eggs"),
         ("2 eggs", "dairy/eggs"),
@@ -123,7 +131,7 @@ def test_load_store_aisles_reloads_after_file_changes(tmp_path: Path) -> None:
         ("la croix", "canned drinks"),
         ("chicken", "meat/fish"),
         ("chimichurri", "refrigerated"),
-        ("avocado oil", "dry goods"),
+        ("avocado oil", "oils & vinegars"),
     ],
 )
 def test_classify_aisle(item: str, expected_aisle: str) -> None:
@@ -150,7 +158,7 @@ def test_sort_grocery_items_follows_store_walk_order() -> None:
     dairy_index = sorted_items.index("eggs")
     meat_index = sorted_items.index("1 lb chicken breast")
     bakery_index = sorted_items.index("sourdough bread")
-    dry_goods_index = sorted_items.index("2 cans white beans")
+    canned_index = sorted_items.index("2 cans white beans")
     frozen_index = sorted_items.index("frozen peas")
 
     assert (
@@ -159,7 +167,7 @@ def test_sort_grocery_items_follows_store_walk_order() -> None:
         < refrigerated_index
         < dairy_index
         < bakery_index
-        < dry_goods_index
+        < canned_index
         < meat_index
         < frozen_index
     )
@@ -170,7 +178,12 @@ def test_group_grocery_items_by_aisle_omits_empty_aisles() -> None:
     items = ["onions", "apples", "eggs", "2 cans white beans"]
     groups = group_grocery_items_by_aisle(items)
 
-    assert [aisle for aisle, _ in groups] == ["fruit", "vegetables", "dairy/eggs", "dry goods"]
+    assert [aisle for aisle, _ in groups] == [
+        "fruit",
+        "vegetables",
+        "dairy/eggs",
+        "canned goods",
+    ]
     assert groups[0][1] == ["apples"]
     assert groups[1][1] == ["onions"]
     assert groups[2][1] == ["eggs"]
@@ -218,14 +231,14 @@ def test_classify_aisle_strips_checklist_prefix(item: str, expected_aisle: str) 
     ("item", "expected_aisle"),
     [
         ("Apple cider", "canned drinks"),
-        ("Canned peaches", "dry goods"),
-        ("Raspberry jam", "dry goods"),
-        ("Apricot jam", "dry goods"),
-        ("Canned corn", "dry goods"),
-        ("Peanut butter", "dry goods"),
+        ("Canned peaches", "canned goods"),
+        ("Raspberry jam", "sauces/condiments"),
+        ("Apricot jam", "sauces/condiments"),
+        ("Canned corn", "canned goods"),
+        ("Peanut butter", "sauces/condiments"),
         ("1 lime, juiced", "fruit"),
         ("1 pound potatoes, unpeeled but scrubbed clean", "vegetables"),
-        ("Applesauce", "dry goods"),
+        ("Applesauce", "sauces/condiments"),
         ("Cold foam", "dairy/eggs"),
         ("Flowers", "flowers"),
         ("- [ ] Flowers", "flowers"),
@@ -242,15 +255,15 @@ def test_classify_aisle_strips_checklist_prefix(item: str, expected_aisle: str) 
         ("pasta for squash", "pasta"),
         ("cheese sticks", "refrigerated"),
         ("pudding vanilla", "dairy/eggs"),
-        ("coconut oil", "dry goods"),
+        ("coconut oil", "oils & vinegars"),
         ("hash brown", "frozen"),
         ("bfast sausage", "frozen"),
         ("1 1/2 lb paneer", "refrigerated"),
-        ("1/2 bottle thai red curry sauce", "dry goods"),
-        ("thai green chiles", "dry goods"),
-        ("buffalo sauce", "dry goods"),
-        ("hot sauce", "dry goods"),
-        ("teriyaki sauce", "dry goods"),
+        ("1/2 bottle thai red curry sauce", "sauces/condiments"),
+        ("thai green chiles", "vegetables"),
+        ("buffalo sauce", "sauces/condiments"),
+        ("hot sauce", "sauces/condiments"),
+        ("teriyaki sauce", "sauces/condiments"),
         ("pkgs gnocchi", "pasta"),
         ("gnocchi", "pasta"),
         ("roti", "bakery"),
@@ -268,14 +281,35 @@ def test_classify_aisle_misclassifications(item: str, expected_aisle: str) -> No
 
 def test_resolve_pantry_aisle_id_accepts_id_or_label() -> None:
     config = load_store_aisles()
-    assert resolve_pantry_aisle_id("dry goods", config=config) == "dry goods"
-    assert resolve_pantry_aisle_id("Dry goods", config=config) == "dry goods"
+    assert resolve_pantry_aisle_id("canned goods", config=config) == "canned goods"
+    assert resolve_pantry_aisle_id("Canned goods", config=config) == "canned goods"
     assert resolve_pantry_aisle_id(None, config=config) is None
+
+
+def test_legacy_notion_aisle_label() -> None:
+    assert is_legacy_notion_aisle_label("Dry goods / cans / cereal / rice")
+    assert is_legacy_notion_aisle_label("dry goods")
+    assert not is_legacy_notion_aisle_label("Spices & seasonings")
+
+
+def test_pantry_aisle_for_item_reclassifies_legacy_notion_label() -> None:
+    config = load_store_aisles()
+    assert (
+        pantry_aisle_for_item(
+            "cumin",
+            "Dry goods / cans / cereal / rice",
+            config=config,
+        )
+        == "spices"
+    )
 
 
 def test_pantry_aisle_for_item_uses_section_or_classifies_name() -> None:
     config = load_store_aisles()
-    assert pantry_aisle_for_item("soy sauce", "Dry goods", config=config) == "dry goods"
+    assert (
+        pantry_aisle_for_item("soy sauce", "Sauces & condiments", config=config)
+        == "sauces/condiments"
+    )
     assert pantry_aisle_for_item("bananas", None, config=config) == "fruit"
 
 

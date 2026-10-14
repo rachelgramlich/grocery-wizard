@@ -22,6 +22,8 @@ from src.grocery_wizard.shopping.pantry import PantrySection, parse_pantry_file_
 from src.grocery_wizard.shopping.store_aisles import (
     aisle_label,
     canonical_pantry_section_label,
+    classify_aisle,
+    is_legacy_notion_aisle_label,
     load_store_aisles,
     pantry_aisle_for_item,
 )
@@ -214,9 +216,14 @@ class NotionPantryDB:
             return False
         cfg = load_store_aisles()
         if section is not None and str(section).strip():
-            target_section = canonical_pantry_section_label(section, config=cfg)
+            if is_legacy_notion_aisle_label(section):
+                aisle_id = classify_aisle(cleaned, config=cfg)
+                target_section = aisle_label(aisle_id, config=cfg)
+            else:
+                target_section = canonical_pantry_section_label(section, config=cfg)
         else:
-            target_section = aisle_label("other", config=cfg)
+            aisle_id = classify_aisle(cleaned, config=cfg)
+            target_section = aisle_label(aisle_id, config=cfg)
         props = {
             **self._db.property_payload(PANTRY_NAME_COLUMN, cleaned),
             **self._db.property_payload(self._aisle_column, target_section),

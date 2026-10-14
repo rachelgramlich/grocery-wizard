@@ -40,6 +40,9 @@ bird's-eye chile
 bird’s-eye chile
 calabrian chiles
 thai chile
+thai green chile
+green chile
+green chiles
 tomatillo
 tomatillos
 romaine heart
@@ -264,7 +267,69 @@ bun
 roll
 croissant
 
-# --- dry goods: Dry goods / cans / cereal / rice ---
+# --- oils & vinegars: Oils & vinegars ---
+neutral oil
+sunflower oil
+safflower oil
+nonstick spray
+cooking oil spray
+cooking spray
+coconut oil
+avocado oil
+extra-virgin olive oil
+evoo
+olive oil
+vegetable oil
+canola oil
+sesame oil
+vinegar
+wine vinegar
+balsamic vinegar
+
+# --- spices: Spices & seasonings ---
+taco seasoning
+kashmiri red chile powder
+smoky chile powder
+whole dried chiles
+dried pequin chiles
+birdseye chilies
+red-pepper flakes
+red pepper flake
+garam masala
+ground cardamom
+ground coriander
+ground cloves
+allspice
+coriander seeds
+whole coriander seeds
+whole black peppercorns
+sichuan peppercorns
+whole star anise
+saffron
+sumac
+za'atar
+za’atar
+aleppo
+poppy seeds
+sesame seed
+black pepper
+paprika
+smoked paprika
+cumin
+cinnamon
+nutmeg
+oregano
+turmeric
+cayenne
+chili powder
+curry powder
+italian seasoning
+bay leaf
+bay leaves
+pepper
+salt
+
+# --- sauces/condiments: Sauces & condiments ---
 thai red curry paste
 red curry paste
 chile-garlic paste
@@ -299,70 +364,41 @@ pitted kalamata olives
 kalamata olives
 castelvetrano olives
 thai seasoning sauce
-taco seasoning
 tajín
 tajin
 chamoy
 apricot preserves
-dry breadcrumbs
 nori sheets
-neutral oil
-sunflower oil
-safflower oil
-nonstick spray
-cooking oil spray
 thai red curry sauce
 teriyaki sauce
 buffalo sauce
 hot sauce
 curry sauce
-thai green chile
-green chile
-green chiles
-canned peaches
-canned corn
 raspberry jam
 strawberry jam
 blueberry jam
 peanut butter
 applesauce
-coconut oil
-avocado oil
-extra-virgin olive oil
-evoo
-olive oil
-vegetable oil
-canola oil
-sesame oil
+gochujang
+soy sauce
+tamari
+sriracha
+tahini
+jam
+seaweed
+
+# --- canned goods: Canned goods ---
+canned peaches
+canned corn
 chicken broth
 beef broth
 vegetable broth
 chicken stock
 beef stock
 vegetable stock
-kashmiri red chile powder
-smoky chile powder
-whole dried chiles
-dried pequin chiles
-birdseye chilies
-red-pepper flakes
-garam masala
-ground cardamom
-ground coriander
-ground cloves
-allspice
-coriander seeds
-whole coriander seeds
-whole black peppercorns
-sichuan peppercorns
-whole star anise
-saffron
-sumac
-za'atar
-za’atar
-aleppo
-poppy seeds
-gochujang
+broth
+stock
+bouillon
 artichoke hearts
 coconut milk
 tomato paste
@@ -375,6 +411,10 @@ black beans
 kidney beans
 chickpeas
 garbanzo
+canned
+beans
+
+# --- rice & grains: Rice grains & cereal ---
 lentils
 split peas
 brown rice
@@ -391,42 +431,10 @@ oats
 oatmeal
 cereal
 granola
-broth
-stock
-beans
-seaweed
-jam
-canned
-vinegar
-wine vinegar
-balsamic vinegar
-soy sauce
-tamari
-sriracha
-tahini
-bouillon
-cooking spray
-sesame seed
-agave
-red pepper flake
-black pepper
-paprika
-smoked paprika
-cumin
-cinnamon
-nutmeg
-oregano
-turmeric
-cayenne
-chili powder
-curry powder
-italian seasoning
-bay leaf
-bay leaves
-pepper
-salt
 
 # --- baking: Baking ---
+dry breadcrumbs
+agave
 sweetened condensed milk
 bittersweet chocolate
 dark chocolate
