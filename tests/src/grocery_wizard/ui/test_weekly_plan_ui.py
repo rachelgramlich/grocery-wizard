@@ -81,7 +81,7 @@ def test_meal_plan_ingredient_filter_before_checkboxes() -> None:
     assert "ingredients in your recipes - search to narrow the list" in filters_source
     assert "_ingredient_search" not in filters_source
     assert "Start typing above" not in filters_source
-    assert filters_source.index('key=f"{key_prefix}_ingredient_names"') < filters_source.index(
+    assert filters_source.index("names_key = f") < filters_source.index(
         "for column in checkbox_columns"
     )
 
@@ -262,6 +262,8 @@ def test_prebuild_recipe_picker_before_build_my_plan() -> None:
     picker_idx = generate.index("_render_prebuild_recipe_picker(")
     assert picker_idx < build_idx
     assert 'st.popover(\n        "Choose meals manually"' in prebuild
+    assert "PLAN_PREBUILD_MANUAL_POPOVER_KEY" in prebuild
+    assert "manual_popover.open" in prebuild
     assert "_render_direct_recipe_pick" in prebuild
     assert "plan_prebuild_direct_pick" in prebuild
     assert prebuild.index("_render_direct_recipe_pick") < prebuild.index(

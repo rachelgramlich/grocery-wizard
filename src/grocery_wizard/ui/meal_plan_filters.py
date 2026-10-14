@@ -125,10 +125,26 @@ def render_meal_plan_filters(
             if total
             else "Ingredients"
         )
+        names_key = f"{key_prefix}_ingredient_names"
+        narrow_key = f"{key_prefix}_ingredient_narrow"
+        selected_so_far = st.session_state.get(names_key, [])
+        if not isinstance(selected_so_far, list):
+            selected_so_far = []
+        narrow_query = st.text_input(
+            "Narrow ingredients",
+            key=narrow_key,
+            placeholder="Type to narrow ingredients…",
+            label_visibility="collapsed",
+        )
+        display_options = scoped_ingredient_multiselect_options(
+            ingredient_options,
+            selected_so_far,
+            narrow_query,
+        )
         ingredient_names = st.multiselect(
             ingredient_label,
-            ingredient_options,
-            key=f"{key_prefix}_ingredient_names",
+            display_options,
+            key=names_key,
             placeholder="Search or pick ingredients…",
         )
         if ingredient_names:

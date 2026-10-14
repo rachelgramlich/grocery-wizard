@@ -50,6 +50,7 @@ from src.grocery_wizard.ui.pages.weekly_plan.state import (
     PLAN_BUILDER_POPOVER_KEY,
     PLAN_FORCE_OPEN_1A_KEY,
     PLAN_MEAL_COUNT_WIDGET_KEY,
+    PLAN_PREBUILD_MANUAL_POPOVER_KEY,
     _clear_grocery_result,
     _clear_grocery_session_overrides,
     _current_plan_names,
@@ -241,34 +242,38 @@ def _render_prebuild_recipe_picker(
         help="Pick and pin recipes before you build your plan",
         width="content",
         wrap=False,
-        key="plan_prebuild_manual_popover",
-    ):
-        st.caption(
-            "Pick a recipe directly or use filters, then pin. Repeat until "
-            "you have as many locked meals as you want."
-        )
-        _render_direct_recipe_pick(
-            all_names,
-            selectbox_key="plan_prebuild_direct_pick",
-            apply_button_key="plan_prebuild_pin_direct",
-            apply_button_label="Pin this recipe",
-            on_apply=lambda name: _append_prebuild_pin(name, max_pins=max_pins),
-        )
-        st.divider()
-        st.markdown("**Or filter**")
-        _render_filtered_recipe_picker(
-            all_recipes=manual_recipes,
-            filter_columns=filter_columns,
-            filter_defaults=filter_defaults,
-            schema_columns=schema_columns,
-            ingredient_index=ingredient_index,
-            key_prefix="plan_prebuild_filter",
-            selectbox_key="plan_prebuild_filtered_pick",
-            apply_button_key="plan_prebuild_pin_recipe",
-            apply_button_label="Pin this recipe",
-            on_apply=lambda name: _append_prebuild_pin(name, max_pins=max_pins),
-            filter_caption="Optional — narrow the list using the filters below.",
-        )
+        key=PLAN_PREBUILD_MANUAL_POPOVER_KEY,
+        on_change="rerun",
+    ) as manual_popover:
+        if manual_popover.open:
+            st.caption(
+                "Pick a recipe directly or use filters, then pin. Repeat until "
+                "you have as many locked meals as you want."
+            )
+            _render_direct_recipe_pick(
+                all_names,
+                selectbox_key="plan_prebuild_direct_pick",
+                apply_button_key="plan_prebuild_pin_direct",
+                apply_button_label="Pin this recipe",
+                on_apply=lambda name: _append_prebuild_pin(name, max_pins=max_pins),
+            )
+            st.divider()
+            st.markdown("**Or filter**")
+            _render_filtered_recipe_picker(
+                all_recipes=manual_recipes,
+                filter_columns=filter_columns,
+                filter_defaults=filter_defaults,
+                schema_columns=schema_columns,
+                ingredient_index=ingredient_index,
+                key_prefix="plan_prebuild_filter",
+                selectbox_key="plan_prebuild_filtered_pick",
+                apply_button_key="plan_prebuild_pin_recipe",
+                apply_button_label="Pin this recipe",
+                on_apply=lambda name: _append_prebuild_pin(name, max_pins=max_pins),
+                filter_caption="Optional — narrow the list using the filters below.",
+            )
+        else:
+            st.caption("Open to search, filter, and pin recipes before building.")
 
     if pinned:
         st.markdown("**Pinned meals**")
