@@ -67,6 +67,17 @@ def test_app_theme_css_includes_weekly_rail_hooks() -> None:
         assert fragment in css
 
 
+def test_weekly_block_fade_css_scoped_to_block_container() -> None:
+    """Opacity must not target generic stVerticalBlock (dims active sibling steps)."""
+    css = app_theme_css()
+    assert (
+        '[data-testid="stVerticalBlock"]:has(p.gw-weekly-block-anchor[data-gw-weekly-state="upcoming"])'
+        not in css
+    )
+    assert '[class*="st-key-weekly_block_"]:has(' in css
+    assert 'data-gw-weekly-state="upcoming"' in css
+
+
 def test_grocery_rail_subcaption(monkeypatch) -> None:
     session: dict = {}
     monkeypatch.setattr(step_ui.st, "session_state", session, raising=False)
