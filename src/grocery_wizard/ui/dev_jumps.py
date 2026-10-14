@@ -171,6 +171,8 @@ def commit_dev_jump(
     if not cleaned:
         return []
 
+    from src.grocery_wizard.ui.pages.weekly_plan.state import _ack_dev_plan_meals_ready
+
     clear_grocery_flow_state(session_state)
     session_state["plan_meals_text"] = "\n".join(cleaned)
     session_state.pop("plan_rejected_names", None)
@@ -183,6 +185,7 @@ def commit_dev_jump(
         return cleaned
 
     if target == DevJumpTarget.PRE_BUILD_GROCERY:
+        _ack_dev_plan_meals_ready(cleaned)
         _set_dev_jump_rail_step("grocery_list")
         return cleaned
 
@@ -190,11 +193,13 @@ def commit_dev_jump(
     recipes = db.query_recipes()
 
     if target == DevJumpTarget.PER_RECIPE_REVIEW:
+        _ack_dev_plan_meals_ready(cleaned)
         stash_recipe_review(session_state, cleaned, recipes, grocery_options)
         _set_dev_jump_rail_step("grocery_list")
         return cleaned
 
     if target == DevJumpTarget.GROCERY_RESULT:
+        _ack_dev_plan_meals_ready(cleaned)
         stash_grocery_result(session_state, db, cleaned, grocery_options, recipes=recipes)
         _set_dev_jump_rail_step("grocery_list")
         return cleaned

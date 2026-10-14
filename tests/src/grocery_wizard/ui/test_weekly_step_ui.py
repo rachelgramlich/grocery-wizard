@@ -12,8 +12,8 @@ def test_weekly_step_state_progression(monkeypatch) -> None:
     monkeypatch.setattr(step_ui, "_weekly_plan_mode", lambda: session.get("weekly_plan_mode"))
     monkeypatch.setattr(
         step_ui,
-        "_matching_saved_plan",
-        lambda names: object() if session.get("saved") else None,
+        "_plan_meals_step_done",
+        lambda names: bool(session.get("saved")),
     )
     monkeypatch.setattr(step_ui.st, "session_state", session, raising=False)
 
@@ -34,6 +34,23 @@ def test_weekly_step_state_progression(monkeypatch) -> None:
     assert step_ui.weekly_step_state(WeeklyRailStep.GROCERY_LIST, recipe_names=["tacos"]) == "done"
 
 
+def test_dev_plan_meals_ack_marks_step_done(monkeypatch) -> None:
+    session = {"weekly_plan_mode": "dev"}
+    monkeypatch.setattr(step_ui, "_weekly_plan_mode", lambda: session.get("weekly_plan_mode"))
+    monkeypatch.setattr(step_ui, "_plan_meals_step_done", step_ui._plan_meals_step_done)
+    monkeypatch.setattr(step_ui.st, "session_state", session, raising=False)
+
+    from src.grocery_wizard.ui.pages.weekly_plan.state import (
+        _DEV_PLAN_MEALS_ACK_FP_KEY,
+        _ack_dev_plan_meals_ready,
+    )
+
+    assert step_ui.weekly_step_state(WeeklyRailStep.PLAN_MEALS, recipe_names=["tacos"]) == "active"
+    _ack_dev_plan_meals_ready(["tacos"])
+    assert session[_DEV_PLAN_MEALS_ACK_FP_KEY] == ("tacos",)
+    assert step_ui.weekly_step_state(WeeklyRailStep.PLAN_MEALS, recipe_names=["tacos"]) == "done"
+
+
 def test_effective_expanded_step_honors_override(monkeypatch) -> None:
     session = {"weekly_plan_mode": "new", step_ui.WEEKLY_EXPANDED_STEP_KEY: "get_started"}
     monkeypatch.setattr(step_ui.st, "session_state", session, raising=False)
@@ -50,7 +67,7 @@ def test_collapse_after_plan_saved_clears_rail_override(monkeypatch) -> None:
 def test_natural_active_step_after_plan_saved(monkeypatch) -> None:
     session = {"weekly_plan_mode": "new"}
     monkeypatch.setattr(step_ui, "_weekly_plan_mode", lambda: session.get("weekly_plan_mode"))
-    monkeypatch.setattr(step_ui, "_matching_saved_plan", lambda names: object())
+    monkeypatch.setattr(step_ui, "_plan_meals_step_done", lambda names: True)
     monkeypatch.setattr(step_ui.st, "session_state", session, raising=False)
     assert step_ui._natural_active_step(recipe_names=["tacos"]) == WeeklyRailStep.GROCERY_LIST
 

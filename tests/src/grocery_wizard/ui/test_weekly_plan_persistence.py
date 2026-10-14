@@ -72,6 +72,17 @@ def test_explicit_save_plan_button_after_meals() -> None:
     assert "_render_save_plan_controls(_current_plan_names(), cached_recipes=all_recipes)" in source
 
 
+def test_dev_mode_continue_to_grocery_without_notion_save() -> None:
+    state_source = (UI_ROOT / "pages" / "weekly_plan" / "state.py").read_text(encoding="utf-8")
+    assert "_plan_meals_step_done" in state_source
+    assert 'key="dev_continue_to_grocery"' in state_source
+    assert "_DEV_PLAN_MEALS_ACK_FP_KEY" in state_source
+    step_source = (UI_ROOT / "pages" / "weekly_plan" / "step_ui.py").read_text(encoding="utf-8")
+    assert "_plan_meals_step_done(recipe_names)" in step_source
+    entry_source = ui_source()
+    assert "Nothing is saved to Notion in dev mode." in entry_source
+
+
 def test_weekly_plan_entry_app_test_smoke() -> None:
     """AppTest: mode picker appears before Build my plan."""
     from streamlit.testing.v1 import AppTest

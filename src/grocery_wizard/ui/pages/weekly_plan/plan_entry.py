@@ -881,10 +881,16 @@ def _render_built_plan_meals(
 
     st.divider()
     st.markdown("#### 1c. Save your plan")
-    st.caption(
-        "When your meal list looks good, save it to Notion. "
-        "That finishes this step before you build a grocery list."
-    )
+    if _weekly_plan_mode() == "dev":
+        st.caption(
+            "When your meal list looks good, continue to the grocery list. "
+            "Nothing is saved to Notion in dev mode."
+        )
+    else:
+        st.caption(
+            "When your meal list looks good, save it to Notion. "
+            "That finishes this step before you build a grocery list."
+        )
     with st.container(key="weekly_meals_save"):
         _render_save_plan_controls(_current_plan_names(), cached_recipes=all_recipes)
 
