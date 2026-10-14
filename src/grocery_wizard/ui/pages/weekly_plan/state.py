@@ -57,6 +57,7 @@ PLAN_PREBUILD_MANUAL_POPOVER_KEY = "plan_prebuild_manual_popover"
 PLAN_BUILDER_POPOVER_KEY = "plan_builder_popover"
 _OVERWRITE_CONFIRM_FP_KEY = "weekly_plan_overwrite_confirm_fingerprint"
 _RUN_GROCERY_AFTER_OVERWRITE_KEY = "weekly_plan_run_grocery_after_overwrite"
+_DEV_PLAN_MEALS_ACK_FP_KEY = "weekly_dev_plan_meals_ack_fingerprint"
 
 
 def _current_plan_names() -> list[str]:
@@ -177,6 +178,29 @@ def _weekly_plan_persists_tracking_stats_to_notion() -> bool:
     return _weekly_plan_mode() != "dev"
 
 
+def _dev_plan_meals_ack_fingerprint(recipe_names: list[str]) -> tuple[str, ...]:
+    return tuple(normalize_recipe_names(recipe_names))
+
+
+def _dev_plan_meals_acknowledged(recipe_names: list[str]) -> bool:
+    if _weekly_plan_mode() != "dev" or not recipe_names:
+        return False
+    return st.session_state.get(_DEV_PLAN_MEALS_ACK_FP_KEY) == _dev_plan_meals_ack_fingerprint(
+        recipe_names
+    )
+
+
+def _ack_dev_plan_meals_ready(recipe_names: list[str]) -> None:
+    st.session_state[_DEV_PLAN_MEALS_ACK_FP_KEY] = _dev_plan_meals_ack_fingerprint(recipe_names)
+
+
+def _plan_meals_step_done(recipe_names: list[str]) -> bool:
+    """Rail step 2 done: Notion save fingerprint or dev-mode continue (no Notion write)."""
+    return _matching_saved_plan(recipe_names) is not None or _dev_plan_meals_acknowledged(
+        recipe_names
+    )
+
+
 def _weekly_plan_reference_date() -> date:
     return datetime.now(tz=UTC).date()
 
@@ -250,6 +274,7 @@ def _matching_saved_plan(recipe_names: list[str]) -> SavedWeeklyPlan | None:
 def _invalidate_weekly_plan_save_state() -> None:
     st.session_state.pop("weekly_plan_last_saved_name", None)
     st.session_state.pop("weekly_plan_saved_fingerprint", None)
+    st.session_state.pop(_DEV_PLAN_MEALS_ACK_FP_KEY, None)
     st.session_state.pop(_OVERWRITE_CONFIRM_FP_KEY, None)
     st.session_state.pop(_RUN_GROCERY_AFTER_OVERWRITE_KEY, None)
 
@@ -413,9 +438,34 @@ def _render_save_plan_controls(
     *,
     cached_recipes: list[Recipe] | None = None,
 ) -> None:
-    """Explicit save after meal generation (not used in dev mode)."""
+    """Explicit save after meal generation, or dev-only continue without Notion."""
+    if not recipe_names:
+        return
     mode = _weekly_plan_mode()
-    if mode == "dev" or not recipe_names:
+    if mode == "dev":
+        if _dev_plan_meals_acknowledged(recipe_names):
+            st.success("Meals ready for this dev session (not saved to Notion).")
+            return
+        if st.button(
+            "Continue to grocery list",
+            type="primary",
+            key="dev_continue_to_grocery",
+            use_container_width=True,
+            help="Marks plan meals done for this session without writing to Notion.",
+        ):
+            from src.grocery_wizard.ui.ids import BLOCK_WEEKLY_GROCERY_PRE_BUILD
+            from src.grocery_wizard.ui.pages.weekly_plan.step_ui import (
+                WeeklyRailStep,
+                collapse_after_plan_saved_to_notion,
+                queue_weekly_scroll,
+                set_expanded_step,
+            )
+
+            _ack_dev_plan_meals_ready(recipe_names)
+            collapse_after_plan_saved_to_notion()
+            set_expanded_step(WeeklyRailStep.GROCERY_LIST)
+            queue_weekly_scroll(BLOCK_WEEKLY_GROCERY_PRE_BUILD)
+            st.rerun()
         return
 
     _render_save_week_choice_buttons()

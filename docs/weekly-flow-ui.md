@@ -45,7 +45,7 @@ Do not add a fourth rail step for copy/finish. Optionally show a **sub-caption**
 | Step | Done when |
 |------|-----------|
 | **Get started** | User clicked **Continue** (show compact “Started: … · Change”) |
-| **Plan meals** | `_matching_saved_plan(recipe_names)` — plan in Notion matches current meals |
+| **Plan meals** | `_matching_saved_plan(recipe_names)` — plan in Notion matches current meals; in **dev mode**, **Continue to grocery list** (session ack, no Notion write) |
 | **Grocery list** | `grocery_result` in session state (final list shown) |
 
 **Auto-save before grocery** (`_ensure_weekly_plan_saved_before_grocery`) counts as a Notion save for step 2 done/collapse — user should not need a separate **Save plan to Notion** click to get collapse, though the explicit save button remains for “save without building a list.”
@@ -82,7 +82,7 @@ Optional: skip scroll on **Save plan to Notion** unless UX testing shows it help
 | **Per-recipe ingredient review** | **Main flow** — after **Create grocery list**, before final list |
 | **Dev tools** (jump buttons) | `weekly_plan_mode == "dev"` only — existing expander; label **`Dev: …`** |
 | **Item sources** on final list | Prefer **`Dev: item sources`** or default collapsed expander |
-| Session **Dev mode** on start screen | Unchanged semantics (no Notion save); naming cleanup in copy pass |
+| Session **Dev mode** on start screen | No Notion plan save; **Continue to grocery list** at end of plan meals unlocks step 3 |
 
 Power-user paths use the **`Dev:`** prefix so they do not look like required happy-path steps. **Review ingredients is not Dev** — it stays the normal path.
 

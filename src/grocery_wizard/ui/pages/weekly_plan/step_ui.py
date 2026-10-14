@@ -16,7 +16,8 @@ from src.grocery_wizard.ui.ids import (
     BLOCK_WEEKLY_PLAN_START,
 )
 from src.grocery_wizard.ui.pages.weekly_plan.state import (
-    _matching_saved_plan,
+    _DEV_PLAN_MEALS_ACK_FP_KEY,
+    _plan_meals_step_done,
     _weekly_plan_mode,
 )
 
@@ -60,7 +61,7 @@ def _get_started_done() -> bool:
 
 
 def _plan_meals_done(recipe_names: list[str]) -> bool:
-    return _matching_saved_plan(recipe_names) is not None
+    return _plan_meals_step_done(recipe_names)
 
 
 def _grocery_list_done() -> bool:
@@ -238,6 +239,8 @@ def _render_collapsed_summary(step: WeeklyRailStep) -> None:
         saved = st.session_state.get("weekly_plan_last_saved_name")
         if saved:
             st.caption(f"Plan saved to Notion ({saved}). Expand to edit meals.")
+        elif _weekly_plan_mode() == "dev" and st.session_state.get(_DEV_PLAN_MEALS_ACK_FP_KEY):
+            st.caption("Meals ready in dev mode (not saved to Notion). Expand to edit.")
         else:
             st.caption("Meals in progress. Expand to edit your plan.")
         return
