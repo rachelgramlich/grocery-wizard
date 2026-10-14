@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from ui_source import APP_PATH
+from ui_source import APP_PATH, apptest_continue_to_meal_builder
 
 from tests.notion_test_env import live_notion_smoke_enabled
 
@@ -26,6 +26,7 @@ def _enter_dev_mode(at) -> None:
     assert session_radio, "Weekly plan session radio missing"
     dev_opt = next(o for o in session_radio[0].options if "Dev mode" in o)
     session_radio[0].set_value(dev_opt).run(timeout=120)
+    apptest_continue_to_meal_builder(at, timeout=120)
 
 
 def test_per_recipe_review_form_submit_reaches_final_list(monkeypatch: pytest.MonkeyPatch) -> None:

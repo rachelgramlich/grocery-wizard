@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ui_source import APP_PATH, UI_ROOT, ui_source
+from ui_source import APP_PATH, UI_ROOT, apptest_continue_to_meal_builder, ui_source
 
 APP_FILE = str(APP_PATH)
 
@@ -96,6 +96,7 @@ def test_weekly_plan_build_shows_per_meal_swap() -> None:
     continue_buttons = [b for b in at.button if b.label == "Continue"]
     assert continue_buttons, "Weekly plan entry Continue button missing"
     continue_buttons[0].click().run(timeout=60)
+    apptest_continue_to_meal_builder(at, timeout=60)
 
     build_buttons = [b for b in at.button if b.label == "Build my plan"]
     assert build_buttons, "Build my plan button missing"
@@ -228,8 +229,32 @@ def test_meal_count_widget_outside_meals_fragment() -> None:
     flow_source = (UI_ROOT / "pages" / "weekly_plan" / "flow.py").read_text(encoding="utf-8")
     assert "_render_meal_count_input()" in flow_source
     assert "_sync_plan_length_to_meal_count(meal_count)" in flow_source
+    assert "_render_plan_meal_count_continue" in flow_source
     meals_fn = flow_source.split("def _weekly_plan_meals_fragment", 1)[1].split("\ndef ", 1)[0]
     assert "_render_meal_count_input" not in meals_fn
+
+
+def test_meal_count_continue_gates_meals_fragment() -> None:
+    """Meal builder waits for explicit Continue after meal count (not Enter on number input)."""
+    flow_source = (UI_ROOT / "pages" / "weekly_plan" / "flow.py").read_text(encoding="utf-8")
+    plan_block = flow_source.split("WeeklyRailStep.PLAN_MEALS", 1)[1].split(
+        "WeeklyRailStep.GROCERY_LIST", 1
+    )[0]
+    assert "_render_plan_meal_count_continue(meal_count=meal_count)" in plan_block
+    assert plan_block.index("_render_plan_meal_count_continue") < plan_block.index(
+        "_weekly_plan_meals_fragment"
+    )
+    state_source = (UI_ROOT / "pages" / "weekly_plan" / "state.py").read_text(encoding="utf-8")
+    assert "PLAN_MEAL_COUNT_CONFIRMED_KEY" in state_source
+    assert "def _plan_meals_builder_unlocked" in state_source
+    continue_fn = (
+        ui_source().split("def _render_plan_meal_count_continue", 1)[1].split("\ndef ", 1)[0]
+    )
+    assert 'key="weekly_plan_meal_count_continue"' in continue_fn
+    assert (
+        "on_change"
+        not in ui_source().split("def _render_meal_count_input", 1)[1].split("\ndef ", 1)[0]
+    )
 
 
 def test_plan_length_syncs_when_meal_count_drops() -> None:

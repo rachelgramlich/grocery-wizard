@@ -49,12 +49,14 @@ from src.grocery_wizard.ui.notion_cache import cached_saved_plans, invalidate_no
 from src.grocery_wizard.ui.pages.weekly_plan.state import (
     PLAN_BUILDER_POPOVER_KEY,
     PLAN_FORCE_OPEN_1A_KEY,
+    PLAN_MEAL_COUNT_CONFIRMED_KEY,
     PLAN_MEAL_COUNT_WIDGET_KEY,
     PLAN_PREBUILD_MANUAL_POPOVER_KEY,
     _clear_grocery_result,
     _clear_grocery_session_overrides,
     _current_plan_names,
     _invalidate_weekly_plan_save_state,
+    _plan_meals_builder_unlocked,
     _plan_slot_origins,
     _render_save_plan_controls,
     _reset_weekly_plan_workflow,
@@ -593,10 +595,12 @@ def _render_weekly_plan_entry() -> bool:
             st.session_state.weekly_plan_loaded_name = selected_plan_name
             st.session_state.plan_meal_count = max(1, len(loaded_recipes))
             st.session_state.pop(PLAN_MEAL_COUNT_WIDGET_KEY, None)
+            st.session_state[PLAN_MEAL_COUNT_CONFIRMED_KEY] = True
         elif choice == "new":
             st.session_state.plan_meals_text = ""
             st.session_state.plan_meal_count = load_config().default_meals
             st.session_state.pop(PLAN_MEAL_COUNT_WIDGET_KEY, None)
+            st.session_state.pop(PLAN_MEAL_COUNT_CONFIRMED_KEY, None)
         queue_weekly_scroll(BLOCK_WEEKLY_MEALS)
         st.rerun()
 
@@ -627,11 +631,29 @@ def _render_meal_count_input() -> int:
             max_value=21,
             step=1,
             key=PLAN_MEAL_COUNT_WIDGET_KEY,
-            on_change=_apply_plan_meal_count_from_widget,
         )
     )
     st.session_state.plan_meal_count = meal_count
     return meal_count
+
+
+def _render_plan_meal_count_continue(*, meal_count: int) -> bool:
+    """Prompt for meal count, then continue. Returns True when the builder may render."""
+    if _plan_meals_builder_unlocked():
+        return True
+    st.caption("Set how many meals you need, then click **Continue** to open the meal builder.")
+    if st.button(
+        "Continue",
+        type="primary",
+        key="weekly_plan_meal_count_continue",
+        help="Opens build-your-meal-list controls for this many meals.",
+    ):
+        st.session_state.plan_meal_count = int(meal_count)
+        st.session_state[PLAN_MEAL_COUNT_CONFIRMED_KEY] = True
+        _sync_plan_length_to_meal_count(meal_count)
+        queue_weekly_scroll(BLOCK_WEEKLY_MEALS)
+        st.rerun()
+    return False
 
 
 def _cached_plan_ingredient_index(all_recipes: list) -> dict[str, set[str]]:
@@ -887,11 +909,6 @@ def _render_built_plan_meals(
     )
     with st.container(key="weekly_meals_save"):
         _render_save_plan_controls(_current_plan_names(), cached_recipes=all_recipes)
-
-
-def _apply_plan_meal_count_from_widget() -> None:
-    """``on_change`` for the meal-count widget (runs before the fragment body)."""
-    st.session_state.plan_meal_count = int(st.session_state[PLAN_MEAL_COUNT_WIDGET_KEY])
 
 
 def _sync_plan_length_to_meal_count(meal_count: int) -> None:
