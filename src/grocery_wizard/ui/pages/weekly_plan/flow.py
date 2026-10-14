@@ -68,23 +68,26 @@ def render_create_weekly_plan() -> None:
 
     _ensure_plan_session_defaults()
 
+    db = get_db()
+    cached_recipes: list[Recipe] | None = None
+
+    def _recipes_for_weekly_plan() -> list[Recipe]:
+        nonlocal cached_recipes
+        if cached_recipes is None:
+            with loading_indicator("Loading recipes from Notion…"):
+                cached_recipes = cached_query_recipes(db)
+        return cached_recipes
+
     with weekly_step_block(WeeklyRailStep.PLAN_MEALS, recipe_names=recipe_names) as show_plan_meals:
         if show_plan_meals:
+            all_recipes = _recipes_for_weekly_plan()
             meal_count = _render_meal_count_input()
             _sync_plan_length_to_meal_count(meal_count)
 
-            db = get_db()
-            with loading_indicator("Loading recipes from Notion…"):
-                all_recipes = cached_query_recipes(db)
-
             _weekly_plan_meals_fragment(db, all_recipes, meal_count=meal_count)
-
-    db = get_db()
-    with loading_indicator("Loading recipes from Notion…"):
-        all_recipes = cached_query_recipes(db)
 
     with weekly_step_block(WeeklyRailStep.GROCERY_LIST, recipe_names=recipe_names) as show_grocery:
         if show_grocery:
-            _weekly_plan_grocery_fragment(db, all_recipes)
+            _weekly_plan_grocery_fragment(db, _recipes_for_weekly_plan())
 
     render_weekly_scroll_into_view()
