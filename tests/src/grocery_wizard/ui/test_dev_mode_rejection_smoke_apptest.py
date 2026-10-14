@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from ui_source import APP_PATH
+from ui_source import APP_PATH, apptest_continue_to_meal_builder
 
 from src.grocery_wizard.integrations.notion import recipe_lookup_key
 from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
@@ -32,6 +32,7 @@ def _enter_dev_mode(at) -> None:
     assert session_radio, "Weekly plan session radio missing"
     dev_opt = next(o for o in session_radio[0].options if "Dev mode" in o)
     session_radio[0].set_value(dev_opt).run(timeout=120)
+    apptest_continue_to_meal_builder(at, timeout=120)
 
 
 def _rejection_count_for_recipe_name(recipe_name: str) -> int:

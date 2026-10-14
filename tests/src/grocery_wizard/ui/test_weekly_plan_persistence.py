@@ -5,6 +5,12 @@ from __future__ import annotations
 from ui_source import APP_PATH, UI_ROOT, ui_source
 
 
+def test_saved_plan_continue_unlocks_meal_builder() -> None:
+    source = ui_source()
+    entry = source.split("def _render_weekly_plan_entry", 1)[1].split("\ndef ", 1)[0]
+    assert "PLAN_MEAL_COUNT_CONFIRMED_KEY] = True" in entry
+
+
 def test_saved_plan_continue_sets_meal_count_from_loaded_recipes() -> None:
     source = ui_source()
     entry = source.split("def _render_weekly_plan_entry", 1)[1].split(

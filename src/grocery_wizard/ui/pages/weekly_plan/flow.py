@@ -12,6 +12,7 @@ from src.grocery_wizard.ui.pages.weekly_plan.grocery_list_ui import render_groce
 from src.grocery_wizard.ui.pages.weekly_plan.plan_entry import (
     _ensure_plan_session_defaults,
     _render_meal_count_input,
+    _render_plan_meal_count_continue,
     _render_weekly_plan_entry,
     _sync_plan_length_to_meal_count,
     render_meals_section,
@@ -82,9 +83,9 @@ def render_create_weekly_plan() -> None:
         if show_plan_meals:
             all_recipes = _recipes_for_weekly_plan()
             meal_count = _render_meal_count_input()
-            _sync_plan_length_to_meal_count(meal_count)
-
-            _weekly_plan_meals_fragment(db, all_recipes, meal_count=meal_count)
+            if _render_plan_meal_count_continue(meal_count=meal_count):
+                _sync_plan_length_to_meal_count(meal_count)
+                _weekly_plan_meals_fragment(db, all_recipes, meal_count=meal_count)
 
     with weekly_step_block(WeeklyRailStep.GROCERY_LIST, recipe_names=recipe_names) as show_grocery:
         if show_grocery:

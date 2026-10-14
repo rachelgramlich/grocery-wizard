@@ -52,6 +52,7 @@ _WEEKLY_PLAN_MODES = ("new", "saved", "dev")
 _SAVE_WEEK_CHOICE_KEY = "weekly_plan_save_week_choice"
 # Widget key for meal count; ``plan_meal_count`` persists when the weekly tab is not rendered.
 PLAN_MEAL_COUNT_WIDGET_KEY = "plan_meal_count_input"
+PLAN_MEAL_COUNT_CONFIRMED_KEY = "plan_meal_count_confirmed"
 PLAN_FORCE_OPEN_1A_KEY = "plan_force_open_1a"
 PLAN_PREBUILD_MANUAL_POPOVER_KEY = "plan_prebuild_manual_popover"
 PLAN_BUILDER_POPOVER_KEY = "plan_builder_popover"
@@ -62,6 +63,13 @@ _DEV_PLAN_MEALS_ACK_FP_KEY = "weekly_dev_plan_meals_ack_fingerprint"
 
 def _current_plan_names() -> list[str]:
     return parse_line_items_text(st.session_state.get("plan_meals_text", ""))
+
+
+def _plan_meals_builder_unlocked() -> bool:
+    """True when the user confirmed meal count or already has meals loaded."""
+    if st.session_state.get(PLAN_MEAL_COUNT_CONFIRMED_KEY):
+        return True
+    return bool(_current_plan_names())
 
 
 def _write_plan_names(names: list[str]) -> None:
@@ -153,6 +161,7 @@ def _reset_weekly_plan_workflow(*, clear_mode: bool = False) -> None:
         "weekly_plan_saved_fingerprint",
         "plan_prebuild_pinned_recipes",
         "plan_last_week_filters",
+        PLAN_MEAL_COUNT_CONFIRMED_KEY,
     ):
         st.session_state.pop(key, None)
     if clear_mode:

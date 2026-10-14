@@ -36,6 +36,13 @@ def pantry_page_source() -> str:
     return (UI_ROOT / "pages" / "pantry_recurring.py").read_text(encoding="utf-8")
 
 
+def apptest_continue_to_meal_builder(at, *, timeout: int = 60) -> None:
+    """Click **Continue** on the meal-count gate (Plan meals step)."""
+    continue_buttons = [b for b in at.button if b.label == "Continue"]
+    assert continue_buttons, "Meal count Continue button missing"
+    continue_buttons[0].click().run(timeout=timeout)
+
+
 # Back-compat alias for older tests and docs during transition.
 def pantry_tab_source() -> str:
     return pantry_page_source()
