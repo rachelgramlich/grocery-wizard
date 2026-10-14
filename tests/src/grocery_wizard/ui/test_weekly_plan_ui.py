@@ -261,8 +261,9 @@ def test_prebuild_recipe_picker_before_build_my_plan() -> None:
     build_idx = generate.index('key="build_plan"')
     picker_idx = generate.index("_render_prebuild_recipe_picker(")
     assert picker_idx < build_idx
-    assert "Choose recipe manually" in prebuild
-    assert "PLAN_PREBUILD_MANUAL_EXPANDER_KEY" in prebuild
+    assert 'st.popover(\n        "Choose meals manually"' in prebuild
+    assert "PLAN_PREBUILD_MANUAL_POPOVER_KEY" in prebuild
+    assert "manual_popover.open" in prebuild
     assert "_render_direct_recipe_pick" in prebuild
     assert "plan_prebuild_direct_pick" in prebuild
     assert prebuild.index("_render_direct_recipe_pick") < prebuild.index(

@@ -43,14 +43,15 @@ def test_plan_meals_loads_recipes_before_meal_count_and_dedupes() -> None:
 
 
 def test_prebuild_manual_picker_lazy_when_collapsed() -> None:
-    """Issue #336: skip heavy filter widgets until Choose recipe manually is open."""
+    """Issue #336: skip heavy filter widgets until Choose meals manually popover is open."""
     source = ui_source()
     prebuild = source.split("def _render_prebuild_recipe_picker", 1)[1].split(
         "def _set_plan_slot_recipe", 1
     )[0]
-    assert "PLAN_PREBUILD_MANUAL_EXPANDER_KEY" in prebuild
+    assert "PLAN_PREBUILD_MANUAL_POPOVER_KEY" in prebuild
     assert "_render_filtered_recipe_picker" in prebuild
-    assert "if st.session_state.get(PLAN_PREBUILD_MANUAL_EXPANDER_KEY)" in prebuild
+    assert 'on_change="rerun"' in prebuild
+    assert "if manual_popover.open" in prebuild
 
 
 def test_long_actions_show_spinners() -> None:

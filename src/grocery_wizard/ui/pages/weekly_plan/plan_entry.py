@@ -50,7 +50,7 @@ from src.grocery_wizard.ui.pages.weekly_plan.state import (
     PLAN_BUILDER_POPOVER_KEY,
     PLAN_FORCE_OPEN_1A_KEY,
     PLAN_MEAL_COUNT_WIDGET_KEY,
-    PLAN_PREBUILD_MANUAL_EXPANDER_KEY,
+    PLAN_PREBUILD_MANUAL_POPOVER_KEY,
     _clear_grocery_result,
     _clear_grocery_session_overrides,
     _current_plan_names,
@@ -222,7 +222,7 @@ def _render_prebuild_recipe_picker(
     schema_columns: dict[str, ColumnInfo],
     ingredient_index: dict[str, set[str]],
 ) -> None:
-    """Single expander: filter → pin → repeat, before **Build my plan**."""
+    """Popover picker: filter → pin → repeat, before **Build my plan**."""
     db = get_db()
     manual_recipes = _manual_pick_recipes(all_recipes, db)
     all_names = sorted({recipe.name for recipe in manual_recipes}, key=str.lower)
@@ -237,12 +237,15 @@ def _render_prebuild_recipe_picker(
         st.caption("No recipes in Notion yet — add recipes to pin meals before building.")
         return
 
-    with st.expander(
-        "Choose recipe manually",
-        expanded=False,
-        key=PLAN_PREBUILD_MANUAL_EXPANDER_KEY,
-    ):
-        if st.session_state.get(PLAN_PREBUILD_MANUAL_EXPANDER_KEY):
+    with st.popover(
+        "Choose meals manually",
+        help="Pick and pin recipes before you build your plan",
+        width="content",
+        wrap=False,
+        key=PLAN_PREBUILD_MANUAL_POPOVER_KEY,
+        on_change="rerun",
+    ) as manual_popover:
+        if manual_popover.open:
             st.caption(
                 "Pick a recipe directly or use filters, then pin. Repeat until "
                 "you have as many locked meals as you want."
@@ -270,7 +273,7 @@ def _render_prebuild_recipe_picker(
                 filter_caption="Optional — narrow the list using the filters below.",
             )
         else:
-            st.caption("Open this panel to search, filter, and pin recipes before building.")
+            st.caption("Open to search, filter, and pin recipes before building.")
 
     if pinned:
         st.markdown("**Pinned meals**")
