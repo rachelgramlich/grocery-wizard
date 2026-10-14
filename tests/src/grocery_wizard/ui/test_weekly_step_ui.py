@@ -40,6 +40,21 @@ def test_effective_expanded_step_honors_override(monkeypatch) -> None:
     assert step_ui.effective_expanded_step(recipe_names=[]) == WeeklyRailStep.GET_STARTED
 
 
+def test_collapse_after_plan_saved_clears_rail_override(monkeypatch) -> None:
+    session = {step_ui.WEEKLY_EXPANDED_STEP_KEY: "plan_meals"}
+    monkeypatch.setattr(step_ui.st, "session_state", session, raising=False)
+    step_ui.collapse_after_plan_saved_to_notion()
+    assert step_ui.WEEKLY_EXPANDED_STEP_KEY not in session
+
+
+def test_natural_active_step_after_plan_saved(monkeypatch) -> None:
+    session = {"weekly_plan_mode": "new"}
+    monkeypatch.setattr(step_ui, "_weekly_plan_mode", lambda: session.get("weekly_plan_mode"))
+    monkeypatch.setattr(step_ui, "_matching_saved_plan", lambda names: object())
+    monkeypatch.setattr(step_ui.st, "session_state", session, raising=False)
+    assert step_ui._natural_active_step(recipe_names=["tacos"]) == WeeklyRailStep.GROCERY_LIST
+
+
 def test_app_theme_css_includes_weekly_rail_hooks() -> None:
     css = app_theme_css()
     for fragment in (
