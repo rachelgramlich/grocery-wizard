@@ -74,3 +74,16 @@ def test_invalidate_stale_grocery_result_clears_when_notion_cache_generation_cha
     monkeypatch.setattr(weekly_plan_state, "notion_cache_generation", lambda: 2)
     weekly_plan_state._invalidate_stale_grocery_result()
     assert fake_streamlit_session.get("grocery_result") is None
+
+
+def test_invalidate_stale_grocery_result_keeps_review_when_stash_matches_cache(
+    fake_streamlit_session: _FakeSessionState,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from src.grocery_wizard.ui.grocery_flow import GROCERY_STASH_NOTION_GENERATION_KEY
+
+    fake_streamlit_session.grocery_per_recipe_review = {"Soup": "1 cup broth"}
+    setattr(fake_streamlit_session, GROCERY_STASH_NOTION_GENERATION_KEY, 2)
+    monkeypatch.setattr(weekly_plan_state, "notion_cache_generation", lambda: 2)
+    weekly_plan_state._invalidate_stale_grocery_result()
+    assert fake_streamlit_session.get("grocery_per_recipe_review") == {"Soup": "1 cup broth"}
