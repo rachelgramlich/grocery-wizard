@@ -352,6 +352,7 @@ olive oil
 vegetable oil
 canola oil
 sesame oil
+apple cider vinegar
 vinegar
 wine vinegar
 balsamic vinegar
@@ -401,8 +402,8 @@ cayenne
 chili powder
 curry powder
 italian seasoning
-bay leaf
 bay leaves
+bay leaf
 pepper
 salt
 
@@ -536,6 +537,7 @@ seaweed
 # --- canned goods: Canned goods soups & broths ---
 canned peaches
 canned corn
+chicken bouillon
 chicken broth
 beef broth
 vegetable broth

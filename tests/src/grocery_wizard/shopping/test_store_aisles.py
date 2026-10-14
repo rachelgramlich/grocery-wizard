@@ -278,6 +278,9 @@ def test_classify_aisle_strips_checklist_prefix(item: str, expected_aisle: str) 
         ("pumpkin candle", "household/personal care"),
         ("butter lettuce", "vegetables"),
         ("2 medium leeks", "vegetables"),
+        ("apple cider vinegar", "oils & vinegars"),
+        ("bay leaves", "spices"),
+        ("chicken bouillon", "canned goods"),
     ],
 )
 def test_classify_aisle_misclassifications(item: str, expected_aisle: str) -> None:

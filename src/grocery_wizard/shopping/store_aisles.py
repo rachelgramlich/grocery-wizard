@@ -154,10 +154,23 @@ def _strip_prep_suffix(name: str) -> str:
     return text
 
 
+def _aisle_classification_name(item: str) -> str:
+    """Ingredient name for keyword matching (keep phrases like ``bay leaves``)."""
+    cleaned = strip_checklist_prefix(item)
+    stripped = cleaned.strip().lower()
+    name_part, _amount = parse_amount(cleaned)
+    # ``parse_amount`` treats trailing ``leaves`` as a count unit (``2 leaves``).
+    if stripped.endswith(" leaves") and len(stripped.split()) >= 2:
+        base = stripped
+    else:
+        base = (name_part or stripped).lower()
+    return _strip_prep_suffix(base)
+
+
 def classify_aisle(item: str, *, config: StoreAisleConfig | None = None) -> str:
     """Classify a grocery list item into a store aisle."""
     cfg = config or load_store_aisles()
-    name = _strip_prep_suffix(ingredient_name(item)).lower()
+    name = _aisle_classification_name(item)
     if not name:
         return "other"
 
