@@ -599,11 +599,16 @@
             margin-bottom: 0.35rem !important;
         }
 
-        [data-testid="stVerticalBlock"]:has(p.gw-weekly-block-anchor[data-gw-weekly-state="done"]:not([data-gw-weekly-expanded="true"])) {
+        /* Scope fade to each weekly block container — not ancestor stVerticalBlocks (#340). */
+        [class*="st-key-weekly_block_"]:has(
+            p.gw-weekly-block-anchor[data-gw-weekly-state="done"]:not([data-gw-weekly-expanded="true"])
+        ) {
             opacity: 0.82;
         }
 
-        [data-testid="stVerticalBlock"]:has(p.gw-weekly-block-anchor[data-gw-weekly-state="upcoming"]) {
+        [class*="st-key-weekly_block_"]:has(
+            p.gw-weekly-block-anchor[data-gw-weekly-state="upcoming"]
+        ) {
             opacity: 0.55;
         }
 
