@@ -38,6 +38,16 @@ def test_per_recipe_review_initializes_widget_keys_without_value_param() -> None
     assert "grocery_review_save_flash" in review_block
 
 
+def test_save_recipe_review_to_notion_syncs_stash_after_cache_invalidation() -> None:
+    source = (UI_ROOT / "pages" / "weekly_plan" / "recipe_review.py").read_text(encoding="utf-8")
+    save_block = source.split("def _save_recipe_review_to_notion", 1)[1].split(
+        "def _render_per_recipe_review", 1
+    )[0]
+    assert "invalidate_notion_cache()" in save_block
+    assert "sync_grocery_stash_notion_generation" in save_block
+    assert "queue_weekly_scroll(BLOCK_WEEKLY_GROCERY_RECIPE_REVIEW)" in save_block
+
+
 def test_final_step_meals_and_grocery_use_separate_fingerprints() -> None:
     source = ui_source()
     result_block = source.split("def _render_grocery_result", 1)[1].split(

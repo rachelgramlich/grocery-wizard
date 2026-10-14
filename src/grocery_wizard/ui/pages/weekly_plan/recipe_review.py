@@ -13,6 +13,7 @@ from src.grocery_wizard.ui.grocery_flow import (
     recipe_review_save_button_key,
     recipe_review_widget_key,
     stash_recipe_review,
+    sync_grocery_stash_notion_generation,
     sync_recipe_review_overrides_to_session,
 )
 from src.grocery_wizard.ui.grocery_helpers import parse_line_items_text
@@ -93,6 +94,8 @@ def _save_recipe_review_to_notion(
         )
     if updated:
         invalidate_notion_cache()
+        sync_grocery_stash_notion_generation(st.session_state)
+        st.session_state["grocery_review_recipes"] = cached_query_recipes(db)
         lookup = recipe_lookup_key(name)
         saved_text = overrides.get(lookup, st.session_state.get(recipe_review_widget_key(name), ""))
         baseline[name] = saved_text
@@ -106,6 +109,8 @@ def _save_recipe_review_to_notion(
             "info",
             f"No ingredient changes to save for **{name}** (already matches Notion).",
         )
+    set_expanded_step(WeeklyRailStep.GROCERY_LIST)
+    queue_weekly_scroll(BLOCK_WEEKLY_GROCERY_RECIPE_REVIEW)
     st.rerun()
 
 

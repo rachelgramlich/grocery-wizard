@@ -210,6 +210,11 @@ def _mark_grocery_stash_notion_generation(session_state: Any) -> None:
     session_state[GROCERY_STASH_NOTION_GENERATION_KEY] = notion_cache_generation()
 
 
+def sync_grocery_stash_notion_generation(session_state: Any) -> None:
+    """After a Notion write during grocery/review, keep stash aligned with cache generation."""
+    _mark_grocery_stash_notion_generation(session_state)
+
+
 def stash_recipe_review(
     session_state: Any,
     selected: list[str],
