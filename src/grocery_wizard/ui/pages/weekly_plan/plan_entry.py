@@ -221,7 +221,7 @@ def _render_prebuild_recipe_picker(
     schema_columns: dict[str, ColumnInfo],
     ingredient_index: dict[str, set[str]],
 ) -> None:
-    """Single expander: filter → pin → repeat, before **Build my plan**."""
+    """Popover picker: filter → pin → repeat, before **Build my plan**."""
     db = get_db()
     manual_recipes = _manual_pick_recipes(all_recipes, db)
     all_names = sorted({recipe.name for recipe in manual_recipes}, key=str.lower)
@@ -236,7 +236,13 @@ def _render_prebuild_recipe_picker(
         st.caption("No recipes in Notion yet — add recipes to pin meals before building.")
         return
 
-    with st.expander("Choose recipe manually", expanded=False):
+    with st.popover(
+        "Choose meals manually",
+        help="Pick and pin recipes before you build your plan",
+        width="content",
+        wrap=False,
+        key="plan_prebuild_manual_popover",
+    ):
         st.caption(
             "Pick a recipe directly or use filters, then pin. Repeat until "
             "you have as many locked meals as you want."
