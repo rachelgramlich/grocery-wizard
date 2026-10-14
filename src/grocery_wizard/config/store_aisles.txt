@@ -107,7 +107,6 @@ cabbage
 fennel
 leeks
 leek
-leeks
 scallion
 scallions
 radish
@@ -124,39 +123,6 @@ purslane
 shiso
 perilla
 greens
-
-# --- coffee: Coffee & tea ---
-nondairy creamer
-creamer
-coffee beans
-coffee
-espresso
-tea
-matcha
-
-# --- pasta: Pasta & noodles ---
-dried lasagna sheets
-lasagna sheets
-pasta for
-gnocchi
-orecchiette
-cavatappi
-farfalle
-fusilli
-ziti
-pastina
-pasta
-spaghetti
-penne
-rigatoni
-fettuccine
-linguine
-orzo
-noodle
-noodles
-ramen
-tortellini
-ravioli
 
 # --- refrigerated: Refrigerated (cheese/tofu) ---
 basil pesto
@@ -198,7 +164,35 @@ kimchi
 sauerkraut
 chimichurri
 
-# --- canned drinks: Canned drinks ---
+# --- coffee: Coffee & tea ---
+nondairy creamer
+creamer
+coffee beans
+coffee
+espresso
+tea
+matcha
+
+# --- snacks/crackers: Crackers chips & snacks ---
+graham cracker
+ritz cracker
+cracker
+crackers
+biscuit
+biscuits
+tamarind candy straws
+potato chips
+tortilla chips
+pita chips
+popcorn
+pretzel
+pretzels
+trail mix
+protein bar
+chips
+snack
+
+# --- drinks: Drinks ---
 apple cider
 sparkling water
 ginger ale
@@ -225,7 +219,6 @@ half and half
 greek yogurt
 greek yoghurt
 cottage cheese
-cream cheese
 crema
 milk
 yogurt
@@ -245,6 +238,51 @@ paper towels
 toilet paper
 soap
 sponge
+
+# --- meat/fish: Meat & fish ---
+salt-packed anchovies
+anchovies
+pork belly
+salami
+smoked salmon
+sweet italian sausage
+italian sausage
+sausage links
+sausage
+chicken breast
+chicken thigh
+chicken wing
+chicken
+ground chicken
+ground beef
+ground turkey
+ground pork
+pork chop
+pork tenderloin
+pork shoulder
+bacon
+ham
+prosciutto
+pastrami
+lox
+salmon
+tuna
+cod
+halibut
+tilapia
+trout
+shrimp
+scallop
+crab
+lobster
+fish
+seafood
+meat
+turkey
+beef
+lamb
+steak
+poultry
 
 # --- bakery: Bakery ---
 packaged puff pastry
@@ -267,6 +305,38 @@ bun
 roll
 croissant
 
+# --- nuts/desserts: Nuts dessert & dried fruit ---
+toasted unsweetened coconut flakes
+unsweetened coconut flakes
+dry coconut flakes
+shredded coconut
+pepitas
+dried cranberries
+dried apricot
+dried mango
+sun-dried tomato
+pine nut
+macadamia
+pistachio
+walnut
+almonds
+almond
+pecan
+cashew
+peanut
+hazelnut
+raisin
+raisins
+dates
+prune
+prunes
+dried fruit
+bittersweet chocolate
+dark chocolate
+chocolate chips
+cookie
+cookies
+
 # --- oils & vinegars: Oils & vinegars ---
 neutral oil
 sunflower oil
@@ -285,6 +355,13 @@ sesame oil
 vinegar
 wine vinegar
 balsamic vinegar
+
+# --- cereal: Cereal & granola ---
+oats
+oatmeal
+cereal
+granola
+granola bar
 
 # --- spices: Spices & seasonings ---
 taco seasoning
@@ -328,6 +405,75 @@ bay leaf
 bay leaves
 pepper
 salt
+
+# --- pasta/grains: Pasta grains & rice ---
+dried lasagna sheets
+lasagna sheets
+pasta for
+gnocchi
+orecchiette
+cavatappi
+farfalle
+fusilli
+ziti
+pastina
+pasta
+spaghetti
+penne
+rigatoni
+fettuccine
+linguine
+orzo
+noodle
+noodles
+ramen
+tortellini
+ravioli
+lentils
+split peas
+brown rice
+jasmine rice
+basmati rice
+wild rice
+rice
+quinoa
+couscous
+farro
+barley
+bulgur
+
+# --- baking: Baking ---
+dry breadcrumbs
+agave
+sweetened condensed milk
+pumpkin purée
+pumpkin puree
+unbaked pie crust
+demerara sugar
+unsweetened cocoa
+cocoa
+tapioca starch
+flax seed
+vanilla paste
+vanilla
+baking powder
+baking soda
+powdered sugar
+brown sugar
+granulated sugar
+all-purpose flour
+bread flour
+cake flour
+vanilla extract
+cocoa powder
+flour
+sugar
+cornstarch
+yeast
+honey
+maple syrup
+molasses
+vanilla bean paste
 
 # --- sauces/condiments: Sauces & condiments ---
 thai red curry paste
@@ -387,7 +533,7 @@ tahini
 jam
 seaweed
 
-# --- canned goods: Canned goods ---
+# --- canned goods: Canned goods soups & broths ---
 canned peaches
 canned corn
 chicken broth
@@ -414,142 +560,6 @@ garbanzo
 canned
 beans
 
-# --- rice & grains: Rice grains & cereal ---
-lentils
-split peas
-brown rice
-jasmine rice
-basmati rice
-wild rice
-rice
-quinoa
-couscous
-farro
-barley
-bulgur
-oats
-oatmeal
-cereal
-granola
-
-# --- baking: Baking ---
-dry breadcrumbs
-agave
-sweetened condensed milk
-bittersweet chocolate
-dark chocolate
-pumpkin purée
-pumpkin puree
-unbaked pie crust
-demerara sugar
-unsweetened cocoa
-cocoa
-tapioca starch
-flax seed
-vanilla paste
-vanilla
-chocolate chips
-baking powder
-baking soda
-powdered sugar
-brown sugar
-granulated sugar
-all-purpose flour
-bread flour
-cake flour
-vanilla extract
-cocoa powder
-flour
-sugar
-cornstarch
-yeast
-honey
-maple syrup
-molasses
-vanilla bean paste
-
-# --- meat/fish: Meat & fish ---
-salt-packed anchovies
-anchovies
-pork belly
-salami
-smoked salmon
-sweet italian sausage
-italian sausage
-sausage links
-sausage
-chicken breast
-chicken thigh
-chicken wing
-chicken
-ground chicken
-ground beef
-ground turkey
-ground pork
-pork chop
-pork tenderloin
-pork shoulder
-bacon
-ham
-prosciutto
-pastrami
-lox
-salmon
-tuna
-cod
-halibut
-tilapia
-trout
-shrimp
-scallop
-crab
-lobster
-fish
-seafood
-meat
-turkey
-beef
-lamb
-steak
-poultry
-
-# --- crackers/cookies: Crackers & cookies ---
-graham cracker
-ritz cracker
-cookie
-cookies
-cracker
-crackers
-biscuit
-biscuits
-
-# --- nuts/dried fruit: Nuts & dried fruit ---
-toasted unsweetened coconut flakes
-unsweetened coconut flakes
-dry coconut flakes
-shredded coconut
-pepitas
-dried cranberries
-dried apricot
-dried mango
-sun-dried tomato
-pine nut
-macadamia
-pistachio
-walnut
-almonds
-almond
-pecan
-cashew
-peanut
-hazelnut
-raisin
-raisins
-dates
-prune
-prunes
-dried fruit
-
 # --- frozen: Frozen ---
 eomuk
 hash browns
@@ -564,20 +574,6 @@ frozen berries
 ice cream
 frozen
 popsicle
-
-# --- snacks: Snacks ---
-tamarind candy straws
-potato chips
-tortilla chips
-pita chips
-popcorn
-pretzel
-pretzels
-trail mix
-granola bar
-protein bar
-chips
-snack
 
 # --- other: Other ---
 # Catch-all for unmatched items (no keywords).

@@ -31,6 +31,13 @@ _LEGACY_NOTION_AISLE_LABELS = frozenset(
     {
         "dry goods / cans / cereal / rice",
         "dry goods",
+        "canned drinks",
+        "crackers & cookies",
+        "snacks",
+        "nuts & dried fruit",
+        "rice grains & cereal",
+        "pasta & noodles",
+        "canned goods",
     }
 )
 

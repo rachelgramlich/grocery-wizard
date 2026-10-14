@@ -41,31 +41,36 @@ def test_load_store_aisles_uses_committed_config() -> None:
     assert config.aisle_order.index("flowers") < config.aisle_order.index("fruit")
     assert config.aisle_order.index("fruit") < config.aisle_order.index("vegetables")
     assert "grape tomato" in config.aisle_keywords["vegetables"]
-    assert config.aisle_order.index("vegetables") < config.aisle_order.index("coffee")
-    assert config.aisle_order.index("coffee") < config.aisle_order.index("pasta")
-    assert config.aisle_order.index("pasta") < config.aisle_order.index("refrigerated")
+    assert config.aisle_order.index("vegetables") < config.aisle_order.index("refrigerated")
+    assert config.aisle_order.index("refrigerated") < config.aisle_order.index("coffee")
+    assert config.aisle_order.index("coffee") < config.aisle_order.index("snacks/crackers")
+    assert config.aisle_order.index("snacks/crackers") < config.aisle_order.index("drinks")
+    assert config.aisle_order.index("drinks") < config.aisle_order.index("dairy/eggs")
     assert config.aisle_order.index("dairy/eggs") < config.aisle_order.index(
         "household/personal care"
     )
-    assert config.aisle_order.index("household/personal care") < config.aisle_order.index("bakery")
-    assert config.aisle_order.index("bakery") < config.aisle_order.index("oils & vinegars")
-    assert config.aisle_order.index("oils & vinegars") < config.aisle_order.index("spices")
-    assert config.aisle_order.index("spices") < config.aisle_order.index("sauces/condiments")
-    assert config.aisle_order.index("sauces/condiments") < config.aisle_order.index("canned goods")
-    assert config.aisle_order.index("canned goods") < config.aisle_order.index("rice & grains")
-    assert config.aisle_order.index("rice & grains") < config.aisle_order.index("baking")
     assert config.aisle_order.index("household/personal care") < config.aisle_order.index(
         "meat/fish"
     )
-    assert config.aisle_order.index("baking") < config.aisle_order.index("meat/fish")
-    assert config.aisle_order.index("meat/fish") < config.aisle_order.index("frozen")
+    assert config.aisle_order.index("meat/fish") < config.aisle_order.index("bakery")
+    assert config.aisle_order.index("bakery") < config.aisle_order.index("nuts/desserts")
+    assert config.aisle_order.index("nuts/desserts") < config.aisle_order.index("oils & vinegars")
+    assert config.aisle_order.index("oils & vinegars") < config.aisle_order.index("cereal")
+    assert config.aisle_order.index("cereal") < config.aisle_order.index("spices")
+    assert config.aisle_order.index("spices") < config.aisle_order.index("pasta/grains")
+    assert config.aisle_order.index("pasta/grains") < config.aisle_order.index("baking")
+    assert config.aisle_order.index("baking") < config.aisle_order.index("sauces/condiments")
+    assert config.aisle_order.index("sauces/condiments") < config.aisle_order.index("canned goods")
+    assert config.aisle_order.index("canned goods") < config.aisle_order.index("frozen")
     assert config.aisle_labels["flowers"] == "Flowers"
     assert config.aisle_labels["household/personal care"] == "Household and personal care"
     assert config.aisle_labels["fruit"] == "Fruit"
     assert config.aisle_labels["meat/fish"] == "Meat & fish"
     assert "banana" in config.aisle_keywords["fruit"]
     assert "onion" in config.aisle_keywords["vegetables"]
-    assert "apple cider" in config.aisle_keywords["canned drinks"]
+    assert "apple cider" in config.aisle_keywords["drinks"]
+    assert "cookie" in config.aisle_keywords["nuts/desserts"]
+    assert "potato chips" in config.aisle_keywords["snacks/crackers"]
     assert "peanut butter" in config.aisle_keywords["sauces/condiments"]
     assert "cumin" in config.aisle_keywords["spices"]
     assert "olive oil" in config.aisle_keywords["oils & vinegars"]
@@ -116,19 +121,19 @@ def test_load_store_aisles_reloads_after_file_changes(tmp_path: Path) -> None:
         ("bananas", "fruit"),
         ("berries", "fruit"),
         ("2 cans white beans", "canned goods"),
-        ("1 lb spaghetti", "pasta"),
+        ("1 lb spaghetti", "pasta/grains"),
         ("eggs", "dairy/eggs"),
         ("2 eggs", "dairy/eggs"),
         ("milk", "dairy/eggs"),
         ("shredded cheddar", "refrigerated"),
         ("frozen peas", "frozen"),
         ("coffee beans", "coffee"),
-        ("almonds", "nuts/dried fruit"),
-        ("potato chips", "snacks"),
+        ("almonds", "nuts/desserts"),
+        ("potato chips", "snacks/crackers"),
         ("all-purpose flour", "baking"),
         ("sourdough bread", "bakery"),
         ("8 corn tortillas", "bakery"),
-        ("la croix", "canned drinks"),
+        ("la croix", "drinks"),
         ("chicken", "meat/fish"),
         ("chimichurri", "refrigerated"),
         ("avocado oil", "oils & vinegars"),
@@ -166,12 +171,12 @@ def test_sort_grocery_items_follows_store_walk_order() -> None:
         < vegetables_index
         < refrigerated_index
         < dairy_index
+        < meat_index
         < bakery_index
         < canned_index
-        < meat_index
         < frozen_index
     )
-    assert sorted_items.index("milk") < bakery_index
+    assert sorted_items.index("milk") < meat_index
 
 
 def test_group_grocery_items_by_aisle_omits_empty_aisles() -> None:
@@ -230,7 +235,7 @@ def test_classify_aisle_strips_checklist_prefix(item: str, expected_aisle: str) 
 @pytest.mark.parametrize(
     ("item", "expected_aisle"),
     [
-        ("Apple cider", "canned drinks"),
+        ("Apple cider", "drinks"),
         ("Canned peaches", "canned goods"),
         ("Raspberry jam", "sauces/condiments"),
         ("Apricot jam", "sauces/condiments"),
@@ -252,7 +257,7 @@ def test_classify_aisle_strips_checklist_prefix(item: str, expected_aisle: str) 
         ("2 leeks", "vegetables"),
         ("leeks", "vegetables"),
         ("2 leeks, light green white parts only", "vegetables"),
-        ("pasta for squash", "pasta"),
+        ("pasta for squash", "pasta/grains"),
         ("cheese sticks", "refrigerated"),
         ("pudding vanilla", "dairy/eggs"),
         ("coconut oil", "oils & vinegars"),
@@ -264,8 +269,8 @@ def test_classify_aisle_strips_checklist_prefix(item: str, expected_aisle: str) 
         ("buffalo sauce", "sauces/condiments"),
         ("hot sauce", "sauces/condiments"),
         ("teriyaki sauce", "sauces/condiments"),
-        ("pkgs gnocchi", "pasta"),
-        ("gnocchi", "pasta"),
+        ("pkgs gnocchi", "pasta/grains"),
+        ("gnocchi", "pasta/grains"),
         ("roti", "bakery"),
         ("nondairy creamer", "coffee"),
         ("laundry detergent", "household/personal care"),
