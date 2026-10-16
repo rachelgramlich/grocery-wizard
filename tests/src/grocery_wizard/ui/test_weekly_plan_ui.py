@@ -13,7 +13,7 @@ def test_weekly_plan_has_per_meal_swap_buttons() -> None:
     assert 'key=f"swap_meal_{index}"' in source
     assert "meal_slot_action_row_" in source
     assert "gw-meal-slot-label" in source
-    assert "meal_col, actions_col = st.columns([1, 1]" not in source
+    assert "meal_col, actions_col = st.columns([1, 1]" in source
     assert (
         'width="content"'
         in source.split("def _render_slot_manual_popover", 1)[1].split(

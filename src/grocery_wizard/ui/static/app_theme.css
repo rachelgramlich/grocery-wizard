@@ -262,13 +262,9 @@
             font-weight: inherit;
         }
 
-        [data-testid="stVerticalBlock"]:has(p.gw-meal-slot-list) p.gw-meal-slot-label {
-            margin: 0.5rem 0 0.2rem 0.75rem;
-        }
-
-        [data-testid="stVerticalBlock"]:has(p.gw-meal-slot-list) [class*="st-key-meal_slot_action_row"] {
-            margin: 0 0 0.65rem 0.75rem;
-            max-width: 100%;
+        [data-testid="stVerticalBlock"]:has(p.gw-meal-slot-list)
+            [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) {
+            margin-left: 1.25rem !important;
         }
 
         [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) {
@@ -303,16 +299,11 @@
             white-space: normal !important;
         }
 
-        [class*="st-key-meal_slot_action_row"] {
-            width: 100% !important;
-            max-width: 100% !important;
-            flex-wrap: wrap !important;
-        }
-
+        [class*="st-key-meal_slot_action_row"],
         [class*="st-key-meal_slot_action_row"] [data-testid="stHorizontalBlock"] {
-            width: 100% !important;
-            max-width: 100% !important;
-            flex-wrap: wrap !important;
+            width: auto !important;
+            min-width: max-content !important;
+            flex: 0 0 auto !important;
         }
 
         /* Weekly plan meal + week actions: show full button labels (no ellipsis). */
