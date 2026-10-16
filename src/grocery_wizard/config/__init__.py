@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal
 
 from pydantic import AliasChoices, Field, ValidationError, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -77,6 +78,30 @@ class Config(BaseSettings):
         default=None,
         validation_alias="GROCERY_WIZARD_MEAL_PLAN_STATUS_COLUMN",
     )
+    feedback_mode: Literal["local", "github"] = Field(
+        default="local",
+        validation_alias="FEEDBACK_MODE",
+    )
+    github_feedback_token: str | None = Field(
+        default=None,
+        validation_alias="GITHUB_FEEDBACK_TOKEN",
+    )
+    github_feedback_repository: str | None = Field(
+        default=None,
+        validation_alias="GITHUB_FEEDBACK_REPOSITORY",
+    )
+    require_auth: bool = Field(default=False, validation_alias="GROCERY_WIZARD_REQUIRE_AUTH")
+    auth_email_allowlist: str | None = Field(
+        default=None,
+        validation_alias="GROCERY_WIZARD_AUTH_EMAIL_ALLOWLIST",
+    )
+
+    @field_validator("feedback_mode", mode="before")
+    @classmethod
+    def _normalize_feedback_mode(cls, value: object) -> object:
+        if isinstance(value, str):
+            return value.strip().lower() or "local"
+        return value
 
     @field_validator(
         "notion_api_key",
@@ -93,6 +118,9 @@ class Config(BaseSettings):
         "suggestion_rejections_column",
         "plan_selections_column",
         "meal_plan_status_column",
+        "github_feedback_token",
+        "github_feedback_repository",
+        "auth_email_allowlist",
         mode="before",
     )
     @classmethod

@@ -9,7 +9,7 @@ This document compares ways to use the UI on a phone **outside home Wi‑Fi**, r
 | Use case | Approach |
 | --- | --- |
 | **Default** | Run `just grocery-ui` on the Mac when it is on; use the **CLI** when the UI is not running. Optional: phone on **same Wi‑Fi** while the Mac is up (`just grocery-ui -- --server.address=0.0.0.0` if needed). |
-| **Phone on cellular / anytime** | Only if we add an **always-on hosted** Streamlit (#138) plus **auth** (#139). Not tunnel-to-Mac—the laptop is often off, so that path is not worth building in this repo. |
+| **Phone on cellular / anytime** | **Household deploy** on Streamlit Community Cloud ([#354](https://github.com/rachelgramlich/grocery-wizard/issues/354)) — see [household-deploy.md](../../../docs/household-deploy.md). Not tunnel-to-Mac—the laptop is often off. |
 
 No committed Just recipes or config exist for tunnels or LAN bind; pass Streamlit flags yourself if you ever experiment locally.
 
@@ -60,17 +60,17 @@ Deploy the same app to a PaaS (Railway, Fly.io, Render, a small VPS, etc.) or **
 
 **Today:** use **local Streamlit + CLI** when the Mac is on; do **not** invest in tunnel-to-Mac automation in this repo.
 
-**If remote UI becomes a requirement:** implement **always-on host + auth** (#138, #139) in that order. Treat Cloudflare Tunnel-to-Mac as a personal ops note only, not a product path.
+**If remote UI becomes a requirement:** use the **household deploy runbook** ([#354](https://github.com/rachelgramlich/grocery-wizard/issues/354), [docs/household-deploy.md](../../../docs/household-deploy.md)). Treat Cloudflare Tunnel-to-Mac as a personal ops note only, not a product path.
 
-**Defer:** Native app; Streamlit Community Cloud as default (auth + repo visibility); Mac tunnel runbook (#137 — closed as not planned).
+**Defer:** Native app; Mac tunnel runbook (#137 — closed as not planned).
 
 ## Staged follow-up issues
 
 | Phase | Backlog issue | Topic |
 | --- | --- | --- |
 | — | ~~[#137](https://github.com/rachelgramlich/grocery-wizard/issues/137)~~ | Mac tunnel runbook — **not planned** (Mac often off) |
-| 1 | [#138](https://github.com/rachelgramlich/grocery-wizard/issues/138) | Always-on Streamlit deploy (container + platform secrets) |
-| 2 | [#139](https://github.com/rachelgramlich/grocery-wizard/issues/139) | Access control in-app or at edge |
+| — | ~~[#138](https://github.com/rachelgramlich/grocery-wizard/issues/138)~~ | Superseded by #354 |
+| Active | [#354](https://github.com/rachelgramlich/grocery-wizard/issues/354) | SCC deploy, Google allowlist, GitHub feedback inbox |
 | 3 | [#140](https://github.com/rachelgramlich/grocery-wizard/issues/140) | Mobile UX: Add to Home Screen hints, optional PWA meta, touch layout pass |
 
 ## Security checklist (any public URL)

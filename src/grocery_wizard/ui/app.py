@@ -12,6 +12,7 @@ if str(_REPO_ROOT) not in sys.path:
 
 import streamlit as st
 
+from src.grocery_wizard.ui.access_gate import enforce_access_gate
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.feedback import render_feedback_controls
 from src.grocery_wizard.ui.ids import (
@@ -121,6 +122,7 @@ def main() -> None:
         layout="centered",
     )
     inject_app_styles()
+    enforce_access_gate()
     st.title("Grocery Wizard")
     mount_global_loading_banner()
 

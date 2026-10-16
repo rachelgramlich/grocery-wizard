@@ -1,6 +1,7 @@
 # Local files and directories to ignore (includes feedback_backlog.md + .archived.md under .local/grocery_wizard/)
 .local/
 settings.toml
+.streamlit/secrets.toml
 .env
 
 # Python

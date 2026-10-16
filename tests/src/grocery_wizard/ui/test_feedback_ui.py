@@ -30,10 +30,11 @@ def test_feedback_submit_appends_to_backlog(tmp_path: Path) -> None:
 
         render_feedback_controls(surface="weekly")
 
-    with patch(
-        "src.grocery_wizard.ui.feedback.append_feedback",
-        side_effect=lambda text, surface=None: append_feedback(text, path=backlog, surface=surface),
-    ):
+    def _submit_local(text: str, *, surface: str | None = None, **kwargs: object) -> str:
+        append_feedback(text, path=backlog, surface=surface)
+        return "local"
+
+    with patch("src.grocery_wizard.ui.feedback.submit_feedback", side_effect=_submit_local):
         at = AppTest.from_function(_app, default_timeout=60)
         at.run(timeout=60)
 

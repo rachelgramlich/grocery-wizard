@@ -14,7 +14,7 @@ dependencies = [
     "python-dotenv>=1.0.1",
     "requests>=2.32.3",
     "ruff>=0.15.6",
-    "streamlit>=1.39.0",
+    "streamlit>=1.42.0",
 ]
 
 
