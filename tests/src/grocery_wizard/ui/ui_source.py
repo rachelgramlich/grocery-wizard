@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from tests.repo_paths import UI_SRC_ROOT
 
-UI_ROOT = Path(__file__).resolve().parents[4] / "src" / "grocery_wizard" / "ui"
+UI_ROOT = UI_SRC_ROOT
 APP_PATH = UI_ROOT / "app.py"
 
 _UI_MODULE_PATHS = (
@@ -48,8 +48,3 @@ def apptest_rail_get_started(at, *, timeout: int = 60) -> None:
     rail = [b for b in at.button if b.label.endswith("Get started")]
     assert rail, "Get started rail button missing"
     rail[0].click().run(timeout=timeout)
-
-
-# Back-compat alias for older tests and docs during transition.
-def pantry_tab_source() -> str:
-    return pantry_page_source()

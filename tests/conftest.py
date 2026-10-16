@@ -10,6 +10,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from tests.notion_test_env import PYTEST_NOTION_API_KEY_PLACEHOLDER
+from tests.repo_paths import UI_TEST_HELPERS
 
 # Dummy Notion settings so CI and fresh clones can run tests without a real `.env`.
 # Real credentials from the environment or `.env` take precedence (`setdefault`).
@@ -95,6 +96,5 @@ def _notion_test_doubles(monkeypatch: pytest.MonkeyPatch) -> None:
     )
 
 
-_UI_TEST_HELPERS = Path(__file__).resolve().parent / "src" / "grocery_wizard" / "ui"
-if str(_UI_TEST_HELPERS) not in sys.path:
-    sys.path.insert(0, str(_UI_TEST_HELPERS))
+if str(UI_TEST_HELPERS) not in sys.path:
+    sys.path.insert(0, str(UI_TEST_HELPERS))
