@@ -13,7 +13,13 @@
             --gw-blue: #b8d9f0;
             --gw-blue-strong: #6baee0;
             --gw-blue-text: #1a4a6e;
-            /* Typography scale — tab subheader down (#222). Page title uses Streamlit defaults. */
+            /* Typography scale — tab subheader down (#222). App title: .gw-app-title word art. */
+            --gw-title-grocery-from: #8b1a5c;
+            --gw-title-grocery-to: #c43d82;
+            --gw-title-wizard-from: #1a4a6e;
+            --gw-title-wizard-to: #6baee0;
+            --gw-title-outline: #fff9fc;
+            --gw-title-shadow: #d48aad;
             --gw-heading-section-size: 1.38rem;
             --gw-heading-section-weight: 600;
             --gw-heading-step-size: 1.2rem;
@@ -34,6 +40,98 @@
 
         html {
             color-scheme: light;
+        }
+
+        .gw-app-title-block {
+            margin: 0.15rem 0 0.85rem 0;
+            text-align: center;
+        }
+
+        .gw-app-title {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 0.15rem 0.35rem;
+            margin: 0;
+            padding: 0;
+            line-height: 1.05;
+            font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+        }
+
+        .gw-app-title__grocery,
+        .gw-app-title__wizard {
+            display: inline-block;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            filter: drop-shadow(0 2px 0 rgba(92, 16, 64, 0.12));
+        }
+
+        .gw-app-title__grocery {
+            font-size: clamp(2rem, 7.5vw, 2.85rem);
+            background-image: linear-gradient(
+                165deg,
+                #5c1040 0%,
+                var(--gw-accent) 38%,
+                #c43d82 72%,
+                var(--gw-accent) 100%
+            );
+            -webkit-text-stroke: 1px rgba(255, 255, 255, 0.55);
+            paint-order: stroke fill;
+        }
+
+        .gw-app-title__wizard {
+            font-size: clamp(2.15rem, 8vw, 3.05rem);
+            font-style: italic;
+            background-image: linear-gradient(
+                155deg,
+                var(--gw-blue-text) 0%,
+                var(--gw-blue-strong) 45%,
+                #4a98d4 100%
+            );
+            -webkit-text-stroke: 1px rgba(255, 255, 255, 0.45);
+            paint-order: stroke fill;
+        }
+
+        .gw-app-title__spark {
+            color: var(--gw-accent);
+            font-size: 0.95rem;
+            opacity: 0.85;
+            transform: translateY(-0.35rem);
+        }
+
+        .gw-app-title__spark--right {
+            color: var(--gw-blue-strong);
+        }
+
+        .gw-app-title__wand {
+            display: inline-flex;
+            width: 2.1rem;
+            height: 2.1rem;
+            margin: 0 -0.15rem;
+            transform: rotate(-8deg) translateY(-0.15rem);
+        }
+
+        .gw-app-title__wand svg {
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+
+        .gw-app-title__wand-stick {
+            fill: none;
+            stroke: var(--gw-accent);
+            stroke-width: 3;
+            stroke-linecap: round;
+        }
+
+        .gw-app-title__wand-star {
+            fill: var(--gw-blue-strong);
+            stroke: var(--gw-blue-text);
+            stroke-width: 0.5;
         }
 
         .stApp {
