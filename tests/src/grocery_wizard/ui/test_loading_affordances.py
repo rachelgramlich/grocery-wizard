@@ -22,9 +22,10 @@ def test_long_actions_use_loading_indicator() -> None:
     assert "st.spinner" not in source
 
 
-def test_loading_indicator_supports_fragment_progress_bar() -> None:
+def test_loading_indicator_uses_spinner_without_inline_progress() -> None:
     loading_source = (UI_ROOT / "loading.py").read_text(encoding="utf-8")
-    assert "st.progress" in loading_source
+    assert "st.spinner" in loading_source
+    assert "st.progress" not in loading_source
     assert "_can_update_global_banner()" in loading_source
 
 
