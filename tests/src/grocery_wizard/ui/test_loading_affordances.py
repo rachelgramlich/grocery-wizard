@@ -9,6 +9,10 @@ def test_app_mounts_global_loading_banner() -> None:
     app_text = APP_PATH.read_text(encoding="utf-8")
     assert "mount_global_loading_banner" in app_text
     assert "loading_indicator" in app_text
+    loading_source = (UI_ROOT / "loading.py").read_text(encoding="utf-8")
+    mount_fn = loading_source.split("def mount_global_loading_banner", 1)[1].split("\ndef ", 1)[0]
+    assert "GW_BUSY_MESSAGE_KEY" in mount_fn
+    assert "_refresh_global_banner()" in mount_fn
 
 
 def test_long_actions_use_loading_indicator() -> None:
