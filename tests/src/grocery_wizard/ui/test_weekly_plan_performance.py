@@ -20,9 +20,13 @@ def test_discard_stale_partial_plan_on_new_weekly_flow() -> None:
     discard_fn = plan_entry.split("def _discard_stale_partial_plan", 1)[1].split("\ndef ", 1)[0]
     assert '_weekly_plan_mode() != "new"' in discard_fn
     assert "plan_prebuild_pinned_recipes" in discard_fn
-    continue_fn = plan_entry.split("def _render_plan_meal_count_continue", 1)[1].split("\ndef ", 1)[0]
+    continue_fn = plan_entry.split("def _render_plan_meal_count_continue", 1)[1].split("\ndef ", 1)[
+        0
+    ]
     assert "_discard_stale_partial_plan" in continue_fn
-    widget_fn = plan_entry.split("def _on_plan_meal_count_widget_change", 1)[1].split("\ndef ", 1)[0]
+    widget_fn = plan_entry.split("def _on_plan_meal_count_widget_change", 1)[1].split("\ndef ", 1)[
+        0
+    ]
     assert "_discard_stale_partial_plan" in widget_fn
 
 
