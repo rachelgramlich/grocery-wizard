@@ -103,6 +103,29 @@ def _locked_recipes_for_plan_build(*, meal_count: int) -> list[str]:
     return locked[: int(meal_count)]
 
 
+def _discard_stale_partial_plan(meal_count: int) -> None:
+    """Drop leftover meals when count was raised on a new plan (session stale state)."""
+    if _weekly_plan_mode() != "new":
+        return
+    names = _current_plan_names()
+    if not names or len(names) >= int(meal_count):
+        return
+    _write_plan_names([])
+    _set_plan_slot_origins([])
+    st.session_state.pop("plan_rejected_names", None)
+    st.session_state.pop("plan_prebuild_pinned_recipes", None)
+    _invalidate_weekly_plan_save_state()
+    _clear_grocery_session_overrides()
+    _clear_grocery_result()
+
+
+def _on_plan_meal_count_widget_change() -> None:
+    meal_count = int(st.session_state[PLAN_MEAL_COUNT_WIDGET_KEY])
+    st.session_state.plan_meal_count = meal_count
+    _discard_stale_partial_plan(meal_count)
+    _sync_plan_length_to_meal_count(meal_count)
+
+
 def _clamp_prebuild_pinned_recipes(*, max_pins: int) -> None:
     """Keep pre-build pins within meal count (e.g. after lowering meal count)."""
     key = "plan_prebuild_pinned_recipes"
@@ -634,6 +657,7 @@ def _render_meal_count_input() -> int:
             max_value=21,
             step=1,
             key=PLAN_MEAL_COUNT_WIDGET_KEY,
+            on_change=_on_plan_meal_count_widget_change,
         )
     )
     st.session_state.plan_meal_count = meal_count
@@ -654,15 +678,7 @@ def _render_plan_meal_count_continue(*, meal_count: int) -> bool:
         st.session_state.plan_meal_count = int(meal_count)
         st.session_state[PLAN_MEAL_COUNT_CONFIRMED_KEY] = True
         st.session_state[PLAN_MEAL_BUILDER_LOADING_KEY] = True
-        if _weekly_plan_mode() == "new":
-            stale = _current_plan_names()
-            if stale and len(stale) < int(meal_count):
-                _write_plan_names([])
-                _set_plan_slot_origins([])
-                st.session_state.pop("plan_rejected_names", None)
-                _invalidate_weekly_plan_save_state()
-                _clear_grocery_session_overrides()
-                _clear_grocery_result()
+        _discard_stale_partial_plan(int(meal_count))
         _sync_plan_length_to_meal_count(meal_count)
         queue_weekly_scroll(BLOCK_WEEKLY_MEALS)
         st.rerun()
@@ -960,6 +976,7 @@ def render_meals_section(
 ) -> list[str]:
     """Render step 1 (meals) and return the current planned recipe names."""
     _render_dev_jump_tools(db)
+    _discard_stale_partial_plan(int(meal_count))
 
     current_plan = _current_plan_names()
     fallback_filters = default_filters(db.schema.all_columns)
@@ -981,7 +998,7 @@ def render_meals_section(
     else:
         week_filters = st.session_state.get("plan_last_week_filters", stored_filters)
 
-    if has_plan:
+    if has_plan and not (plan_incomplete and _weekly_plan_mode() == "new"):
         _render_built_plan_meals(
             db,
             all_recipes=all_recipes,
