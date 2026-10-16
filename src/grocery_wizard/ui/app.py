@@ -124,7 +124,7 @@ def main() -> None:
     inject_app_styles()
     enforce_access_gate()
     st.markdown(
-        '<h1 class="gw-app-title">Grocery Wizard</h1>',
+        '<h1 class="gw-app-title" style="text-align:center;width:100%;">Grocery Wizard</h1>',
         unsafe_allow_html=True,
     )
     mount_global_loading_banner()
