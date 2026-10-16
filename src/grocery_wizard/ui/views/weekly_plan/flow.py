@@ -16,6 +16,7 @@ from src.grocery_wizard.ui.views.weekly_plan.plan_entry import (
     _render_weekly_plan_entry,
     _sync_plan_length_to_meal_count,
     render_meals_section,
+    warm_weekly_plan_meal_caches,
 )
 from src.grocery_wizard.ui.views.weekly_plan.state import (
     _current_plan_names,
@@ -77,6 +78,7 @@ def render_create_weekly_plan() -> None:
         if cached_recipes is None:
             with loading_indicator("Loading recipes from Notion…"):
                 cached_recipes = cached_query_recipes(db)
+                warm_weekly_plan_meal_caches(cached_recipes)
         return cached_recipes
 
     with weekly_step_block(WeeklyRailStep.PLAN_MEALS, recipe_names=recipe_names) as show_plan_meals:
