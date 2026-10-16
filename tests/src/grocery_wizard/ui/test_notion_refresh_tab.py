@@ -9,7 +9,7 @@ def test_notion_refresh_uses_on_click_not_inline_rerun() -> None:
     app = APP_PATH.read_text(encoding="utf-8")
     assert "def _refresh_notion_cache_from_ui()" in app
     assert "on_click=_refresh_notion_cache_from_ui" in app
-    refresh_block = app.split("def _render_notion_cache_controls()")[1].split("def main")[0]
+    refresh_block = app.split("def _render_global_header_controls(")[1].split("def main")[0]
     assert "st.rerun()" not in refresh_block
 
 
@@ -18,7 +18,7 @@ def test_notion_refresh_controls_render_above_page_picker() -> None:
     app = APP_PATH.read_text(encoding="utf-8")
     main_body = app.split("def main() -> None:")[1].split('if __name__ == "__main__"')[0]
     picker_idx = main_body.index("st.segmented_control(")
-    refresh_idx = main_body.index("_render_notion_cache_controls()")
+    refresh_idx = main_body.index("_render_global_header_controls(")
     assert refresh_idx < picker_idx
 
 
