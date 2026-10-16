@@ -42,6 +42,8 @@ _LEGACY_NOTION_AISLE_LABELS = frozenset(
 )
 
 _SECTION_HEADER_RE = re.compile(r"^#\s*---\s*(?P<id>.+?)(?::\s*(?P<label>.+?))?\s*---\s*$")
+_PRODUCT_LINE_RE = re.compile(r"^(?P<aisle>[^:]+):\s*(?P<phrase>.+)$")
+_PRODUCTS_SECTION_ID = "products"
 
 # Trailing prep phrases (after a comma) stripped before keyword matching so
 # ``lime, juiced`` and ``potatoes, unpeeled but scrubbed clean`` classify correctly.
@@ -63,6 +65,7 @@ class StoreAisleConfig:
     aisle_order: tuple[str, ...]
     aisle_labels: dict[str, str]
     aisle_keywords: dict[str, tuple[str, ...]]
+    product_phrases: tuple[tuple[str, str], ...] = ()
 
 
 def parse_store_aisles_file(path: Path) -> StoreAisleConfig:
@@ -70,7 +73,9 @@ def parse_store_aisles_file(path: Path) -> StoreAisleConfig:
     aisle_order: list[str] = []
     aisle_labels: dict[str, str] = {}
     aisle_keywords: dict[str, list[str]] = {}
+    product_phrases: list[tuple[str, str]] = []
     current_aisle: str | None = None
+    in_products = False
 
     if not path.exists():
         return StoreAisleConfig((), {}, {})
@@ -84,13 +89,29 @@ def parse_store_aisles_file(path: Path) -> StoreAisleConfig:
         if header_match:
             aisle_id = header_match.group("id").strip().lower()
             label = (header_match.group("label") or aisle_id).strip()
+            if aisle_id == _PRODUCTS_SECTION_ID:
+                in_products = True
+                current_aisle = None
+                continue
+            in_products = False
             aisle_order.append(aisle_id)
             aisle_labels[aisle_id] = label
             aisle_keywords[aisle_id] = []
             current_aisle = aisle_id
             continue
 
-        if stripped.startswith("#") or current_aisle is None:
+        if stripped.startswith("#"):
+            continue
+
+        if in_products:
+            product_match = _PRODUCT_LINE_RE.match(stripped)
+            if product_match:
+                aisle = product_match.group("aisle").strip().lower()
+                phrase = product_match.group("phrase").strip().lower()
+                product_phrases.append((phrase, aisle))
+            continue
+
+        if current_aisle is None:
             continue
 
         aisle_keywords[current_aisle].append(stripped.lower())
@@ -100,10 +121,13 @@ def parse_store_aisles_file(path: Path) -> StoreAisleConfig:
         aisle_labels.setdefault("other", "Other")
         aisle_keywords.setdefault("other", [])
 
+    product_phrases.sort(key=lambda pair: len(pair[0].split()), reverse=True)
+
     return StoreAisleConfig(
         aisle_order=tuple(aisle_order),
         aisle_labels=aisle_labels,
         aisle_keywords={aisle: tuple(words) for aisle, words in aisle_keywords.items()},
+        product_phrases=tuple(product_phrases),
     )
 
 
@@ -175,7 +199,84 @@ def classify_aisle(item: str, *, config: StoreAisleConfig | None = None) -> str:
         return "other"
 
     name_words = name.split()
-    best_aisle = "other"
+
+    product_aisle = _best_phrase_aisle(
+        name_words,
+        cfg.product_phrases,
+        aisle_order=cfg.aisle_order,
+    )
+    if product_aisle is not None:
+        return product_aisle
+
+    multi_word = _best_keyword_aisle(
+        name_words,
+        cfg,
+        min_keyword_words=2,
+    )
+    if multi_word is not None:
+        return multi_word
+
+    modifier_aisle = _aisle_from_modifiers(name_words)
+    if modifier_aisle is not None:
+        return modifier_aisle
+
+    single_word = _best_keyword_aisle(
+        name_words,
+        cfg,
+        min_keyword_words=1,
+        max_keyword_words=1,
+        single_word_head_only=True,
+    )
+    if single_word is not None:
+        return single_word
+
+    return "other"
+
+
+def _aisle_from_modifiers(name_words: list[str]) -> str | None:
+    """Route obvious form modifiers before single-token ingredient keywords."""
+    if any(_word_matches(word, "frozen") for word in name_words):
+        return "frozen"
+    if any(_word_matches(word, "canned") for word in name_words):
+        return "canned goods"
+    return None
+
+
+def _best_phrase_aisle(
+    name_words: list[str],
+    phrases: tuple[tuple[str, str], ...],
+    *,
+    aisle_order: tuple[str, ...],
+) -> str | None:
+    best_aisle: str | None = None
+    best_phrase_len = 0
+    best_aisle_rank = len(aisle_order)
+
+    for phrase, aisle in phrases:
+        phrase_words = phrase.split()
+        if not _contains_word_phrase(name_words, phrase_words):
+            continue
+        phrase_len = len(phrase_words)
+        rank = aisle_order.index(aisle) if aisle in aisle_order else len(aisle_order)
+        if phrase_len > best_phrase_len or (
+            phrase_len == best_phrase_len and rank < best_aisle_rank
+        ):
+            best_aisle = aisle
+            best_phrase_len = phrase_len
+            best_aisle_rank = rank
+
+    return best_aisle
+
+
+def _best_keyword_aisle(
+    name_words: list[str],
+    cfg: StoreAisleConfig,
+    *,
+    min_keyword_words: int,
+    max_keyword_words: int | None = None,
+    single_word_head_only: bool = False,
+) -> str | None:
+    best_aisle: str | None = None
     best_keyword_len = 0
     best_aisle_rank = len(cfg.aisle_order)
 
@@ -184,16 +285,34 @@ def classify_aisle(item: str, *, config: StoreAisleConfig | None = None) -> str:
             continue
         for keyword in cfg.aisle_keywords.get(aisle, ()):
             keyword_words = keyword.split()
-            if _contains_word_phrase(name_words, keyword_words):
-                keyword_len = len(keyword_words)
-                if keyword_len > best_keyword_len or (
-                    keyword_len == best_keyword_len and rank < best_aisle_rank
-                ):
-                    best_aisle = aisle
-                    best_keyword_len = keyword_len
-                    best_aisle_rank = rank
+            keyword_len = len(keyword_words)
+            if keyword_len < min_keyword_words:
+                continue
+            if max_keyword_words is not None and keyword_len > max_keyword_words:
+                continue
+            if single_word_head_only and not _single_token_keyword_matches(
+                name_words, keyword_words[0]
+            ):
+                continue
+            if not _contains_word_phrase(name_words, keyword_words):
+                continue
+            if keyword_len > best_keyword_len or (
+                keyword_len == best_keyword_len and rank < best_aisle_rank
+            ):
+                best_aisle = aisle
+                best_keyword_len = keyword_len
+                best_aisle_rank = rank
 
     return best_aisle
+
+
+def _single_token_keyword_matches(name_words: list[str], keyword: str) -> bool:
+    """Match single-token keywords on the full name or the head (last) word only."""
+    if not name_words:
+        return False
+    if len(name_words) == 1:
+        return _word_matches(name_words[0], keyword)
+    return _word_matches(name_words[-1], keyword)
 
 
 def sort_grocery_items(
