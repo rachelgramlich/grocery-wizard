@@ -51,3 +51,12 @@ def test_manual_pick_popovers_only_render_body_when_open() -> None:
         body = source.split(f"def {fn}", 1)[1].split("\ndef ", 1)[0]
         assert 'on_change="rerun"' in body
         assert ".open" in body
+def test_pantry_write_helpers_do_not_clear_recipe_caches() -> None:
+    """Perf guard (#409): pantry and recurring writes only invalidate household reads."""
+    source = (UI_ROOT / "views" / "pantry_recurring.py").read_text(encoding="utf-8")
+    assert "invalidate_notion_cache" not in source
+    assert "invalidate_household_cache()" in source
+    cache_source = _NOTION_CACHE_PATH.read_text(encoding="utf-8")
+    block = cache_source.split("def invalidate_household_cache()", 1)[1].split("\n\n\n", 1)[0]
+    assert "get_db.clear()" not in block
+    assert "st.cache_data.clear()" not in block
