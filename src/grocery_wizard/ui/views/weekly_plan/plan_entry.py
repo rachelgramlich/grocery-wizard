@@ -54,6 +54,7 @@ from src.grocery_wizard.ui.views.weekly_plan.state import (
     PLAN_BUILDER_POPOVER_KEY,
     PLAN_FORCE_OPEN_1A_KEY,
     PLAN_MEAL_COUNT_CONFIRMED_KEY,
+    PLAN_MEAL_BUILDER_LOADING_KEY,
     PLAN_MEAL_COUNT_WIDGET_KEY,
     PLAN_PREBUILD_MANUAL_POPOVER_KEY,
     _clear_grocery_result,
@@ -598,6 +599,7 @@ def _render_weekly_plan_entry() -> bool:
             st.session_state.plan_meal_count = max(1, len(loaded_recipes))
             st.session_state.pop(PLAN_MEAL_COUNT_WIDGET_KEY, None)
             st.session_state[PLAN_MEAL_COUNT_CONFIRMED_KEY] = True
+            st.session_state[PLAN_MEAL_BUILDER_LOADING_KEY] = True
         elif choice == "new":
             st.session_state.plan_meals_text = ""
             st.session_state.plan_meal_count = load_config().default_meals
@@ -651,6 +653,7 @@ def _render_plan_meal_count_continue(*, meal_count: int) -> bool:
     ):
         st.session_state.plan_meal_count = int(meal_count)
         st.session_state[PLAN_MEAL_COUNT_CONFIRMED_KEY] = True
+        st.session_state[PLAN_MEAL_BUILDER_LOADING_KEY] = True
         _sync_plan_length_to_meal_count(meal_count)
         queue_weekly_scroll(BLOCK_WEEKLY_MEALS)
         st.rerun()

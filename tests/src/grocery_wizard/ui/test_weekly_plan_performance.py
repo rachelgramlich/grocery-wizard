@@ -10,7 +10,7 @@ def test_weekly_plan_uses_fragments_for_meals_and_grocery() -> None:
     assert '@st.fragment(key="weekly_plan_meals")' in source
     assert '@st.fragment(key="weekly_plan_grocery")' in source
     assert "_weekly_plan_meals_fragment" in source
-    assert "Preparing your meal builder" not in source
+    assert "Preparing your meal builder" in source
 
 
 def test_meal_slot_manual_picker_uses_per_slot_fragment() -> None:
@@ -41,9 +41,10 @@ def test_plan_meals_warms_recipes_quietly_before_meal_count_continue() -> None:
     )
     assert plan_block.count("cached_query_recipes(") == 0
     assert flow_source.count("cached_query_recipes(") == 2
-    meal_builder_block = plan_block.split("_render_plan_meal_count_continue", 1)[1]
-    assert "loading_indicator" not in meal_builder_block
-    assert "Preparing your meal builder" not in meal_builder_block
+    meal_builder_block = plan_block.split("if _render_plan_meal_count_continue", 1)[1]
+    assert "loading_indicator" in meal_builder_block
+    assert "use_global_banner=False" in meal_builder_block
+    assert "_MEAL_BUILDER_LOADING_MESSAGE" in meal_builder_block
 
 
 def test_prebuild_manual_picker_lazy_when_collapsed() -> None:
