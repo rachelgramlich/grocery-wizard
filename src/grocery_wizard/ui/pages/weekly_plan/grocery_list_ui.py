@@ -91,17 +91,17 @@ def _render_build_result_summary(result: dict) -> None:
     excluded: list[str] = list(result.get("excluded") or [])
 
     render_weekly_sub_block_anchor(BLOCK_WEEKLY_GROCERY_RESULT_SUMMARY)
-    with st.expander("Summary (build result)", expanded=False):
+    with st.expander("Summary", expanded=False):
         col_added, col_removed = st.columns(2)
         with col_added:
-            st.markdown("**Added: recurring items and pasted extras**")
+            st.markdown("**Added**")
             if added_items:
                 for item in added_items:
                     st.write(f"- {item}")
             else:
                 st.write("_None_")
         with col_removed:
-            st.markdown("**Removed: items in the pantry**")
+            st.markdown("**Removed (pantry)**")
             if excluded:
                 for item in excluded:
                     st.write(f"- {item}")
@@ -263,11 +263,7 @@ def _render_grocery_result() -> None:
         final_items,
     )
     if aligned_provenance:
-        sources_label = (
-            "Dev: item sources"
-            if _weekly_plan_mode() == "dev"
-            else "Item sources (which recipe each item came from)"
-        )
+        sources_label = "Dev: item sources" if _weekly_plan_mode() == "dev" else "Item sources"
         with st.expander(sources_label, expanded=False):
             st.text(format_item_provenance(aligned_provenance))
 
@@ -278,8 +274,8 @@ def _render_grocery_result() -> None:
         meals_copy_text = format_meals_copy_text(meals)
         grocery_copy_text = format_grocery_items_copy_text(final_items)
 
-        st.markdown("### Customize list")
-        st.caption("Edit meals and grocery copy before copying.")
+        st.markdown("### Copy list")
+        st.caption("Edit below, then copy meals and groceries.")
         st.markdown("**Meals**")
         meals_fingerprint = tuple(meals)
         if st.session_state.get("meals_final_list_fingerprint") != meals_fingerprint:
@@ -298,8 +294,7 @@ def _render_grocery_result() -> None:
             key="meals_copy",
         )
 
-        st.markdown("**Grocery List**")
-        st.caption("Edit the list below before copying.")
+        st.markdown("**Grocery list**")
         grocery_fingerprint = (tuple(final_items),)
         if st.session_state.get("grocery_final_list_fingerprint") != grocery_fingerprint:
             st.session_state["grocery_final_list_fingerprint"] = grocery_fingerprint

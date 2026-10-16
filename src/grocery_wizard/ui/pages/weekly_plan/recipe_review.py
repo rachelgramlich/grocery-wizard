@@ -124,14 +124,11 @@ def _render_per_recipe_review(db: NotionRecipesDB, selected: list[str]) -> None:
 
     st.markdown("**Review ingredients**")
     st.caption(
-        "Each recipe's ingredients are listed in collapsible sections below. "
-        "Open a recipe to edit lines, **Save to Notion** when ready, then use "
-        "**Build final list** once every recipe looks correct."
+        "Open a recipe to edit ingredients. **Save to Notion** per recipe if you want, "
+        "then **Build final list**."
     )
     if dev_mode:
-        st.caption(
-            "Dev mode: ingredient edits apply to this week's list only (Notion save disabled)."
-        )
+        st.caption("Dev mode: edits apply to this list only (Notion save disabled).")
 
     _render_recipe_review_save_flash()
 
