@@ -12,8 +12,8 @@ def test_notion_refresh_uses_on_click_not_inline_rerun() -> None:
     refresh_block = app.split("def _render_global_header_controls(")[1].split("def main")[0]
     assert "st.rerun()" not in refresh_block
     assert "Recipes load from Notion" not in app
-    assert "gw-app-header" in app
-    assert "gw-global-header-actions" in app
+    assert "gw-app-title" in app
+    assert "st.columns([1, 2, 1])" in refresh_block
 
 
 def test_notion_refresh_controls_render_above_page_picker() -> None:

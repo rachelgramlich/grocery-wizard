@@ -105,30 +105,15 @@
             line-height: 1.3;
         }
 
-        p.gw-app-header,
-        p.gw-global-header-actions {
-            display: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        .stApp [data-testid="stVerticalBlock"]:has(p.gw-app-header) [data-testid="stTitle"] {
-            text-align: center;
-        }
-
-        .stApp [data-testid="stVerticalBlock"]:has(p.gw-app-header) [data-testid="stTitle"] h1 {
-            text-align: center;
-        }
-
-        .stApp [data-testid="stVerticalBlock"]:has(p.gw-global-header-actions) [data-testid="stHorizontalBlock"] {
-            justify-content: center;
-        }
-
-        .stApp [data-testid="stVerticalBlock"]:has(p.gw-global-header-actions) [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:nth-child(2),
-        .stApp [data-testid="stVerticalBlock"]:has(p.gw-global-header-actions) [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:nth-child(3) {
-            flex: 0 1 12rem;
-            min-width: 10.5rem;
-            max-width: 14rem;
+        h1.gw-app-title {
+            text-align: center !important;
+            color: var(--gw-text);
+            font-size: 2.75rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin: 0 0 0.35rem;
+            padding: 0.25rem 0 0.5rem;
+            width: 100%;
         }
 
         /* Single-line bold markdown used as a card/section label (Add recipe cards, etc.). */
