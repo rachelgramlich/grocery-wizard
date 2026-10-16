@@ -45,8 +45,22 @@ test:
 test-cov:
     uv run pytest --cov=. --cov-report=html
 
+# Symlink .streamlit/secrets.toml → repo-root secrets.toml (for st.login [auth])
+link-secrets:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mkdir -p .streamlit
+    if [[ -f secrets.toml ]]; then
+      ln -sf ../secrets.toml .streamlit/secrets.toml
+      echo "Linked .streamlit/secrets.toml → secrets.toml"
+    else
+      echo "No secrets.toml at repo root — copy secrets.toml.example first" >&2
+      exit 1
+    fi
+
 # Run Grocery Wizard Streamlit UI (laptop / same-WiFi phone)
 grocery-ui *ARGS:
+    just link-secrets
     uv run streamlit run src/grocery_wizard/ui/app.py {{ARGS}}
 
 # Push store_aisles.txt labels to Notion pantry Store Aisle options and remap rows

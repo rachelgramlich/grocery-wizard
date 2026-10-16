@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from unittest.mock import patch
 
 from ui_source import APP_PATH
-
-from src.grocery_wizard.lib.feedback_backlog import append_feedback, read_feedback_backlog
 
 
 def test_feedback_expander_renders_in_app() -> None:
@@ -20,10 +17,8 @@ def test_feedback_expander_renders_in_app() -> None:
     assert any("Send feedback" in (expander.label or "") for expander in at.expander)
 
 
-def test_feedback_submit_appends_to_backlog(tmp_path: Path) -> None:
+def test_feedback_submit_files_github_issue() -> None:
     from streamlit.testing.v1 import AppTest
-
-    backlog = tmp_path / "feedback_backlog.md"
 
     def _app() -> None:
         from src.grocery_wizard.ui.feedback import render_feedback_controls
@@ -31,8 +26,8 @@ def test_feedback_submit_appends_to_backlog(tmp_path: Path) -> None:
         render_feedback_controls(surface="weekly")
 
     with patch(
-        "src.grocery_wizard.ui.feedback.append_feedback",
-        side_effect=lambda text, surface=None: append_feedback(text, path=backlog, surface=surface),
+        "src.grocery_wizard.ui.feedback.submit_feedback",
+        return_value="github #42",
     ):
         at = AppTest.from_function(_app, default_timeout=60)
         at.run(timeout=60)
@@ -43,11 +38,7 @@ def test_feedback_submit_appends_to_backlog(tmp_path: Path) -> None:
         submit[0].click().run(timeout=60)
 
     assert not at.exception
-    entries = read_feedback_backlog(backlog)
-    assert len(entries) == 1
-    assert entries[0]["text"] == "Papercut: button hard to see"
-    assert entries[0]["surface"] == "weekly"
-    assert any("Thanks" in s.value for s in at.success)
+    assert any("Thanks" in s.value and "#42" in s.value for s in at.success)
 
 
 def test_feedback_control_placed_before_page_picker() -> None:

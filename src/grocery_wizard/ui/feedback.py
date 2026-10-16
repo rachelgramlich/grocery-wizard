@@ -1,16 +1,22 @@
-"""Streamlit control for capturing free-text feedback to a local backlog file."""
+"""Streamlit control for capturing free-text feedback."""
 
 from __future__ import annotations
 
 import streamlit as st
 
-from src.grocery_wizard.lib.feedback_backlog import append_feedback
+from src.grocery_wizard.lib.feedback_submit import submit_feedback
 from src.grocery_wizard.ui.ids import control_streamlit_key
 
 _FEEDBACK_NOTE_KEY = "gw_feedback_note"
 _FEEDBACK_FLASH_OK = "gw_feedback_flash_ok"
 _FEEDBACK_WARN_EMPTY = "gw_feedback_warn_empty"
+_FEEDBACK_ERROR_KEY = "gw_feedback_error"
 _FEEDBACK_SUBMIT_KEY = "gw_feedback_submit"
+
+_FEEDBACK_CAPTION = (
+    "Bugs, ideas, and papercuts — filed as a GitHub inbox issue for triage "
+    "(you do not need a GitHub account)."
+)
 
 
 def _submit_feedback(*, surface: str | None) -> None:
@@ -20,8 +26,13 @@ def _submit_feedback(*, surface: str | None) -> None:
         st.session_state[_FEEDBACK_WARN_EMPTY] = True
         return
 
-    append_feedback(text, surface=surface)
-    st.session_state[_FEEDBACK_FLASH_OK] = True
+    try:
+        outcome = submit_feedback(text, surface=surface)
+    except (RuntimeError, ValueError) as exc:
+        st.session_state[_FEEDBACK_ERROR_KEY] = str(exc)
+        return
+
+    st.session_state[_FEEDBACK_FLASH_OK] = outcome
     st.session_state[_FEEDBACK_NOTE_KEY] = ""
 
 
@@ -33,17 +44,21 @@ def render_feedback_controls(
     """Global feedback expander; ``surface`` is usually the active page slug."""
     expander_key = control_streamlit_key(control_id) if control_id else "gw_feedback"
     with st.expander("Send feedback", expanded=False, key=expander_key):
-        st.caption("Bugs, ideas, and papercuts — saved locally on this machine for later triage.")
-        if st.session_state.pop(_FEEDBACK_FLASH_OK, False):
-            st.success("Thanks — your note was saved.")
-            st.toast("Feedback saved", icon="✅")
+        st.caption(_FEEDBACK_CAPTION)
+        flash = st.session_state.pop(_FEEDBACK_FLASH_OK, False)
+        if flash:
+            st.success(f"Thanks — your note was filed ({flash}).")
+            st.toast("Feedback submitted", icon="✅")
         if st.session_state.pop(_FEEDBACK_WARN_EMPTY, False):
             st.warning("Please enter a short note before submitting.")
+        if err := st.session_state.pop(_FEEDBACK_ERROR_KEY, None):
+            st.error(err)
 
         st.text_area(
             "Your note",
             key=_FEEDBACK_NOTE_KEY,
             height=100,
+            max_chars=4000,
             label_visibility="collapsed",
             placeholder="Describe a bug, idea, or papercut…",
         )

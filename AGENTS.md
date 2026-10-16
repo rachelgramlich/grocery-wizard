@@ -5,7 +5,7 @@
 | You type | Purpose |
 | --- | --- |
 | **`/create-issues`** | One or more notes → auto **bug vs backlog**, merge by **code area**, create GitHub issue(s) via **`gh`** |
-| **`/create-issues-from-backlog`** | Local feedback `.md` inbox → draft plan → **`gh`** create → clear inbox & archive (see `.cursor/commands/grocery-wizard/create-issues-from-backlog.md`) |
+| **`/create-issues-from-backlog`** | GitHub `user-feedback-inbox` issues → draft plan → **`gh`** create (see `.cursor/commands/grocery-wizard/create-issues-from-backlog.md`) |
 | **`/app-review`** | Hands-on Streamlit UAT → findings → optional grouped **`gh`** issues (see `.cursor/commands/grocery-wizard/app-review.md`) |
 | **`/architecture-review`** | Standards audit + optional **`audit`** issues (shared: `.cursor/commands/shared/architecture-review.md`) |
 | **`/list-enhancements`** | Open backlog (`grocery-wizard` label) via **`gh`** (`.cursor/commands/grocery-wizard/list-enhancements.md`) |
