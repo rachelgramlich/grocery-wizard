@@ -270,16 +270,18 @@ _LEMON_LINE_RE = re.compile(
     re.IGNORECASE,
 )
 
-_LEMON_ZEST_LEGACY_RE = re.compile(
+_CITRUS_ZEST_LEGACY_RE = re.compile(
     r"^(?:\d+(?:\s+\d+/\d+|\d+/\d+|\.\d+)?\s+)?"
-    r"(?:(?:finely|freshly)\s+)?(?:grated\s+)?lemon\s+zest\b",
+    r"(?:(?:finely|freshly)\s+)?(?:grated\s+)?(?:lemon|lime)\s+zest\b",
     re.IGNORECASE,
 )
 
-_FROM_LEMON_RE = re.compile(
-    r"\(from\s+(half(?:\s+a)?|(?:\d+\s+)?\d+/\d+|\d+(?:\.\d+)?)\s+lemons?\)",
+_FROM_CITRUS_RE = re.compile(
+    r"\(from\s+(half(?:\s+a)?|(?:\d+\s+)?\d+/\d+|\d+(?:\.\d+)?)\s+(?:lemons?|limes?)\)",
     re.IGNORECASE,
 )
+
+_CITRUS_NOUN_IN_TEXT_RE = re.compile(r"\b(?:lemons?|limes?)\b", re.IGNORECASE)
 
 _SUBSTITUTION_PAREN_RE = re.compile(
     r"\((?:or\s+)?(?:substitute|see notes|frozen|fresh)\b",
@@ -556,9 +558,9 @@ def _simplify_parsed_name(name: str) -> str:
     if _FLOUR_TYPE_RE.search(cleaned):
         return "flour"
     lowered = cleaned.lower()
-    if lowered in {"lemon", "lemons", "lemon wedges"}:
+    if lowered in {"lemon", "lemons", "lemon wedges", "lemon juice"}:
         return "lemons"
-    if lowered in {"lime", "limes", "lime wedges"}:
+    if lowered in {"lime", "limes", "lime wedges", "lime juice"}:
         return "limes"
     if lowered.endswith(" leaves"):
         return lowered.replace(" leaves", "")
@@ -746,7 +748,29 @@ def _format_amount_text(amount: IngredientAmount) -> str | None:
     return f"{_format_qty(qty)} {display}"
 
 
-def _lemon_quantity_from_parsed(parsed: ParsedIngredient, original: str) -> float | None:
+def _citrus_plural_from_text(text: str, parsed_name: str = "") -> str | None:
+    stripped = text.strip()
+    if _LEMON_LINE_RE.match(stripped) or re.match(r"^zest\b", stripped, re.IGNORECASE):
+        match = _CITRUS_NOUN_IN_TEXT_RE.search(stripped)
+        if match:
+            word = match.group(0).lower()
+            return "limes" if word.startswith("lime") else "lemons"
+    lowered_name = parsed_name.lower()
+    if lowered_name in {"lime", "limes", "lime wedges", "lemon", "lemons", "lemon wedges"}:
+        return "limes" if "lime" in lowered_name else "lemons"
+    if re.match(
+        r"^(?:\d+\s+)?(?:\d+/\d+|\d+(?:\.\d+)?)\s+(?:lemons?|limes?)\b",
+        stripped,
+        re.IGNORECASE,
+    ):
+        match = _CITRUS_NOUN_IN_TEXT_RE.search(stripped)
+        if match:
+            word = match.group(0).lower()
+            return "limes" if word.startswith("lime") else "lemons"
+    return None
+
+
+def _citrus_quantity_from_parsed(parsed: ParsedIngredient, original: str) -> float | None:
     text = _normalize_unicode(original.strip().lower())
     if _LEMON_LINE_RE.match(text):
         if parsed.amount:
@@ -755,37 +779,51 @@ def _lemon_quantity_from_parsed(parsed: ParsedIngredient, original: str) -> floa
                 return qty
         if "half" in text:
             return 0.5
-    if parsed.name and parsed.name[0].text.lower() in {"lemon", "lemons"} and parsed.amount:
-        return _amount_quantity(parsed.amount[0])
+    if parsed.name and parsed.amount:
+        fruit = parsed.name[0].text.lower()
+        if fruit in {"lemon", "lemons", "lime", "limes"}:
+            return _amount_quantity(parsed.amount[0])
     return None
 
 
-def _is_lemon_zest_ingredient(original: str, name: str = "") -> bool:
+def _is_citrus_zest_ingredient(original: str, name: str = "") -> bool:
     stripped = original.strip()
     if _LEMON_LINE_RE.match(stripped) and re.search(r"\bzest\b", stripped, re.IGNORECASE):
         return True
-    if re.search(r"\blemon\s+zest\b", stripped, re.IGNORECASE):
+    if re.search(r"\b(?:lemon|lime)\s+zest\b", stripped, re.IGNORECASE):
         return True
-    return bool(name and re.search(r"\blemon\s+zest\b", name, re.IGNORECASE))
+    return bool(name and re.search(r"\b(?:lemon|lime)\s+zest\b", name, re.IGNORECASE))
 
 
-def _lemon_zest_quantity(original: str, parsed: ParsedIngredient) -> float:
-    from_match = _FROM_LEMON_RE.search(original)
+def _citrus_zest_quantity(original: str, parsed: ParsedIngredient) -> float:
+    from_match = _FROM_CITRUS_RE.search(original)
     if from_match:
         value = from_match.group(1).lower().strip()
         if value in {"half", "a half"}:
             return 0.5
         return _parse_qty(value)
-    qty = _lemon_quantity_from_parsed(parsed, original)
+    qty = _citrus_quantity_from_parsed(parsed, original)
     if qty is not None:
         return qty
     return 1.0
 
 
-def _format_lemon_zest_storage(qty: float) -> str:
+def _format_citrus_zest_storage(qty: float, fruit_plural: str) -> str:
     if qty != 1:
-        return f"zest {_format_qty(qty)} lemons"
-    return "zest lemons"
+        return f"zest {_format_qty(qty)} {fruit_plural}"
+    return f"zest {fruit_plural}"
+
+
+def format_citrus_grocery_amount(amount: str) -> str:
+    """Render a citrus amount for the grocery list (whole fruit counts)."""
+    if amount.startswith("zest:"):
+        qty_str = amount[5:].strip() or "1"
+        return _format_qty(_parse_qty(qty_str))
+    qty_str, _ = _split_amount_str(amount)
+    qty = _parse_qty(qty_str)
+    if qty < 1:
+        return "1"
+    return _format_qty(qty)
 
 
 def _canonicalize_grocery_name(name: str) -> str:
@@ -869,8 +907,10 @@ def _build_storage_line(
     amounts = list(parsed.amount or [])
     selected = _select_amount(amounts, original)
 
-    if _is_lemon_zest_ingredient(context, name):
-        return _format_lemon_zest_storage(_lemon_zest_quantity(context, parsed))
+    citrus_plural = _citrus_plural_from_text(context, name)
+    if _is_citrus_zest_ingredient(context, name):
+        fruit = citrus_plural or "lemons"
+        return _format_citrus_zest_storage(_citrus_zest_quantity(context, parsed), fruit)
 
     if selected is None and not amounts:
         bare = original.strip().lower()
@@ -879,20 +919,23 @@ def _build_storage_line(
         if bare in {"lime", "limes"}:
             return "lime"
 
-    if _LEMON_LINE_RE.match(original.strip()) or name == "lemons":
+    if _LEMON_LINE_RE.match(original.strip()) or citrus_plural or name in {"lemons", "limes"}:
+        fruit = citrus_plural or (name if name in {"lemons", "limes"} else "lemons")
         if re.search(r"\bzest\b", original, re.IGNORECASE):
-            lemon_qty = _lemon_quantity_from_parsed(parsed, original)
-            if lemon_qty is not None and lemon_qty != 1:
-                return f"zest {_format_qty(lemon_qty)} lemons"
-            return "zest lemons"
-        lemon_qty = _lemon_quantity_from_parsed(parsed, original)
-        if lemon_qty is not None:
-            return f"{_format_qty(lemon_qty)} lemons"
+            citrus_qty = _citrus_quantity_from_parsed(parsed, original)
+            if citrus_qty is not None and citrus_qty != 1:
+                return f"zest {_format_qty(citrus_qty)} {fruit}"
+            return f"zest {fruit}"
+        citrus_qty = _citrus_quantity_from_parsed(parsed, original)
+        if citrus_qty is not None:
+            return f"{_format_qty(citrus_qty)} {fruit}"
         if selected is not None:
             qty = _amount_quantity(selected)
             if qty is not None:
-                return f"{_format_qty(qty)} lemons"
-        return "lemons"
+                return f"{_format_qty(qty)} {fruit}"
+        if re.search(r"\b(?:lime|lemon)\s+wedges?\b", context, re.IGNORECASE):
+            return f"1 {fruit}"
+        return fruit
 
     if selected is None:
         return _prefer_plural_form(name)
@@ -950,8 +993,9 @@ def format_ingredient_for_storage(line: str) -> str:
     )
     if not text:
         return ""
-    if re.match(r"^(?:finely|freshly\s+grated\s+)?lemon\s+zest\Z", text, re.IGNORECASE):
-        return "zest lemons"
+    if re.match(r"^(?:finely|freshly\s+grated\s+)?(?:lemon|lime)\s+zest\Z", text, re.IGNORECASE):
+        fruit = "limes" if re.search(r"\blime\b", text, re.IGNORECASE) else "lemons"
+        return f"zest {fruit}"
     if _should_preserve_raw_line(line):
         return _strip_trailing_prep_commas(_normalize_unicode(line.strip()))
     parse_text = _strip_parenthetical_notes(text)
@@ -1031,8 +1075,8 @@ def _parse_stored_rest(qty_str: str, rest: str) -> tuple[str, str | None]:
     return _canonicalize_grocery_name(name), qty_str
 
 
-_ZEST_LEMONS_RE = re.compile(
-    r"^zest(?:\s+((?:\d+\s+)?\d+/\d+|\d+(?:\.\d+)?))?\s+lemons?\Z",
+_ZEST_CITRUS_RE = re.compile(
+    r"^zest(?:\s+((?:\d+\s+)?\d+/\d+|\d+(?:\.\d+)?))?\s+(?:lemons?|limes?)\Z",
     re.IGNORECASE,
 )
 
@@ -1046,8 +1090,8 @@ _STORED_CLOVE_GARLIC_RE = re.compile(
     re.IGNORECASE,
 )
 
-_STORED_ZEST_LEMONS_RE = re.compile(
-    r"^zest:((?:\d+\s+)?\d+/\d+|\d+(?:\.\d+)?)\s+lemons?\Z",
+_STORED_ZEST_CITRUS_RE = re.compile(
+    r"^zest:((?:\d+\s+)?\d+/\d+|\d+(?:\.\d+)?)\s+(?:lemons?|limes?)\Z",
     re.IGNORECASE,
 )
 
@@ -1116,10 +1160,15 @@ def parse_stored_ingredient(line: str) -> tuple[str, str | None]:
     if not text:
         return "", None
 
-    zest_match = _ZEST_LEMONS_RE.match(text)
+    if text.lower() in {"lemon juice", "lime juice"}:
+        fruit = "limes" if text.lower().startswith("lime") else "lemons"
+        return fruit, "1"
+
+    zest_match = _ZEST_CITRUS_RE.match(text)
     if zest_match:
         qty = zest_match.group(1).strip() if zest_match.group(1) else "1"
-        return "lemons", f"zest:{qty}"
+        fruit = _citrus_plural_from_text(text) or "lemons"
+        return fruit, f"zest:{qty}"
 
     head_garlic_match = _HEAD_GARLIC_RE.match(text) or _GARLIC_HEAD_LEGACY_RE.match(text)
     if head_garlic_match:
@@ -1129,17 +1178,19 @@ def parse_stored_ingredient(line: str) -> tuple[str, str | None]:
     if stored_clove_match:
         return "garlic", f"clove:{stored_clove_match.group(1).strip()}"
 
-    stored_zest_match = _STORED_ZEST_LEMONS_RE.match(text)
+    stored_zest_match = _STORED_ZEST_CITRUS_RE.match(text)
     if stored_zest_match:
-        return "lemons", f"zest:{stored_zest_match.group(1).strip()}"
+        fruit = _citrus_plural_from_text(text) or "lemons"
+        return fruit, f"zest:{stored_zest_match.group(1).strip()}"
 
     if text.lower() == "garlic":
         return "garlic", None
 
-    if _LEMON_ZEST_LEGACY_RE.match(text) or re.match(
-        r"^(?:finely|freshly\s+grated\s+)?lemon\s+zest\Z", text, re.IGNORECASE
+    if _CITRUS_ZEST_LEGACY_RE.match(text) or re.match(
+        r"^(?:finely|freshly\s+grated\s+)?(?:lemon|lime)\s+zest\Z", text, re.IGNORECASE
     ):
-        return "lemons", "zest:1"
+        fruit = _citrus_plural_from_text(text) or "lemons"
+        return fruit, "zest:1"
 
     match = _LEADING_QTY_RE.match(text)
     if match:
@@ -1198,7 +1249,7 @@ def looks_like_stored_ingredient_line(text: str) -> bool:
         return False
     if re.match(r"^\d+\s+\d+\s+", stripped):
         return False
-    if _LEMON_ZEST_LEGACY_RE.match(stripped):
+    if _CITRUS_ZEST_LEGACY_RE.match(stripped):
         return False
     if re.search(
         r"\b(?:packed|coarsely|finely|roughly|thinly)\s+(?:chopped|sliced|diced|minced)\b",
@@ -1243,26 +1294,17 @@ def should_show_amount(amount: str | None, raw_line: str) -> bool:
     return _HIDE_AMOUNT_UNITS_RE.search(raw_line) is None
 
 
-def _aggregate_lemon_amounts(amounts: list[str]) -> str:
-    """Sum lemon counts, allowing one zest need to overlap with a whole lemon."""
-    regular_total = 0.0
-    zest_total = 0.0
-    has_fractional = False
+def _aggregate_citrus_amounts(amounts: list[str]) -> str:
+    """Sum lemon/lime needs: each zest line uses ``zest:N``; other lines count ≥1 fruit."""
+    total = 0.0
     for amount in amounts:
         if amount.startswith("zest:"):
-            zest_total += _parse_qty(amount[5:])
+            total += _parse_qty(amount[5:] or "1")
             continue
         qty_str, _ = _split_amount_str(amount)
         qty = _parse_qty(qty_str)
-        regular_total += qty
-        if "/" in qty_str or qty % 1 != 0:
-            has_fractional = True
-
-    overlap = 0.0
-    if zest_total > 0 and regular_total >= 2 and has_fractional:
-        overlap = min(zest_total, 1.0)
-
-    return str(math.ceil(regular_total + zest_total - overlap))
+        total += qty if qty >= 1 else 1.0
+    return str(math.ceil(total))
 
 
 def _aggregate_garlic_amounts(amounts: list[str | None]) -> str | None:
@@ -1311,13 +1353,20 @@ def aggregate_amounts(amounts: list[str | None], *, name: str | None = None) -> 
         return None
     if name and name.lower() == "garlic":
         return _aggregate_garlic_amounts(amounts)
+    citrus = name.lower() if name else None
+    if citrus in {"lemons", "limes"}:
+        if not non_none:
+            return None
+        if len(non_none) == 1:
+            return format_citrus_grocery_amount(non_none[0])
+        return _aggregate_citrus_amounts(non_none)
     if not non_none:
         return None
     if len(non_none) == 1:
         return non_none[0]
 
     if any(amount.startswith("zest:") for amount in non_none):
-        return _aggregate_lemon_amounts(non_none)
+        return _aggregate_citrus_amounts(non_none)
 
     parsed = [_split_amount_str(amount) for amount in non_none]
     canon_units = {_canonical_unit(unit) for _, unit in parsed}

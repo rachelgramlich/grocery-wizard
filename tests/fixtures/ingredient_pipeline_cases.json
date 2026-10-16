@@ -1,13 +1,13 @@
 [
   {
-    "label": "Lemon juice + zest + whole (issue #21)",
+    "label": "Lemon juice + zest + whole (issue #348)",
     "raw_lines": [
       "juice of half a lemon",
       "zest of 1 lemon",
       "2 lemons"
     ],
     "aggregate": true,
-    "expect_aggregate_grocery": "3 lemons",
+    "expect_aggregate_grocery": "4 lemons",
     "issue_21": true
   },
   {

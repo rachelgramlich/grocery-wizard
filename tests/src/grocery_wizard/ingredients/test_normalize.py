@@ -127,6 +127,10 @@ def test_normalize_ingredient_empty() -> None:
             "Chopped fresh cilantro and lime wedges, for garnish (optional)",
             ["Chopped fresh cilantro", "lime wedges, for garnish (optional)"],
         ),
+        (
+            "Chopped fresh cilantro lime wedges, for garnish (optional)",
+            ["Chopped fresh cilantro", "lime wedges, for garnish (optional)"],
+        ),
         ("Salt and pepper to taste", ["Salt and pepper to taste"]),
         ("1 onion, diced, and 2 cloves garlic", ["1 onion, diced", "2 cloves garlic"]),
         ("cauliflower rice", ["cauliflower rice"]),
@@ -440,7 +444,16 @@ def test_aggregate_amounts_consolidates_lemon_variants_with_two_whole() -> None:
         parse_amount(clean_ingredient_line_for_storage("zest of 1 lemon"))[1],
         parse_amount(clean_ingredient_line_for_storage("2 lemons"))[1],
     ]
-    assert aggregate_amounts(amounts) == "3"
+    assert aggregate_amounts(amounts) == "4"
+
+
+def test_aggregate_amounts_consolidates_lime_variants() -> None:
+    amounts = [
+        parse_amount("juice of 1 lime")[1],
+        parse_amount("zest of 1 lime")[1],
+        parse_amount("1/2 lime, juiced")[1],
+    ]
+    assert aggregate_amounts(amounts, name="limes") == "3"
 
 
 def test_aggregate_amounts_garlic_cloves_do_not_sum() -> None:
@@ -584,14 +597,21 @@ def test_celery_stalks_store_as_celery() -> None:
 
 def test_notion_fixture_normalize(notion_case: dict) -> None:
     """Notion-derived lines: normalize_ingredient matches fixture expectations."""
+    from src.grocery_wizard.ingredients.sync import prepare_ingredients_for_notion
+
     raw = notion_case["raw_line"]
     expected = notion_case["expect_normalized"]
-    result = normalize_ingredient(raw)
 
     if expected is None:
-        assert result == ""
-    else:
-        assert result == expected
+        assert normalize_ingredient(raw) == ""
+        return
+    if "|" in expected:
+        prepared = prepare_ingredients_for_notion(raw)
+        results = [normalize_ingredient(line) for line in prepared.splitlines() if line.strip()]
+        assert results == expected.split("|")
+        return
+
+    assert normalize_ingredient(raw) == expected
 
 
 # ---------------------------------------------------------------------------
@@ -694,7 +714,8 @@ def test_lemon_juice_not_filtered_as_junk() -> None:
     """'lemon juice' must not be classified as junk (regression for 'juice' removal)."""
     assert not is_junk_ingredient("lemon juice")
     assert not is_junk_ingredient("lime juice")
-    assert normalize_ingredient("lemon juice") != ""
+    assert normalize_ingredient("lemon juice") == "lemons"
+    assert normalize_ingredient("lime juice") == "limes"
 
 
 @pytest.mark.parametrize(

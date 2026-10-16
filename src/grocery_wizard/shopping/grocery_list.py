@@ -41,8 +41,8 @@ from src.grocery_wizard.ingredients.normalize import (
     should_show_amount,
 )
 from src.grocery_wizard.ingredients.parsed import (
+    format_citrus_grocery_amount,
     format_garlic_grocery_amount,
-    format_lemon_zest_grocery_line,
 )
 from src.grocery_wizard.ingredients.sync import apply_removals, parse_ingredients_text
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe, recipe_lookup_key
@@ -333,9 +333,9 @@ def _amount_for_grocery_display(name: str, amount: str | None) -> str | None:
 
 def format_grocery_item(name: str, amount: str | None) -> str:
     """Format a grocery item for display: ``"amount name"`` or just ``name``."""
-    if name.lower() == "lemons" and amount and amount.startswith("zest:"):
-        return format_lemon_zest_grocery_line(amount)
     amount = _amount_for_grocery_display(name, amount)
+    if name.lower() in {"lemons", "limes"} and amount is not None:
+        amount = format_citrus_grocery_amount(amount)
     if amount is None:
         return name
     return f"{amount} {name}"

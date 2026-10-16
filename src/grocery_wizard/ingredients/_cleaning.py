@@ -37,8 +37,31 @@ def _normalize_unicode_fractions(text: str) -> str:
     return text
 
 
+_HERB_BEFORE_CITRUS_WEDGES_RE = re.compile(
+    r"^(?P<left>.+\b(?:cilantro|parsley|mint|basil|dill))\s+"
+    r"(?P<right>(?:lime|lemon)\s+wedges\b.*)$",
+    re.IGNORECASE,
+)
+
+
+def _try_split_herb_before_citrus_wedges(text: str) -> tuple[str, str] | None:
+    """``Chopped fresh cilantro lime wedges`` → cilantro phrase + citrus wedges."""
+    match = _HERB_BEFORE_CITRUS_WEDGES_RE.match(text.strip())
+    if match is None:
+        return None
+    left = match.group("left").strip()
+    right = match.group("right").strip()
+    if not left or not right:
+        return None
+    if not _looks_like_ingredient(left) or not _looks_like_ingredient(right):
+        return None
+    return left, right
+
+
 def _split_compound_parts_recursive(text: str) -> list[str]:
     split = _try_split_on_conjunction(text)
+    if split is None:
+        split = _try_split_herb_before_citrus_wedges(text)
     if split is None:
         return [text]
     left, right = split

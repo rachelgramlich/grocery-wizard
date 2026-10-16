@@ -147,7 +147,7 @@ def test_build_grocery_list_splits_compound_ingredients(tmp_path: Path) -> None:
 
     assert any(item.lower() == "naan bread" for item in items)
     assert "cilantro" in items
-    assert "limes" in items
+    assert any(item == "1 limes" for item in items)
     assert "rice" not in items
     assert "naan bread and rice" not in items
     assert "cilantro and lime wedges" not in items
@@ -801,7 +801,7 @@ def test_build_grocery_list_issue_27_quality_fixes(tmp_path: Path) -> None:
     assert "8 corn tortillas" in items
     assert "8 corn" not in items
     assert "tortillas" not in items
-    assert any(item.startswith("1/2") and "limes" in item for item in items)
+    assert any(item == "1 limes" for item in items)
     assert "cilantro sprigs" in items
     assert "Cilantro" not in items
     assert "oyster mushrooms" in items
@@ -819,8 +819,8 @@ def test_build_grocery_list_issue_27_quality_fixes(tmp_path: Path) -> None:
         ("2 carrots", "2 carrots"),
         ("clove:5 garlic", "5 cloves garlic"),
         ("5 cloves garlic, minced", "5 cloves garlic"),
-        ("zest:1 lemons", "zest of 1 lemon"),
-        ("- zest:1 lemons", "zest of 1 lemon"),
+        ("zest:1 lemons", "1 lemons"),
+        ("- zest:1 lemons", "1 lemons"),
     ],
 )
 def test_normalize_grocery_list_item_strips_checklist_prefixes(
@@ -843,9 +843,10 @@ def test_build_grocery_list_zest_lemons_shows_readable_line(tmp_path: Path) -> N
         exclude_pantry=True,
     )
 
-    assert "zest of 1 lemon" in items
+    lemon_items = [item for item in items if "lemon" in item.lower()]
+    assert len(lemon_items) == 1
+    assert lemon_items[0] == "2 lemons"
     assert not any("zest:" in item for item in items)
-    assert any("lemon juice" in item for item in items)
 
 
 def test_build_grocery_list_keeps_cauliflower_rice_when_rice_in_pantry(
