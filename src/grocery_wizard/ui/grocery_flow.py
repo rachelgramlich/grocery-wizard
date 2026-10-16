@@ -6,6 +6,7 @@ import hashlib
 from dataclasses import dataclass
 from typing import Any
 
+from src.grocery_wizard.config import load_config
 from src.grocery_wizard.ingredients.sync import (
     format_ingredients_for_review,
     prepare_ingredients_for_notion,
@@ -13,10 +14,8 @@ from src.grocery_wizard.ingredients.sync import (
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe, recipe_lookup_key
 from src.grocery_wizard.shopping.grocery_list import build_grocery_list
 from src.grocery_wizard.shopping.line_items import parse_line_items
-from src.grocery_wizard.shopping.recurring_weekly_items import (
-    apply_recurring_session_overrides,
-    load_recurring_weekly_items,
-)
+from src.grocery_wizard.shopping.recurring_weekly_items import apply_recurring_session_overrides
+from src.grocery_wizard.ui.notion_cache import cached_pantry_names, cached_recurring_items
 
 GROCERY_STASH_NOTION_GENERATION_KEY = "grocery_stash_notion_generation"
 
@@ -75,7 +74,7 @@ def effective_recurring_items(session_state: Any, template: list[str]) -> list[s
 
 def default_pre_build_grocery_options(session_state: Any) -> GroceryPreBuildOptions:
     """Defaults matching section **2. Grocery list** before the user edits widgets."""
-    template_recurring = load_recurring_weekly_items()
+    template_recurring = cached_recurring_items()
     default_recurring = effective_recurring_items(session_state, template_recurring)
     extra_key = grocery_pre_extra_items_widget_key(session_state)
     extra_items_text = str(session_state.get(extra_key, "") or "")
@@ -252,6 +251,7 @@ def build_grocery_result_payload(
     pantry_extra: set[str],
     ingredient_overrides: dict[str, str] | None,
     recipes: list[Recipe] | None = None,
+    pantry_names: set[str] | None = None,
 ) -> dict[str, Any]:
     recurring_weekly_items = parse_line_items(recurring_text)
     items, excluded, _sync_summary, missing_ingredients, item_provenance, mismatches = (
@@ -264,6 +264,13 @@ def build_grocery_result_payload(
             recurring_weekly_items=recurring_weekly_items,
             include_recurring_weekly_items=True,
             ingredient_overrides=ingredient_overrides,
+            pantry_names=(
+                pantry_names
+                if pantry_names is not None
+                else cached_pantry_names(
+                    pantry_database_id=load_config().notion_pantry_database_id,
+                )
+            ),
         )
     )
     return {

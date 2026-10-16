@@ -16,7 +16,6 @@ from src.grocery_wizard.shopping.pantry import (
 )
 from src.grocery_wizard.shopping.recurring_weekly_items import (
     append_recurring_weekly_item,
-    load_recurring_weekly_items,
     remove_recurring_weekly_item,
 )
 from src.grocery_wizard.shopping.store_aisles import (
@@ -28,7 +27,11 @@ from src.grocery_wizard.shopping.store_aisles import (
     resolve_pantry_aisle_id,
 )
 from src.grocery_wizard.ui.loading import loading_indicator
-from src.grocery_wizard.ui.notion_cache import cached_pantry_entries, invalidate_notion_cache
+from src.grocery_wizard.ui.notion_cache import (
+    cached_pantry_entries,
+    cached_recurring_items,
+    invalidate_household_cache,
+)
 
 _PANTRY_AISLE_CAPTION = "Grouped by store walk order—the same aisle headings as your grocery list."
 
@@ -50,17 +53,32 @@ def _pantry_already_has(name: str, entries: list) -> bool:
 def _append_pantry_item_idempotent(name: str, *, aisle_label: str) -> bool:
     """Return True when the item is in the pantry after this call (added or already present)."""
     if append_pantry_item(name, section=aisle_label):
-        invalidate_notion_cache()
+        invalidate_household_cache()
         return True
     if _pantry_already_has(name, _load_pantry_entries_from_notion()):
-        invalidate_notion_cache()
+        invalidate_household_cache()
+        return True
+    return False
+
+
+def _append_recurring_item_idempotent(name: str) -> bool:
+    """Return True when the item is on the recurring list after this call."""
+    if append_recurring_weekly_item(name):
+        invalidate_household_cache()
+        return True
+    return any(existing.casefold() == name.casefold() for existing in cached_recurring_items())
+
+
+def _remove_recurring_item_and_invalidate(name: str) -> bool:
+    if remove_recurring_weekly_item(name):
+        invalidate_household_cache()
         return True
     return False
 
 
 def _remove_pantry_item_and_invalidate(name: str) -> bool:
     if remove_pantry_item_by_name(name):
-        invalidate_notion_cache()
+        invalidate_household_cache()
         return True
     return False
 
@@ -187,14 +205,14 @@ def _render_remove_picker(
 
 def _render_recurring_block() -> None:
     st.markdown("### Recurring weekly items")
-    template = load_recurring_weekly_items()
+    template = cached_recurring_items()
     if template:
         _render_markdown_item_list(template, item_class="gw-recurring-item")
         _render_remove_picker(
             items=template,
             key="pantry_recurring_remove_pick",
             label="Remove a recurring item",
-            on_remove=remove_recurring_weekly_item,
+            on_remove=_remove_recurring_item_and_invalidate,
         )
     else:
         st.caption("_No recurring items yet._")
@@ -205,9 +223,7 @@ def _render_recurring_block() -> None:
             name = new_recurring.strip()
             if not name:
                 st.warning("Enter an item name.")
-            elif append_recurring_weekly_item(name) or any(
-                existing.casefold() == name.casefold() for existing in load_recurring_weekly_items()
-            ):
+            elif _append_recurring_item_idempotent(name):
                 st.success(f"Added “{name}” to recurring items.")
                 st.rerun()
             else:
