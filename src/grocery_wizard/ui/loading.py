@@ -56,17 +56,20 @@ def _refresh_global_banner() -> None:
 def loading_indicator(message: str) -> Iterator[None]:
     """Show loading UI while ``message`` work runs.
 
-    Full-app reruns also update the top banner. Fragment reruns use the spinner
-    only (the banner slot from ``main()`` is not writable inside a fragment).
+    Full-app reruns use the top banner only (no duplicate inline spinner).
+    Fragment reruns use ``st.spinner`` (the banner slot is not writable).
     """
-    st.session_state[GW_BUSY_MESSAGE_KEY] = message
-    _refresh_global_banner()
-    try:
+    if _can_update_global_banner():
+        st.session_state[GW_BUSY_MESSAGE_KEY] = message
+        _refresh_global_banner()
+        try:
+            yield
+        finally:
+            st.session_state.pop(GW_BUSY_MESSAGE_KEY, None)
+            _refresh_global_banner()
+    else:
         with st.spinner(message):
             yield
-    finally:
-        st.session_state.pop(GW_BUSY_MESSAGE_KEY, None)
-        _refresh_global_banner()
 
 
 def run_with_loading[T](message: str, action: Callable[[], T]) -> T:
