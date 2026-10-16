@@ -22,7 +22,7 @@ def test_saved_plan_continue_sets_meal_count_from_loaded_recipes() -> None:
 
 
 def test_plan_save_collapses_rail_expand_override() -> None:
-    state_source = (UI_ROOT / "pages" / "weekly_plan" / "state.py").read_text(encoding="utf-8")
+    state_source = (UI_ROOT / "views" / "weekly_plan" / "state.py").read_text(encoding="utf-8")
     apply_fn = state_source.split("def _apply_weekly_plan_save_result", 1)[1].split(
         "def _persist_weekly_plan_to_notion", 1
     )[0]
@@ -34,7 +34,7 @@ def test_plan_save_collapses_rail_expand_override() -> None:
 
 
 def test_create_grocery_clears_rail_override_after_plan_saved() -> None:
-    source = (UI_ROOT / "pages" / "weekly_plan" / "grocery_list_ui.py").read_text(encoding="utf-8")
+    source = (UI_ROOT / "views" / "weekly_plan" / "grocery_list_ui.py").read_text(encoding="utf-8")
     section = source.split('if st.button("Create grocery list"', 1)[1].split(
         "with loading_indicator", 1
     )[0]
@@ -79,11 +79,11 @@ def test_explicit_save_plan_button_after_meals() -> None:
 
 
 def test_dev_mode_continue_to_grocery_without_notion_save() -> None:
-    state_source = (UI_ROOT / "pages" / "weekly_plan" / "state.py").read_text(encoding="utf-8")
+    state_source = (UI_ROOT / "views" / "weekly_plan" / "state.py").read_text(encoding="utf-8")
     assert "_plan_meals_step_done" in state_source
     assert 'key="dev_continue_to_grocery"' in state_source
     assert "_DEV_PLAN_MEALS_ACK_FP_KEY" in state_source
-    step_source = (UI_ROOT / "pages" / "weekly_plan" / "step_ui.py").read_text(encoding="utf-8")
+    step_source = (UI_ROOT / "views" / "weekly_plan" / "step_ui.py").read_text(encoding="utf-8")
     assert "_plan_meals_step_done(recipe_names)" in step_source
     entry_source = ui_source()
     assert "nothing saved to Notion" in entry_source

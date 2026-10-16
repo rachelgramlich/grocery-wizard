@@ -34,7 +34,7 @@
 
 | Area | Files |
 | --- | --- |
-| **ui** | `src/grocery_wizard/ui/app.py`, `docs/ui-map.md`, `src/grocery_wizard/ui/ids.py`, `src/grocery_wizard/ui/pages/` |
+| **ui** | `src/grocery_wizard/ui/app.py`, `docs/ui-map.md`, `src/grocery_wizard/ui/ids.py`, `src/grocery_wizard/ui/views/` |
 | **parser** | `src/grocery_wizard/ingredients/normalize.py`, `src/grocery_wizard/ingredients/_patterns.py` |
 | **shopping** | `src/grocery_wizard/shopping/grocery_list.py`, `src/grocery_wizard/shopping/pantry.py` |
 | **recipes** | `src/grocery_wizard/recipes/add_recipe.py`, `src/grocery_wizard/recipes/scraper.py` |

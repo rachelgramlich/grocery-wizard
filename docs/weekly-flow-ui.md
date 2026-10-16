@@ -117,12 +117,12 @@ Power-user paths use the **`Dev:`** prefix so they do not look like required hap
 
 | Concern | Files |
 |---------|--------|
-| Page orchestration | `src/grocery_wizard/ui/pages/weekly_plan/flow.py` |
-| Start + meals | `src/grocery_wizard/ui/pages/weekly_plan/plan_entry.py` |
-| Grocery + result | `src/grocery_wizard/ui/pages/weekly_plan/grocery_list_ui.py` |
-| Per-recipe review | `src/grocery_wizard/ui/pages/weekly_plan/recipe_review.py` |
-| Save / fingerprint | `src/grocery_wizard/ui/pages/weekly_plan/state.py` |
-| Rail / step UI (new) | e.g. `src/grocery_wizard/ui/pages/weekly_plan/step_ui.py` |
+| Page orchestration | `src/grocery_wizard/ui/views/weekly_plan/flow.py` |
+| Start + meals | `src/grocery_wizard/ui/views/weekly_plan/plan_entry.py` |
+| Grocery + result | `src/grocery_wizard/ui/views/weekly_plan/grocery_list_ui.py` |
+| Per-recipe review | `src/grocery_wizard/ui/views/weekly_plan/recipe_review.py` |
+| Save / fingerprint | `src/grocery_wizard/ui/views/weekly_plan/state.py` |
+| Rail / step UI (new) | e.g. `src/grocery_wizard/ui/views/weekly_plan/step_ui.py` |
 | Dim / scroll CSS | `src/grocery_wizard/ui/static/app_theme.css` |
 
 ## Implementation split (GitHub)

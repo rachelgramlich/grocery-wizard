@@ -190,7 +190,7 @@ def test_dev_mode_auto_continues_without_continue_button() -> None:
 
 
 def test_weekly_plan_mode_choices_always_includes_dev() -> None:
-    source = (UI_ROOT / "pages" / "weekly_plan" / "state.py").read_text(encoding="utf-8")
+    source = (UI_ROOT / "views" / "weekly_plan" / "state.py").read_text(encoding="utf-8")
     choices_fn = source.split("def _weekly_plan_mode_choices", 1)[1].split(
         "def _weekly_plan_mode", 1
     )[0]
@@ -223,13 +223,13 @@ def test_plan_meal_count_persists_separate_from_widget_key() -> None:
     )[0]
     assert "PLAN_MEAL_COUNT_WIDGET_KEY not in st.session_state" in sync_fn
     assert "st.session_state.plan_meal_count" in sync_fn
-    state_source = (UI_ROOT / "pages" / "weekly_plan" / "state.py").read_text(encoding="utf-8")
+    state_source = (UI_ROOT / "views" / "weekly_plan" / "state.py").read_text(encoding="utf-8")
     assert 'PLAN_MEAL_COUNT_WIDGET_KEY = "plan_meal_count_input"' in state_source
 
 
 def test_meal_count_widget_outside_meals_fragment() -> None:
     """Issue #284: meal count changes must rerun the full weekly-plan tab, not only the fragment."""
-    flow_source = (UI_ROOT / "pages" / "weekly_plan" / "flow.py").read_text(encoding="utf-8")
+    flow_source = (UI_ROOT / "views" / "weekly_plan" / "flow.py").read_text(encoding="utf-8")
     assert "_render_meal_count_input()" in flow_source
     assert "_sync_plan_length_to_meal_count(meal_count)" in flow_source
     assert "_render_plan_meal_count_continue" in flow_source
@@ -239,7 +239,7 @@ def test_meal_count_widget_outside_meals_fragment() -> None:
 
 def test_meal_count_continue_gates_meals_fragment() -> None:
     """Meal builder waits for explicit Continue after meal count (not Enter on number input)."""
-    flow_source = (UI_ROOT / "pages" / "weekly_plan" / "flow.py").read_text(encoding="utf-8")
+    flow_source = (UI_ROOT / "views" / "weekly_plan" / "flow.py").read_text(encoding="utf-8")
     plan_block = flow_source.split("WeeklyRailStep.PLAN_MEALS", 1)[1].split(
         "WeeklyRailStep.GROCERY_LIST", 1
     )[0]
@@ -247,7 +247,7 @@ def test_meal_count_continue_gates_meals_fragment() -> None:
     assert plan_block.index("_render_plan_meal_count_continue") < plan_block.index(
         "_weekly_plan_meals_fragment"
     )
-    state_source = (UI_ROOT / "pages" / "weekly_plan" / "state.py").read_text(encoding="utf-8")
+    state_source = (UI_ROOT / "views" / "weekly_plan" / "state.py").read_text(encoding="utf-8")
     assert "PLAN_MEAL_COUNT_CONFIRMED_KEY" in state_source
     assert "def _plan_meals_builder_unlocked" in state_source
     continue_fn = (
@@ -333,10 +333,10 @@ def test_grocery_list_extra_items_before_create_button() -> None:
 
 def test_grocery_stage_uses_sub_block_anchors_and_scroll() -> None:
     """Issue #330: grocery sub-stages share rail step 3 with scroll hooks."""
-    grocery_source = (UI_ROOT / "pages" / "weekly_plan" / "grocery_list_ui.py").read_text(
+    grocery_source = (UI_ROOT / "views" / "weekly_plan" / "grocery_list_ui.py").read_text(
         encoding="utf-8"
     )
-    review_source = (UI_ROOT / "pages" / "weekly_plan" / "recipe_review.py").read_text(
+    review_source = (UI_ROOT / "views" / "weekly_plan" / "recipe_review.py").read_text(
         encoding="utf-8"
     )
     assert "### 2. Grocery list" not in grocery_source

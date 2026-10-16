@@ -6,7 +6,7 @@
 
 ## Executive summary
 
-Everyday slowness (buttons, navigation) is dominated by Streamlit’s **full-script rerun** model and **Notion round-trips** when caches miss. The UI has moved away from a monolithic `app.py`: page bodies live under `ui/pages/`, the **Create weekly plan** flow is split across `ui/pages/weekly_plan/` (plan entry, recipe review, grocery wizard), and **`st.segmented_control`** only runs **one** section per interaction instead of all tabs at once.
+Everyday slowness (buttons, navigation) is dominated by Streamlit’s **full-script rerun** model and **Notion round-trips** when caches miss. The UI has moved away from a monolithic `app.py`: page bodies live under `ui/views/`, the **Create weekly plan** flow is split across `ui/views/weekly_plan/` (plan entry, recipe review, grocery wizard), and **`st.segmented_control`** only runs **one** section per interaction instead of all tabs at once.
 
 **Phase 1** work (cached Notion reads via `ui/notion_cache.py`, explicit invalidation, single-section navigation) is largely in place. Remaining gains are mostly **DOM weight**, **fragment-scoped reruns** inside heavy sections, and **deduping** recipe fetches within a single weekly-plan rerun.
 
@@ -68,8 +68,8 @@ Recipe count scales linearly on **cache miss**: each uncached `query_recipes()` 
 
 - `@st.cache_resource` on `get_db()`.
 - `ui/notion_cache.py`: cached recipes, pantry, saved plans + **Refresh from Notion** (`invalidate_notion_cache()`).
-- **Single active page** per rerun (`app.py` + `ui/pages/__init__.py`).
-- **Modular pages:** `ui/pages/add_recipe.py`, `pantry_recurring.py`, `weekly_plan/` (plan entry, recipe review, grocery wizard).
+- **Single active page** per rerun (`app.py` + `ui/views/__init__.py`).
+- **Modular pages:** `ui/views/add_recipe.py`, `pantry_recurring.py`, `weekly_plan/` (plan entry, recipe review, grocery wizard).
 - Ingredient index for meal planning cached in session state keyed by recipe-set fingerprint.
 - Grocery result cached in `st.session_state.grocery_result` until the meal plan changes.
 
@@ -149,7 +149,7 @@ Use Streamlit **Settings → Run on save** off while measuring so saves do not s
 
 ### D. Modularize UI (Phase 2 — **in progress**)
 
-- Thin `app.py`; pages under `ui/pages/`; weekly plan split into plan entry, recipe review, grocery wizard modules.
+- Thin `app.py`; pages under `ui/views/`; weekly plan split into plan entry, recipe review, grocery wizard modules.
 - Easier to apply fragments and unit-test pure helpers.
 
 **Effort:** ongoing. **Impact:** Maintainability; indirect perf via smaller reruns.
@@ -233,7 +233,7 @@ Justification threshold: Phase 1–3 fail metrics **and** UI is a primary daily 
 
 - Entry point: `src/grocery_wizard/ui/app.py` — `main()`, segmented navigation, cache refresh
 - Notion cache: `src/grocery_wizard/ui/notion_cache.py`
-- Weekly plan UI: `src/grocery_wizard/ui/pages/weekly_plan/` (`plan_entry.py`, `recipe_review.py`, `grocery_list_ui.py`, `flow.py`)
+- Weekly plan UI: `src/grocery_wizard/ui/views/weekly_plan/` (`plan_entry.py`, `recipe_review.py`, `grocery_list_ui.py`, `flow.py`)
 - Notion pagination: `src/grocery_wizard/integrations/notion.py` — `query_recipes()`
 - Pantry load: `cached_pantry_entries()` in `notion_cache.py`; `render_pantry_and_recurring` in `pages/pantry_recurring.py`
 - Grocery build: `src/grocery_wizard/ui/grocery_flow.py`, `shopping/grocery_list.py`

@@ -6,7 +6,7 @@ from ui_source import APP_PATH, pantry_page_source
 
 
 def test_weekly_page_is_first_and_default() -> None:
-    nav = (APP_PATH.parent / "pages" / "__init__.py").read_text(encoding="utf-8")
+    nav = (APP_PATH.parent / "views" / "__init__.py").read_text(encoding="utf-8")
     assert 'PAGE_LABEL_WEEKLY: Final = "Create weekly plan"' in nav
     assert "PAGE_PICKER_LABELS" in nav
     app = APP_PATH.read_text(encoding="utf-8")

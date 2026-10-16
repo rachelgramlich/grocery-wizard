@@ -10,16 +10,16 @@ APP_PATH = UI_ROOT / "app.py"
 _UI_MODULE_PATHS = (
     "app.py",
     "ids.py",
-    "pages/__init__.py",
-    "pages/weekly_plan/state.py",
-    "pages/weekly_plan/plan_entry.py",
-    "pages/weekly_plan/recipe_review.py",
-    "pages/weekly_plan/flow.py",
-    "pages/weekly_plan/step_ui.py",
-    "pages/weekly_plan/grocery_list_ui.py",
-    "pages/add_recipe.py",
-    "pages/pantry_recurring.py",
-    "pages/recipe_maintenance.py",
+    "views/__init__.py",
+    "views/weekly_plan/state.py",
+    "views/weekly_plan/plan_entry.py",
+    "views/weekly_plan/recipe_review.py",
+    "views/weekly_plan/flow.py",
+    "views/weekly_plan/step_ui.py",
+    "views/weekly_plan/grocery_list_ui.py",
+    "views/add_recipe.py",
+    "views/pantry_recurring.py",
+    "views/recipe_maintenance.py",
     "grocery_helpers.py",
     "grocery_flow.py",
     "meal_plan_filters.py",
@@ -33,7 +33,7 @@ def ui_source() -> str:
 
 
 def pantry_page_source() -> str:
-    return (UI_ROOT / "pages" / "pantry_recurring.py").read_text(encoding="utf-8")
+    return (UI_ROOT / "views" / "pantry_recurring.py").read_text(encoding="utf-8")
 
 
 def apptest_continue_to_meal_builder(at, *, timeout: int = 60) -> None:

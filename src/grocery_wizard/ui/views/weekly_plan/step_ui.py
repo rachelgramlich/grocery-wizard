@@ -15,7 +15,7 @@ from src.grocery_wizard.ui.ids import (
     BLOCK_WEEKLY_MEALS,
     BLOCK_WEEKLY_PLAN_START,
 )
-from src.grocery_wizard.ui.pages.weekly_plan.state import (
+from src.grocery_wizard.ui.views.weekly_plan.state import (
     _DEV_PLAN_MEALS_ACK_FP_KEY,
     _plan_meals_step_done,
     _weekly_plan_mode,
@@ -227,7 +227,7 @@ def _render_collapsed_summary(step: WeeklyRailStep) -> None:
             label = f"{label} — {loaded}"
         st.markdown(f"**Started:** {label}")
         if st.button("Change how I started", key="weekly_plan_change_mode_summary"):
-            from src.grocery_wizard.ui.pages.weekly_plan.state import _reset_weekly_plan_workflow
+            from src.grocery_wizard.ui.views.weekly_plan.state import _reset_weekly_plan_workflow
 
             _reset_weekly_plan_workflow(clear_mode=True)
             st.session_state.weekly_plan_mode_choice = "new"

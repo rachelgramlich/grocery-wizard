@@ -39,7 +39,7 @@ def test_per_recipe_review_initializes_widget_keys_without_value_param() -> None
 
 
 def test_save_recipe_review_to_notion_syncs_stash_after_cache_invalidation() -> None:
-    source = (UI_ROOT / "pages" / "weekly_plan" / "recipe_review.py").read_text(encoding="utf-8")
+    source = (UI_ROOT / "views" / "weekly_plan" / "recipe_review.py").read_text(encoding="utf-8")
     save_block = source.split("def _save_recipe_review_to_notion", 1)[1].split(
         "def _render_per_recipe_review", 1
     )[0]
