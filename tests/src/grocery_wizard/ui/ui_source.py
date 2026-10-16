@@ -43,6 +43,13 @@ def apptest_continue_to_meal_builder(at, *, timeout: int = 60) -> None:
     continue_buttons[0].click().run(timeout=timeout)
 
 
+def apptest_rail_get_started(at, *, timeout: int = 60) -> None:
+    """Expand **Get started** via the step rail (after the first Continue)."""
+    rail = [b for b in at.button if b.label.endswith("Get started")]
+    assert rail, "Get started rail button missing"
+    rail[0].click().run(timeout=timeout)
+
+
 # Back-compat alias for older tests and docs during transition.
 def pantry_tab_source() -> str:
     return pantry_page_source()

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from ui_source import APP_PATH, apptest_continue_to_meal_builder
+from ui_source import APP_PATH, apptest_continue_to_meal_builder, apptest_rail_get_started
 
 from src.grocery_wizard.integrations.notion import recipe_lookup_key
 from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
@@ -23,6 +23,7 @@ def _enter_dev_mode(at) -> None:
     continue_buttons = [b for b in at.button if b.label == "Continue"]
     assert continue_buttons, "Weekly plan Continue missing"
     continue_buttons[0].click().run(timeout=120)
+    apptest_rail_get_started(at, timeout=120)
 
     change = [b for b in at.button if b.label == "Change how I started"]
     assert change, "Change how I started missing"
