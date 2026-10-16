@@ -176,3 +176,29 @@ def test_select_scenarios_filters_by_glob_and_substring() -> None:
         s.id for s in build_scenarios() if s.id.startswith("pantry.")
     }
     assert [s.id for s in select_scenarios(["build_plan"])] == ["weekly.meals.build_plan"]
+
+
+def test_noisy_flag_marks_unstable_warm_repetitions() -> None:
+    from src.grocery_wizard.dev.perf_audit.measure import RunStats
+    from src.grocery_wizard.dev.perf_audit.report import ScenarioResult, flags_for
+
+    stable = ScenarioResult(
+        id="a",
+        page="p",
+        label="l",
+        writes=False,
+        external=False,
+        warm=RunStats(wall_s=1.0),
+        warm_runs_s=[1.0, 1.1, 1.2],
+    )
+    noisy = ScenarioResult(
+        id="b",
+        page="p",
+        label="l",
+        writes=False,
+        external=False,
+        warm=RunStats(wall_s=1.0),
+        warm_runs_s=[1.0, 1.2, 9.0],
+    )
+    assert "NOISY" not in flags_for(stable, 0.4)
+    assert "NOISY" in flags_for(noisy, 0.4)

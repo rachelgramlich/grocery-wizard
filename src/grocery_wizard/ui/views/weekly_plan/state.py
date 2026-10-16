@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import streamlit as st
 
-from src.grocery_wizard.config import WEEK_PLAN_PATH
+from src.grocery_wizard.config import WEEK_PLAN_PATH, load_config
 from src.grocery_wizard.integrations.notion import recipe_lookup_key
 from src.grocery_wizard.planning.meal_planner import save_week_plan
 from src.grocery_wizard.planning.saved_weekly_plans import (
@@ -15,7 +15,6 @@ from src.grocery_wizard.planning.saved_weekly_plans import (
     SaveWeekChoice,
     WeeklyPlanSaveResult,
     ensure_saved_weekly_plan,
-    find_plan_for_week,
     needs_save_week_choice,
     normalize_recipe_names,
     saved_plan_week_start,
@@ -40,9 +39,11 @@ from src.grocery_wizard.ui.grocery_flow import (
 from src.grocery_wizard.ui.grocery_helpers import parse_line_items_text
 from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.notion_cache import (
+    cached_saved_plans,
     invalidate_notion_cache,
     invalidate_saved_plans_cache,
     notion_cache_generation,
+    saved_plan_for_week,
 )
 
 if TYPE_CHECKING:
@@ -314,7 +315,13 @@ def _weekly_plan_save_would_replace(
     if not recipes:
         return False, None
     week_start = _resolve_save_week_start()
-    existing = find_plan_for_week(week_start, recipes_db=get_db())
+    existing = saved_plan_for_week(
+        cached_saved_plans(
+            get_db(),
+            weekly_plans_database_id=load_config().notion_weekly_meal_plans_database_id,
+        ),
+        week_start,
+    )
     if existing is None or existing.recipes == recipes:
         return False, existing
     return True, existing

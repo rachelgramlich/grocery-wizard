@@ -15,6 +15,7 @@ from streamlit.testing.v1 import AppTest
 from src.grocery_wizard.dev.perf_audit import flows
 from src.grocery_wizard.dev.perf_audit.flows import AuditContext, ScenarioSkipError
 from src.grocery_wizard.ui.ids import CONTROL_GLOBAL_REFRESH, control_streamlit_key
+from src.grocery_wizard.ui.views.weekly_plan.state import PLAN_PREBUILD_MANUAL_POPOVER_KEY
 
 Prepare = Callable[[AuditContext], AppTest]
 Act = Callable[[AuditContext, AppTest], AppTest]
@@ -104,10 +105,13 @@ def _quick_swap_act(ctx: AuditContext, at: AppTest) -> AppTest:
 
 def _slot_use_recipe_prepare(ctx: AuditContext) -> AppTest:
     at = flows.start_new_plan_with_built_meals(ctx)
+    at.session_state["plan_slot_popover_1"] = True
+    at.run(timeout=ctx.timeout)
     picker = at.selectbox(key="plan_slot_direct_pick_1")
     if len(picker.options) < 2:
         raise ScenarioSkipError("Need at least two recipes to swap a slot")
     picker.set_value(picker.options[-1])
+    at.session_state["plan_slot_popover_1"] = True
     return at.run(timeout=ctx.timeout)
 
 
@@ -117,10 +121,13 @@ def _slot_use_recipe_act(ctx: AuditContext, at: AppTest) -> AppTest:
 
 def _prebuild_pin_prepare(ctx: AuditContext) -> AppTest:
     at = flows.start_new_plan_at_builder(ctx)
+    at.session_state[PLAN_PREBUILD_MANUAL_POPOVER_KEY] = True
+    at.run(timeout=ctx.timeout)
     picker = at.selectbox(key="plan_prebuild_direct_pick")
     if not picker.options:
         raise ScenarioSkipError("No recipes available to pin")
     picker.set_value(picker.options[0])
+    at.session_state[PLAN_PREBUILD_MANUAL_POPOVER_KEY] = True
     return at.run(timeout=ctx.timeout)
 
 
@@ -128,11 +135,18 @@ def _save_plan_prepare(ctx: AuditContext) -> AppTest:
     return flows.start_new_plan_with_built_meals(ctx)
 
 
-def _save_plan_act(ctx: AuditContext, at: AppTest) -> AppTest:
-    labels = {b.key for b in at.button}
-    if "weekly_plan_pick_next_week" in labels:
+def _click_save_plan(ctx: AuditContext, at: AppTest) -> AppTest:
+    keys = {b.key for b in at.button}
+    if "weekly_plan_pick_next_week" in keys:
         flows.click(ctx, at, key="weekly_plan_pick_next_week")
-    return flows.click(ctx, at, key="save_weekly_plan")
+        keys = {b.key for b in at.button}
+    if "save_weekly_plan" in keys:
+        return flows.click(ctx, at, key="save_weekly_plan")
+    return flows.click(ctx, at, key="weekly_plan_confirm_overwrite_save")
+
+
+def _save_plan_act(ctx: AuditContext, at: AppTest) -> AppTest:
+    return _click_save_plan(ctx, at)
 
 
 # --- weekly: grocery -----------------------------------------------------------------
@@ -155,9 +169,7 @@ def _review_cancel_act(ctx: AuditContext, at: AppTest) -> AppTest:
 
 
 def _review_save_prepare(ctx: AuditContext) -> AppTest:
-    at = flows.start_new_plan_with_built_meals(ctx)
-    flows.click(ctx, at, key="save_weekly_plan")
-    flows.click(ctx, at, key="create_grocery")
+    at = flows.dev_jump(ctx, "per_recipe_review_btn_review")
     if not at.text_area:
         raise ScenarioSkipError("Per-recipe review did not render")
     at.text_area[0].set_value(f"{at.text_area[0].value}\n1 perf-audit test item")
@@ -422,7 +434,12 @@ def build_scenarios() -> list[Scenario]:
             "Save plan to Notion",
             _save_plan_prepare,
             _save_plan_act,
-            covers=("save_weekly_plan", "weekly_plan_pick_this_week", "weekly_plan_pick_next_week"),
+            covers=(
+                "save_weekly_plan",
+                "weekly_plan_confirm_overwrite_save",
+                "weekly_plan_pick_this_week",
+                "weekly_plan_pick_next_week",
+            ),
             writes=True,
         ),
         Scenario(
