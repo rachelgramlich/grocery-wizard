@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import tomllib
 from pathlib import Path
@@ -27,6 +28,10 @@ _REPO_SECRETS_PATH = _REPO_ROOT / "secrets.toml"
 _LEGACY_STREAMLIT_SECRETS_PATH = _REPO_ROOT / ".streamlit" / "secrets.toml"
 _STREAMLIT_SECRETS_SYMLINK = _LEGACY_STREAMLIT_SECRETS_PATH
 _DEFAULT_GITHUB_FEEDBACK_REPOSITORY = "rachelgramlich/grocery-wizard"
+_DEPLOY_FEEDBACK_TOKEN_LOG = (
+    "GITHUB_FEEDBACK_TOKEN is unset; Send feedback will fail until Streamlit Cloud "
+    "Secrets are updated (see docs/household-deploy.md)."
+)
 
 
 def _coerce_bool_env(value: object) -> bool:
@@ -285,6 +290,17 @@ def load_auth_gate_settings() -> AuthGateSettings:
         require_auth=_coerce_bool_env(os.environ.get("GROCERY_WIZARD_REQUIRE_AUTH", "false")),
         auth_email_allowlist=os.environ.get("GROCERY_WIZARD_AUTH_EMAIL_ALLOWLIST"),
     )
+
+
+def warn_if_missing_github_feedback_token_when_deployed() -> None:
+    """Log once per process when auth-gated deploy lacks ``GITHUB_FEEDBACK_TOKEN``."""
+    gate = load_auth_gate_settings()
+    if not gate.require_auth:
+        return
+    token = os.environ.get("GITHUB_FEEDBACK_TOKEN", "").strip()
+    if token:
+        return
+    logging.getLogger(__name__).warning(_DEPLOY_FEEDBACK_TOKEN_LOG)
 
 
 def load_config() -> Config:

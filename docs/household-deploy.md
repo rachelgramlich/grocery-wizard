@@ -45,13 +45,59 @@ Never bake tokens into the Docker image or commit them to git.
 
 **Google login (`st.login`):** depends on **`streamlit[auth]`** (Authlib + httpx). After `git pull`, run **`just setup`** or **`uv sync`** so your venv matches `pyproject.toml`.
 
-### 3. GitHub feedback PAT
+### 3. GitHub feedback PAT (fine-grained, production)
 
-- Fine-grained personal access token scoped to this repository.
-- Permission: **Issues** → Read and write.
-- Store only in Streamlit Cloud secrets (or host env).
+Production **Send feedback** must use a **fine-grained** personal access token scoped to this repo—not a broad classic token or a copy of `gh auth token` from local dev ([#360](https://github.com/rachelgramlich/grocery-wizard/issues/360)).
+
+#### Create the token (GitHub)
+
+1. GitHub → **Settings** → **Developer settings** → **Personal access tokens** → **Fine-grained tokens** → **Generate new token**.
+2. **Resource owner:** your account (or org that owns the repo).
+3. **Repository access:** **Only select repositories** → `rachelgramlich/grocery-wizard`.
+4. **Permissions** (repository): **Issues** → **Read and write** only. Leave Contents, Actions, and other permissions at **No access**.
+5. Set a short **expiration** (e.g. 90 days) and a note such as `grocery-wizard Streamlit feedback`.
+6. **Generate** and copy the token once (`github_pat_…`). You cannot view it again.
+
+Do **not** commit the token or bake it into a Docker image.
+
+#### Install in Streamlit Community Cloud
+
+1. Open the app in [Streamlit Community Cloud](https://share.streamlit.io/) → **Manage app** → **Settings** → **Secrets**.
+2. Edit the existing TOML (same shape as [`secrets.toml.example`](../secrets.toml.example)). Set or replace:
+
+   `GITHUB_FEEDBACK_TOKEN = "github_pat_…"`
+
+   Keep `GITHUB_FEEDBACK_REPOSITORY = "rachelgramlich/grocery-wizard"` unless you intentionally file elsewhere.
+3. **Save** → **Reboot app** (Secrets changes do not apply until reboot).
+
+#### Verify
+
+1. Sign in on the production URL (allowlisted Google account).
+2. Expand **Send feedback**, submit a short test note, confirm success toast.
+3. On This Mac: `gh issue list --label user-feedback-inbox --state open --repo rachelgramlich/grocery-wizard` — confirm the new inbox issue.
+
+#### Revoke old tokens
+
+If you ever pasted a **classic** PAT, a **`gh auth token`**, or an over-scoped token into Cloud Secrets:
+
+1. After the fine-grained token works, open **GitHub → Settings → Developer settings → Personal access tokens** (fine-grained **and** classic lists).
+2. **Revoke** the old token(s) used for Cloud feedback.
+3. Local dev can keep using `gh auth login` for issues/PRs; that CLI token must **not** be copied into Streamlit Secrets.
 
 Submitted notes open issues labeled **`user-feedback-inbox`**. Promote to backlog label `grocery-wizard` after triage ([#355](https://github.com/rachelgramlich/grocery-wizard/issues/355)).
+
+### Secret rotation (no git commits)
+
+All deploy secrets live in **Streamlit Community Cloud → Manage app → Settings → Secrets** (TOML). Rotating a key never requires a repo commit—only edit Secrets and **Reboot app**.
+
+| Secret | When to rotate | Steps |
+| --- | --- | --- |
+| **`NOTION_API_KEY`** | Notion integration secret rolled, suspected leak, or offboarding | Create/roll secret in [Notion integrations](https://www.notion.so/my-integrations). Paste new `NOTION_API_KEY` in Cloud Secrets (other `NOTION_*` IDs unchanged unless you migrated DBs). Save → Reboot. Smoke-test one Notion read; revert any test write in Notion. |
+| **`GITHUB_FEEDBACK_TOKEN`** | Expiration, suspected leak, or PAT policy | Generate a **new** fine-grained PAT (Issues read/write on this repo only). Replace `GITHUB_FEEDBACK_TOKEN` in Cloud Secrets → Save → Reboot. Submit test **Send feedback**; confirm inbox issue. **Revoke** the previous PAT in GitHub. |
+| **`[auth]`** (`client_secret`, `cookie_secret`) | Google OAuth client rotated or cookie compromise | Update values in Google Cloud Console and Cloud Secrets TOML (`[auth]` block + matching **Authorized redirect URIs**). Save → Reboot. Sign-in smoke from a second device. |
+| **NYT cookies** (`NYT_S_COOKIE`, `NYT_REGI_ID`) | Sync stops working (phase 6) | Refresh cookies locally, paste into Cloud Secrets → Reboot. |
+
+If **Send feedback** fails after rotation, check **Manage app → Logs** for configuration warnings (missing `GITHUB_FEEDBACK_TOKEN` when auth is enabled) and the troubleshooting table below.
 
 ## Local vs deployed
 
@@ -89,7 +135,7 @@ On the OAuth **consent screen**, add authorized domain **`streamlit.app`**. Keep
 
 | Phase | Topic | Tracking |
 | --- | --- | --- |
-| **4** | Replace dev `gh auth token` with **fine-grained PAT** (`issues:write` on this repo only) in Streamlit Cloud Secrets; document rotation when Notion/GitHub keys rotate | GitHub issue (backlog) |
+| **4** | Fine-grained **GitHub feedback PAT** in Cloud Secrets + rotation runbook | [#360](https://github.com/rachelgramlich/grocery-wizard/issues/360) (this doc, §3 and **Secret rotation**) |
 | **5** | Triage **`user-feedback-inbox`** → **`grocery-wizard`** backlog | [#355](https://github.com/rachelgramlich/grocery-wizard/issues/355) (`/promote-feedback-inbox` or similar) |
 | **6** | Optional **NYT Cooking** sync on hosted app (`NYT_S_COOKIE`, `NYT_REGI_ID` in Cloud Secrets; cookies expire) | GitHub issue (backlog) |
 
