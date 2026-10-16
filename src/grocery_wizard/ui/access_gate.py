@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from src.grocery_wizard.config import Config, load_config
+from src.grocery_wizard.config import Config, load_auth_gate_settings
 
 
 def parse_email_allowlist(raw: str | None) -> frozenset[str]:
@@ -16,11 +16,18 @@ def parse_email_allowlist(raw: str | None) -> frozenset[str]:
 
 def enforce_access_gate(config: Config | None = None) -> None:
     """Require Google login and an allowlisted email when auth is enabled."""
-    cfg = config or load_config()
-    if not cfg.require_auth:
+    if config is not None:
+        require_auth = config.require_auth
+        allowlist_raw = config.auth_email_allowlist
+    else:
+        gate = load_auth_gate_settings()
+        require_auth = gate.require_auth
+        allowlist_raw = gate.auth_email_allowlist
+
+    if not require_auth:
         return
 
-    allowlist = parse_email_allowlist(cfg.auth_email_allowlist)
+    allowlist = parse_email_allowlist(allowlist_raw)
     if not allowlist:
         st.error(
             "App auth is misconfigured: set GROCERY_WIZARD_AUTH_EMAIL_ALLOWLIST "

@@ -6,7 +6,7 @@ import os
 import tomllib
 from pathlib import Path
 
-from pydantic import AliasChoices, Field, ValidationError, field_validator
+from pydantic import AliasChoices, BaseModel, Field, ValidationError, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _PACKAGE_DIR = Path(__file__).resolve().parent.parent
@@ -27,6 +27,25 @@ _REPO_SECRETS_PATH = _REPO_ROOT / "secrets.toml"
 _LEGACY_STREAMLIT_SECRETS_PATH = _REPO_ROOT / ".streamlit" / "secrets.toml"
 _STREAMLIT_SECRETS_SYMLINK = _LEGACY_STREAMLIT_SECRETS_PATH
 _DEFAULT_GITHUB_FEEDBACK_REPOSITORY = "rachelgramlich/grocery-wizard"
+
+
+def _coerce_bool_env(value: object) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"true", "1", "yes", "on"}:
+            return True
+        if normalized in {"false", "0", "no", "off", ""}:
+            return False
+    return bool(value)
+
+
+class AuthGateSettings(BaseModel):
+    """Auth-only settings for ``enforce_access_gate`` (no Notion validation)."""
+
+    require_auth: bool = False
+    auth_email_allowlist: str | None = None
 
 
 class Config(BaseSettings):
@@ -98,14 +117,8 @@ class Config(BaseSettings):
 
     @field_validator("require_auth", "dev_ui_enabled", mode="before")
     @classmethod
-    def _coerce_bool_env(cls, value: object) -> object:
-        if isinstance(value, str):
-            normalized = value.strip().lower()
-            if normalized in {"true", "1", "yes", "on"}:
-                return True
-            if normalized in {"false", "0", "no", "off", ""}:
-                return False
-        return value
+    def _coerce_bool_fields(cls, value: object) -> object:
+        return _coerce_bool_env(value)
 
     @field_validator(
         "notion_api_key",
@@ -260,10 +273,23 @@ def _format_config_validation_error(exc: ValidationError) -> str:
     )
 
 
-def load_config() -> Config:
-    """Load configuration from environment, Streamlit secrets, ``secrets.toml``, and ``.env``."""
+def _prime_config_environ() -> None:
     _apply_streamlit_runtime_secrets_to_environ()
     _apply_streamlit_secrets_file_to_environ()
+
+
+def load_auth_gate_settings() -> AuthGateSettings:
+    """Load Google gate flags without validating Notion credentials."""
+    _prime_config_environ()
+    return AuthGateSettings(
+        require_auth=_coerce_bool_env(os.environ.get("GROCERY_WIZARD_REQUIRE_AUTH", "false")),
+        auth_email_allowlist=os.environ.get("GROCERY_WIZARD_AUTH_EMAIL_ALLOWLIST"),
+    )
+
+
+def load_config() -> Config:
+    """Load configuration from environment, Streamlit secrets, ``secrets.toml``, and ``.env``."""
+    _prime_config_environ()
     try:
         return Config()
     except ValidationError as exc:

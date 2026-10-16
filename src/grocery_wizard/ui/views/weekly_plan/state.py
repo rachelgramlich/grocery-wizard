@@ -359,7 +359,7 @@ def _apply_weekly_plan_save_result(
 ) -> None:
     save_week_plan(recipe_names, WEEK_PLAN_PATH)
     _sync_weekly_plan_save_state(recipe_names, result.plan)
-    from src.grocery_wizard.ui.pages.weekly_plan.step_ui import (
+    from src.grocery_wizard.ui.views.weekly_plan.step_ui import (
         collapse_after_plan_saved_to_notion,
     )
 
@@ -463,7 +463,7 @@ def _render_save_plan_controls(
             help="Marks plan meals done for this session without writing to Notion.",
         ):
             from src.grocery_wizard.ui.ids import BLOCK_WEEKLY_GROCERY_PRE_BUILD
-            from src.grocery_wizard.ui.pages.weekly_plan.step_ui import (
+            from src.grocery_wizard.ui.views.weekly_plan.step_ui import (
                 WeeklyRailStep,
                 collapse_after_plan_saved_to_notion,
                 queue_weekly_scroll,

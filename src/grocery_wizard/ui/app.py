@@ -31,17 +31,17 @@ from src.grocery_wizard.ui.notion_cache import (
     invalidate_notion_cache,
     last_recipe_cache_load_seconds,
 )
-from src.grocery_wizard.ui.pages import (
+from src.grocery_wizard.ui.styles import inject_app_styles
+from src.grocery_wizard.ui.views import (
     PAGE_LABEL_WEEKLY,
     PAGE_PICKER_LABELS,
     page_label_for_slug,
     page_slug_for_label,
 )
-from src.grocery_wizard.ui.pages.add_recipe import render_add_recipe
-from src.grocery_wizard.ui.pages.pantry_recurring import render_pantry_and_recurring
-from src.grocery_wizard.ui.pages.recipe_maintenance import render_recipe_maintenance
-from src.grocery_wizard.ui.pages.weekly_plan import render_create_weekly_plan
-from src.grocery_wizard.ui.styles import inject_app_styles
+from src.grocery_wizard.ui.views.add_recipe import render_add_recipe
+from src.grocery_wizard.ui.views.pantry_recurring import render_pantry_and_recurring
+from src.grocery_wizard.ui.views.recipe_maintenance import render_recipe_maintenance
+from src.grocery_wizard.ui.views.weekly_plan import render_create_weekly_plan
 
 _GW_RENDER_PAGE_SLUG = "gw_render_page_slug"
 _SKIP_PICKER_RENDER_SYNC = "gw_skip_picker_render_sync"

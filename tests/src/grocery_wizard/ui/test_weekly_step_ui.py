@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from src.grocery_wizard.ui.pages.weekly_plan import step_ui
-from src.grocery_wizard.ui.pages.weekly_plan.step_ui import WeeklyRailStep
 from src.grocery_wizard.ui.theme import app_theme_css
+from src.grocery_wizard.ui.views.weekly_plan import step_ui
+from src.grocery_wizard.ui.views.weekly_plan.step_ui import WeeklyRailStep
 
 
 def test_weekly_step_state_progression(monkeypatch) -> None:
@@ -40,7 +40,7 @@ def test_dev_plan_meals_ack_marks_step_done(monkeypatch) -> None:
     monkeypatch.setattr(step_ui, "_plan_meals_step_done", step_ui._plan_meals_step_done)
     monkeypatch.setattr(step_ui.st, "session_state", session, raising=False)
 
-    from src.grocery_wizard.ui.pages.weekly_plan.state import (
+    from src.grocery_wizard.ui.views.weekly_plan.state import (
         _DEV_PLAN_MEALS_ACK_FP_KEY,
         _ack_dev_plan_meals_ready,
     )

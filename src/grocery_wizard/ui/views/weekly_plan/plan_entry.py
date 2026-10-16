@@ -46,7 +46,11 @@ from src.grocery_wizard.ui.meal_plan_filters import (
     render_meal_plan_filters,
 )
 from src.grocery_wizard.ui.notion_cache import cached_saved_plans, invalidate_notion_cache
-from src.grocery_wizard.ui.pages.weekly_plan.state import (
+from src.grocery_wizard.ui.recipe_match import (
+    render_unmatched_plan_recipes_help,
+    unmatched_plan_recipe_names,
+)
+from src.grocery_wizard.ui.views.weekly_plan.state import (
     PLAN_BUILDER_POPOVER_KEY,
     PLAN_FORCE_OPEN_1A_KEY,
     PLAN_MEAL_COUNT_CONFIRMED_KEY,
@@ -66,14 +70,10 @@ from src.grocery_wizard.ui.pages.weekly_plan.state import (
     _weekly_plan_persists_tracking_stats_to_notion,
     _write_plan_names,
 )
-from src.grocery_wizard.ui.pages.weekly_plan.step_ui import (
+from src.grocery_wizard.ui.views.weekly_plan.step_ui import (
     WeeklyRailStep,
     queue_weekly_scroll,
     set_expanded_step,
-)
-from src.grocery_wizard.ui.recipe_match import (
-    render_unmatched_plan_recipes_help,
-    unmatched_plan_recipe_names,
 )
 
 
@@ -517,7 +517,7 @@ def _render_weekly_plan_entry() -> bool:
         detail = f" — loaded **{loaded}**" if mode == "saved" and loaded else ""
         st.info(f"**{labels[mode]}**{detail}")
         if st.button("Change how I started", key="weekly_plan_change_mode"):
-            from src.grocery_wizard.ui.pages.weekly_plan.step_ui import clear_expanded_step_override
+            from src.grocery_wizard.ui.views.weekly_plan.step_ui import clear_expanded_step_override
 
             _reset_weekly_plan_workflow(clear_mode=True)
             st.session_state.weekly_plan_mode_choice = "new"

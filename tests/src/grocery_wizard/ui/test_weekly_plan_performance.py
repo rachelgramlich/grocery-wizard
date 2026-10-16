@@ -30,7 +30,7 @@ def test_ingredient_filter_single_searchable_multiselect() -> None:
 
 def test_plan_meals_loads_recipes_before_meal_count_and_dedupes() -> None:
     """Issue #336: show Notion load before meal count; one recipe fetch per rerun."""
-    flow_source = (UI_ROOT / "pages" / "weekly_plan" / "flow.py").read_text(encoding="utf-8")
+    flow_source = (UI_ROOT / "views" / "weekly_plan" / "flow.py").read_text(encoding="utf-8")
     plan_block = flow_source.split("WeeklyRailStep.PLAN_MEALS", 1)[1].split(
         "WeeklyRailStep.GROCERY_LIST", 1
     )[0]

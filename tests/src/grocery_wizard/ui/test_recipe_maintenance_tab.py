@@ -6,7 +6,7 @@ from ui_source import APP_PATH, ui_source
 
 
 def test_recipe_maintenance_page_registered() -> None:
-    nav = (APP_PATH.parent / "pages" / "__init__.py").read_text(encoding="utf-8")
+    nav = (APP_PATH.parent / "views" / "__init__.py").read_text(encoding="utf-8")
     assert 'PAGE_LABEL_MAINTENANCE: Final = "Recipe maintenance"' in nav
     assert "PAGE_PICKER_LABELS" in nav
     source = ui_source()

@@ -29,17 +29,17 @@ from src.grocery_wizard.ui.ids import (
 )
 from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.notion_cache import cached_query_recipes
-from src.grocery_wizard.ui.pages.weekly_plan.recipe_review import (
+from src.grocery_wizard.ui.views.weekly_plan.recipe_review import (
     _render_per_recipe_review,
     _start_recipe_review,
 )
-from src.grocery_wizard.ui.pages.weekly_plan.state import (
+from src.grocery_wizard.ui.views.weekly_plan.state import (
     _clear_grocery_result,
     _ensure_weekly_plan_saved_before_grocery,
     _grocery_pre_extra_items_widget_key,
     _weekly_plan_mode,
 )
-from src.grocery_wizard.ui.pages.weekly_plan.step_ui import (
+from src.grocery_wizard.ui.views.weekly_plan.step_ui import (
     WeeklyRailStep,
     clear_expanded_step_override,
     queue_weekly_scroll,

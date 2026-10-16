@@ -24,7 +24,7 @@ Vocabulary for issues, feedback, tests, and agents.
 | `pantry` | Pantry & recurring |
 | `maintenance` | Recipe maintenance |
 
-Constants: `src/grocery_wizard/ui/ids.py`, labels: `src/grocery_wizard/ui/pages/__init__.py`.
+Constants: `src/grocery_wizard/ui/ids.py`, labels: `src/grocery_wizard/ui/views/__init__.py`.
 
 ## Global controls
 
@@ -83,8 +83,8 @@ Rail steps (user-facing, not numbered): **Get started** → **Plan meals** → *
 |------|--------|
 | App entry, page routing | `ui/app.py` |
 | IDs | `ui/ids.py` |
-| Page labels / slugs | `ui/pages/__init__.py` |
-| Page bodies | `ui/pages/*.py`, `ui/pages/weekly_plan/` |
+| Page labels / slugs | `ui/views/__init__.py` |
+| Page bodies | `ui/views/*.py`, `ui/views/weekly_plan/` |
 | Weekly grocery build logic | `ui/grocery_flow.py`, `ui/grocery_helpers.py` |
 | Shared widgets | `ui/loading.py`, `ui/feedback.py`, `ui/notion_cache.py`, … |
 
