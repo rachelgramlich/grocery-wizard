@@ -6,7 +6,7 @@ Grocery Wizard is a Streamlit app for household meal planning: save recipes from
 
 **Hosted app:** [grocerywizard.streamlit.app](https://grocerywizard.streamlit.app) (Google sign-in for household members). **Local:** `just grocery-ui` from this repo.
 
-> **Streamlit profile card:** set the display name under **Manage app → Settings → General → App name** (otherwise SCC may show **“Sign in – Google Accounts”** from the OAuth redirect). This README supplies the GitHub/social blurb; the **My apps** tile is mostly name + screenshot. Use `page_title="Grocery Wizard"` in the app entrypoint. After Secrets are valid, **Reboot app**; preview refresh can take hours.
+> **Streamlit “My apps” / profile tile:** Community Cloud has **no separate display-name field** (Settings → General is **App URL** only). The tile title and screenshot often come from the **last page SCC captured** — with Google login, that is usually **“Sign in – Google Accounts”**, not `st.set_page_config` or this README. That is cosmetic; the live app title is still **Grocery Wizard** after sign-in. README text helps GitHub and link previews, not the profile grid.
 
 ## What this app does
 
