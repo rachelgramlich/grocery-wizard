@@ -45,6 +45,8 @@ def test_plan_meals_warms_recipes_quietly_before_meal_count_continue() -> None:
     assert "loading_indicator" in meal_builder_block
     assert "use_global_banner=False" in meal_builder_block
     assert "_MEAL_BUILDER_LOADING_MESSAGE" in meal_builder_block
+    assert "_weekly_plan_meals_fragment" in meal_builder_block.split("loading_indicator", 1)[-1]
+    assert "clear_global_loading_banner" in meal_builder_block
 
 
 def test_prebuild_manual_picker_lazy_when_collapsed() -> None:
