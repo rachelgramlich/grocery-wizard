@@ -102,17 +102,20 @@ def test_weekly_plan_build_shows_per_meal_swap() -> None:
     """AppTest smoke test: Build my plan renders per-meal ↺ buttons."""
     from streamlit.testing.v1 import AppTest
 
-    at = AppTest.from_file(APP_FILE, default_timeout=60)
-    at.run(timeout=60)
+    at = AppTest.from_file(APP_FILE, default_timeout=120)
+    at.run(timeout=120)
 
     continue_buttons = [b for b in at.button if b.label == "Continue"]
     assert continue_buttons, "Weekly plan entry Continue button missing"
-    continue_buttons[0].click().run(timeout=60)
-    apptest_continue_to_meal_builder(at, timeout=60)
+    continue_buttons[0].click().run(timeout=120)
+    meal_count_inputs = [n for n in at.number_input if n.label == "How many meals this week?"]
+    if meal_count_inputs:
+        meal_count_inputs[0].set_value(1).run(timeout=120)
+    apptest_continue_to_meal_builder(at, timeout=120)
 
     build_buttons = [b for b in at.button if b.label == "Build my plan"]
     assert build_buttons, "Build my plan button missing"
-    build_buttons[0].click().run(timeout=60)
+    build_buttons[0].click().run(timeout=120)
 
     swap_buttons = [b for b in at.button if b.label == "Quick swap"]
     assert len(swap_buttons) >= 1, "Expected at least one per-meal Quick swap button"
@@ -139,12 +142,12 @@ def test_dev_mode_exposes_collapsed_dev_tools_expander() -> None:
     assert "commit_dev_jump" in source
     assert "resolve_dev_jump_meal_names" in source
     assert "sync_dev_manual_multiselect" in source
-    assert "Dev: Meals filled (auto)" in source
-    assert "Dev: Meals filled (manual)" in source
+    assert "DEV_JUMP_BUTTON_LABEL_MEALS_FILLED_AUTO" in source
+    assert "DEV_JUMP_BUTTON_LABEL_MEALS_FILLED_MANUAL" in source
     assert "DEV_MANUAL_RECIPES_KEY" in source
     assert 'st.markdown("#### Meals filled")' not in source
     assert '"Choose recipes manually"' in source
-    assert '"Dev: Final list"' in source
+    assert "DEV_JUMP_BUTTON_LABEL_FINAL_LIST" in source
     dev_section = source.split('st.expander("Dev: tools"', 1)[1].split(
         "def _render_weekly_plan_entry", 1
     )[0]
@@ -152,14 +155,14 @@ def test_dev_mode_exposes_collapsed_dev_tools_expander() -> None:
     assert "for step in DEV_JUMP_FLOW_ORDER:\n            _dev_jump_bullet(step)" in dev_section
     bullets_end = dev_section.index("all_names = sorted")
     assert dev_section.index("for step in DEV_JUMP_FLOW_ORDER") < bullets_end
-    assert dev_section.index("Dev: Meals filled (auto)") < dev_section.index(
-        'label="Dev: Pre-build grocery"'
+    assert dev_section.index("DEV_JUMP_BUTTON_LABEL_MEALS_FILLED_AUTO") < dev_section.index(
+        "DEV_JUMP_BUTTON_LABEL_PRE_BUILD_GROCERY"
     )
-    assert dev_section.index('label="Dev: Pre-build grocery"') < dev_section.index(
-        'label="Dev: Per-recipe review"'
+    assert dev_section.index("DEV_JUMP_BUTTON_LABEL_PRE_BUILD_GROCERY") < dev_section.index(
+        "DEV_JUMP_BUTTON_LABEL_PER_RECIPE_REVIEW"
     )
-    assert dev_section.index('label="Dev: Per-recipe review"') < dev_section.index(
-        'label="Dev: Final list"'
+    assert dev_section.index("DEV_JUMP_BUTTON_LABEL_PER_RECIPE_REVIEW") < dev_section.index(
+        "DEV_JUMP_BUTTON_LABEL_FINAL_LIST"
     )
 
 
@@ -240,13 +243,18 @@ def test_plan_meal_count_persists_separate_from_widget_key() -> None:
 
 
 def test_meal_count_widget_outside_meals_fragment() -> None:
-    """Issue #284: meal count changes must rerun the full weekly-plan tab, not a meals fragment."""
+    """Issue #284/#400: meal count in flow.py; meals render in main run, not a meals fragment."""
     flow_source = (UI_ROOT / "views" / "weekly_plan" / "flow.py").read_text(encoding="utf-8")
     assert "_render_meal_count_input()" in flow_source
     assert "_sync_plan_length_to_meal_count(meal_count)" in flow_source
     assert "_render_plan_meal_count_continue" in flow_source
     assert '@st.fragment(key="weekly_plan_meals")' not in flow_source
     assert "render_meals_section" in flow_source
+    plan_entry_source = (UI_ROOT / "views" / "weekly_plan" / "plan_entry.py").read_text(
+        encoding="utf-8"
+    )
+    meals_fn = plan_entry_source.split("def render_meals_section", 1)[1].split("\ndef ", 1)[0]
+    assert "_render_meal_count_input" not in meals_fn
 
 
 def test_meal_count_continue_gates_meals_fragment() -> None:

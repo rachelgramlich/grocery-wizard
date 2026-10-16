@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import pytest
-from ui_source import APP_PATH, apptest_rail_get_started
+from ui_source import APP_PATH, apptest_continue_to_meal_builder, apptest_rail_get_started
 
+from src.grocery_wizard.ui.dev_jumps import DEV_JUMP_BUTTON_LABEL_MEALS_FILLED_AUTO
 from tests.notion_test_env import live_notion_smoke_enabled
 
 pytestmark = pytest.mark.skipif(
@@ -27,6 +28,7 @@ def _enter_dev_mode(at) -> None:
     assert session_radio, "Weekly plan session radio missing"
     dev_opt = next(o for o in session_radio[0].options if "Dev mode" in o)
     session_radio[0].set_value(dev_opt).run(timeout=120)
+    apptest_continue_to_meal_builder(at, timeout=120)
 
 
 def test_dev_mode_continue_to_grocery_unlocks_grocery_step(
@@ -39,8 +41,8 @@ def test_dev_mode_continue_to_grocery_unlocks_grocery_step(
     at.run(timeout=120)
     _enter_dev_mode(at)
 
-    auto_jump = [b for b in at.button if b.label == "Meals filled: auto"]
-    assert auto_jump, "Dev jump Meals filled: auto missing"
+    auto_jump = [b for b in at.button if b.label == DEV_JUMP_BUTTON_LABEL_MEALS_FILLED_AUTO]
+    assert auto_jump, f"Dev jump {DEV_JUMP_BUTTON_LABEL_MEALS_FILLED_AUTO!r} missing"
     auto_jump[0].click().run(timeout=120)
 
     continue_grocery = [b for b in at.button if b.label == "Continue to grocery list"]

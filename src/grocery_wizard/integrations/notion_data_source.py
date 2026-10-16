@@ -2,6 +2,12 @@
 
 from __future__ import annotations
 
+__all__ = [
+    "NotionDataSourcesClient",
+    "NotionDatabasesClient",
+    "resolve_notion_data_source_id",
+]
+
 from typing import Any, Protocol
 
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 from ui_source import APP_PATH, apptest_continue_to_meal_builder, apptest_rail_get_started
 
+from src.grocery_wizard.ui.dev_jumps import DEV_JUMP_BUTTON_LABEL_PER_RECIPE_REVIEW
 from tests.notion_test_env import live_notion_smoke_enabled
 
 pytestmark = pytest.mark.skipif(
@@ -39,7 +40,7 @@ def test_per_recipe_review_form_submit_reaches_final_list(monkeypatch: pytest.Mo
     at.run(timeout=120)
     _enter_dev_mode(at)
 
-    review_jump = [b for b in at.button if b.label == "Dev: Per-recipe review"]
+    review_jump = [b for b in at.button if b.label == DEV_JUMP_BUTTON_LABEL_PER_RECIPE_REVIEW]
     assert review_jump, "Dev jump Per-recipe review button missing"
     review_jump[0].click().run(timeout=120)
 

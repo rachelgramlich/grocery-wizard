@@ -6,6 +6,18 @@ Orchestrates the **storage pipeline** (``parsed.py`` + line filters from
 
 from __future__ import annotations
 
+__all__ = [
+    "apply_removals",
+    "format_ingredients_for_review",
+    "is_directive",
+    "is_removal_directive",
+    "merge_ingredients",
+    "parse_ingredients_text",
+    "parse_removal_target",
+    "prepare_ingredients_for_notion",
+    "split_ingredients_text",
+]
+
 import re
 
 from src.grocery_wizard.ingredients.normalize import (

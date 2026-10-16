@@ -660,6 +660,7 @@ def _segment_contributes_filter_key(part: str) -> bool:
 
 def _filter_line_segments(line: str) -> list[str]:
     """Split stored lines into parts that each contribute filter keys."""
+    # Lazy import: ``parsed`` imports ``normalize`` for junk checks (top-level would cycle).
     from src.grocery_wizard.ingredients.parsed import _normalize_unicode
 
     text = _strip_filter_line_prefix(line)
@@ -678,6 +679,7 @@ def _filter_line_segments(line: str) -> list[str]:
 
 
 def _filter_key_from_words(words: list[str]) -> str:
+    # Lazy import: shared with ``parsed`` storage helpers (see ``_filter_line_segments``).
     from src.grocery_wizard.ingredients.parsed import _prefer_plural_form
 
     if not words:
@@ -822,6 +824,7 @@ def split_compound_ingredients(text: str) -> list[str]:
 
 def is_junk_ingredient(line: str) -> bool:
     """Return True when a line is only prep instructions, not a grocery item."""
+    # Lazy import: ``parsed.format_*`` calls ``is_junk_ingredient`` at module load otherwise.
     from src.grocery_wizard.ingredients.parsed import _strip_optional_prefix
 
     return _is_junk_only(_strip_optional_prefix(line.strip()))
@@ -944,6 +947,7 @@ def normalize_ingredient(line: str) -> str:
 
 def parse_amount(line: str) -> tuple[str, str | None]:
     """Parse an ingredient line into ``(name, amount | None)``."""
+    # Lazy import: same ``parsed`` ↔ ``normalize`` cycle as other helpers above.
     from src.grocery_wizard.ingredients.parsed import _needs_display_prep_strip
 
     if is_junk_ingredient(line):
