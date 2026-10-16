@@ -22,6 +22,7 @@ from src.grocery_wizard.shopping.grocery_list import (
     normalize_grocery_list_item,
     recipe_title_from_url,
 )
+from src.grocery_wizard.shopping.store_aisles import classify_aisle
 
 
 def _recipe(name: str, ingredients: str) -> Recipe:
@@ -121,6 +122,33 @@ def test_build_grocery_list_include_pantry(pantry_file: Path) -> None:
     assert any("olive oil" in item for item in items)
     assert any("garlic" in item for item in items)
     assert excluded == []
+
+
+def test_build_grocery_list_store_aisle_collision_products(pantry_file: Path) -> None:
+    """Formatted list lines from build_grocery_list use the same aisle classifier as sort."""
+    db = MagicMock()
+    db.query_recipes.return_value = [
+        _recipe(
+            "Snack Bowl",
+            "1 bag apple chips\n2 apples\ncauliflower rice\n1 package frozen cauliflower rice",
+        )
+    ]
+
+    items, _, _, _, _, _ = build_grocery_list(
+        db,
+        recipe_names=["Snack Bowl"],
+        pantry_path=pantry_file,
+        exclude_pantry=False,
+    )
+
+    def aisle_for(fragment: str) -> str:
+        line = next(item for item in items if fragment.lower() in item.lower())
+        return classify_aisle(line)
+
+    assert aisle_for("apple chips") == "nuts/desserts"
+    assert aisle_for("2 apples") == "fruit"
+    assert aisle_for("cauliflower rice") == "frozen"
+    assert aisle_for("frozen cauliflower rice") == "frozen"
 
 
 def test_build_grocery_list_splits_compound_ingredients(tmp_path: Path) -> None:

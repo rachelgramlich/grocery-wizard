@@ -6,7 +6,7 @@ Paths and env loading live in `__init__.py`. This folder holds **shared product 
 
 | File | Role |
 |------|------|
-| **`store_aisles.txt`** | Source of truth for store walk order, aisle labels, and ingredient keywords. Edit here and commit — section headers like `# --- Produce ---`. |
+| **`store_aisles.txt`** | Source of truth for store walk order, aisle labels, ingredient keywords, and **product overrides** (`# --- products: Product overrides ---`, lines `aisle_id: phrase`). Edit here and commit — section headers like `# --- Produce ---`. |
 | **`__init__.py`** | Notion credentials and database IDs. |
 
 `store_aisles.txt` should **not** move to Notion; it is shared app configuration, not personal household data. Rationale and boundaries (repo rules vs Notion pantry rows): [decision #268](https://github.com/rachelgramlich/grocery-wizard/issues/268).

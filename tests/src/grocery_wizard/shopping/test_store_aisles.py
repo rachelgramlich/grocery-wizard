@@ -35,6 +35,56 @@ def test_parse_store_aisles_file_reads_sections_and_keywords(tmp_path: Path) -> 
     assert config.aisle_keywords["produce"] == ("onion", "garlic")
 
 
+def test_parse_store_aisles_file_reads_product_overrides(tmp_path: Path) -> None:
+    path = tmp_path / "store_aisles.txt"
+    path.write_text(
+        "# --- products: Product overrides ---\n"
+        "snacks: apple chips\n"
+        "# --- fruit: Fruit ---\n"
+        "apple\n"
+        "# --- other: Other ---\n",
+        encoding="utf-8",
+    )
+
+    config = parse_store_aisles_file(path)
+
+    assert "products" not in config.aisle_order
+    assert config.product_phrases == (("apple chips", "snacks"),)
+
+
+def test_classify_aisle_v2_product_beats_generic_token(tmp_path: Path) -> None:
+    path = tmp_path / "store_aisles.txt"
+    path.write_text(
+        "# --- products: Product overrides ---\n"
+        "snacks: apple chips\n"
+        "# --- fruit: Fruit ---\n"
+        "apple\n"
+        "# --- snacks: Snacks ---\n"
+        "chips\n"
+        "# --- other: Other ---\n",
+        encoding="utf-8",
+    )
+    config = parse_store_aisles_file(path)
+
+    assert classify_aisle("apple chips", config=config) == "snacks"
+    assert classify_aisle("apples", config=config) == "fruit"
+
+
+def test_classify_aisle_v2_modifier_frozen(tmp_path: Path) -> None:
+    path = tmp_path / "store_aisles.txt"
+    path.write_text(
+        "# --- vegetables: Vegetables ---\n"
+        "cauliflower\n"
+        "# --- frozen: Frozen ---\n"
+        "frozen peas\n"
+        "# --- other: Other ---\n",
+        encoding="utf-8",
+    )
+    config = parse_store_aisles_file(path)
+
+    assert classify_aisle("frozen pizza", config=config) == "frozen"
+
+
 def test_load_store_aisles_uses_committed_config() -> None:
     config = load_store_aisles()
     assert config.aisle_order[0] == "flowers"

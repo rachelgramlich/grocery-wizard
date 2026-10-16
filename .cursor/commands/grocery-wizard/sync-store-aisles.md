@@ -76,6 +76,7 @@ Edit **`src/grocery_wizard/config/store_aisles.txt` only** (unless tests need a 
 **Placement rules:**
 
 - Put each keyword under the **most likely** aisle section (`# --- aisle_id: Display label ---`).
+- For **multi-word products** that collide with generic tokens (e.g. `apple chips` vs fruit `apple`), add **`aisle_id: phrase`** lines under **`# --- products: Product overrides ---`** instead of relying on a long keyword list.
 - Follow file conventions: **one keyword per line**; **longer / more specific phrases before shorter ones** in the same section (see file header comment).
 - Use lowercase keywords unless the file already uses a special form for that item.
 - After edits, re-run classification on the missing set — every added name should no longer land in **`other`**.
