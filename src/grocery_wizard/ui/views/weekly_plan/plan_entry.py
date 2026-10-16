@@ -784,25 +784,19 @@ def _render_built_plan_meals(
     )
     st.markdown('<p class="gw-meal-slot-list" aria-hidden="true"></p>', unsafe_allow_html=True)
     for index, name in enumerate(current_plan, start=1):
-        # Ratio is a hint; theme CSS sizes the action column to its buttons.
-        meal_col, actions_col = st.columns([1, 1], vertical_alignment="top")
-        with meal_col:
-            st.markdown(
-                f'<p class="gw-meal-slot-label">'
-                f'<span class="gw-meal-slot-title">{index}.</span> '
-                f'<span class="gw-meal-slot-recipe">{html.escape(name)}</span></p>',
-                unsafe_allow_html=True,
-            )
-        with (
-            actions_col,
-            st.container(
-                key=f"meal_slot_action_row_{index}",
-                horizontal=True,
-                gap="small",
-                wrap=False,
-                width="content",
-                horizontal_alignment="left",
-            ),
+        st.markdown(
+            f'<p class="gw-meal-slot-label">'
+            f'<span class="gw-meal-slot-title">{index}.</span> '
+            f'<span class="gw-meal-slot-recipe">{html.escape(name)}</span></p>',
+            unsafe_allow_html=True,
+        )
+        with st.container(
+            key=f"meal_slot_action_row_{index}",
+            horizontal=True,
+            gap="small",
+            wrap=True,
+            width="stretch",
+            horizontal_alignment="left",
         ):
             if st.button(
                 "Quick swap",

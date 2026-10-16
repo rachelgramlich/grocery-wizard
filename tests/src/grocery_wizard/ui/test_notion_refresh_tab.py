@@ -13,7 +13,8 @@ def test_notion_refresh_uses_on_click_not_inline_rerun() -> None:
     assert "st.rerun()" not in refresh_block
     assert "Recipes load from Notion" not in app
     assert "render_app_title()" in app
-    assert "st.columns(4)" in refresh_block
+    assert "st.columns(2" in refresh_block
+    assert 'key="gw_global_header"' in refresh_block
     assert 'width="stretch"' in app
 
 

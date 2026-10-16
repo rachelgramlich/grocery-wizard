@@ -16,6 +16,8 @@ _REQUIRED_MOBILE_CSS_FRAGMENTS = (
     "p.gw-pantry-item",
     "overflow-x: clip",
     "st-key-global_global_page_picker",
+    "st-key-gw_global_header",
+    "st-key-meal_slot_action_row",
 )
 
 

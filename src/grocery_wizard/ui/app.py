@@ -97,23 +97,24 @@ def _refresh_notion_cache_from_ui() -> None:
 
 
 def _render_global_header_controls(*, surface: str | None) -> None:
-    """Refresh and feedback centered under the app title, above the page picker."""
-    st.markdown(
-        '<p class="gw-global-header-actions" aria-hidden="true"></p>',
-        unsafe_allow_html=True,
-    )
-    _pad_left, refresh_col, feedback_col, _pad_right = st.columns(4)
-    with refresh_col:
-        st.button(
-            "Refresh from Notion",
-            key=control_streamlit_key(CONTROL_GLOBAL_REFRESH),
-            type="secondary",
-            use_container_width=True,
-            help="Reload recipes, pantry, saved plans, and database column options from Notion",
-            on_click=_refresh_notion_cache_from_ui,
+    """Refresh and feedback under the app title, above the page picker."""
+    with st.container(key="gw_global_header"):
+        st.markdown(
+            '<p class="gw-global-header-actions" aria-hidden="true"></p>',
+            unsafe_allow_html=True,
         )
-    with feedback_col:
-        render_feedback_controls(surface=surface, control_id=CONTROL_GLOBAL_FEEDBACK)
+        refresh_col, feedback_col = st.columns(2, gap="small")
+        with refresh_col:
+            st.button(
+                "Refresh from Notion",
+                key=control_streamlit_key(CONTROL_GLOBAL_REFRESH),
+                type="secondary",
+                use_container_width=True,
+                help="Reload recipes, pantry, saved plans, and database column options from Notion",
+                on_click=_refresh_notion_cache_from_ui,
+            )
+        with feedback_col:
+            render_feedback_controls(surface=surface, control_id=CONTROL_GLOBAL_FEEDBACK)
 
 
 def main() -> None:
