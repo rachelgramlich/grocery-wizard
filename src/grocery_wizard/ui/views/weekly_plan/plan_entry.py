@@ -832,8 +832,14 @@ def _render_built_plan_meals(
         st.rerun()
 
     batch_render = st.session_state.pop(PLAN_MEALS_LIST_BATCH_KEY, False)
+    defer_slot_paint = batch_render or len(current_plan) >= 2
 
     def _render_meal_slot_rows() -> None:
+        if defer_slot_paint:
+            st.markdown(
+                '<p class="gw-meals-batch-pending" aria-hidden="true"></p>',
+                unsafe_allow_html=True,
+            )
         st.markdown("#### Your meals")
         render_unmatched_plan_recipes_help(
             unmatched_plan_recipe_names(current_plan, all_recipes),
@@ -881,6 +887,11 @@ def _render_built_plan_meals(
                         schema_columns=schema.all_columns,
                         ingredient_index=ingredient_index,
                     )
+        if defer_slot_paint:
+            st.markdown(
+                '<p class="gw-meals-batch-complete" aria-hidden="true"></p>',
+                unsafe_allow_html=True,
+            )
 
     if batch_render:
         with loading_indicator("Loading your meals…"):

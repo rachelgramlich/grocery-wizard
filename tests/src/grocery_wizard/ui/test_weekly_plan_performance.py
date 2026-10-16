@@ -31,6 +31,11 @@ def test_meals_list_batch_render_after_plan_build() -> None:
     built_fn = plan_entry.split("def _render_built_plan_meals", 1)[1].split("\ndef ", 1)[0]
     assert "batch_render = st.session_state.pop(PLAN_MEALS_LIST_BATCH_KEY" in built_fn
     assert 'loading_indicator("Loading your meals…")' in built_fn
+    assert "gw-meals-batch-pending" in built_fn
+    assert "gw-meals-batch-complete" in built_fn
+    css = (UI_ROOT / "static" / "app_theme.css").read_text(encoding="utf-8")
+    assert "gw-meals-batch-pending" in css
+    assert "gw-meals-batch-complete" in css
     build_fn = plan_entry.split('key="build_plan"', 1)[1].split("def _render_built_plan_meals", 1)[
         0
     ]
