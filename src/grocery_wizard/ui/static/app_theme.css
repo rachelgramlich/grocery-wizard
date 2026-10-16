@@ -272,32 +272,6 @@
             margin-left: 1.25rem !important;
         }
 
-        /* Meal rows: stacked in Python; column flex by default (mobile-safe). */
-        [class*="st-key-meal_slot_row_"] [data-testid="stVerticalBlock"]:has(p.gw-meal-slot-row-anchor) {
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: stretch !important;
-            gap: 0.35rem !important;
-            width: 100% !important;
-            max-width: 100% !important;
-        }
-
-        [class*="st-key-meal_slot_row_"]
-            [data-testid="stVerticalBlock"]:has(p.gw-meal-slot-row-anchor)
-            > [data-testid="stElementContainer"]:has(p.gw-meal-slot-row-anchor) {
-            display: none !important;
-        }
-
-        [class*="st-key-meal_slot_row_"] p.gw-meal-slot-label {
-            margin: 0.15rem 0 0.1rem 0 !important;
-        }
-
-        [class*="st-key-meal_slot_row_"] [class*="st-key-meal_slot_action_row"] {
-            width: 100% !important;
-            max-width: 100% !important;
-            min-width: 0 !important;
-        }
-
         [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) {
             align-items: flex-start !important;
             gap: 0.75rem !important;
@@ -1045,11 +1019,44 @@
             }
         }
 
-        /* Phone / tablet: full-width meal controls (stack is already default in Python). */
+        /*
+         * Meal rows: ``st.columns`` in Python for desktop; stack columns on narrow viewports
+         * with ``display: block`` (works when flex-direction column on the row does not).
+         */
         @media (max-width: 768px) {
             [data-testid="stVerticalBlock"]:has(p.gw-meal-slot-list) [class*="st-key-meal_slot_row_"] {
                 margin-left: 0.35rem !important;
                 margin-right: 0 !important;
+            }
+
+            [class*="st-key-meal_slot_row_"] [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) {
+                display: block !important;
+            }
+
+            [class*="st-key-meal_slot_row_"]
+                [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label)
+                [data-testid="stColumn"] {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                flex: none !important;
+            }
+
+            [class*="st-key-meal_slot_row_"]
+                [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label)
+                [data-testid="stColumn"]:last-child {
+                min-width: 0 !important;
+                margin-top: 0.35rem !important;
+            }
+
+            [class*="st-key-meal_slot_row_"] [class*="st-key-meal_slot_action_row"],
+            [class*="st-key-meal_slot_row_"]
+                [class*="st-key-meal_slot_action_row"]
+                [data-testid="stHorizontalBlock"] {
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
             }
 
             [class*="st-key-meal_slot_row_"] .stButton,
@@ -1059,6 +1066,11 @@
                 width: 100% !important;
                 min-width: 0 !important;
                 max-width: 100% !important;
+            }
+
+            p.gw-meal-slot-label {
+                padding-left: 0;
+                text-indent: 0;
             }
 
             [class*="st-key-plan_week_action_row"] {
@@ -1080,44 +1092,5 @@
                 width: 100% !important;
                 min-width: 0 !important;
                 max-width: 100% !important;
-            }
-        }
-
-        /* Desktop: side-by-side label and actions inside each meal row container. */
-        @media (min-width: 769px) {
-            [class*="st-key-meal_slot_row_"] [data-testid="stVerticalBlock"]:has(p.gw-meal-slot-row-anchor) {
-                flex-direction: row !important;
-                align-items: flex-start !important;
-                gap: 0.75rem !important;
-            }
-
-            [class*="st-key-meal_slot_row_"]
-                [data-testid="stVerticalBlock"]:has(p.gw-meal-slot-row-anchor)
-                > [data-testid="stElementContainer"]:has(p.gw-meal-slot-label) {
-                flex: 1 1 0 !important;
-                min-width: 0 !important;
-                max-width: 100% !important;
-            }
-
-            [class*="st-key-meal_slot_row_"]
-                [data-testid="stVerticalBlock"]:has(p.gw-meal-slot-row-anchor)
-                > [data-testid="stElementContainer"]:has([class*="st-key-meal_slot_action_row"]) {
-                flex: 0 0 auto !important;
-                width: auto !important;
-                min-width: max-content !important;
-                max-width: none !important;
-            }
-
-            [class*="st-key-meal_slot_row_"] [class*="st-key-meal_slot_action_row"] {
-                width: auto !important;
-                min-width: max-content !important;
-                max-width: none !important;
-            }
-
-            [class*="st-key-meal_slot_row_"] [class*="st-key-meal_slot_action_row"] button,
-            [class*="st-key-meal_slot_row_"] [class*="st-key-meal_slot_action_row"] .stPopover button {
-                width: auto !important;
-                min-width: max-content !important;
-                max-width: none !important;
             }
         }

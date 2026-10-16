@@ -21,9 +21,8 @@ _REQUIRED_MOBILE_CSS_FRAGMENTS = (
     "st-key-meal_slot_row_",
     "p.gw-meal-slot-row-anchor",
     "@media (max-width: 768px)",
-    "@media (min-width: 769px)",
+    "display: block",
     "gw-meal-slot-row-anchor",
-    "flex-direction: row",
 )
 
 
