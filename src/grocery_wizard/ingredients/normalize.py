@@ -27,6 +27,7 @@ __all__ = [
 ]
 
 import re
+from functools import lru_cache
 
 from src.grocery_wizard.ingredients._cleaning import (
     _is_junk_only,
@@ -575,6 +576,10 @@ def _is_non_filterable_segment(segment: str) -> bool:
     )
 
 
+# Parsing a segment is slow; the same segment is resolved twice per line and repeats across recipes.
+_FILTER_SOURCE_NAME_CACHE_SIZE = 16384
+
+
 def _is_meaningless_filter_key(key: str) -> bool:
     lowered = key.lower().strip()
     if not lowered:
@@ -588,6 +593,7 @@ def _is_meaningless_filter_key(key: str) -> bool:
     )
 
 
+@lru_cache(maxsize=_FILTER_SOURCE_NAME_CACHE_SIZE)
 def _resolve_filter_source_name(prepared: str) -> str:
     text = _prepare_line_for_parsing(prepared) or prepared
     stored = format_ingredient_for_storage(text)

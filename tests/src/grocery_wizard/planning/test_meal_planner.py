@@ -544,6 +544,43 @@ def test_build_ingredient_index_keys_by_page_id() -> None:
     assert index["id-mm"] == set()
 
 
+def test_build_ingredient_index_reparses_only_changed_ingredient_text(monkeypatch) -> None:
+    from src.grocery_wizard.planning import meal_planner
+
+    meal_planner._ingredient_keys_for_text.cache_clear()
+    parsed_texts: list[str] = []
+    real_parse = meal_planner.parse_ingredients_text
+
+    def counting_parse(text: str):
+        parsed_texts.append(text)
+        return real_parse(text)
+
+    monkeypatch.setattr(meal_planner, "parse_ingredients_text", counting_parse)
+    recipes = [
+        _recipe("A", page_id="id-a", ingredients="2 cups flour"),
+        _recipe("B", page_id="id-b", ingredients="1 lb chicken thighs"),
+    ]
+
+    first = build_ingredient_index(recipes)
+    assert len(parsed_texts) == 2
+
+    assert build_ingredient_index(recipes) == first
+    assert len(parsed_texts) == 2
+
+    edited = [recipes[0], _recipe("B", page_id="id-b", ingredients="1 lb chicken thighs\n1 onion")]
+    second = build_ingredient_index(edited)
+    assert len(parsed_texts) == 3
+    assert second["id-a"] == first["id-a"]
+    assert second["id-b"] > first["id-b"]
+
+
+def test_build_ingredient_index_returns_independent_sets() -> None:
+    recipes = [_recipe("A", page_id="id-a", ingredients="2 cups flour")]
+    first = build_ingredient_index(recipes)
+    first["id-a"].add("mutated")
+    assert "mutated" not in build_ingredient_index(recipes)["id-a"]
+
+
 def test_ingredient_filter_include_mode_matches_intersection() -> None:
     index = build_ingredient_index(_INGREDIENT_RECIPES)
     chicken_ingredients = index["id-cc"]
