@@ -123,16 +123,14 @@ def run_scenario(
         else:
             _run_once(scenario, ctx, tap, seen, clear_before_act=False, profile=False)
         warm_runs: list[RunStats] = [
-            _run_once(
-                scenario,
-                ctx,
-                tap,
-                seen,
-                clear_before_act=False,
-                profile=profile and index == 0,
-            )
-            for index in range(max(1, reps))
+            _run_once(scenario, ctx, tap, seen, clear_before_act=False, profile=False)
+            for _ in range(max(1, reps))
         ]
+        profiled = (
+            _run_once(scenario, ctx, tap, seen, clear_before_act=False, profile=True)
+            if profile
+            else None
+        )
     except ScenarioSkipError as exc:
         result.status = "skipped"
         result.reason = str(exc)
@@ -145,8 +143,8 @@ def run_scenario(
     result.warm_runs_s = [r.wall_s for r in warm_runs]
     median_wall = statistics.median(result.warm_runs_s)
     result.warm = min(warm_runs, key=lambda r: abs(r.wall_s - median_wall))
-    if profile:
-        result.warm.profile = warm_runs[0].profile
+    if profiled is not None:
+        result.warm.profile = profiled.profile
     return result
 
 
