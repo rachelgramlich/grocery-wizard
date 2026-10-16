@@ -19,6 +19,9 @@ def mount_global_loading_banner() -> None:
     """Reserve a top-of-page slot; call once near the start of ``main()``."""
     # Streamlit ``DeltaGenerator`` slots are run-scoped — allocate fresh each rerun.
     st.session_state[_BANNER_PLACEHOLDER_KEY] = st.empty()
+    # Drop stale busy text from an interrupted prior rerun (e.g. old weekly prefetch UX).
+    st.session_state.pop(GW_BUSY_MESSAGE_KEY, None)
+    _refresh_global_banner()
 
 
 def _banner_placeholder() -> st.delta_generator.DeltaGenerator | None:
