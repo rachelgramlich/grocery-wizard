@@ -56,6 +56,7 @@ from src.grocery_wizard.ui.views.weekly_plan.state import (
     PLAN_MEAL_BUILDER_LOADING_KEY,
     PLAN_MEAL_COUNT_CONFIRMED_KEY,
     PLAN_MEAL_COUNT_WIDGET_KEY,
+    PLAN_MEALS_LIST_BATCH_KEY,
     PLAN_PREBUILD_MANUAL_POPOVER_KEY,
     _clear_grocery_result,
     _clear_grocery_session_overrides,
@@ -101,6 +102,11 @@ def _locked_recipes_for_plan_build(*, meal_count: int) -> list[str]:
             if name not in locked:
                 locked.append(name)
     return locked[: int(meal_count)]
+
+
+def _queue_meals_list_batch_render() -> None:
+    """Paint the full meal list under one spinner (avoids Streamlit row-by-row flash)."""
+    st.session_state[PLAN_MEALS_LIST_BATCH_KEY] = True
 
 
 def _discard_stale_partial_plan(meal_count: int) -> None:
@@ -618,6 +624,8 @@ def _render_weekly_plan_entry() -> bool:
             with loading_indicator("Loading saved plan from Notion…"):
                 loaded_recipes = load_plan_recipes(selected_plan_name, recipes_db=get_db())
                 st.session_state.plan_meals_text = "\n".join(loaded_recipes)
+            if len(loaded_recipes) > 1:
+                _queue_meals_list_batch_render()
             st.session_state.weekly_plan_loaded_name = selected_plan_name
             st.session_state.plan_meal_count = max(1, len(loaded_recipes))
             st.session_state.pop(PLAN_MEAL_COUNT_WIDGET_KEY, None)
@@ -762,6 +770,7 @@ def _render_generate_plan_controls(
             _clear_grocery_session_overrides()
             _clear_grocery_result()
             st.session_state.plan_last_week_filters = build_filters
+        _queue_meals_list_batch_render()
         queue_weekly_scroll(BLOCK_WEEKLY_MEALS)
         st.rerun()
 
@@ -822,53 +831,62 @@ def _render_built_plan_meals(
             _clear_grocery_result()
         st.rerun()
 
-    st.markdown("#### Your meals")
-    render_unmatched_plan_recipes_help(
-        unmatched_plan_recipe_names(current_plan, all_recipes),
-        context="meals",
-    )
-    st.markdown('<p class="gw-meal-slot-list" aria-hidden="true"></p>', unsafe_allow_html=True)
-    for index, name in enumerate(current_plan, start=1):
-        # Desktop: ``st.columns``; mobile stacks the same columns via CSS ``display: block`` (#378).
-        with st.container(key=f"meal_slot_row_{index}"):
-            st.markdown(
-                '<p class="gw-meal-slot-row-anchor" aria-hidden="true"></p>',
-                unsafe_allow_html=True,
-            )
-            meal_col, actions_col = st.columns([1, 1], vertical_alignment="top")
-            with meal_col:
+    batch_render = st.session_state.pop(PLAN_MEALS_LIST_BATCH_KEY, False)
+
+    def _render_meal_slot_rows() -> None:
+        st.markdown("#### Your meals")
+        render_unmatched_plan_recipes_help(
+            unmatched_plan_recipe_names(current_plan, all_recipes),
+            context="meals",
+        )
+        st.markdown('<p class="gw-meal-slot-list" aria-hidden="true"></p>', unsafe_allow_html=True)
+        for index, name in enumerate(current_plan, start=1):
+            # Desktop: ``st.columns``; mobile stacks via CSS ``display: block`` (#378).
+            with st.container(key=f"meal_slot_row_{index}"):
                 st.markdown(
-                    f'<p class="gw-meal-slot-label">'
-                    f'<span class="gw-meal-slot-title">{index}.</span> '
-                    f'<span class="gw-meal-slot-recipe">{html.escape(name)}</span></p>',
+                    '<p class="gw-meal-slot-row-anchor" aria-hidden="true"></p>',
                     unsafe_allow_html=True,
                 )
-            with (
-                actions_col,
-                st.container(
-                    key=f"meal_slot_action_row_{index}",
-                    horizontal=True,
-                    gap="small",
-                    wrap=False,
-                    width="content",
-                    horizontal_alignment="left",
-                ),
-            ):
-                if st.button(
-                    "Quick swap",
-                    key=f"swap_meal_{index}",
-                    width="content",
-                    help="Suggest a different recipe from this week's filter pool",
+                meal_col, actions_col = st.columns([1, 1], vertical_alignment="top")
+                with meal_col:
+                    st.markdown(
+                        f'<p class="gw-meal-slot-label">'
+                        f'<span class="gw-meal-slot-title">{index}.</span> '
+                        f'<span class="gw-meal-slot-recipe">{html.escape(name)}</span></p>',
+                        unsafe_allow_html=True,
+                    )
+                with (
+                    actions_col,
+                    st.container(
+                        key=f"meal_slot_action_row_{index}",
+                        horizontal=True,
+                        gap="small",
+                        wrap=False,
+                        width="content",
+                        horizontal_alignment="left",
+                    ),
                 ):
-                    _apply_plan_swap([name])
-                _render_slot_manual_popover(
-                    slot_index=index,
-                    all_recipes=all_recipes,
-                    filter_columns=filter_columns,
-                    filter_defaults=filter_defaults,
-                    schema_columns=schema.all_columns,
-                    ingredient_index=ingredient_index,
-                )
+                    if st.button(
+                        "Quick swap",
+                        key=f"swap_meal_{index}",
+                        width="content",
+                        help="Suggest a different recipe from this week's filter pool",
+                    ):
+                        _apply_plan_swap([name])
+                    _render_slot_manual_popover(
+                        slot_index=index,
+                        all_recipes=all_recipes,
+                        filter_columns=filter_columns,
+                        filter_defaults=filter_defaults,
+                        schema_columns=schema.all_columns,
+                        ingredient_index=ingredient_index,
+                    )
+
+    if batch_render:
+        with loading_indicator("Loading your meals…"):
+            _render_meal_slot_rows()
+    else:
+        _render_meal_slot_rows()
 
     fill_remaining = len(current_plan) < int(meal_count)
     with st.container(key="plan_week_action_row"):
@@ -918,6 +936,7 @@ def _render_built_plan_meals(
                     _invalidate_weekly_plan_save_state()
                     _clear_grocery_session_overrides()
                     _clear_grocery_result()
+                _queue_meals_list_batch_render()
                 st.rerun()
             if fill_remaining and st.button(
                 "Fill remaining slots", key="fill_remaining_plan", width="content"
@@ -944,6 +963,7 @@ def _render_built_plan_meals(
                     _invalidate_weekly_plan_save_state()
                     _clear_grocery_session_overrides()
                     _clear_grocery_result()
+                _queue_meals_list_batch_render()
                 st.rerun()
 
     st.divider()

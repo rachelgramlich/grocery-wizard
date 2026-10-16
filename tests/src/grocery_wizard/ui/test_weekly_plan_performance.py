@@ -14,6 +14,29 @@ def test_weekly_plan_uses_fragment_for_grocery_only() -> None:
     assert "Preparing your meal builder" in source
 
 
+def test_meal_builder_spinner_wraps_meals_section_render() -> None:
+    """Cold / Continue load keeps meal UI inside the inline spinner until ready."""
+    flow_source = (UI_ROOT / "views" / "weekly_plan" / "flow.py").read_text(encoding="utf-8")
+    cold_block = flow_source.split("if show_meal_builder_loading or cold_recipes:", 1)[1].split(
+        "else:", 1
+    )[0]
+    assert "render_meals_section" in cold_block
+    assert cold_block.index("render_meals_section") > cold_block.index("loading_indicator")
+
+
+def test_meals_list_batch_render_after_plan_build() -> None:
+    plan_entry = (UI_ROOT / "views" / "weekly_plan" / "plan_entry.py").read_text(encoding="utf-8")
+    assert "PLAN_MEALS_LIST_BATCH_KEY" in plan_entry
+    assert "_queue_meals_list_batch_render" in plan_entry
+    built_fn = plan_entry.split("def _render_built_plan_meals", 1)[1].split("\ndef ", 1)[0]
+    assert "batch_render = st.session_state.pop(PLAN_MEALS_LIST_BATCH_KEY" in built_fn
+    assert 'loading_indicator("Loading your meals…")' in built_fn
+    build_fn = plan_entry.split('key="build_plan"', 1)[1].split("def _render_built_plan_meals", 1)[
+        0
+    ]
+    assert "_queue_meals_list_batch_render()" in build_fn
+
+
 def test_discard_stale_partial_plan_on_new_weekly_flow() -> None:
     plan_entry = (UI_ROOT / "views" / "weekly_plan" / "plan_entry.py").read_text(encoding="utf-8")
     assert "_discard_stale_partial_plan" in plan_entry
