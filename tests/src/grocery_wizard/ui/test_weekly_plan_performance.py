@@ -41,7 +41,10 @@ def test_plan_meals_warms_recipes_quietly_before_meal_count_continue() -> None:
     )
     assert plan_block.count("cached_query_recipes(") == 0
     assert flow_source.count("cached_query_recipes(") == 2
-    assert "loading_indicator" in plan_block.split("_render_plan_meal_count_continue", 1)[1]
+    meal_builder_block = plan_block.split("if _render_plan_meal_count_continue", 1)[1]
+    assert "loading_indicator" in meal_builder_block
+    assert "use_global_banner=False" in meal_builder_block
+    assert "_MEAL_BUILDER_LOADING_MESSAGE" in meal_builder_block
 
 
 def test_prebuild_manual_picker_lazy_when_collapsed() -> None:
@@ -57,18 +60,24 @@ def test_prebuild_manual_picker_lazy_when_collapsed() -> None:
     assert "_manual_pick_recipes" in prebuild.split("if manual_popover.open", 1)[1]
 
 
-def test_meal_builder_caches_warm_with_recipe_load() -> None:
-    """Issue #386: ingredient index builds with Notion load, not after meal-count Continue."""
+def test_meal_builder_defers_ingredient_index_until_needed() -> None:
+    """Issue #391: Notion recipe load must not build the full ingredient index up front."""
     flow_source = (UI_ROOT / "views" / "weekly_plan" / "flow.py").read_text(encoding="utf-8")
-    assert "warm_weekly_plan_meal_caches" in flow_source
-    warm_fn = flow_source.split("def _load_and_warm_weekly_plan_recipes", 1)[1].split("\n\n", 1)[0]
-    assert "cached_query_recipes" in warm_fn
-    assert "warm_weekly_plan_meal_caches" in warm_fn
+    load_fn = flow_source.split("def _load_weekly_plan_recipes", 1)[1].split("\n\n", 1)[0]
+    assert "cached_query_recipes" in load_fn
+    assert "warm_weekly_plan_meal_caches" not in flow_source
+    assert "_cached_plan_ingredient_index" not in load_fn
     assert "_prefetch_weekly_plan_recipes" not in flow_source
 
     plan_entry = (UI_ROOT / "views" / "weekly_plan" / "plan_entry.py").read_text(encoding="utf-8")
     meals_section = plan_entry.split("def render_meals_section", 1)[1].split("\ndef ", 1)[0]
+    assert "_cached_plan_ingredient_index(all_recipes)" not in meals_section
+    assert "_ingredient_index_for_filters" in meals_section
     assert "Loading your meals" not in meals_section
+    filtered_picker = plan_entry.split("def _render_filtered_recipe_picker", 1)[1].split(
+        "\ndef ", 1
+    )[0]
+    assert "_cached_plan_ingredient_index(all_recipes)" in filtered_picker
 
 
 def test_get_started_does_not_prefetch_recipes() -> None:

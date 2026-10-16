@@ -170,7 +170,7 @@ def _render_filtered_recipe_picker(
     filter_columns: list[ColumnInfo],
     filter_defaults: MealPlanFilters,
     schema_columns: dict[str, ColumnInfo],
-    ingredient_index: dict[str, set[str]],
+    ingredient_index: dict[str, set[str]] | None,
     key_prefix: str,
     selectbox_key: str,
     apply_button_key: str,
@@ -179,19 +179,22 @@ def _render_filtered_recipe_picker(
     filter_caption: str | None = None,
 ) -> None:
     """Shared filter widgets + filtered recipe selectbox + confirm action."""
+    resolved_index = ingredient_index
+    if resolved_index is None:
+        resolved_index = _cached_plan_ingredient_index(all_recipes)
     if filter_caption:
         st.caption(filter_caption)
     active_filters = render_meal_plan_filters(
         filter_columns,
         filter_defaults,
         key_prefix=key_prefix,
-        ingredient_index=ingredient_index,
+        ingredient_index=resolved_index,
     )
     pool = filter_recipes(
         all_recipes,
         active_filters,
         schema_columns,
-        ingredient_index=ingredient_index,
+        ingredient_index=resolved_index,
     )
     matching_names = [recipe.name for recipe in pool]
     with st.container(border=True):
@@ -223,7 +226,7 @@ def _render_prebuild_recipe_picker(
     filter_columns: list[ColumnInfo],
     filter_defaults: MealPlanFilters,
     schema_columns: dict[str, ColumnInfo],
-    ingredient_index: dict[str, set[str]],
+    ingredient_index: dict[str, set[str]] | None,
 ) -> None:
     """Popover picker: filter → pin → repeat, before **Build my plan**."""
     max_pins = max(1, int(meal_count))
@@ -313,7 +316,7 @@ def _slot_manual_picker_fragment(
         filter_columns: list[ColumnInfo],
         filter_defaults: MealPlanFilters,
         schema_columns: dict[str, ColumnInfo],
-        ingredient_index: dict[str, set[str]],
+        ingredient_index: dict[str, set[str]] | None,
     ) -> None:
 
         def _apply_picked(recipe_name: str) -> None:
@@ -365,7 +368,7 @@ def _render_plan_builder_popover(
     *,
     all_recipes: list,
     meal_count: int,
-    ingredient_index: dict[str, set[str]],
+    ingredient_index: dict[str, set[str]] | None,
 ) -> MealPlanFilters:
     """Post-build meal builder in a secondary popover (matches per-meal Choose manually)."""
     schema = db.schema
@@ -396,7 +399,7 @@ def _render_slot_manual_popover(
     filter_columns: list[ColumnInfo],
     filter_defaults: MealPlanFilters,
     schema_columns: dict[str, ColumnInfo],
-    ingredient_index: dict[str, set[str]],
+    ingredient_index: dict[str, set[str]] | None,
 ) -> None:
     with st.popover(
         "Choose manually",
@@ -666,9 +669,14 @@ def _cached_plan_ingredient_index(all_recipes: list) -> dict[str, set[str]]:
     return st.session_state["_ingredient_index"]
 
 
-def warm_weekly_plan_meal_caches(all_recipes: list) -> None:
-    """Precompute meal-builder caches while recipes load (before meal-count Continue)."""
-    _cached_plan_ingredient_index(all_recipes)
+def _ingredient_index_for_filters(
+    all_recipes: list,
+    filters: MealPlanFilters | None,
+) -> dict[str, set[str]] | None:
+    """Build the ingredient index only when week filters actually use ingredients."""
+    if filters and filters.ingredient_names:
+        return _cached_plan_ingredient_index(all_recipes)
+    return None
 
 
 def _render_generate_plan_controls(
@@ -676,7 +684,7 @@ def _render_generate_plan_controls(
     *,
     all_recipes: list,
     meal_count: int,
-    ingredient_index: dict[str, set[str]],
+    ingredient_index: dict[str, set[str]] | None,
     show_section_heading: bool = True,
 ) -> MealPlanFilters:
     schema = db.schema
@@ -741,14 +749,15 @@ def _render_built_plan_meals(
     all_recipes: list,
     meal_count: int,
     week_filters: MealPlanFilters,
-    ingredient_index: dict[str, set[str]],
+    ingredient_index: dict[str, set[str]] | None,
 ) -> None:
     schema = db.schema
     filter_defaults = default_filters(schema.all_columns)
     filter_columns = [*schema.filter_columns, *schema.checkbox_columns]
 
+    pool_index = _ingredient_index_for_filters(all_recipes, week_filters) or ingredient_index
     suggestion_pool = filter_recipes(
-        all_recipes, week_filters, schema.all_columns, ingredient_index=ingredient_index
+        all_recipes, week_filters, schema.all_columns, ingredient_index=pool_index
     )
     status_column, rejections_column = _meal_plan_picker_columns(db)
 
@@ -875,7 +884,7 @@ def _render_built_plan_meals(
                         filters=week_filters,
                         schema_columns=schema.all_columns,
                         rejected_names=rejected,
-                        ingredient_index=ingredient_index,
+                        ingredient_index=pool_index,
                         status_column=status_column,
                         rejections_column=rejections_column,
                     )
@@ -895,7 +904,7 @@ def _render_built_plan_meals(
                         locked_names=current_plan,
                         filters=week_filters,
                         schema_columns=schema.all_columns,
-                        ingredient_index=ingredient_index,
+                        ingredient_index=pool_index,
                         status_column=status_column,
                         rejections_column=rejections_column,
                     )
@@ -943,10 +952,10 @@ def render_meals_section(
     """Render step 1 (meals) and return the current planned recipe names."""
     _render_dev_jump_tools(db)
 
-    ingredient_index = _cached_plan_ingredient_index(all_recipes)
     current_plan = _current_plan_names()
     fallback_filters = default_filters(db.schema.all_columns)
     stored_filters = st.session_state.get("plan_last_week_filters", fallback_filters)
+    ingredient_index = _ingredient_index_for_filters(all_recipes, stored_filters)
     has_plan = bool(current_plan)
     if st.session_state.pop(PLAN_FORCE_OPEN_1A_KEY, False):
         st.session_state[PLAN_BUILDER_POPOVER_KEY] = True

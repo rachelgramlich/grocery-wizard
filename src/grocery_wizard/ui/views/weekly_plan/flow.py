@@ -16,7 +16,6 @@ from src.grocery_wizard.ui.views.weekly_plan.plan_entry import (
     _render_weekly_plan_entry,
     _sync_plan_length_to_meal_count,
     render_meals_section,
-    warm_weekly_plan_meal_caches,
 )
 from src.grocery_wizard.ui.views.weekly_plan.state import (
     PLAN_MEAL_BUILDER_LOADING_KEY,
@@ -40,9 +39,8 @@ def _weekly_recipes_warm_for_current_cache() -> bool:
     return st.session_state.get(_WEEKLY_RECIPES_WARM_GENERATION_KEY) == notion_cache_generation()
 
 
-def _load_and_warm_weekly_plan_recipes(db: NotionRecipesDB) -> list[Recipe]:
+def _load_weekly_plan_recipes(db: NotionRecipesDB) -> list[Recipe]:
     recipes = cached_query_recipes(db)
-    warm_weekly_plan_meal_caches(recipes)
     st.session_state[_WEEKLY_RECIPES_WARM_GENERATION_KEY] = notion_cache_generation()
     return recipes
 
@@ -51,7 +49,7 @@ def _warm_weekly_plan_recipes_quiet(db: NotionRecipesDB) -> list[Recipe]:
     """Load Notion recipes + meal caches with no loading UI (issue #386)."""
     if _weekly_recipes_warm_for_current_cache():
         return cached_query_recipes(db)
-    return _load_and_warm_weekly_plan_recipes(db)
+    return _load_weekly_plan_recipes(db)
 
 
 @st.fragment(key="weekly_plan_meals")
@@ -113,7 +111,10 @@ def render_create_weekly_plan() -> None:
                     PLAN_MEAL_BUILDER_LOADING_KEY, False
                 )
                 if show_meal_builder_loading:
-                    with loading_indicator(_MEAL_BUILDER_LOADING_MESSAGE):
+                    with loading_indicator(
+                        _MEAL_BUILDER_LOADING_MESSAGE,
+                        use_global_banner=False,
+                    ):
                         all_recipes = _recipes_for_weekly_plan()
                         _weekly_plan_meals_fragment(db, all_recipes, meal_count=meal_count)
                 else:

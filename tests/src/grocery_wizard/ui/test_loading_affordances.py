@@ -30,8 +30,9 @@ def test_loading_indicator_uses_spinner_without_inline_progress() -> None:
     assert "st.spinner" in loading_source
     assert "st.progress" not in loading_source
     assert "_can_update_global_banner()" in loading_source
-    assert "if _can_update_global_banner():" in loading_source
     fn_body = loading_source.split("def loading_indicator", 1)[1].split("\ndef ", 1)[0]
+    assert "use_global_banner" in fn_body
+    assert "if use_global_banner and _can_update_global_banner():" in fn_body
     assert fn_body.count("with st.spinner(message):") == 1
 
 
