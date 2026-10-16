@@ -21,6 +21,8 @@ PYTHON_HEAVY_S = 1.0
 READ_FANOUT = 6
 WRITE_FANOUT = 3
 COLD_GAP_MIN_S = 1.0
+NOISY_SPREAD_RATIO = 2.0
+NOISY_SPREAD_MIN_S = 1.0
 REGRESSION_PCT = 0.10
 REGRESSION_ABS_S = 0.10
 
@@ -37,6 +39,7 @@ FLAG_HELP: dict[str, str] = {
     "WRITE_FANOUT": f"{WRITE_FANOUT}+ Notion write requests in one interaction",
     "HEAVY_DOM": f"{HEAVY_ELEMENTS}+ elements or {HEAVY_OPTIONS}+ select options rendered",
     "COLD_GAP": "Cold run is 3x+ slower than warm and over 1s (first-load / cache-rebuild cost)",
+    "NOISY": "Warm repetitions differ 2x+ (throttling or a parallel run): re-run before trusting",
     "EXTERNAL_ON_RENDER": "Non-Notion HTTP call (NYT, recipe sites) on a warm interaction",
 }
 
@@ -118,6 +121,13 @@ def flags_for(result: ScenarioResult, write_latency_s: float) -> list[str]:
         flags.append("COLD_GAP")
     if result.warm is not None and result.warm.external_calls and not result.external:
         flags.append("EXTERNAL_ON_RENDER")
+    runs = result.warm_runs_s
+    if (
+        len(runs) >= 2
+        and max(runs) - min(runs) >= NOISY_SPREAD_MIN_S
+        and max(runs) >= NOISY_SPREAD_RATIO * max(min(runs), 0.05)
+    ):
+        flags.append("NOISY")
     return flags
 
 

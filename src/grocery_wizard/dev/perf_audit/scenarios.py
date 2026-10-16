@@ -105,6 +105,8 @@ def _quick_swap_act(ctx: AuditContext, at: AppTest) -> AppTest:
 
 def _slot_use_recipe_prepare(ctx: AuditContext) -> AppTest:
     at = flows.start_new_plan_with_built_meals(ctx)
+    at.session_state["plan_slot_popover_1"] = True
+    at.run(timeout=ctx.timeout)
     picker = at.selectbox(key="plan_slot_direct_pick_1")
     if len(picker.options) < 2:
         raise ScenarioSkipError("Need at least two recipes to swap a slot")

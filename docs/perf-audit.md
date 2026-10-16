@@ -45,6 +45,7 @@ Safe to run on the real databases: no Notion writes are issued, so no UAT cleanu
 | `READ_FANOUT` | >= 6 Notion reads in one interaction. |
 | `WRITE_FANOUT` | >= 3 Notion writes in one interaction. |
 | `HEAVY_DOM` | >= 1500 elements or >= 2000 select options sent to the browser. |
+| `NOISY` | Warm repetitions differ 2x+ (Notion throttling or a parallel run). Re-run before trusting. |
 | `COLD_GAP` | Cold >= 3x warm and >= 1s: first-load or cache-rebuild cost. |
 | `EXTERNAL_ON_RENDER` | Non-Notion HTTP on a warm interaction. |
 
