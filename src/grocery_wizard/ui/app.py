@@ -102,8 +102,9 @@ def _refresh_notion_cache_from_ui() -> None:
         st.session_state[_PAGE_PICKER_SESSION_KEY] = label
 
 
-def _render_notion_cache_controls() -> None:
-    _, refresh_col = st.columns([2, 1])
+def _render_global_header_controls(*, surface: str | None) -> None:
+    """Refresh and feedback as peer actions above the page picker."""
+    _, refresh_col, feedback_col = st.columns([2, 1, 1])
     with refresh_col:
         st.button(
             "Refresh from Notion",
@@ -114,6 +115,8 @@ def _render_notion_cache_controls() -> None:
             on_click=_refresh_notion_cache_from_ui,
         )
         st.caption(_notion_load_caption())
+    with feedback_col:
+        render_feedback_controls(surface=surface, control_id=CONTROL_GLOBAL_FEEDBACK)
 
 
 def main() -> None:
@@ -130,11 +133,7 @@ def main() -> None:
 
     _init_page_navigation_state()
 
-    _render_notion_cache_controls()
-    render_feedback_controls(
-        surface=st.session_state.get(_GW_RENDER_PAGE_SLUG),
-        control_id=CONTROL_GLOBAL_FEEDBACK,
-    )
+    _render_global_header_controls(surface=st.session_state.get(_GW_RENDER_PAGE_SLUG))
 
     st.segmented_control(
         "Page",

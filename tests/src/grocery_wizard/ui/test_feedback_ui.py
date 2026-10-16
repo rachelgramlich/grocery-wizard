@@ -4,17 +4,19 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from ui_source import APP_PATH
+from ui_source import APP_PATH, UI_ROOT
 
 
-def test_feedback_expander_renders_in_app() -> None:
+def test_feedback_header_controls_render_in_app() -> None:
     from streamlit.testing.v1 import AppTest
 
     at = AppTest.from_file(str(APP_PATH), default_timeout=60)
     at.run(timeout=60)
 
     assert not at.exception
-    assert any("Send feedback" in (expander.label or "") for expander in at.expander)
+    labels = {button.label for button in at.button}
+    assert "Refresh from Notion" in labels
+    assert "Submit feedback" in labels
 
 
 def test_feedback_submit_files_github_issue() -> None:
@@ -44,6 +46,9 @@ def test_feedback_submit_files_github_issue() -> None:
 def test_feedback_control_placed_before_page_picker() -> None:
     app = APP_PATH.read_text(encoding="utf-8")
     main_body = app.split("def main() -> None:")[1].split('if __name__ == "__main__"')[0]
-    feedback_idx = main_body.index("render_feedback_controls")
+    header_idx = main_body.index("_render_global_header_controls")
     picker_idx = main_body.index("st.segmented_control(")
-    assert feedback_idx < picker_idx
+    assert header_idx < picker_idx
+
+    feedback_source = (UI_ROOT / "feedback.py").read_text(encoding="utf-8")
+    assert 'st.popover(\n        "Send feedback"' in feedback_source

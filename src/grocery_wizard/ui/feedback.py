@@ -36,36 +36,47 @@ def _submit_feedback(*, surface: str | None) -> None:
     st.session_state[_FEEDBACK_NOTE_KEY] = ""
 
 
+def _render_feedback_form(*, surface: str | None) -> None:
+    flash = st.session_state.pop(_FEEDBACK_FLASH_OK, False)
+    if flash:
+        st.success(f"Thanks — your note was filed ({flash}).")
+        st.toast("Feedback submitted", icon="✅")
+    if st.session_state.pop(_FEEDBACK_WARN_EMPTY, False):
+        st.warning("Please enter a short note before submitting.")
+    if err := st.session_state.pop(_FEEDBACK_ERROR_KEY, None):
+        st.error(err)
+
+    st.caption(_FEEDBACK_CAPTION)
+    st.text_area(
+        "Your note",
+        key=_FEEDBACK_NOTE_KEY,
+        height=100,
+        max_chars=4000,
+        label_visibility="collapsed",
+        placeholder="Describe a bug, idea, or papercut…",
+    )
+    st.button(
+        "Submit feedback",
+        key=_FEEDBACK_SUBMIT_KEY,
+        type="secondary",
+        on_click=_submit_feedback,
+        kwargs={"surface": surface},
+    )
+
+
 def render_feedback_controls(
     *,
     surface: str | None = None,
     control_id: str | None = None,
 ) -> None:
-    """Global feedback expander; ``surface`` is usually the active page slug."""
-    expander_key = control_streamlit_key(control_id) if control_id else "gw_feedback"
-    with st.expander("Send feedback", expanded=False, key=expander_key):
-        st.caption(_FEEDBACK_CAPTION)
-        flash = st.session_state.pop(_FEEDBACK_FLASH_OK, False)
-        if flash:
-            st.success(f"Thanks — your note was filed ({flash}).")
-            st.toast("Feedback submitted", icon="✅")
-        if st.session_state.pop(_FEEDBACK_WARN_EMPTY, False):
-            st.warning("Please enter a short note before submitting.")
-        if err := st.session_state.pop(_FEEDBACK_ERROR_KEY, None):
-            st.error(err)
-
-        st.text_area(
-            "Your note",
-            key=_FEEDBACK_NOTE_KEY,
-            height=100,
-            max_chars=4000,
-            label_visibility="collapsed",
-            placeholder="Describe a bug, idea, or papercut…",
-        )
-        st.button(
-            "Submit feedback",
-            key=_FEEDBACK_SUBMIT_KEY,
-            type="secondary",
-            on_click=_submit_feedback,
-            kwargs={"surface": surface},
-        )
+    """Global feedback popover; ``surface`` is usually the active page slug."""
+    widget_key = control_streamlit_key(control_id) if control_id else "gw_feedback"
+    with st.popover(
+        "Send feedback",
+        key=widget_key,
+        type="secondary",
+        use_container_width=True,
+        help=_FEEDBACK_CAPTION,
+    ):
+        _render_feedback_form(surface=surface)
+    st.caption("Bugs, ideas, and papercuts — filed for triage.")
