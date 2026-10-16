@@ -7,3 +7,7 @@ textColor = "#5c1040"
 
 [browser]
 gatherUsageStats = false
+
+# Custom in-app navigation (segmented control); ignore auto `pages/` sidebar.
+[client]
+showSidebarNavigation = false
