@@ -67,6 +67,10 @@ grocery-ui *ARGS:
 sync-pantry-aisles:
     PYTHONPATH=src uv run python -c "from grocery_wizard.integrations.notion_pantry_setup import sync_pantry_section_store_aisles; r = sync_pantry_section_store_aisles(); print(f'Updated {len(r.aisle_labels)} aisle options; remapped {r.rows_migrated} rows.')"
 
+# Time every Streamlit control against live Notion (writes stubbed); see docs/perf-audit.md
+perf-audit *ARGS:
+    uv run python -m src.grocery_wizard.dev.perf_audit {{ARGS}}
+
 # Clean up Python cache files
 clean:
     find . -type d -name __pycache__ -exec rm -r {} + 2>/dev/null || true
