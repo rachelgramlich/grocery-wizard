@@ -13,8 +13,15 @@ def test_app_mounts_global_loading_banner() -> None:
     mount_fn = loading_source.split("def mount_global_loading_banner", 1)[1].split("\ndef ", 1)[0]
     assert "clear_global_loading_banner()" in mount_fn
     clear_fn = loading_source.split("def clear_global_loading_banner", 1)[1].split("\ndef ", 1)[0]
-    assert "GW_BUSY_MESSAGE_KEY" in clear_fn
-    assert "_refresh_global_banner()" in clear_fn
+    assert "placeholder.empty()" in clear_fn
+    assert "st.status" not in loading_source
+
+
+def test_only_refresh_from_notion_uses_global_banner() -> None:
+    app_text = APP_PATH.read_text(encoding="utf-8")
+    refresh_fn = app_text.split("def _refresh_notion_cache_from_ui", 1)[1].split("\ndef ", 1)[0]
+    assert "use_global_banner=True" in refresh_fn
+    assert app_text.count("use_global_banner=True") == 1
 
 
 def test_long_actions_use_loading_indicator() -> None:
@@ -27,15 +34,15 @@ def test_long_actions_use_loading_indicator() -> None:
     assert "st.spinner" not in source
 
 
-def test_loading_indicator_uses_spinner_without_inline_progress() -> None:
+def test_loading_indicator_defaults_to_inline_spinner() -> None:
     loading_source = (UI_ROOT / "loading.py").read_text(encoding="utf-8")
     assert "st.spinner" in loading_source
     assert "st.progress" not in loading_source
-    assert "_can_update_global_banner()" in loading_source
+    assert "st.status" not in loading_source
     fn_body = loading_source.split("def loading_indicator", 1)[1].split("\ndef ", 1)[0]
-    assert "use_global_banner" in fn_body
-    assert "if use_global_banner and _can_update_global_banner():" in fn_body
-    assert fn_body.count("with st.spinner(message):") == 1
+    assert "use_global_banner: bool = False" in fn_body
+    assert "_can_update_global_banner()" in fn_body
+    assert fn_body.count("st.spinner(message)") == 2
 
 
 def test_add_recipe_slow_paths_use_loading_indicator() -> None:

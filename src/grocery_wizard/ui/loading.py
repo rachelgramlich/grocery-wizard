@@ -11,21 +11,22 @@ from streamlit.runtime.scriptrunner_utils.script_run_context import (
     get_script_run_ctx,
 )
 
-GW_BUSY_MESSAGE_KEY = "gw_busy_message"
 _BANNER_PLACEHOLDER_KEY = "gw_loading_banner_placeholder"
 
 
 def clear_global_loading_banner() -> None:
-    """Hide the top loading banner (e.g. before inline spinners on the weekly plan)."""
-    st.session_state.pop(GW_BUSY_MESSAGE_KEY, None)
-    _refresh_global_banner()
+    """Clear the top loading slot (e.g. before inline spinners on the weekly plan)."""
+    if not _can_update_global_banner():
+        return
+    placeholder = _banner_placeholder()
+    if placeholder is not None:
+        placeholder.empty()
 
 
 def mount_global_loading_banner() -> None:
     """Reserve a top-of-page slot; call once near the start of ``main()``."""
     # Streamlit ``DeltaGenerator`` slots are run-scoped — allocate fresh each rerun.
     st.session_state[_BANNER_PLACEHOLDER_KEY] = st.empty()
-    # Drop stale busy text from an interrupted prior rerun (e.g. old weekly prefetch UX).
     clear_global_loading_banner()
 
 
@@ -46,42 +47,30 @@ def _can_update_global_banner() -> bool:
     return _banner_placeholder() is not None
 
 
-def _refresh_global_banner() -> None:
-    if not _can_update_global_banner():
-        return
-    placeholder = _banner_placeholder()
-    if placeholder is None:
-        return
-    message = st.session_state.get(GW_BUSY_MESSAGE_KEY)
-    if message:
-        with placeholder.container():
-            st.status(str(message), state="running", expanded=False)
-    else:
-        placeholder.empty()
-
-
 @contextmanager
-def loading_indicator(message: str, *, use_global_banner: bool = True) -> Iterator[None]:
-    """Show loading UI while ``message`` work runs.
+def loading_indicator(message: str, *, use_global_banner: bool = False) -> Iterator[None]:
+    """Show a Streamlit spinner while work runs.
 
-    By default, full-app reruns use the top banner only (no duplicate inline spinner).
-    Pass ``use_global_banner=False`` for a single inline ``st.spinner`` in the active block.
-    Fragment reruns always use ``st.spinner`` (the banner slot is not writable).
+    By default, spinners render inline in the active block (next to the control you used).
+    Pass ``use_global_banner=True`` only for **Refresh from Notion** (top slot under the title).
+    Fragment reruns always use inline ``st.spinner`` (the top slot is not writable).
     """
     if use_global_banner and _can_update_global_banner():
-        st.session_state[GW_BUSY_MESSAGE_KEY] = message
-        _refresh_global_banner()
-        try:
+        placeholder = _banner_placeholder()
+        assert placeholder is not None
+        with placeholder.container(), st.spinner(message):
             yield
-        finally:
-            st.session_state.pop(GW_BUSY_MESSAGE_KEY, None)
-            _refresh_global_banner()
     else:
         with st.spinner(message):
             yield
 
 
-def run_with_loading[T](message: str, action: Callable[[], T]) -> T:
+def run_with_loading[T](
+    message: str,
+    action: Callable[[], T],
+    *,
+    use_global_banner: bool = False,
+) -> T:
     """Run ``action`` inside :func:`loading_indicator`."""
-    with loading_indicator(message):
+    with loading_indicator(message, use_global_banner=use_global_banner):
         return action()

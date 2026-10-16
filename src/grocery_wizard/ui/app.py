@@ -88,7 +88,7 @@ def _sync_render_page_from_picker() -> None:
 def _refresh_notion_cache_from_ui() -> None:
     """Invalidate Notion caches; Streamlit reruns after the button callback."""
     st.session_state[_SKIP_PICKER_RENDER_SYNC] = True
-    with loading_indicator("Refreshing from Notion…"):
+    with loading_indicator("Refreshing from Notion…", use_global_banner=True):
         invalidate_notion_cache()
     slug = st.session_state[_GW_RENDER_PAGE_SLUG]
     label = page_label_for_slug(slug)
