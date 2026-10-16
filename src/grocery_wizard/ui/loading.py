@@ -54,13 +54,22 @@ def _refresh_global_banner() -> None:
 
 @contextmanager
 def loading_indicator(message: str) -> Iterator[None]:
-    """Show a global status banner and inline spinner while ``message`` work runs."""
+    """Show loading UI while ``message`` work runs.
+
+    Full-app reruns use the top banner plus a spinner. Fragment reruns cannot
+    write the banner slot from ``main()``, so they also show a progress bar.
+    """
     st.session_state[GW_BUSY_MESSAGE_KEY] = message
     _refresh_global_banner()
+    inline_progress = None
     try:
+        if not _can_update_global_banner():
+            inline_progress = st.progress(0, text=str(message))
         with st.spinner(message):
             yield
     finally:
+        if inline_progress is not None:
+            inline_progress.empty()
         st.session_state.pop(GW_BUSY_MESSAGE_KEY, None)
         _refresh_global_banner()
 

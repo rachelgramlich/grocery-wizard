@@ -14,11 +14,18 @@ def test_app_mounts_global_loading_banner() -> None:
 def test_long_actions_use_loading_indicator() -> None:
     source = ui_source()
     assert "Building your meal plan" in source
+    assert "Loading your meals" in source
     assert "Preparing ingredient review" in source
     assert "Building grocery list" in source
     assert "Refreshing from Notion" in source
     assert "loading_indicator" in source
     assert "st.spinner" not in source
+
+
+def test_loading_indicator_supports_fragment_progress_bar() -> None:
+    loading_source = (UI_ROOT / "loading.py").read_text(encoding="utf-8")
+    assert "st.progress" in loading_source
+    assert "_can_update_global_banner()" in loading_source
 
 
 def test_add_recipe_slow_paths_use_loading_indicator() -> None:
