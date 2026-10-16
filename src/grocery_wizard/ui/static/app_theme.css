@@ -42,9 +42,16 @@
             color-scheme: light;
         }
 
+        p.gw-global-header-actions {
+            display: none;
+            margin: 0;
+            padding: 0;
+        }
+
         .gw-app-title-block {
             margin: 0.15rem 0 0.85rem 0;
             text-align: center;
+            width: 100%;
         }
 
         .gw-app-title {

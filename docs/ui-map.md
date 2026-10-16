@@ -31,8 +31,8 @@ Constants: `src/grocery_wizard/ui/ids.py`, labels: `src/grocery_wizard/ui/views/
 | ID | UI |
 |----|-----|
 | `global.global.page_picker` | Page segmented control |
-| `global.global.refresh` | Refresh from Notion (header row, above page picker) |
-| `global.global.feedback` | Send feedback popover (header row, peer to refresh) |
+| `global.global.refresh` | Refresh from Notion (centered under title, above page picker) |
+| `global.global.feedback` | Send feedback popover (centered under title, peer to refresh) |
 | `global.global.loading` | Global loading banner |
 
 ## Blocks by page

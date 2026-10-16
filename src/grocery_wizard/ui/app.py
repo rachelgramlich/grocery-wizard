@@ -31,10 +31,7 @@ from src.grocery_wizard.ui.ids import (
     control_streamlit_key,
 )
 from src.grocery_wizard.ui.loading import loading_indicator, mount_global_loading_banner
-from src.grocery_wizard.ui.notion_cache import (
-    invalidate_notion_cache,
-    last_recipe_cache_load_seconds,
-)
+from src.grocery_wizard.ui.notion_cache import invalidate_notion_cache
 from src.grocery_wizard.ui.styles import inject_app_styles
 from src.grocery_wizard.ui.views import (
     PAGE_LABEL_WEEKLY,
@@ -60,13 +57,6 @@ __all__ = [
     "render_pantry_and_recurring",
     "render_recipe_maintenance",
 ]
-
-
-def _notion_load_caption() -> str:
-    load_seconds = last_recipe_cache_load_seconds()
-    if load_seconds is None:
-        return "Recipes load from Notion on first use."
-    return f"Last full recipe load: {load_seconds:.2f}s"
 
 
 def _init_page_navigation_state() -> None:
@@ -107,8 +97,12 @@ def _refresh_notion_cache_from_ui() -> None:
 
 
 def _render_global_header_controls(*, surface: str | None) -> None:
-    """Refresh and feedback as peer actions above the page picker."""
-    _, refresh_col, feedback_col = st.columns([2, 1, 1])
+    """Refresh and feedback centered under the app title, above the page picker."""
+    st.markdown(
+        '<p class="gw-global-header-actions" aria-hidden="true"></p>',
+        unsafe_allow_html=True,
+    )
+    _pad_left, refresh_col, feedback_col, _pad_right = st.columns(4)
     with refresh_col:
         st.button(
             "Refresh from Notion",
@@ -118,7 +112,6 @@ def _render_global_header_controls(*, surface: str | None) -> None:
             help="Reload recipes, pantry, saved plans, and database column options from Notion",
             on_click=_refresh_notion_cache_from_ui,
         )
-        st.caption(_notion_load_caption())
     with feedback_col:
         render_feedback_controls(surface=surface, control_id=CONTROL_GLOBAL_FEEDBACK)
 
@@ -145,6 +138,7 @@ def main() -> None:
         PAGE_PICKER_LABELS,
         key=_PAGE_PICKER_SESSION_KEY,
         label_visibility="collapsed",
+        width="stretch",
         persist_state="session",
         on_change=_on_active_page_change,
     )
