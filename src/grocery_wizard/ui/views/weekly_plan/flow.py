@@ -6,7 +6,7 @@ import streamlit as st
 
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 from src.grocery_wizard.ui.db_access import get_db
-from src.grocery_wizard.ui.loading import loading_indicator
+from src.grocery_wizard.ui.loading import clear_global_loading_banner, loading_indicator
 from src.grocery_wizard.ui.notion_cache import cached_query_recipes, notion_cache_generation
 from src.grocery_wizard.ui.views.weekly_plan.grocery_list_ui import render_grocery_list_section
 from src.grocery_wizard.ui.views.weekly_plan.plan_entry import (
@@ -111,15 +111,15 @@ def render_create_weekly_plan() -> None:
                     PLAN_MEAL_BUILDER_LOADING_KEY, False
                 )
                 if show_meal_builder_loading:
+                    clear_global_loading_banner()
                     with loading_indicator(
                         _MEAL_BUILDER_LOADING_MESSAGE,
                         use_global_banner=False,
                     ):
                         all_recipes = _recipes_for_weekly_plan()
-                        _weekly_plan_meals_fragment(db, all_recipes, meal_count=meal_count)
                 else:
                     all_recipes = _recipes_for_weekly_plan()
-                    _weekly_plan_meals_fragment(db, all_recipes, meal_count=meal_count)
+                _weekly_plan_meals_fragment(db, all_recipes, meal_count=meal_count)
 
     with weekly_step_block(WeeklyRailStep.GROCERY_LIST, recipe_names=recipe_names) as show_grocery:
         if show_grocery:

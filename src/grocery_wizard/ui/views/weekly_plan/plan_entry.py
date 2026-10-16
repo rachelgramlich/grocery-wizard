@@ -654,6 +654,15 @@ def _render_plan_meal_count_continue(*, meal_count: int) -> bool:
         st.session_state.plan_meal_count = int(meal_count)
         st.session_state[PLAN_MEAL_COUNT_CONFIRMED_KEY] = True
         st.session_state[PLAN_MEAL_BUILDER_LOADING_KEY] = True
+        if _weekly_plan_mode() == "new":
+            stale = _current_plan_names()
+            if stale and len(stale) < int(meal_count):
+                _write_plan_names([])
+                _set_plan_slot_origins([])
+                st.session_state.pop("plan_rejected_names", None)
+                _invalidate_weekly_plan_save_state()
+                _clear_grocery_session_overrides()
+                _clear_grocery_result()
         _sync_plan_length_to_meal_count(meal_count)
         queue_weekly_scroll(BLOCK_WEEKLY_MEALS)
         st.rerun()
@@ -956,20 +965,14 @@ def render_meals_section(
     fallback_filters = default_filters(db.schema.all_columns)
     stored_filters = st.session_state.get("plan_last_week_filters", fallback_filters)
     ingredient_index = _ingredient_index_for_filters(all_recipes, stored_filters)
-    has_plan = bool(current_plan)
+    plan_slots = len(current_plan)
+    meal_slots = int(meal_count)
+    has_plan = plan_slots > 0
+    plan_incomplete = has_plan and plan_slots < meal_slots
     if st.session_state.pop(PLAN_FORCE_OPEN_1A_KEY, False):
         st.session_state[PLAN_BUILDER_POPOVER_KEY] = True
 
-    if has_plan:
-        _render_built_plan_meals(
-            db,
-            all_recipes=all_recipes,
-            meal_count=meal_count,
-            week_filters=stored_filters,
-            ingredient_index=ingredient_index,
-        )
-        week_filters = st.session_state.get("plan_last_week_filters", stored_filters)
-    else:
+    if not has_plan or plan_incomplete:
         week_filters = _render_generate_plan_controls(
             db,
             all_recipes=all_recipes,
@@ -977,6 +980,10 @@ def render_meals_section(
             ingredient_index=ingredient_index,
             show_section_heading=True,
         )
+    else:
+        week_filters = st.session_state.get("plan_last_week_filters", stored_filters)
+
+    if has_plan:
         _render_built_plan_meals(
             db,
             all_recipes=all_recipes,
