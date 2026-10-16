@@ -48,6 +48,12 @@
             padding: 0;
         }
 
+        p.gw-global-page-picker-anchor {
+            display: none;
+            margin: 0;
+            padding: 0;
+        }
+
         .gw-app-title-block {
             margin: 0.15rem 0 0.85rem 0;
             text-align: center;
@@ -729,4 +735,241 @@
             p.gw-weekly-block-anchor[data-gw-weekly-expanded="false"]
         ) {
             padding-left: 0.35rem;
+        }
+
+        /*
+         * Mobile / narrow viewport (#378): touch targets and no sideways scroll on primary flows.
+         * Breakpoint covers ~375px phones in dev tools and real devices.
+         */
+        @media (max-width: 480px) {
+            :root {
+                --gw-touch-min-height: 2.75rem;
+                --gw-touch-min-width: 2.75rem;
+            }
+
+            .stApp {
+                overflow-x: clip;
+            }
+
+            .stApp [data-testid="stMainBlockContainer"],
+            .stApp .main .block-container {
+                max-width: 100%;
+                overflow-x: clip;
+            }
+
+            .stApp .stButton button,
+            .stApp .stDownloadButton button,
+            .stApp .stPopover button {
+                min-height: var(--gw-touch-min-height);
+            }
+
+            [data-testid="stNumberInputStepDown"],
+            [data-testid="stNumberInputStepUp"] {
+                min-width: var(--gw-touch-min-width) !important;
+                min-height: var(--gw-touch-min-height) !important;
+            }
+
+            [data-testid="stExpander"] summary {
+                min-height: var(--gw-touch-min-height);
+                padding-top: 0.45rem !important;
+                padding-bottom: 0.45rem !important;
+            }
+
+            .stCheckbox label[data-baseweb="checkbox"],
+            .stRadio label[data-baseweb="radio"] {
+                min-height: var(--gw-touch-min-height);
+                padding-top: 0.35rem;
+                padding-bottom: 0.35rem;
+            }
+
+            [data-testid="stText"] pre,
+            [data-testid="stText"] code {
+                white-space: pre-wrap !important;
+                word-break: break-word !important;
+                max-width: 100% !important;
+            }
+
+            /* Refresh + feedback: stack full-width tap targets under the title. */
+            [data-testid="stVerticalBlock"]:has(p.gw-global-header-actions)
+                > [data-testid="stHorizontalBlock"] {
+                flex-direction: column !important;
+                gap: 0.5rem !important;
+            }
+
+            [data-testid="stVerticalBlock"]:has(p.gw-global-header-actions)
+                [data-testid="stColumn"] {
+                width: 100% !important;
+                min-width: 0 !important;
+                flex: 1 1 auto !important;
+            }
+
+            /* Page picker: two columns of segments, taller segments. */
+            [data-testid="stVerticalBlock"]:has(p.gw-global-page-picker-anchor)
+                [data-testid="stHorizontalBlock"] {
+                flex-wrap: wrap !important;
+                gap: 0.35rem !important;
+            }
+
+            [data-testid="stVerticalBlock"]:has(p.gw-global-page-picker-anchor)
+                [data-testid="stColumn"] {
+                flex: 1 1 calc(50% - 0.35rem) !important;
+                min-width: 9.5rem !important;
+            }
+
+            [data-testid="stVerticalBlock"]:has(p.gw-global-page-picker-anchor)
+                .stButton button,
+            [data-testid="stVerticalBlock"]:has(p.gw-global-page-picker-anchor)
+                label[data-baseweb="button-toggle"],
+            [class*="st-key-global_global_page_picker"] button,
+            [class*="st-key-global_global_page_picker"]
+                label[data-baseweb="button-toggle"] {
+                min-height: var(--gw-touch-min-height) !important;
+                width: 100% !important;
+            }
+
+            [class*="st-key-global_global_page_picker"] {
+                width: 100% !important;
+            }
+
+            [class*="st-key-global_global_page_picker"]
+                [data-baseweb="button-group"] {
+                flex-wrap: wrap !important;
+                gap: 0.35rem !important;
+                width: 100% !important;
+            }
+
+            [class*="st-key-global_global_page_picker"]
+                label[data-baseweb="button-toggle"] {
+                flex: 1 1 calc(50% - 0.35rem) !important;
+                min-width: 9.5rem !important;
+            }
+
+            /* Weekly step rail: one segment per row on phones. */
+            [data-testid="stVerticalBlock"]:has(p.gw-weekly-rail-anchor)
+                > [data-testid="stHorizontalBlock"] {
+                flex-direction: column !important;
+                gap: 0.4rem !important;
+            }
+
+            [data-testid="stVerticalBlock"]:has(p.gw-weekly-rail-anchor)
+                [data-testid="stColumn"] {
+                width: 100% !important;
+                min-width: 0 !important;
+                flex: 1 1 auto !important;
+            }
+
+            p.gw-meal-slot-label {
+                padding-left: 0;
+                text-indent: 0;
+            }
+
+            p.gw-meal-slot-label .gw-meal-slot-title {
+                white-space: normal;
+            }
+
+            /* Meal rows + week actions: stack label above buttons; allow wrapped labels. */
+            [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 0.5rem !important;
+            }
+
+            [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label)
+                [data-testid="stColumn"]:first-child,
+            [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label)
+                [data-testid="stColumn"]:last-child {
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
+                flex: 1 1 auto !important;
+            }
+
+            [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label)
+                [data-testid="stColumn"]:last-child
+                [data-testid="stElementContainer"],
+            [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label)
+                [data-testid="stColumn"]:last-child
+                .stButton,
+            [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label)
+                [data-testid="stColumn"]:last-child
+                .stPopover,
+            [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions)
+                [data-testid="stElementContainer"],
+            [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions)
+                .stButton,
+            [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions)
+                .stPopover {
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
+            }
+
+            [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label)
+                [data-testid="stColumn"]:last-child
+                button,
+            [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label)
+                [data-testid="stColumn"]:last-child
+                .stPopover
+                button,
+            [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions)
+                button,
+            [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions)
+                .stPopover
+                button {
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
+            }
+
+            [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label)
+                [data-testid="stColumn"]:last-child
+                button
+                p,
+            [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label)
+                [data-testid="stColumn"]:last-child
+                button
+                span,
+            [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label)
+                [data-testid="stColumn"]:last-child
+                .stPopover
+                button
+                p,
+            [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label)
+                [data-testid="stColumn"]:last-child
+                .stPopover
+                button
+                span,
+            [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions)
+                button
+                p,
+            [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions)
+                button
+                span,
+            [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions)
+                .stPopover
+                button
+                p,
+            [data-testid="stVerticalBlock"]:has(p.gw-plan-week-actions)
+                .stPopover
+                button
+                span {
+                white-space: normal !important;
+                overflow: visible !important;
+                text-overflow: clip !important;
+            }
+
+            /* Pantry / recurring remove controls: meet minimum touch size. */
+            [data-testid="stHorizontalBlock"]:has(p.gw-pantry-item)
+                .stButton
+                button,
+            [data-testid="stHorizontalBlock"]:has(p.gw-recurring-item)
+                .stButton
+                button {
+                min-height: var(--gw-touch-min-height) !important;
+                min-width: var(--gw-touch-min-width) !important;
+                width: var(--gw-touch-min-width) !important;
+                height: auto !important;
+                padding: 0.25rem 0.45rem !important;
+                font-size: 1rem !important;
+            }
         }

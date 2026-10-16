@@ -133,6 +133,10 @@ def main() -> None:
 
     _render_global_header_controls(surface=st.session_state.get(_GW_RENDER_PAGE_SLUG))
 
+    st.markdown(
+        '<p class="gw-global-page-picker-anchor" aria-hidden="true"></p>',
+        unsafe_allow_html=True,
+    )
     st.segmented_control(
         "Page",
         PAGE_PICKER_LABELS,
