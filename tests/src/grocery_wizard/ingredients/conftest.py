@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from typing import Any
 
 import pytest
+
+from tests.repo_paths import FIXTURES_DIR
 
 
 def _ensure_nltk() -> None:
@@ -22,9 +23,8 @@ def _ensure_nltk() -> None:
 
 _ensure_nltk()
 
-_FIXTURES_DIR = Path(__file__).resolve().parents[3] / "fixtures"
-_NOTION_FIXTURE_PATH = _FIXTURES_DIR / "notion_ingredient_cases.json"
-_PIPELINE_FIXTURE_PATH = _FIXTURES_DIR / "ingredient_pipeline_cases.json"
+_NOTION_FIXTURE_PATH = FIXTURES_DIR / "notion_ingredient_cases.json"
+_PIPELINE_FIXTURE_PATH = FIXTURES_DIR / "ingredient_pipeline_cases.json"
 
 
 def load_notion_ingredient_cases() -> list[dict[str, Any]]:

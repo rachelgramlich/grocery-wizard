@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ui_source import pantry_tab_source, ui_source
+from ui_source import pantry_page_source, ui_source
 
 
 def test_build_final_list_clears_stale_removal_widget_state() -> None:
@@ -21,7 +21,7 @@ def test_build_final_list_does_not_auto_persist_recurring_template() -> None:
 
 
 def test_pantry_tab_has_no_bulk_recurring_editor() -> None:
-    pantry_fn = pantry_tab_source()
+    pantry_fn = pantry_page_source()
     assert "Save recurring template" not in pantry_fn
     assert "pantry_tab_recurring_template_editor" not in pantry_fn
     assert "Bulk edit the saved recurring template" not in pantry_fn
