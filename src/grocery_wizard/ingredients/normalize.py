@@ -546,6 +546,23 @@ def _strip_filter_leading_noise(words: list[str]) -> list[str]:
     return tokens
 
 
+def _words_are_quantity_only(words: list[str]) -> bool:
+    """True when tokens are only leading qty noise, numbers, or measurement units."""
+    tokens = _strip_filter_leading_noise(list(words))
+    if not tokens:
+        return True
+    unit_tokens = _UNITS | _SIZES
+    for token in tokens:
+        if re.match(r"^\d+(?:\.\d+)?(?:/\d+)?$", token):
+            continue
+        if token in unit_tokens:
+            continue
+        if token in {"a", "an"}:
+            continue
+        return False
+    return True
+
+
 def _strip_filter_trailing_noise(words: list[str]) -> list[str]:
     tokens = list(words)
     while tokens and tokens[-1] in _FILTER_TRAILING_NOISE:
@@ -569,6 +586,8 @@ def _is_non_filterable_segment(segment: str) -> bool:
     if _is_prep_instruction_fragment(prepared):
         return True
     words = _sanitize_filter_words(lowered)
+    if words and _words_are_quantity_only(words):
+        return True
     return bool(
         words
         and not _find_grocery_noun_positions(words)
@@ -585,6 +604,8 @@ def _is_meaningless_filter_key(key: str) -> bool:
     if not lowered:
         return True
     if lowered in _FILTER_VAGUE_PHRASES:
+        return True
+    if _words_are_quantity_only(_sanitize_filter_words(lowered)):
         return True
     return bool(
         _FILTER_DIMENSION_RE.match(lowered)

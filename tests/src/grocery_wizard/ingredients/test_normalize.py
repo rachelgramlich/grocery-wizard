@@ -829,6 +829,16 @@ def test_filter_ingredient_keys_drop_prose_and_dimension_fragments() -> None:
     assert filter_ingredient_keys("pitted and diced, optional") == set()
 
 
+def test_filter_ingredient_keys_drop_quantity_only_fragments() -> None:
+    assert filter_ingredient_keys("2 pounds") == set()
+    assert filter_ingredient_keys("24 pieces") == set()
+    assert filter_ingredient_keys("about 2 pounds") == set()
+    assert filter_ingredient_keys("▢2 pounds") == set()
+    assert filter_ingredient_keys("2 pounds 24 pieces") == set()
+    assert filter_ingredient_keys("2 pounds\n24 pieces") == set()
+    assert filter_ingredient_keys("1 tablespoon") == set()
+
+
 def test_filter_ingredient_keys_grated_cheese_lines() -> None:
     fontina = "about 1 heaping cup coarsely grated fontina"
     parmesan = "about 1 heaping cup coarsely grated parmesan"
