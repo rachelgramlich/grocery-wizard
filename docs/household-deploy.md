@@ -102,6 +102,7 @@ List inbox issues: `gh issue list --label user-feedback-inbox --state open --rep
 | Google “doesn't comply with OAuth 2.0 policy” / redirect | Prod URI not registered | Add `https://….streamlit.app/oauth2callback` in Google **and** Cloud `[auth].redirect_uri` |
 | `StreamlitMissingAuthlibError` | Missing `streamlit[auth]` deps | `uv sync` / `just setup` on `main` (see #359) |
 | Feedback `GITHUB_FEEDBACK_TOKEN` | Missing or revoked token | Update Cloud Secrets; prefer fine-grained PAT (phase 4) |
+| **`ValidationError` after reboot** | Cloud Secrets missing/invalid TOML, or bool/env mismatch | **Manage app → Logs** for field names. Re-paste Secrets (TOML, not `.env` syntax). Need all `NOTION_*`, flat keys + `[auth]`. Save → Reboot. |
 | Notion key missing locally | No `secrets.toml` | Copy `secrets.toml.example` → `secrets.toml`; `just link-secrets` |
 | App auth OK but “not authorized” | Email not on allowlist | `GROCERY_WIZARD_AUTH_EMAIL_ALLOWLIST` in secrets |
 

@@ -96,6 +96,17 @@ class Config(BaseSettings):
         validation_alias="GROCERY_WIZARD_AUTH_EMAIL_ALLOWLIST",
     )
 
+    @field_validator("require_auth", "dev_ui_enabled", mode="before")
+    @classmethod
+    def _coerce_bool_env(cls, value: object) -> object:
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"true", "1", "yes", "on"}:
+                return True
+            if normalized in {"false", "0", "no", "off", ""}:
+                return False
+        return value
+
     @field_validator(
         "notion_api_key",
         "notion_recipe_database_id",
@@ -193,29 +204,66 @@ def ensure_streamlit_secrets_symlink() -> None:
     _STREAMLIT_SECRETS_SYMLINK.symlink_to("../secrets.toml")
 
 
-def _apply_streamlit_secrets_to_environ() -> None:
-    """Inject flat keys from repo-root ``secrets.toml`` (Streamlit + local parity).
+def _setdefault_env(key: str, value: object) -> None:
+    if isinstance(value, bool):
+        os.environ.setdefault(key, "true" if value else "false")
+    else:
+        os.environ.setdefault(key, str(value))
 
-    Precedence when ``Config`` loads: process environment, then secrets.toml, then ``.env``.
-    Nested tables (e.g. ``[auth]``) are for Streamlit OIDC only and are not mapped here.
-    """
+
+def _apply_flat_secrets_mapping(raw: dict[str, object]) -> None:
+    """Map flat TOML / ``st.secrets`` keys into ``os.environ`` (skip nested ``[auth]``)."""
+    for key, value in raw.items():
+        if isinstance(value, dict):
+            continue
+        _setdefault_env(str(key), value)
+
+
+def _apply_streamlit_secrets_file_to_environ() -> None:
+    """Inject flat keys from repo-root ``secrets.toml`` (local dev)."""
     path = _secrets_toml_path()
     if path is None:
         return
     raw = tomllib.loads(path.read_text(encoding="utf-8"))
-    for key, value in raw.items():
-        if isinstance(value, dict):
-            continue
-        env_key = str(key)
-        if isinstance(value, bool):
-            os.environ.setdefault(env_key, "true" if value else "false")
-        else:
-            os.environ.setdefault(env_key, str(value))
+    _apply_flat_secrets_mapping(raw)
+
+
+def _apply_streamlit_runtime_secrets_to_environ() -> None:
+    """Inject flat keys from ``st.secrets`` (Streamlit Community Cloud Secrets)."""
+    try:
+        import streamlit as st
+    except ImportError:
+        return
+    try:
+        secrets = st.secrets
+        mapping: dict[str, object] = {}
+        for key in secrets:
+            if key == "auth":
+                continue
+            mapping[str(key)] = secrets[key]
+    except Exception:
+        return
+    _apply_flat_secrets_mapping(mapping)
+
+
+def _format_config_validation_error(exc: ValidationError) -> str:
+    parts: list[str] = []
+    for error in exc.errors():
+        loc = error.get("loc", ())
+        field = loc[0] if loc else "config"
+        msg = error.get("msg", "invalid value")
+        parts.append(f"{field}: {msg}")
+    detail = "; ".join(parts)
+    return (
+        "Configuration is invalid. Check repo-root secrets.toml or Streamlit Cloud Secrets "
+        f"(NOTION_*, GITHUB_*, GROCERY_WIZARD_*). Details: {detail}"
+    )
 
 
 def load_config() -> Config:
-    """Load configuration from environment, repo-root ``secrets.toml``, and ``.env``."""
-    _apply_streamlit_secrets_to_environ()
+    """Load configuration from environment, Streamlit secrets, ``secrets.toml``, and ``.env``."""
+    _apply_streamlit_runtime_secrets_to_environ()
+    _apply_streamlit_secrets_file_to_environ()
     try:
         return Config()
     except ValidationError as exc:
@@ -243,4 +291,4 @@ def load_config() -> Config:
                     "NOTION_WEEKLY_MEAL_PLANS_DATABASE_ID is required "
                     "(set in .env or Cloud Agent Secrets)"
                 ) from exc
-        raise
+        raise ValueError(_format_config_validation_error(exc)) from exc
