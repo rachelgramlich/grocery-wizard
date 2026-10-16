@@ -11,6 +11,7 @@ from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
     suggestion_rejection_count,
 )
 from src.grocery_wizard.ui.db_access import get_db
+from src.grocery_wizard.ui.dev_jumps import DEV_JUMP_BUTTON_LABEL_MEALS_FILLED_AUTO
 from tests.notion_test_env import live_notion_smoke_enabled
 
 pytestmark = pytest.mark.skipif(
@@ -60,8 +61,8 @@ def test_dev_mode_quick_swap_does_not_increment_rejection_count(
     at.run(timeout=120)
     _enter_dev_mode(at)
 
-    auto_jump = [b for b in at.button if b.label == "Meals filled: auto"]
-    assert auto_jump, "Dev jump Meals filled: auto missing"
+    auto_jump = [b for b in at.button if b.label == DEV_JUMP_BUTTON_LABEL_MEALS_FILLED_AUTO]
+    assert auto_jump, f"Dev jump {DEV_JUMP_BUTTON_LABEL_MEALS_FILLED_AUTO!r} missing"
     auto_jump[0].click().run(timeout=120)
 
     plan_text = str(at.session_state["plan_meals_text"]).strip()

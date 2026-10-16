@@ -2,6 +2,24 @@
 
 from __future__ import annotations
 
+__all__ = [
+    "DEFAULT_DEV_MEAL_COUNT",
+    "DEV_JUMP_BUTTON_LABEL_FINAL_LIST",
+    "DEV_JUMP_BUTTON_LABEL_MEALS_FILLED_AUTO",
+    "DEV_JUMP_BUTTON_LABEL_MEALS_FILLED_MANUAL",
+    "DEV_JUMP_BUTTON_LABEL_PER_RECIPE_REVIEW",
+    "DEV_JUMP_BUTTON_LABEL_PRE_BUILD_GROCERY",
+    "DEV_JUMP_CAPTIONS",
+    "DEV_JUMP_FLOW_ORDER",
+    "DEV_MANUAL_RECIPES_KEY",
+    "DevJumpTarget",
+    "apply_dev_jump",
+    "commit_dev_jump",
+    "dev_jump_display_title",
+    "resolve_dev_jump_meal_names",
+    "sync_dev_manual_multiselect",
+]
+
 import random
 from enum import StrEnum
 from typing import Any
@@ -35,6 +53,13 @@ DEV_JUMP_FLOW_ORDER: tuple[DevJumpTarget, ...] = (
     DevJumpTarget.PER_RECIPE_REVIEW,
     DevJumpTarget.GROCERY_RESULT,
 )
+
+# Streamlit button labels (keep in sync with tests and docs/ui-map dev jumps).
+DEV_JUMP_BUTTON_LABEL_MEALS_FILLED_AUTO = "Dev: Meals filled (auto)"
+DEV_JUMP_BUTTON_LABEL_MEALS_FILLED_MANUAL = "Dev: Meals filled (manual)"
+DEV_JUMP_BUTTON_LABEL_PRE_BUILD_GROCERY = "Dev: Pre-build grocery"
+DEV_JUMP_BUTTON_LABEL_PER_RECIPE_REVIEW = "Dev: Per-recipe review"
+DEV_JUMP_BUTTON_LABEL_FINAL_LIST = "Dev: Final list"
 
 
 def dev_jump_display_title(target: DevJumpTarget) -> str:

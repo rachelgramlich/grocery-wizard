@@ -10,7 +10,6 @@ from src.grocery_wizard.ui.loading import clear_global_loading_banner, loading_i
 from src.grocery_wizard.ui.notion_cache import cached_query_recipes, notion_cache_generation
 from src.grocery_wizard.ui.views.weekly_plan.grocery_list_ui import render_grocery_list_section
 from src.grocery_wizard.ui.views.weekly_plan.plan_entry import (
-    _discard_stale_partial_plan,
     _ensure_plan_session_defaults,
     _render_meal_count_input,
     _render_plan_meal_count_continue,
@@ -98,7 +97,6 @@ def render_create_weekly_plan() -> None:
                 _warm_weekly_plan_recipes_quiet(db)
             if _render_plan_meal_count_continue(meal_count=meal_count):
                 _sync_plan_length_to_meal_count(meal_count)
-                _discard_stale_partial_plan(int(meal_count))
                 cold_recipes = not _weekly_recipes_warm_for_current_cache()
                 show_meal_builder_loading = st.session_state.pop(
                     PLAN_MEAL_BUILDER_LOADING_KEY, False

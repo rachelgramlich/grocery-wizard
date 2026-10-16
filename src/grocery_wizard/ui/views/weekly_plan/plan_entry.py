@@ -30,6 +30,11 @@ from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.dev_jumps import (
     DEFAULT_DEV_MEAL_COUNT,
+    DEV_JUMP_BUTTON_LABEL_FINAL_LIST,
+    DEV_JUMP_BUTTON_LABEL_MEALS_FILLED_AUTO,
+    DEV_JUMP_BUTTON_LABEL_MEALS_FILLED_MANUAL,
+    DEV_JUMP_BUTTON_LABEL_PER_RECIPE_REVIEW,
+    DEV_JUMP_BUTTON_LABEL_PRE_BUILD_GROCERY,
     DEV_JUMP_CAPTIONS,
     DEV_JUMP_FLOW_ORDER,
     DEV_MANUAL_RECIPES_KEY,
@@ -486,7 +491,7 @@ def _render_dev_jump_tools(db: NotionRecipesDB) -> None:
             key=DEV_MANUAL_RECIPES_KEY,
             placeholder="Pick one or more recipes…",
             help="When set, updates **Your meals** immediately and is used by every jump "
-            "button below except **Dev: Meals filled (auto)**.",
+            f"button below except **{DEV_JUMP_BUTTON_LABEL_MEALS_FILLED_AUTO}**.",
         )
         sync_dev_manual_multiselect(st.session_state)
 
@@ -503,32 +508,32 @@ def _render_dev_jump_tools(db: NotionRecipesDB) -> None:
         )
         _dev_jump_button(
             DevJumpTarget.MEALS_FILLED,
-            label="Dev: Meals filled (auto)",
+            label=DEV_JUMP_BUTTON_LABEL_MEALS_FILLED_AUTO,
             key_suffix="auto",
             names=auto_names,
         )
         _dev_jump_button(
             DevJumpTarget.MEALS_FILLED,
-            label="Dev: Meals filled (manual)",
+            label=DEV_JUMP_BUTTON_LABEL_MEALS_FILLED_MANUAL,
             key_suffix="manual",
             names=list(manual_pick),
             require_names=True,
         )
         _dev_jump_button(
             DevJumpTarget.PRE_BUILD_GROCERY,
-            label="Dev: Pre-build grocery",
+            label=DEV_JUMP_BUTTON_LABEL_PRE_BUILD_GROCERY,
             key_suffix="btn_pre_build",
             names=jump_names,
         )
         _dev_jump_button(
             DevJumpTarget.PER_RECIPE_REVIEW,
-            label="Dev: Per-recipe review",
+            label=DEV_JUMP_BUTTON_LABEL_PER_RECIPE_REVIEW,
             key_suffix="btn_review",
             names=jump_names,
         )
         _dev_jump_button(
             DevJumpTarget.GROCERY_RESULT,
-            label="Dev: Final list",
+            label=DEV_JUMP_BUTTON_LABEL_FINAL_LIST,
             key_suffix="btn_final_list",
             names=jump_names,
         )
@@ -976,7 +981,6 @@ def render_meals_section(
 ) -> list[str]:
     """Render step 1 (meals) and return the current planned recipe names."""
     _render_dev_jump_tools(db)
-    _discard_stale_partial_plan(int(meal_count))
 
     current_plan = _current_plan_names()
     fallback_filters = default_filters(db.schema.all_columns)
@@ -998,7 +1002,7 @@ def render_meals_section(
     else:
         week_filters = st.session_state.get("plan_last_week_filters", stored_filters)
 
-    if has_plan and not (plan_incomplete and _weekly_plan_mode() == "new"):
+    if has_plan:
         _render_built_plan_meals(
             db,
             all_recipes=all_recipes,
