@@ -15,11 +15,8 @@ def test_weekly_plan_has_per_meal_swap_buttons() -> None:
     assert "gw-meal-slot-row-anchor" in source
     assert "meal_slot_action_row_" in source
     assert "gw-meal-slot-label" in source
-    assert "meal_col, actions_col = st.columns([1, 1]" not in source
-    assert (
-        'width="stretch"'
-        in source.split("def _render_built_plan_meals", 1)[1].split("fill_remaining = ", 1)[0]
-    )
+    assert "meal_col, actions_col = st.columns([1, 1]" in source
+    assert "display: block" in (UI_ROOT / "static" / "app_theme.css").read_text(encoding="utf-8")
     assert (
         'width="content"'
         in source.split("def _render_slot_manual_popover", 1)[1].split(
