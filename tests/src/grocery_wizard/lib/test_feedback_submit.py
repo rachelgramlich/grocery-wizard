@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 
 from src.grocery_wizard.config import Config
@@ -22,21 +20,9 @@ def _config(**overrides: object) -> Config:
     return Config(**base)  # type: ignore[arg-type]
 
 
-def test_submit_feedback_local_writes_file(tmp_path: Path) -> None:
-    inbox = tmp_path / "feedback_backlog.md"
-    outcome = submit_feedback(
-        "hello",
-        surface="weekly",
-        config=_config(feedback_mode="local"),
-        local_path=inbox,
-    )
-    assert outcome == "local"
-    assert "hello" in inbox.read_text(encoding="utf-8")
-
-
-def test_submit_feedback_github_requires_secrets() -> None:
-    with pytest.raises(RuntimeError, match="GITHUB_FEEDBACK"):
-        submit_feedback("hello", config=_config(feedback_mode="github"))
+def test_submit_feedback_github_requires_token() -> None:
+    with pytest.raises(RuntimeError, match="GITHUB_FEEDBACK_TOKEN"):
+        submit_feedback("hello", config=_config(github_feedback_token=None))
 
 
 def test_submit_feedback_github_delegates(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -46,10 +32,6 @@ def test_submit_feedback_github_delegates(monkeypatch: pytest.MonkeyPatch) -> No
     )
     outcome = submit_feedback(
         "idea",
-        config=_config(
-            feedback_mode="github",
-            github_feedback_token="tok",
-            github_feedback_repository="o/r",
-        ),
+        config=_config(github_feedback_token="tok"),
     )
     assert outcome == "github #12"

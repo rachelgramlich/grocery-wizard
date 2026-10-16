@@ -13,7 +13,7 @@ flowchart LR
 
   User -->|Google OIDC + allowlist| SCC
   SCC --> Notion
-  SCC -->|FEEDBACK_MODE=github| GH
+  SCC --> GH
 ```
 
 ## One-time setup
@@ -28,7 +28,7 @@ flowchart LR
 
 1. Connect the GitHub repo; set **Main file path** to `src/grocery_wizard/ui/app.py`.
 2. Set the app to **Private** and optionally add viewers in Cloud sharing (belt-and-suspenders with in-app allowlist).
-3. Paste **Secrets** (TOML) — merge with `.streamlit/secrets.toml.example` shape:
+3. Paste **Secrets** (TOML) — same shape as committed `secrets.toml.example` at repo root:
 
 | Secret / env | Purpose |
 | --- | --- |
@@ -36,11 +36,12 @@ flowchart LR
 | `[auth]` block | Google OIDC (`client_id`, `client_secret`, `redirect_uri`, `cookie_secret`, `server_metadata_url`) |
 | `GROCERY_WIZARD_REQUIRE_AUTH` | `true` |
 | `GROCERY_WIZARD_AUTH_EMAIL_ALLOWLIST` | Comma-separated household Google emails |
-| `FEEDBACK_MODE` | `github` |
-| `GITHUB_FEEDBACK_REPOSITORY` | `owner/repo` |
+| `GITHUB_FEEDBACK_REPOSITORY` | `rachelgramlich/grocery-wizard` (default if omitted) |
 | `GITHUB_FEEDBACK_TOKEN` | Fine-grained PAT, **issues:write** on this repo only |
 
 Never bake tokens into the Docker image or commit them to git.
+
+**Local parity:** copy [`secrets.toml.example`](../secrets.toml.example) to **`secrets.toml`** at repo root (gitignored). Run **`just link-secrets`** so Streamlit sees `[auth]` via `.streamlit/secrets.toml` → `../secrets.toml`. `load_config()` reads the root file before `.env`. Precedence: **shell environment → secrets.toml → `.env`**.
 
 ### 3. GitHub feedback PAT
 
@@ -54,9 +55,9 @@ Submitted notes open issues labeled **`user-feedback-inbox`**. Promote to backlo
 
 | Setting | Local (`just grocery-ui`) | Household Cloud |
 | --- | --- | --- |
-| `GROCERY_WIZARD_REQUIRE_AUTH` | unset / `false` | `true` |
-| `FEEDBACK_MODE` | `local` (default) | `github` |
-| Feedback triage | `/create-issues-from-backlog` | Inbox issues + `/create-issues` or #355 command |
+| `GROCERY_WIZARD_REQUIRE_AUTH` | `false` in `.streamlit/secrets.toml` | `true` |
+| Feedback | Always GitHub (`user-feedback-inbox`) | Same |
+| Feedback triage | #355 inbox command or `gh issue list --label user-feedback-inbox` | Same |
 
 ## Manual smoke test (after deploy)
 

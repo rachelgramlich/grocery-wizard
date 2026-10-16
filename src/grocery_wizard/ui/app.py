@@ -12,6 +12,7 @@ if str(_REPO_ROOT) not in sys.path:
 
 import streamlit as st
 
+from src.grocery_wizard.config import ensure_streamlit_secrets_symlink
 from src.grocery_wizard.ui.access_gate import enforce_access_gate
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.feedback import render_feedback_controls
@@ -116,6 +117,7 @@ def _render_notion_cache_controls() -> None:
 
 
 def main() -> None:
+    ensure_streamlit_secrets_symlink()
     st.set_page_config(
         page_title="Grocery Wizard",
         page_icon="🛒",

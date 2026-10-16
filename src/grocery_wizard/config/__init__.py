@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import os
+import tomllib
 from pathlib import Path
-from typing import Literal
 
 from pydantic import AliasChoices, Field, ValidationError, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -22,7 +23,10 @@ LEGACY_DATA_DIR = Path(".grocery_wizard")
 WEEK_PLAN_PATH = DATA_DIR / "week_plan.json"
 LEGACY_WEEK_PLAN_PATH = LEGACY_DATA_DIR / "week_plan.json"
 NYT_LAST_SYNC_PATH = DATA_DIR / "nyt_last_sync.json"
-FEEDBACK_BACKLOG_PATH = DATA_DIR / "feedback_backlog.md"
+_REPO_SECRETS_PATH = _REPO_ROOT / "secrets.toml"
+_LEGACY_STREAMLIT_SECRETS_PATH = _REPO_ROOT / ".streamlit" / "secrets.toml"
+_STREAMLIT_SECRETS_SYMLINK = _LEGACY_STREAMLIT_SECRETS_PATH
+_DEFAULT_GITHUB_FEEDBACK_REPOSITORY = "rachelgramlich/grocery-wizard"
 
 
 class Config(BaseSettings):
@@ -78,16 +82,12 @@ class Config(BaseSettings):
         default=None,
         validation_alias="GROCERY_WIZARD_MEAL_PLAN_STATUS_COLUMN",
     )
-    feedback_mode: Literal["local", "github"] = Field(
-        default="local",
-        validation_alias="FEEDBACK_MODE",
-    )
     github_feedback_token: str | None = Field(
         default=None,
         validation_alias="GITHUB_FEEDBACK_TOKEN",
     )
-    github_feedback_repository: str | None = Field(
-        default=None,
+    github_feedback_repository: str = Field(
+        default=_DEFAULT_GITHUB_FEEDBACK_REPOSITORY,
         validation_alias="GITHUB_FEEDBACK_REPOSITORY",
     )
     require_auth: bool = Field(default=False, validation_alias="GROCERY_WIZARD_REQUIRE_AUTH")
@@ -95,13 +95,6 @@ class Config(BaseSettings):
         default=None,
         validation_alias="GROCERY_WIZARD_AUTH_EMAIL_ALLOWLIST",
     )
-
-    @field_validator("feedback_mode", mode="before")
-    @classmethod
-    def _normalize_feedback_mode(cls, value: object) -> object:
-        if isinstance(value, str):
-            return value.strip().lower() or "local"
-        return value
 
     @field_validator(
         "notion_api_key",
@@ -176,8 +169,53 @@ class Config(BaseSettings):
         return value
 
 
+def _secrets_toml_path() -> Path | None:
+    """Repo-root ``secrets.toml`` first, then legacy ``.streamlit/secrets.toml``."""
+    if _REPO_SECRETS_PATH.is_file():
+        return _REPO_SECRETS_PATH
+    if _LEGACY_STREAMLIT_SECRETS_PATH.is_file():
+        return _LEGACY_STREAMLIT_SECRETS_PATH
+    return None
+
+
+def ensure_streamlit_secrets_symlink() -> None:
+    """Link ``.streamlit/secrets.toml`` to repo-root ``secrets.toml`` for Streamlit auth."""
+    if not _REPO_SECRETS_PATH.is_file():
+        return
+    _STREAMLIT_SECRETS_SYMLINK.parent.mkdir(parents=True, exist_ok=True)
+    desired = _REPO_SECRETS_PATH.resolve()
+    if _STREAMLIT_SECRETS_SYMLINK.is_symlink():
+        if _STREAMLIT_SECRETS_SYMLINK.resolve() == desired:
+            return
+        _STREAMLIT_SECRETS_SYMLINK.unlink()
+    elif _STREAMLIT_SECRETS_SYMLINK.is_file():
+        return
+    _STREAMLIT_SECRETS_SYMLINK.symlink_to("../secrets.toml")
+
+
+def _apply_streamlit_secrets_to_environ() -> None:
+    """Inject flat keys from repo-root ``secrets.toml`` (Streamlit + local parity).
+
+    Precedence when ``Config`` loads: process environment, then secrets.toml, then ``.env``.
+    Nested tables (e.g. ``[auth]``) are for Streamlit OIDC only and are not mapped here.
+    """
+    path = _secrets_toml_path()
+    if path is None:
+        return
+    raw = tomllib.loads(path.read_text(encoding="utf-8"))
+    for key, value in raw.items():
+        if isinstance(value, dict):
+            continue
+        env_key = str(key)
+        if isinstance(value, bool):
+            os.environ.setdefault(env_key, "true" if value else "false")
+        else:
+            os.environ.setdefault(env_key, str(value))
+
+
 def load_config() -> Config:
-    """Load configuration from environment variables and ``.env``."""
+    """Load configuration from environment, repo-root ``secrets.toml``, and ``.env``."""
+    _apply_streamlit_secrets_to_environ()
     try:
         return Config()
     except ValidationError as exc:

@@ -26,7 +26,7 @@ def _issue_body(*, text: str, surface: str | None, timestamp: str) -> str:
     lines = [f"**Submitted:** {timestamp}"]
     if surface:
         lines.append(f"**Surface:** {surface}")
-    footer = "_Auto-filed from Grocery Wizard (FEEDBACK_MODE=github)._"
+    footer = "_Auto-filed from Grocery Wizard Send feedback._"
     lines.extend(["", text.rstrip(), "", "---", footer])
     body = "\n".join(lines)
     if len(body) > MAX_FEEDBACK_BODY_CHARS:

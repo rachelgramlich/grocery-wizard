@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import streamlit as st
 
-from src.grocery_wizard.config import load_config
 from src.grocery_wizard.lib.feedback_submit import submit_feedback
 from src.grocery_wizard.ui.ids import control_streamlit_key
 
@@ -14,15 +13,10 @@ _FEEDBACK_WARN_EMPTY = "gw_feedback_warn_empty"
 _FEEDBACK_ERROR_KEY = "gw_feedback_error"
 _FEEDBACK_SUBMIT_KEY = "gw_feedback_submit"
 
-
-def _feedback_caption() -> str:
-    mode = load_config().feedback_mode
-    if mode == "github":
-        return (
-            "Bugs, ideas, and papercuts — submitted to the maintainer inbox on GitHub "
-            "(no GitHub account needed)."
-        )
-    return "Bugs, ideas, and papercuts — saved locally on this machine for later triage."
+_FEEDBACK_CAPTION = (
+    "Bugs, ideas, and papercuts — filed as a GitHub inbox issue for triage "
+    "(you do not need a GitHub account)."
+)
 
 
 def _submit_feedback(*, surface: str | None) -> None:
@@ -50,15 +44,11 @@ def render_feedback_controls(
     """Global feedback expander; ``surface`` is usually the active page slug."""
     expander_key = control_streamlit_key(control_id) if control_id else "gw_feedback"
     with st.expander("Send feedback", expanded=False, key=expander_key):
-        st.caption(_feedback_caption())
+        st.caption(_FEEDBACK_CAPTION)
         flash = st.session_state.pop(_FEEDBACK_FLASH_OK, False)
         if flash:
-            if flash == "local":
-                st.success("Thanks — your note was saved.")
-                st.toast("Feedback saved", icon="✅")
-            else:
-                st.success(f"Thanks — your note was filed ({flash}).")
-                st.toast("Feedback submitted", icon="✅")
+            st.success(f"Thanks — your note was filed ({flash}).")
+            st.toast("Feedback submitted", icon="✅")
         if st.session_state.pop(_FEEDBACK_WARN_EMPTY, False):
             st.warning("Please enter a short note before submitting.")
         if err := st.session_state.pop(_FEEDBACK_ERROR_KEY, None):
