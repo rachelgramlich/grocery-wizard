@@ -26,6 +26,9 @@ def test_loading_indicator_uses_spinner_without_inline_progress() -> None:
     assert "st.spinner" in loading_source
     assert "st.progress" not in loading_source
     assert "_can_update_global_banner()" in loading_source
+    assert "if _can_update_global_banner():" in loading_source
+    fn_body = loading_source.split("def loading_indicator", 1)[1].split("\ndef ", 1)[0]
+    assert fn_body.count("with st.spinner(message):") == 1
 
 
 def test_add_recipe_slow_paths_use_loading_indicator() -> None:

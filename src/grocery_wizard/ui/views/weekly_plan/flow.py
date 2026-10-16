@@ -19,8 +19,10 @@ from src.grocery_wizard.ui.views.weekly_plan.plan_entry import (
     warm_weekly_plan_meal_caches,
 )
 from src.grocery_wizard.ui.views.weekly_plan.state import (
+    PLAN_MEAL_BUILDER_LOADING_KEY,
     _current_plan_names,
     _invalidate_stale_grocery_result,
+    _plan_meals_builder_unlocked,
 )
 from src.grocery_wizard.ui.views.weekly_plan.step_ui import (
     WeeklyRailStep,
@@ -31,7 +33,7 @@ from src.grocery_wizard.ui.views.weekly_plan.step_ui import (
 )
 
 _WEEKLY_RECIPES_WARM_GENERATION_KEY = "_weekly_plan_recipes_warm_generation"
-_WEEKLY_RECIPES_PREFETCH_PAINT_KEY = "_weekly_plan_recipes_prefetch_paint"
+_MEAL_BUILDER_LOADING_MESSAGE = "Preparing your meal builder…"
 
 
 def _weekly_recipes_warm_for_current_cache() -> bool:
@@ -45,19 +47,11 @@ def _load_and_warm_weekly_plan_recipes(db: NotionRecipesDB) -> list[Recipe]:
     return recipes
 
 
-def _prefetch_weekly_plan_recipes(db: NotionRecipesDB) -> None:
-    """Warm Notion recipe + meal-builder caches during Get started (issue #386).
-
-    Streamlit runs synchronously, so we paint step 1 once, ``st.rerun()``, then load
-    on the next run while the user is still on Get started.
-    """
+def _warm_weekly_plan_recipes_quiet(db: NotionRecipesDB) -> list[Recipe]:
+    """Load Notion recipes + meal caches with no loading UI (issue #386)."""
     if _weekly_recipes_warm_for_current_cache():
-        return
-    if not st.session_state.get(_WEEKLY_RECIPES_PREFETCH_PAINT_KEY):
-        st.session_state[_WEEKLY_RECIPES_PREFETCH_PAINT_KEY] = True
-        st.rerun()
-    with loading_indicator("Loading recipes from Notion…"):
-        _load_and_warm_weekly_plan_recipes(db)
+        return cached_query_recipes(db)
+    return _load_and_warm_weekly_plan_recipes(db)
 
 
 @st.fragment(key="weekly_plan_meals")
@@ -89,21 +83,14 @@ def render_create_weekly_plan() -> None:
         nonlocal cached_recipes
         if cached_recipes is not None:
             return cached_recipes
-        if _weekly_recipes_warm_for_current_cache():
-            cached_recipes = cached_query_recipes(db)
-            return cached_recipes
-        with loading_indicator("Loading recipes from Notion…"):
-            cached_recipes = _load_and_warm_weekly_plan_recipes(db)
+        cached_recipes = _warm_weekly_plan_recipes_quiet(db)
         return cached_recipes
 
     if not weekly_plan_has_started():
         with weekly_step_block(WeeklyRailStep.GET_STARTED, recipe_names=recipe_names):
             if not _render_weekly_plan_entry():
                 return
-        _prefetch_weekly_plan_recipes(db)
         return
-
-    _prefetch_weekly_plan_recipes(db)
 
     render_weekly_step_rail(recipe_names=recipe_names)
 
@@ -117,11 +104,21 @@ def render_create_weekly_plan() -> None:
 
     with weekly_step_block(WeeklyRailStep.PLAN_MEALS, recipe_names=recipe_names) as show_plan_meals:
         if show_plan_meals:
-            all_recipes = _recipes_for_weekly_plan()
             meal_count = _render_meal_count_input()
+            if not _plan_meals_builder_unlocked():
+                _warm_weekly_plan_recipes_quiet(db)
             if _render_plan_meal_count_continue(meal_count=meal_count):
                 _sync_plan_length_to_meal_count(meal_count)
-                _weekly_plan_meals_fragment(db, all_recipes, meal_count=meal_count)
+                show_meal_builder_loading = st.session_state.pop(
+                    PLAN_MEAL_BUILDER_LOADING_KEY, False
+                )
+                if show_meal_builder_loading:
+                    with loading_indicator(_MEAL_BUILDER_LOADING_MESSAGE):
+                        all_recipes = _recipes_for_weekly_plan()
+                        _weekly_plan_meals_fragment(db, all_recipes, meal_count=meal_count)
+                else:
+                    all_recipes = _recipes_for_weekly_plan()
+                    _weekly_plan_meals_fragment(db, all_recipes, meal_count=meal_count)
 
     with weekly_step_block(WeeklyRailStep.GROCERY_LIST, recipe_names=recipe_names) as show_grocery:
         if show_grocery:
