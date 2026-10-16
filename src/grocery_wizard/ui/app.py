@@ -16,6 +16,7 @@ from src.grocery_wizard.config import (
     ensure_streamlit_secrets_symlink,
     warn_if_missing_github_feedback_token_when_deployed,
 )
+from src.grocery_wizard.integrations.notion_views import clear_notion_view_url_cache
 from src.grocery_wizard.ui.access_gate import enforce_access_gate
 from src.grocery_wizard.ui.app_title import render_app_title
 from src.grocery_wizard.ui.db_access import get_db
@@ -90,6 +91,7 @@ def _refresh_notion_cache_from_ui() -> None:
     st.session_state[_SKIP_PICKER_RENDER_SYNC] = True
     with loading_indicator("Refreshing from Notion…", use_global_banner=True):
         invalidate_notion_cache()
+        clear_notion_view_url_cache()
     slug = st.session_state[_GW_RENDER_PAGE_SLUG]
     label = page_label_for_slug(slug)
     if label is not None:
