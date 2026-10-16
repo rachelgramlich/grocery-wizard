@@ -108,9 +108,10 @@ def render_create_weekly_plan() -> None:
                         use_global_banner=False,
                     ):
                         all_recipes = _recipes_for_weekly_plan()
+                        render_meals_section(db, all_recipes=all_recipes, meal_count=meal_count)
                 else:
                     all_recipes = _recipes_for_weekly_plan()
-                render_meals_section(db, all_recipes=all_recipes, meal_count=meal_count)
+                    render_meals_section(db, all_recipes=all_recipes, meal_count=meal_count)
 
     with weekly_step_block(WeeklyRailStep.GROCERY_LIST, recipe_names=recipe_names) as show_grocery:
         if show_grocery:

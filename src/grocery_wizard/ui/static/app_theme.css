@@ -273,6 +273,22 @@
         }
 
         /*
+         * Streamlit streams meal-row widgets one at a time during a rerun. While the
+         * batch is in flight, hide every slot row until gw-meals-batch-complete lands.
+         */
+        .stApp:has(p.gw-meals-batch-pending):not(:has(p.gw-meals-batch-complete))
+            [class*="st-key-meal_slot_row_"] {
+            visibility: hidden !important;
+            height: 0 !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
+        /*
          * Meal row: one flex-wrap row for every viewport. Recipe label grows; actions
          * keep their natural width. When the label's minimum width plus the actions no
          * longer fit, the actions wrap under the label (phones) with no media query.

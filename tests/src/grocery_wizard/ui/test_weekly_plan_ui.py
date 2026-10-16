@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import pytest
 from ui_source import APP_PATH, UI_ROOT, apptest_continue_to_meal_builder, ui_source
+
+from tests.notion_test_env import live_notion_smoke_enabled
 
 APP_FILE = str(APP_PATH)
 
@@ -91,6 +94,10 @@ def test_meal_plan_ingredient_filter_before_checkboxes() -> None:
     )
 
 
+@pytest.mark.skipif(
+    not live_notion_smoke_enabled(),
+    reason="Live Notion credentials required for AppTest smoke",
+)
 def test_weekly_plan_build_shows_per_meal_swap() -> None:
     """AppTest smoke test: Build my plan renders per-meal ↺ buttons."""
     from streamlit.testing.v1 import AppTest
@@ -101,6 +108,9 @@ def test_weekly_plan_build_shows_per_meal_swap() -> None:
     continue_buttons = [b for b in at.button if b.label == "Continue"]
     assert continue_buttons, "Weekly plan entry Continue button missing"
     continue_buttons[0].click().run(timeout=120)
+    meal_count_inputs = [n for n in at.number_input if n.label == "How many meals this week?"]
+    if meal_count_inputs:
+        meal_count_inputs[0].set_value(1).run(timeout=120)
     apptest_continue_to_meal_builder(at, timeout=120)
 
     build_buttons = [b for b in at.button if b.label == "Build my plan"]
@@ -233,11 +243,13 @@ def test_plan_meal_count_persists_separate_from_widget_key() -> None:
 
 
 def test_meal_count_widget_outside_meals_fragment() -> None:
-    """Issue #284/#400: meal count lives in flow.py; meal builder is not a nested fragment."""
+    """Issue #284/#400: meal count in flow.py; meals render in main run, not a meals fragment."""
     flow_source = (UI_ROOT / "views" / "weekly_plan" / "flow.py").read_text(encoding="utf-8")
     assert "_render_meal_count_input()" in flow_source
     assert "_sync_plan_length_to_meal_count(meal_count)" in flow_source
     assert "_render_plan_meal_count_continue" in flow_source
+    assert '@st.fragment(key="weekly_plan_meals")' not in flow_source
+    assert "render_meals_section" in flow_source
     plan_entry_source = (UI_ROOT / "views" / "weekly_plan" / "plan_entry.py").read_text(
         encoding="utf-8"
     )
@@ -264,6 +276,7 @@ def test_meal_count_continue_gates_meals_fragment() -> None:
     assert 'key="weekly_plan_meal_count_continue"' in continue_fn
     meal_count_fn = ui_source().split("def _render_meal_count_input", 1)[1].split("\ndef ", 1)[0]
     assert "on_change=_on_plan_meal_count_widget_change" in meal_count_fn
+    assert "_discard_stale_partial_plan" in ui_source()
 
 
 def test_plan_length_syncs_when_meal_count_drops() -> None:
