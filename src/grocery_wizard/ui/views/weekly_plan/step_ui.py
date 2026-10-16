@@ -285,20 +285,21 @@ def render_weekly_step_rail(*, recipe_names: list[str]) -> None:
     subcaption = grocery_rail_subcaption()
     if subcaption:
         st.caption(subcaption)
-    cols = st.columns(len(RAIL_STEP_ORDER))
-    for col, step in zip(cols, RAIL_STEP_ORDER, strict=True):
-        segment_state = _rail_segment_state(
-            step, recipe_names=recipe_names, expanded_step=expanded_step
-        )
-        label = RAIL_STEP_LABELS[step]
-        prefix = "✓ " if segment_state == "done" else ""
-        with col:
-            if st.button(
-                f"{prefix}{label}",
-                key=f"weekly_rail_{step.value}",
-                use_container_width=True,
-                type="primary" if segment_state == "active" else "secondary",
-            ):
-                set_expanded_step(step)
-                queue_weekly_scroll(_BLOCK_ID_BY_STEP[step])
-                st.rerun()
+    with st.container(key="weekly_step_rail"):
+        cols = st.columns(len(RAIL_STEP_ORDER))
+        for col, step in zip(cols, RAIL_STEP_ORDER, strict=True):
+            segment_state = _rail_segment_state(
+                step, recipe_names=recipe_names, expanded_step=expanded_step
+            )
+            label = RAIL_STEP_LABELS[step]
+            prefix = "✓ " if segment_state == "done" else ""
+            with col:
+                if st.button(
+                    f"{prefix}{label}",
+                    key=f"weekly_rail_{step.value}",
+                    use_container_width=True,
+                    type="primary" if segment_state == "active" else "secondary",
+                ):
+                    set_expanded_step(step)
+                    queue_weekly_scroll(_BLOCK_ID_BY_STEP[step])
+                    st.rerun()
