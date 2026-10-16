@@ -136,7 +136,7 @@ def test_weekly_plan_build_shows_per_meal_swap() -> None:
 
 def test_dev_mode_exposes_collapsed_dev_tools_expander() -> None:
     source = ui_source()
-    assert "_render_dev_jump_tools(db)" in source
+    assert "_render_dev_jump_tools(db, all_recipes)" in source
     assert 'st.expander("Dev: tools", expanded=False)' in source
     assert '_weekly_plan_mode() != "dev"' in source
     assert "commit_dev_jump" in source

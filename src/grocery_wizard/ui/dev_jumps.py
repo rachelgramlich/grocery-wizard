@@ -106,6 +106,7 @@ def resolve_dev_jump_meal_names(
     *,
     meal_count: int,
     force_auto: bool = False,
+    recipes: list[Recipe] | None = None,
 ) -> list[str]:
     """Manual multiselect wins over auto sample unless *force_auto* is True."""
     if not force_auto:
@@ -113,7 +114,8 @@ def resolve_dev_jump_meal_names(
         cleaned_manual = [name for name in manual if name.strip()]
         if cleaned_manual:
             return cleaned_manual
-    return pick_default_recipe_names(db.query_recipes(), meal_count=meal_count)
+    pool = recipes if recipes is not None else db.query_recipes()
+    return pick_default_recipe_names(pool, meal_count=meal_count)
 
 
 def sync_dev_manual_multiselect(session_state: Any) -> None:

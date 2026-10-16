@@ -462,7 +462,7 @@ def _render_slot_manual_popover(
         )
 
 
-def _render_dev_jump_tools(db: NotionRecipesDB) -> None:
+def _render_dev_jump_tools(db: NotionRecipesDB, all_recipes: list) -> None:
     """Collapsed dev-only shortcuts to wizard steps for manual UAT."""
     if _weekly_plan_mode() != "dev":
         return
@@ -501,7 +501,7 @@ def _render_dev_jump_tools(db: NotionRecipesDB) -> None:
         for step in DEV_JUMP_FLOW_ORDER:
             _dev_jump_bullet(step)
 
-        all_names = sorted({recipe.name for recipe in db.query_recipes()}, key=str.lower)
+        all_names = sorted({recipe.name for recipe in all_recipes}, key=str.lower)
         manual_pick = st.multiselect(
             "Choose recipes manually",
             options=all_names,
@@ -517,11 +517,13 @@ def _render_dev_jump_tools(db: NotionRecipesDB) -> None:
             db,
             meal_count=meal_count,
             force_auto=True,
+            recipes=all_recipes,
         )
         jump_names = resolve_dev_jump_meal_names(
             st.session_state,
             db,
             meal_count=meal_count,
+            recipes=all_recipes,
         )
         _dev_jump_button(
             DevJumpTarget.MEALS_FILLED,
@@ -1024,7 +1026,7 @@ def render_meals_section(
     meal_count: int,
 ) -> list[str]:
     """Render step 1 (meals) and return the current planned recipe names."""
-    _render_dev_jump_tools(db)
+    _render_dev_jump_tools(db, all_recipes)
 
     current_plan = _current_plan_names()
     fallback_filters = default_filters(db.schema.all_columns)
