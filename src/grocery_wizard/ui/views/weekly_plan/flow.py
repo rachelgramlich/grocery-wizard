@@ -113,7 +113,10 @@ def render_create_weekly_plan() -> None:
                     PLAN_MEAL_BUILDER_LOADING_KEY, False
                 )
                 if show_meal_builder_loading:
-                    with loading_indicator(_MEAL_BUILDER_LOADING_MESSAGE):
+                    with loading_indicator(
+                        _MEAL_BUILDER_LOADING_MESSAGE,
+                        use_global_banner=False,
+                    ):
                         all_recipes = _recipes_for_weekly_plan()
                         _weekly_plan_meals_fragment(db, all_recipes, meal_count=meal_count)
                 else:

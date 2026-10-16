@@ -41,7 +41,9 @@ def test_plan_meals_warms_recipes_quietly_before_meal_count_continue() -> None:
     )
     assert plan_block.count("cached_query_recipes(") == 0
     assert flow_source.count("cached_query_recipes(") == 2
-    assert "loading_indicator" in plan_block.split("_render_plan_meal_count_continue", 1)[1]
+    meal_builder_block = plan_block.split("_render_plan_meal_count_continue", 1)[1]
+    assert "loading_indicator" in meal_builder_block
+    assert "use_global_banner=False" in meal_builder_block
 
 
 def test_prebuild_manual_picker_lazy_when_collapsed() -> None:

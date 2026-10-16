@@ -56,13 +56,14 @@ def _refresh_global_banner() -> None:
 
 
 @contextmanager
-def loading_indicator(message: str) -> Iterator[None]:
+def loading_indicator(message: str, *, use_global_banner: bool = True) -> Iterator[None]:
     """Show loading UI while ``message`` work runs.
 
-    Full-app reruns use the top banner only (no duplicate inline spinner).
-    Fragment reruns use ``st.spinner`` (the banner slot is not writable).
+    By default, full-app reruns use the top banner only (no duplicate inline spinner).
+    Pass ``use_global_banner=False`` for a single inline ``st.spinner`` in the active block.
+    Fragment reruns always use ``st.spinner`` (the banner slot is not writable).
     """
-    if _can_update_global_banner():
+    if use_global_banner and _can_update_global_banner():
         st.session_state[GW_BUSY_MESSAGE_KEY] = message
         _refresh_global_banner()
         try:
