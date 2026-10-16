@@ -966,13 +966,11 @@ def render_meals_section(
     stored_filters = st.session_state.get("plan_last_week_filters", fallback_filters)
     ingredient_index = _ingredient_index_for_filters(all_recipes, stored_filters)
     plan_slots = len(current_plan)
-    meal_slots = int(meal_count)
     has_plan = plan_slots > 0
-    plan_incomplete = has_plan and plan_slots < meal_slots
     if st.session_state.pop(PLAN_FORCE_OPEN_1A_KEY, False):
         st.session_state[PLAN_BUILDER_POPOVER_KEY] = True
 
-    if not has_plan or plan_incomplete:
+    if not has_plan:
         week_filters = _render_generate_plan_controls(
             db,
             all_recipes=all_recipes,
