@@ -17,6 +17,7 @@ from src.grocery_wizard.config import (
     warn_if_missing_github_feedback_token_when_deployed,
 )
 from src.grocery_wizard.ui.access_gate import enforce_access_gate
+from src.grocery_wizard.ui.app_title import render_app_title
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.feedback import render_feedback_controls
 from src.grocery_wizard.ui.ids import (
@@ -132,7 +133,7 @@ def main() -> None:
     )
     inject_app_styles()
     enforce_access_gate()
-    st.title("Grocery Wizard")
+    render_app_title()
     mount_global_loading_banner()
 
     _init_page_navigation_state()
