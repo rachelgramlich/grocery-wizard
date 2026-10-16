@@ -147,7 +147,7 @@ def test_build_grocery_list_splits_compound_ingredients(tmp_path: Path) -> None:
 
     assert any(item.lower() == "naan bread" for item in items)
     assert "cilantro" in items
-    assert "limes" in items
+    assert any(item == "1 limes" for item in items)
     assert "rice" not in items
     assert "naan bread and rice" not in items
     assert "cilantro and lime wedges" not in items

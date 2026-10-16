@@ -933,6 +933,8 @@ def _build_storage_line(
             qty = _amount_quantity(selected)
             if qty is not None:
                 return f"{_format_qty(qty)} {fruit}"
+        if re.search(r"\b(?:lime|lemon)\s+wedges?\b", context, re.IGNORECASE):
+            return f"1 {fruit}"
         return fruit
 
     if selected is None:

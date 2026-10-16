@@ -23,8 +23,8 @@
   {
     "recipe": "Chickpea curry",
     "raw_line": "Chopped fresh cilantro lime wedges, for garnish (optional)",
-    "expect_after_prepare": "cilantro lime wedges",
-    "expect_normalized": "cilantro lime wedges",
+    "expect_after_prepare": "cilantro\n1 limes",
+    "expect_normalized": "cilantro|limes",
     "notes": "optional, parenthetical"
   },
   {
