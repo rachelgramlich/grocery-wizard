@@ -10,7 +10,7 @@ def test_weekly_plan_uses_fragments_for_meals_and_grocery() -> None:
     assert '@st.fragment(key="weekly_plan_meals")' in source
     assert '@st.fragment(key="weekly_plan_grocery")' in source
     assert "_weekly_plan_meals_fragment" in source
-    assert "Loading recipes from Notion" in source
+    assert "Preparing your meal builder" in source
 
 
 def test_meal_slot_manual_picker_uses_per_slot_fragment() -> None:
@@ -28,19 +28,20 @@ def test_ingredient_filter_single_searchable_multiselect() -> None:
     assert "_ingredient_narrow" in render_fn
 
 
-def test_plan_meals_loads_recipes_before_meal_count_and_dedupes() -> None:
-    """Issue #336: show Notion load before meal count; one recipe fetch per rerun."""
+def test_plan_meals_warms_recipes_quietly_before_meal_count_continue() -> None:
+    """Issue #386: no loading UI until meal-count Continue; quiet warm while picking count."""
     flow_source = (UI_ROOT / "views" / "weekly_plan" / "flow.py").read_text(encoding="utf-8")
     plan_block = flow_source.split("WeeklyRailStep.PLAN_MEALS", 1)[1].split(
         "WeeklyRailStep.GROCERY_LIST", 1
     )[0]
-    assert "_recipes_for_weekly_plan()" in plan_block
-    assert plan_block.index("_recipes_for_weekly_plan()") < plan_block.index(
-        "_render_meal_count_input()"
+    assert "_render_meal_count_input()" in plan_block
+    assert "_warm_weekly_plan_recipes_quiet" in plan_block
+    assert plan_block.index("_render_meal_count_input()") < plan_block.index(
+        "_warm_weekly_plan_recipes_quiet"
     )
     assert plan_block.count("cached_query_recipes(") == 0
     assert flow_source.count("cached_query_recipes(") == 2
-    assert flow_source.count("_load_and_warm_weekly_plan_recipes(") >= 2
+    assert "loading_indicator" in plan_block.split("_render_plan_meal_count_continue", 1)[1]
 
 
 def test_prebuild_manual_picker_lazy_when_collapsed() -> None:
@@ -56,34 +57,27 @@ def test_prebuild_manual_picker_lazy_when_collapsed() -> None:
     assert "_manual_pick_recipes" in prebuild.split("if manual_popover.open", 1)[1]
 
 
-def test_meal_builder_caches_warm_during_recipe_load() -> None:
+def test_meal_builder_caches_warm_with_recipe_load() -> None:
     """Issue #386: ingredient index builds with Notion load, not after meal-count Continue."""
     flow_source = (UI_ROOT / "views" / "weekly_plan" / "flow.py").read_text(encoding="utf-8")
     assert "warm_weekly_plan_meal_caches" in flow_source
-    assert "_load_and_warm_weekly_plan_recipes" in flow_source
     warm_fn = flow_source.split("def _load_and_warm_weekly_plan_recipes", 1)[1].split("\n\n", 1)[0]
     assert "cached_query_recipes" in warm_fn
     assert "warm_weekly_plan_meal_caches" in warm_fn
-    prefetch_fn = flow_source.split("def _prefetch_weekly_plan_recipes", 1)[1].split("\n\n@", 1)[0]
-    assert "_load_and_warm_weekly_plan_recipes" in prefetch_fn
-
-
-def test_weekly_recipes_prefetch_starts_on_get_started() -> None:
-    """Issue #386: begin Notion recipe load during step 1 (Get started), not at Plan meals."""
-    flow_source = (UI_ROOT / "views" / "weekly_plan" / "flow.py").read_text(encoding="utf-8")
-    get_started_path = flow_source.split("if not weekly_plan_has_started():", 1)[1].split(
-        "render_weekly_step_rail", 1
-    )[0]
-    assert "_prefetch_weekly_plan_recipes" in get_started_path
-    assert "_WEEKLY_RECIPES_PREFETCH_PAINT_KEY" in flow_source
-    assert (
-        "st.rerun()"
-        in flow_source.split("def _prefetch_weekly_plan_recipes", 1)[1].split("\n\n@", 1)[0]
-    )
+    assert "_prefetch_weekly_plan_recipes" not in flow_source
 
     plan_entry = (UI_ROOT / "views" / "weekly_plan" / "plan_entry.py").read_text(encoding="utf-8")
     meals_section = plan_entry.split("def render_meals_section", 1)[1].split("\ndef ", 1)[0]
     assert "Loading your meals" not in meals_section
+
+
+def test_get_started_does_not_prefetch_recipes() -> None:
+    flow_source = (UI_ROOT / "views" / "weekly_plan" / "flow.py").read_text(encoding="utf-8")
+    get_started_path = flow_source.split("if not weekly_plan_has_started():", 1)[1].split(
+        "render_weekly_step_rail", 1
+    )[0]
+    assert "_warm_weekly_plan_recipes_quiet" not in get_started_path
+    assert "loading_indicator" not in get_started_path
 
 
 def test_long_actions_show_spinners() -> None:
