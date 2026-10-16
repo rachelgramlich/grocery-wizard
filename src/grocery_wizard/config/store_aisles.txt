@@ -306,6 +306,7 @@ roll
 croissant
 
 # --- nuts/desserts: Nuts dessert & dried fruit ---
+apple chips
 toasted unsweetened coconut flakes
 unsweetened coconut flakes
 dry coconut flakes
@@ -563,6 +564,9 @@ canned
 beans
 
 # --- frozen: Frozen ---
+cauliflower rice
+riced cauliflower
+frozen cauliflower rice
 eomuk
 hash browns
 hash brown
