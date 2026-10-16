@@ -69,6 +69,42 @@ Submitted notes open issues labeled **`user-feedback-inbox`**. Promote to backlo
 4. Submit **Send feedback**; confirm a new GitHub issue with label `user-feedback-inbox`.
 5. In browser DevTools → Network, confirm no `NOTION_*` or `GITHUB_*` values appear in responses.
 
+### Streamlit Community Cloud — deploy UI
+
+- **Create app** → **“Yup, I have an app”** (do **not** use the template / “create a repository” path).
+- Repository: **`rachelgramlich/grocery-wizard`**, branch **`main`**, file **`src/grocery_wizard/ui/app.py`**.
+- Private repo: grant Community Cloud access to **private** repos in account settings, or **Paste GitHub URL** to the entrypoint file on GitHub.
+- **Custom subdomain** (e.g. `grocerywizard.streamlit.app`) only changes the public URL — not a new GitHub repo.
+
+### Google OAuth — production redirect
+
+Register **both** in the Google Cloud OAuth client (**Authorized redirect URIs**):
+
+- `http://localhost:8501/oauth2callback` (local)
+- `https://<your-subdomain>.streamlit.app/oauth2callback` (must match **`[auth].redirect_uri`** in Cloud Secrets exactly)
+
+On the OAuth **consent screen**, add authorized domain **`streamlit.app`**. Keep household emails as **Test users** while the app is in Testing.
+
+## Post-setup (phases 4–6)
+
+| Phase | Topic | Tracking |
+| --- | --- | --- |
+| **4** | Replace dev `gh auth token` with **fine-grained PAT** (`issues:write` on this repo only) in Streamlit Cloud Secrets; document rotation when Notion/GitHub keys rotate | GitHub issue (backlog) |
+| **5** | Triage **`user-feedback-inbox`** → **`grocery-wizard`** backlog | [#355](https://github.com/rachelgramlich/grocery-wizard/issues/355) (`/promote-feedback-inbox` or similar) |
+| **6** | Optional **NYT Cooking** sync on hosted app (`NYT_S_COOKIE`, `NYT_REGI_ID` in Cloud Secrets; cookies expire) | GitHub issue (backlog) |
+
+List inbox issues: `gh issue list --label user-feedback-inbox --state open --repo rachelgramlich/grocery-wizard`
+
+## Troubleshooting
+
+| Symptom | Likely cause | Fix |
+| --- | --- | --- |
+| Google “doesn't comply with OAuth 2.0 policy” / redirect | Prod URI not registered | Add `https://….streamlit.app/oauth2callback` in Google **and** Cloud `[auth].redirect_uri` |
+| `StreamlitMissingAuthlibError` | Missing `streamlit[auth]` deps | `uv sync` / `just setup` on `main` (see #359) |
+| Feedback `GITHUB_FEEDBACK_TOKEN` | Missing or revoked token | Update Cloud Secrets; prefer fine-grained PAT (phase 4) |
+| Notion key missing locally | No `secrets.toml` | Copy `secrets.toml.example` → `secrets.toml`; `just link-secrets` |
+| App auth OK but “not authorized” | Email not on allowlist | `GROCERY_WIZARD_AUTH_EMAIL_ALLOWLIST` in secrets |
+
 ## Staging Notion
 
-**Deferred** for household MVP — single production Notion integration; revert test writes per `AGENTS.md` UAT rules.
+**Deferred** — [#356](https://github.com/rachelgramlich/grocery-wizard/issues/356). Household MVP uses one production Notion integration; revert test writes per `AGENTS.md` UAT rules.
