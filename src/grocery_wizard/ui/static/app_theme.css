@@ -262,8 +262,13 @@
             font-weight: inherit;
         }
 
-        [data-testid="stVerticalBlock"]:has(p.gw-meal-slot-list) [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) {
-            margin-left: 1.25rem !important;
+        [data-testid="stVerticalBlock"]:has(p.gw-meal-slot-list) p.gw-meal-slot-label {
+            margin: 0.5rem 0 0.2rem 0.75rem;
+        }
+
+        [data-testid="stVerticalBlock"]:has(p.gw-meal-slot-list) [class*="st-key-meal_slot_action_row"] {
+            margin: 0 0 0.65rem 0.75rem;
+            max-width: 100%;
         }
 
         [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) {
@@ -298,11 +303,16 @@
             white-space: normal !important;
         }
 
-        [class*="st-key-meal_slot_action_row"],
+        [class*="st-key-meal_slot_action_row"] {
+            width: 100% !important;
+            max-width: 100% !important;
+            flex-wrap: wrap !important;
+        }
+
         [class*="st-key-meal_slot_action_row"] [data-testid="stHorizontalBlock"] {
-            width: auto !important;
-            min-width: max-content !important;
-            flex: 0 0 auto !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            flex-wrap: wrap !important;
         }
 
         /* Weekly plan meal + week actions: show full button labels (no ellipsis). */
@@ -790,17 +800,56 @@
             }
 
             /* Refresh + feedback: stack full-width tap targets under the title. */
+            [class*="st-key-gw_global_header"] [data-testid="stHorizontalBlock"],
             [data-testid="stVerticalBlock"]:has(p.gw-global-header-actions)
-                > [data-testid="stHorizontalBlock"] {
+                [data-testid="stHorizontalBlock"] {
                 flex-direction: column !important;
                 gap: 0.5rem !important;
             }
 
+            [class*="st-key-gw_global_header"] [data-testid="stColumn"],
             [data-testid="stVerticalBlock"]:has(p.gw-global-header-actions)
                 [data-testid="stColumn"] {
                 width: 100% !important;
                 min-width: 0 !important;
                 flex: 1 1 auto !important;
+            }
+
+            [class*="st-key-gw_global_header"] .stButton,
+            [class*="st-key-gw_global_header"] .stPopover {
+                width: 100% !important;
+            }
+
+            [class*="st-key-meal_slot_action_row"] {
+                margin-left: 0.35rem !important;
+                margin-right: 0 !important;
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
+                flex-wrap: wrap !important;
+                gap: 0.35rem !important;
+            }
+
+            [class*="st-key-meal_slot_action_row"] .stButton,
+            [class*="st-key-meal_slot_action_row"] .stPopover,
+            [class*="st-key-meal_slot_action_row"] [data-testid="stElementContainer"] {
+                width: auto !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
+                flex: 1 1 auto !important;
+            }
+
+            [class*="st-key-meal_slot_action_row"] button,
+            [class*="st-key-meal_slot_action_row"] .stPopover button {
+                min-width: 0 !important;
+                max-width: 100% !important;
+            }
+
+            [class*="st-key-weekly_block_"]:has(
+                p.gw-weekly-block-anchor[data-gw-weekly-state="active"][data-gw-weekly-expanded="true"]
+            ) {
+                margin-left: 0 !important;
+                padding-left: 0.5rem !important;
             }
 
             /* Page picker: two columns of segments, taller segments. */
