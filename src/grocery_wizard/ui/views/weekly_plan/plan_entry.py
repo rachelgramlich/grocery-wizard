@@ -225,9 +225,6 @@ def _render_prebuild_recipe_picker(
     ingredient_index: dict[str, set[str]],
 ) -> None:
     """Popover picker: filter → pin → repeat, before **Build my plan**."""
-    db = get_db()
-    manual_recipes = _manual_pick_recipes(all_recipes, db)
-    all_names = sorted({recipe.name for recipe in manual_recipes}, key=str.lower)
     max_pins = max(1, int(meal_count))
     current = _current_plan_names()
     if "plan_prebuild_pinned_recipes" not in st.session_state and current:
@@ -235,7 +232,7 @@ def _render_prebuild_recipe_picker(
     _clamp_prebuild_pinned_recipes(max_pins=max_pins)
     pinned = list(st.session_state.get("plan_prebuild_pinned_recipes") or [])
 
-    if not all_names:
+    if not all_recipes:
         st.caption("No recipes in Notion yet — add recipes to pin meals before building.")
         return
 
@@ -248,6 +245,12 @@ def _render_prebuild_recipe_picker(
         on_change="rerun",
     ) as manual_popover:
         if manual_popover.open:
+            db = get_db()
+            manual_recipes = _manual_pick_recipes(all_recipes, db)
+            all_names = sorted({recipe.name for recipe in manual_recipes}, key=str.lower)
+            if not all_names:
+                st.warning("No recipes are available to pin with the current meal-plan rules.")
+                return
             st.caption(
                 "Pick a recipe directly or use filters, then pin. Repeat until "
                 "you have as many locked meals as you want."
@@ -660,6 +663,11 @@ def _cached_plan_ingredient_index(all_recipes: list) -> dict[str, set[str]]:
     return st.session_state["_ingredient_index"]
 
 
+def warm_weekly_plan_meal_caches(all_recipes: list) -> None:
+    """Precompute meal-builder caches while recipes load (before meal-count Continue)."""
+    _cached_plan_ingredient_index(all_recipes)
+
+
 def _render_generate_plan_controls(
     db: NotionRecipesDB,
     *,
@@ -930,41 +938,40 @@ def render_meals_section(
     meal_count: int,
 ) -> list[str]:
     """Render step 1 (meals) and return the current planned recipe names."""
-    with loading_indicator("Loading your meals…"):
-        _render_dev_jump_tools(db)
+    _render_dev_jump_tools(db)
 
-        ingredient_index = _cached_plan_ingredient_index(all_recipes)
-        current_plan = _current_plan_names()
-        fallback_filters = default_filters(db.schema.all_columns)
-        stored_filters = st.session_state.get("plan_last_week_filters", fallback_filters)
-        has_plan = bool(current_plan)
-        if st.session_state.pop(PLAN_FORCE_OPEN_1A_KEY, False):
-            st.session_state[PLAN_BUILDER_POPOVER_KEY] = True
+    ingredient_index = _cached_plan_ingredient_index(all_recipes)
+    current_plan = _current_plan_names()
+    fallback_filters = default_filters(db.schema.all_columns)
+    stored_filters = st.session_state.get("plan_last_week_filters", fallback_filters)
+    has_plan = bool(current_plan)
+    if st.session_state.pop(PLAN_FORCE_OPEN_1A_KEY, False):
+        st.session_state[PLAN_BUILDER_POPOVER_KEY] = True
 
-        if has_plan:
-            _render_built_plan_meals(
-                db,
-                all_recipes=all_recipes,
-                meal_count=meal_count,
-                week_filters=stored_filters,
-                ingredient_index=ingredient_index,
-            )
-            week_filters = st.session_state.get("plan_last_week_filters", stored_filters)
-        else:
-            week_filters = _render_generate_plan_controls(
-                db,
-                all_recipes=all_recipes,
-                meal_count=meal_count,
-                ingredient_index=ingredient_index,
-                show_section_heading=True,
-            )
-            _render_built_plan_meals(
-                db,
-                all_recipes=all_recipes,
-                meal_count=meal_count,
-                week_filters=week_filters,
-                ingredient_index=ingredient_index,
-            )
-        st.session_state.plan_last_week_filters = week_filters
+    if has_plan:
+        _render_built_plan_meals(
+            db,
+            all_recipes=all_recipes,
+            meal_count=meal_count,
+            week_filters=stored_filters,
+            ingredient_index=ingredient_index,
+        )
+        week_filters = st.session_state.get("plan_last_week_filters", stored_filters)
+    else:
+        week_filters = _render_generate_plan_controls(
+            db,
+            all_recipes=all_recipes,
+            meal_count=meal_count,
+            ingredient_index=ingredient_index,
+            show_section_heading=True,
+        )
+        _render_built_plan_meals(
+            db,
+            all_recipes=all_recipes,
+            meal_count=meal_count,
+            week_filters=week_filters,
+            ingredient_index=ingredient_index,
+        )
+    st.session_state.plan_last_week_filters = week_filters
 
     return _current_plan_names()

@@ -14,7 +14,6 @@ def test_app_mounts_global_loading_banner() -> None:
 def test_long_actions_use_loading_indicator() -> None:
     source = ui_source()
     assert "Building your meal plan" in source
-    assert "Loading your meals" in source
     assert "Preparing ingredient review" in source
     assert "Building grocery list" in source
     assert "Refreshing from Notion" in source

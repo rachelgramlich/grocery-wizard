@@ -39,7 +39,8 @@ def test_plan_meals_loads_recipes_before_meal_count_and_dedupes() -> None:
         "_render_meal_count_input()"
     )
     assert plan_block.count("cached_query_recipes(") == 0
-    assert flow_source.count("cached_query_recipes(") == 1
+    assert flow_source.count("cached_query_recipes(") == 2
+    assert flow_source.count("_load_and_warm_weekly_plan_recipes(") >= 2
 
 
 def test_prebuild_manual_picker_lazy_when_collapsed() -> None:
@@ -52,6 +53,37 @@ def test_prebuild_manual_picker_lazy_when_collapsed() -> None:
     assert "_render_filtered_recipe_picker" in prebuild
     assert 'on_change="rerun"' in prebuild
     assert "if manual_popover.open" in prebuild
+    assert "_manual_pick_recipes" in prebuild.split("if manual_popover.open", 1)[1]
+
+
+def test_meal_builder_caches_warm_during_recipe_load() -> None:
+    """Issue #386: ingredient index builds with Notion load, not after meal-count Continue."""
+    flow_source = (UI_ROOT / "views" / "weekly_plan" / "flow.py").read_text(encoding="utf-8")
+    assert "warm_weekly_plan_meal_caches" in flow_source
+    assert "_load_and_warm_weekly_plan_recipes" in flow_source
+    warm_fn = flow_source.split("def _load_and_warm_weekly_plan_recipes", 1)[1].split("\n\n", 1)[0]
+    assert "cached_query_recipes" in warm_fn
+    assert "warm_weekly_plan_meal_caches" in warm_fn
+    prefetch_fn = flow_source.split("def _prefetch_weekly_plan_recipes", 1)[1].split("\n\n@", 1)[0]
+    assert "_load_and_warm_weekly_plan_recipes" in prefetch_fn
+
+
+def test_weekly_recipes_prefetch_starts_on_get_started() -> None:
+    """Issue #386: begin Notion recipe load during step 1 (Get started), not at Plan meals."""
+    flow_source = (UI_ROOT / "views" / "weekly_plan" / "flow.py").read_text(encoding="utf-8")
+    get_started_path = flow_source.split("if not weekly_plan_has_started():", 1)[1].split(
+        "render_weekly_step_rail", 1
+    )[0]
+    assert "_prefetch_weekly_plan_recipes" in get_started_path
+    assert "_WEEKLY_RECIPES_PREFETCH_PAINT_KEY" in flow_source
+    assert (
+        "st.rerun()"
+        in flow_source.split("def _prefetch_weekly_plan_recipes", 1)[1].split("\n\n@", 1)[0]
+    )
+
+    plan_entry = (UI_ROOT / "views" / "weekly_plan" / "plan_entry.py").read_text(encoding="utf-8")
+    meals_section = plan_entry.split("def render_meals_section", 1)[1].split("\ndef ", 1)[0]
+    assert "Loading your meals" not in meals_section
 
 
 def test_long_actions_show_spinners() -> None:
