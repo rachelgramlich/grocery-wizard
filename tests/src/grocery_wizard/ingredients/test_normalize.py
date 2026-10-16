@@ -440,7 +440,16 @@ def test_aggregate_amounts_consolidates_lemon_variants_with_two_whole() -> None:
         parse_amount(clean_ingredient_line_for_storage("zest of 1 lemon"))[1],
         parse_amount(clean_ingredient_line_for_storage("2 lemons"))[1],
     ]
-    assert aggregate_amounts(amounts) == "3"
+    assert aggregate_amounts(amounts) == "4"
+
+
+def test_aggregate_amounts_consolidates_lime_variants() -> None:
+    amounts = [
+        parse_amount("juice of 1 lime")[1],
+        parse_amount("zest of 1 lime")[1],
+        parse_amount("1/2 lime, juiced")[1],
+    ]
+    assert aggregate_amounts(amounts, name="limes") == "3"
 
 
 def test_aggregate_amounts_garlic_cloves_do_not_sum() -> None:
@@ -694,7 +703,8 @@ def test_lemon_juice_not_filtered_as_junk() -> None:
     """'lemon juice' must not be classified as junk (regression for 'juice' removal)."""
     assert not is_junk_ingredient("lemon juice")
     assert not is_junk_ingredient("lime juice")
-    assert normalize_ingredient("lemon juice") != ""
+    assert normalize_ingredient("lemon juice") == "lemons"
+    assert normalize_ingredient("lime juice") == "limes"
 
 
 @pytest.mark.parametrize(
