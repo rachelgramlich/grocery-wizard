@@ -6,7 +6,6 @@ import streamlit as st
 
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 from src.grocery_wizard.ui.db_access import get_db
-from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.notion_cache import cached_query_recipes, notion_cache_generation
 from src.grocery_wizard.ui.views.weekly_plan.grocery_list_ui import render_grocery_list_section
 from src.grocery_wizard.ui.views.weekly_plan.plan_entry import (
@@ -18,7 +17,6 @@ from src.grocery_wizard.ui.views.weekly_plan.plan_entry import (
     render_meals_section,
 )
 from src.grocery_wizard.ui.views.weekly_plan.state import (
-    PLAN_MEAL_BUILDER_LOADING_KEY,
     _current_plan_names,
     _invalidate_stale_grocery_result,
     _plan_meals_builder_unlocked,
@@ -32,7 +30,6 @@ from src.grocery_wizard.ui.views.weekly_plan.step_ui import (
 )
 
 _WEEKLY_RECIPES_WARM_GENERATION_KEY = "_weekly_plan_recipes_warm_generation"
-_MEAL_BUILDER_LOADING_MESSAGE = "Preparing your meal builder…"
 
 
 def _weekly_recipes_warm_for_current_cache() -> bool:
@@ -107,19 +104,8 @@ def render_create_weekly_plan() -> None:
                 _warm_weekly_plan_recipes_quiet(db)
             if _render_plan_meal_count_continue(meal_count=meal_count):
                 _sync_plan_length_to_meal_count(meal_count)
-                show_meal_builder_loading = st.session_state.pop(
-                    PLAN_MEAL_BUILDER_LOADING_KEY, False
-                )
-                if show_meal_builder_loading:
-                    with loading_indicator(
-                        _MEAL_BUILDER_LOADING_MESSAGE,
-                        use_global_banner=False,
-                    ):
-                        all_recipes = _recipes_for_weekly_plan()
-                        _weekly_plan_meals_fragment(db, all_recipes, meal_count=meal_count)
-                else:
-                    all_recipes = _recipes_for_weekly_plan()
-                    _weekly_plan_meals_fragment(db, all_recipes, meal_count=meal_count)
+                all_recipes = _recipes_for_weekly_plan()
+                _weekly_plan_meals_fragment(db, all_recipes, meal_count=meal_count)
 
     with weekly_step_block(WeeklyRailStep.GROCERY_LIST, recipe_names=recipe_names) as show_grocery:
         if show_grocery:
