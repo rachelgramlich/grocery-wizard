@@ -21,8 +21,10 @@ _REQUIRED_MOBILE_CSS_FRAGMENTS = (
     "st-key-meal_slot_row_",
     "p.gw-meal-slot-row-anchor",
     "@media (max-width: 768px)",
-    "display: block",
     "gw-meal-slot-row-anchor",
+    "st-key-weekly_step_rail",
+    "st-key-plan_week_action_row",
+    '[data-testid="stMarkdownContainer"]:has(> p.gw-meal-slot-label)',
 )
 
 
@@ -44,3 +46,29 @@ def test_meal_rows_use_stackable_container_keys() -> None:
     plan_entry = (UI_ROOT / "views" / "weekly_plan" / "plan_entry.py").read_text(encoding="utf-8")
     assert 'key=f"meal_slot_row_{index}"' in plan_entry
     assert "gw-meal-slot-row-anchor" in plan_entry
+
+
+def test_meal_row_wraps_with_one_flex_rule_not_a_display_hack() -> None:
+    """Meal rows wrap on their own; stacking hacks fought Streamlit's -1rem markdown margin."""
+    css = app_theme_css()
+    row_rule = css.split('[data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) {', 1)[1]
+    row_rule = row_rule.split("}", 1)[0]
+    assert "flex-wrap: wrap !important" in row_rule
+    assert "flex-direction" not in row_rule
+    label_fix = css.split('[data-testid="stMarkdownContainer"]:has(> p.gw-meal-slot-label) {', 1)[1]
+    assert "margin-bottom: 0 !important" in label_fix.split("}", 1)[0]
+    mobile = css.split("@media (max-width: 768px)", 1)[1]
+    assert "display: block" not in mobile
+
+
+def test_mobile_rules_are_scoped_to_keyed_containers_not_ancestor_anchors() -> None:
+    """``stVerticalBlock:has(p.anchor)`` also matches the page block and restyles every row."""
+    css = app_theme_css()
+    mobile = css.split("@media (max-width: 480px)", 1)[1]
+    for anchor in (
+        "gw-global-header-actions",
+        "gw-global-page-picker-anchor",
+        "gw-weekly-rail-anchor",
+        "gw-plan-week-actions",
+    ):
+        assert f'stVerticalBlock"]:has(p.{anchor})' not in mobile, anchor
