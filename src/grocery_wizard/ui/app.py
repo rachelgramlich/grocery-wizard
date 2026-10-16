@@ -98,20 +98,22 @@ def _refresh_notion_cache_from_ui() -> None:
 
 def _render_global_header_controls(*, surface: str | None) -> None:
     """Refresh and feedback centered under the app title, above the page picker."""
-    _left, _center, _right = st.columns([1, 2, 1])
-    with _center:
-        refresh_col, feedback_col = st.columns(2)
-        with refresh_col:
-            st.button(
-                "Refresh from Notion",
-                key=control_streamlit_key(CONTROL_GLOBAL_REFRESH),
-                type="secondary",
-                use_container_width=True,
-                help="Reload recipes, pantry, saved plans, and database column options from Notion",
-                on_click=_refresh_notion_cache_from_ui,
-            )
-        with feedback_col:
-            render_feedback_controls(surface=surface, control_id=CONTROL_GLOBAL_FEEDBACK)
+    st.markdown(
+        '<p class="gw-global-header-actions" aria-hidden="true"></p>',
+        unsafe_allow_html=True,
+    )
+    _pad_left, refresh_col, feedback_col, _pad_right = st.columns(4)
+    with refresh_col:
+        st.button(
+            "Refresh from Notion",
+            key=control_streamlit_key(CONTROL_GLOBAL_REFRESH),
+            type="secondary",
+            use_container_width=True,
+            help="Reload recipes, pantry, saved plans, and database column options from Notion",
+            on_click=_refresh_notion_cache_from_ui,
+        )
+    with feedback_col:
+        render_feedback_controls(surface=surface, control_id=CONTROL_GLOBAL_FEEDBACK)
 
 
 def main() -> None:
@@ -136,6 +138,7 @@ def main() -> None:
         PAGE_PICKER_LABELS,
         key=_PAGE_PICKER_SESSION_KEY,
         label_visibility="collapsed",
+        width="stretch",
         persist_state="session",
         on_change=_on_active_page_change,
     )
