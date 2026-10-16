@@ -13,11 +13,6 @@ _FEEDBACK_WARN_EMPTY = "gw_feedback_warn_empty"
 _FEEDBACK_ERROR_KEY = "gw_feedback_error"
 _FEEDBACK_SUBMIT_KEY = "gw_feedback_submit"
 
-_FEEDBACK_CAPTION = (
-    "Bugs, ideas, and papercuts — filed as a GitHub inbox issue for triage "
-    "(you do not need a GitHub account)."
-)
-
 
 def _submit_feedback(*, surface: str | None) -> None:
     """Button callback — runs before widgets on the next rerun."""
@@ -46,14 +41,13 @@ def _render_feedback_form(*, surface: str | None) -> None:
     if err := st.session_state.pop(_FEEDBACK_ERROR_KEY, None):
         st.error(err)
 
-    st.caption(_FEEDBACK_CAPTION)
     st.text_area(
         "Your note",
         key=_FEEDBACK_NOTE_KEY,
         height=100,
         max_chars=4000,
         label_visibility="collapsed",
-        placeholder="Describe a bug, idea, or papercut…",
+        placeholder="Describe a bug, feature request, idea, or question...",
     )
     st.button(
         "Submit feedback",
@@ -76,7 +70,5 @@ def render_feedback_controls(
         key=widget_key,
         type="secondary",
         use_container_width=True,
-        help=_FEEDBACK_CAPTION,
     ):
         _render_feedback_form(surface=surface)
-    st.caption("Bugs, ideas, and papercuts — filed for triage.")
