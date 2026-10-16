@@ -5,12 +5,23 @@ from __future__ import annotations
 from ui_source import UI_ROOT, ui_source
 
 
-def test_weekly_plan_uses_fragments_for_meals_and_grocery() -> None:
+def test_weekly_plan_uses_fragment_for_grocery_only() -> None:
+    """Meals render in the main run (no stale fragment); grocery stays fragmented."""
     source = ui_source()
-    assert '@st.fragment(key="weekly_plan_meals")' in source
+    assert '@st.fragment(key="weekly_plan_meals")' not in source
     assert '@st.fragment(key="weekly_plan_grocery")' in source
-    assert "_weekly_plan_meals_fragment" in source
+    assert "render_meals_section" in source
     assert "Preparing your meal builder" in source
+
+
+def test_discard_stale_partial_plan_on_new_weekly_flow() -> None:
+    plan_entry = (UI_ROOT / "views" / "weekly_plan" / "plan_entry.py").read_text(encoding="utf-8")
+    assert "_discard_stale_partial_plan" in plan_entry
+    discard_fn = plan_entry.split("def _discard_stale_partial_plan", 1)[1].split("\ndef ", 1)[0]
+    assert '_weekly_plan_mode() != "new"' in discard_fn
+    assert "plan_prebuild_pinned_recipes" in discard_fn
+    meals_section = plan_entry.split("def render_meals_section", 1)[1].split("\ndef ", 1)[0]
+    assert "_discard_stale_partial_plan" in meals_section
 
 
 def test_meal_slot_manual_picker_uses_per_slot_fragment() -> None:
@@ -45,7 +56,8 @@ def test_plan_meals_warms_recipes_quietly_before_meal_count_continue() -> None:
     assert "loading_indicator" in meal_builder_block
     assert "use_global_banner=False" in meal_builder_block
     assert "_MEAL_BUILDER_LOADING_MESSAGE" in meal_builder_block
-    assert "_weekly_plan_meals_fragment" in meal_builder_block.split("loading_indicator", 1)[-1]
+    assert "render_meals_section" in meal_builder_block.split("loading_indicator", 1)[-1]
+    assert "cold_recipes" in meal_builder_block
     assert "clear_global_loading_banner" in meal_builder_block
 
 
