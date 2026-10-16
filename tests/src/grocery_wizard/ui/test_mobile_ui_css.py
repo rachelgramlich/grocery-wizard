@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ui_source import APP_PATH
+from ui_source import APP_PATH, UI_ROOT
 
 from src.grocery_wizard.ui.theme import app_theme_css
 
@@ -18,6 +18,9 @@ _REQUIRED_MOBILE_CSS_FRAGMENTS = (
     "st-key-global_global_page_picker",
     "st-key-gw_global_header",
     "st-key-meal_slot_action_row",
+    "st-key-meal_slot_row_",
+    "p.gw-meal-slot-row-anchor",
+    "@media (max-width: 768px)",
 )
 
 
@@ -33,3 +36,9 @@ def test_app_exposes_page_picker_css_anchor() -> None:
     picker_idx = app.index("st.segmented_control(")
     anchor_idx = app.index("gw-global-page-picker-anchor")
     assert anchor_idx < picker_idx
+
+
+def test_meal_rows_use_stackable_container_keys() -> None:
+    plan_entry = (UI_ROOT / "views" / "weekly_plan" / "plan_entry.py").read_text(encoding="utf-8")
+    assert 'key=f"meal_slot_row_{index}"' in plan_entry
+    assert "gw-meal-slot-row-anchor" in plan_entry

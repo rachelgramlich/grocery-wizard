@@ -236,6 +236,12 @@
             padding: 0;
         }
 
+        p.gw-meal-slot-row-anchor {
+            display: none;
+            margin: 0;
+            padding: 0;
+        }
+
         p.gw-meal-slot-label {
             color: var(--gw-heading-meal-color);
             font-size: var(--gw-heading-meal-size);
@@ -262,8 +268,7 @@
             font-weight: inherit;
         }
 
-        [data-testid="stVerticalBlock"]:has(p.gw-meal-slot-list)
-            [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) {
+        [data-testid="stVerticalBlock"]:has(p.gw-meal-slot-list) [class*="st-key-meal_slot_row_"] {
             margin-left: 1.25rem !important;
         }
 
@@ -1011,5 +1016,86 @@
                 height: auto !important;
                 padding: 0.25rem 0.45rem !important;
                 font-size: 1rem !important;
+            }
+        }
+
+        /*
+         * Meal rows on tablet / phone (#378): stack title and actions; desktop keeps columns.
+         * Uses ``meal_slot_row_*`` widget keys (not ``:has(p.gw-meal-slot-label)`` alone).
+         */
+        @media (max-width: 768px) {
+            [data-testid="stVerticalBlock"]:has(p.gw-meal-slot-list) [class*="st-key-meal_slot_row_"] {
+                margin-left: 0.35rem !important;
+                margin-right: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            [class*="st-key-meal_slot_row_"] [data-testid="stHorizontalBlock"] {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 0.5rem !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            [class*="st-key-meal_slot_row_"] [data-testid="stColumn"] {
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
+                flex: 1 1 auto !important;
+            }
+
+            [class*="st-key-meal_slot_row_"] [class*="st-key-meal_slot_action_row"],
+            [class*="st-key-meal_slot_row_"]
+                [class*="st-key-meal_slot_action_row"]
+                [data-testid="stHorizontalBlock"] {
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
+                flex-wrap: wrap !important;
+            }
+
+            [class*="st-key-meal_slot_row_"] [data-testid="stElementContainer"],
+            [class*="st-key-meal_slot_row_"] .stButton,
+            [class*="st-key-meal_slot_row_"] .stPopover {
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
+            }
+
+            [class*="st-key-meal_slot_row_"] button,
+            [class*="st-key-meal_slot_row_"] .stPopover button {
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
+            }
+
+            [class*="st-key-meal_slot_row_"] button p,
+            [class*="st-key-meal_slot_row_"] button span,
+            [class*="st-key-meal_slot_row_"] .stPopover button p,
+            [class*="st-key-meal_slot_row_"] .stPopover button span {
+                white-space: normal !important;
+            }
+
+            [class*="st-key-plan_week_action_row"] {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            [class*="st-key-plan_week_action_row"] [data-testid="stHorizontalBlock"] {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 0.5rem !important;
+                width: 100% !important;
+            }
+
+            [class*="st-key-plan_week_action_row"] .stButton,
+            [class*="st-key-plan_week_action_row"] .stPopover,
+            [class*="st-key-plan_week_action_row"] button,
+            [class*="st-key-plan_week_action_row"] .stPopover button {
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
             }
         }
