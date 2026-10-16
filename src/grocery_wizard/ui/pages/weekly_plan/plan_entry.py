@@ -367,7 +367,7 @@ def _render_plan_builder_popover(
     schema = db.schema
     fallback = st.session_state.get("plan_last_week_filters") or default_filters(schema.all_columns)
     with st.popover(
-        "Build your meal list",
+        "Build meals",
         help="Pin meals, adjust filters, and rebuild your plan",
         width="content",
         wrap=False,
@@ -415,12 +415,8 @@ def _render_dev_jump_tools(db: NotionRecipesDB) -> None:
     if _weekly_plan_mode() != "dev":
         return
 
-    with st.expander("Dev tools", expanded=False):
-        st.caption(
-            "Jump to a wizard step using a small default meal set from Notion "
-            "(recipes with ingredients). Use when manually testing UI without "
-            "clicking through meal generation each time."
-        )
+    with st.expander("Dev: tools", expanded=False):
+        st.caption("Jump to a weekly step using sample meals from Notion (manual UAT only).")
 
         def _dev_jump_bullet(target: DevJumpTarget) -> None:
             title = dev_jump_display_title(target)
@@ -459,8 +455,8 @@ def _render_dev_jump_tools(db: NotionRecipesDB) -> None:
             options=all_names,
             key=DEV_MANUAL_RECIPES_KEY,
             placeholder="Pick one or more recipes…",
-            help="When set, updates **1b. Your meals** immediately and is used by every jump "
-            "button below except **Meals filled: auto**.",
+            help="When set, updates **Your meals** immediately and is used by every jump "
+            "button below except **Dev: Meals filled (auto)**.",
         )
         sync_dev_manual_multiselect(st.session_state)
 
@@ -477,13 +473,13 @@ def _render_dev_jump_tools(db: NotionRecipesDB) -> None:
         )
         _dev_jump_button(
             DevJumpTarget.MEALS_FILLED,
-            label="Meals filled: auto",
+            label="Dev: Meals filled (auto)",
             key_suffix="auto",
             names=auto_names,
         )
         _dev_jump_button(
             DevJumpTarget.MEALS_FILLED,
-            label="Meals filled: manual",
+            label="Dev: Meals filled (manual)",
             key_suffix="manual",
             names=list(manual_pick),
             require_names=True,
@@ -622,7 +618,6 @@ def _sync_plan_meal_count_widget_from_persisted() -> None:
 
 
 def _render_meal_count_input() -> int:
-    st.markdown("### 1. Meals")
     _sync_plan_meal_count_widget_from_persisted()
     meal_count = int(
         st.number_input(
@@ -641,7 +636,7 @@ def _render_plan_meal_count_continue(*, meal_count: int) -> bool:
     """Prompt for meal count, then continue. Returns True when the builder may render."""
     if _plan_meals_builder_unlocked():
         return True
-    st.caption("Set how many meals you need, then click **Continue** to open the meal builder.")
+    st.caption("Set how many meals you need, then **Continue** to build meals.")
     if st.button(
         "Continue",
         type="primary",
@@ -677,10 +672,10 @@ def _render_generate_plan_controls(
     filter_defaults = default_filters(schema.all_columns)
 
     if show_section_heading:
-        st.markdown("#### Build your meal list")
+        st.markdown("#### Build meals")
     st.caption(
-        "Optionally pin meals you already know, then **Build my plan** auto-fills the rest. "
-        "Per-meal filters are available under each meal after you build."
+        "Pin meals you already know, then **Build my plan** fills the rest. "
+        "Use **Choose manually** on a slot to swap one meal."
     )
     filter_columns = [*schema.filter_columns, *schema.checkbox_columns]
     build_filters = default_filters(schema.all_columns)
@@ -782,7 +777,7 @@ def _render_built_plan_meals(
             _clear_grocery_result()
         st.rerun()
 
-    st.markdown("#### 1b. Your meals")
+    st.markdown("#### Your meals")
     render_unmatched_plan_recipes_help(
         unmatched_plan_recipe_names(current_plan, all_recipes),
         context="meals",
@@ -902,17 +897,11 @@ def _render_built_plan_meals(
                 st.rerun()
 
     st.divider()
-    st.markdown("#### 1c. Save your plan")
+    st.markdown("#### Save plan")
     if _weekly_plan_mode() == "dev":
-        st.caption(
-            "When your meal list looks good, continue to the grocery list. "
-            "Nothing is saved to Notion in dev mode."
-        )
+        st.caption("Continue to the grocery list when meals look good (nothing saved to Notion).")
     else:
-        st.caption(
-            "When your meal list looks good, save it to Notion. "
-            "That finishes this step before you build a grocery list."
-        )
+        st.caption("Save to Notion when meals look good, then build your grocery list.")
     with st.container(key="weekly_meals_save"):
         _render_save_plan_controls(_current_plan_names(), cached_recipes=all_recipes)
 

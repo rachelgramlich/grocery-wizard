@@ -48,12 +48,12 @@ def dev_jump_display_title(target: DevJumpTarget) -> str:
 
 DEV_JUMP_CAPTIONS: dict[DevJumpTarget, str] = {
     DevJumpTarget.MEALS_FILLED: (
-        f"Block **{DEV_JUMP_BLOCK_ID[DevJumpTarget.MEALS_FILLED.value]}** (1. Meals) — "
+        f"Block **{DEV_JUMP_BLOCK_ID[DevJumpTarget.MEALS_FILLED.value]}** (Plan meals) — "
         "pick recipes in the multiselect (updates meals live) or use **auto** "
         "for the default sample."
     ),
     DevJumpTarget.PRE_BUILD_GROCERY: (
-        f"Block **{DEV_JUMP_BLOCK_ID[DevJumpTarget.PRE_BUILD_GROCERY.value]}** (2. Grocery list) — "
+        f"Block **{DEV_JUMP_BLOCK_ID[DevJumpTarget.PRE_BUILD_GROCERY.value]}** (Grocery list) — "
         "options expander and **Create grocery list**."
     ),
     DevJumpTarget.PER_RECIPE_REVIEW: (

@@ -122,25 +122,25 @@ def test_weekly_plan_build_shows_per_meal_swap() -> None:
 def test_dev_mode_exposes_collapsed_dev_tools_expander() -> None:
     source = ui_source()
     assert "_render_dev_jump_tools(db)" in source
-    assert 'st.expander("Dev tools", expanded=False)' in source
+    assert 'st.expander("Dev: tools", expanded=False)' in source
     assert '_weekly_plan_mode() != "dev"' in source
     assert "commit_dev_jump" in source
     assert "resolve_dev_jump_meal_names" in source
     assert "sync_dev_manual_multiselect" in source
-    assert "Meals filled: auto" in source
-    assert "Meals filled: manual" in source
+    assert "Dev: Meals filled (auto)" in source
+    assert "Dev: Meals filled (manual)" in source
     assert "DEV_MANUAL_RECIPES_KEY" in source
     assert 'st.markdown("#### Meals filled")' not in source
     assert '"Choose recipes manually"' in source
     assert '"Dev: Final list"' in source
-    dev_section = source.split('st.expander("Dev tools"', 1)[1].split(
+    dev_section = source.split('st.expander("Dev: tools"', 1)[1].split(
         "def _render_weekly_plan_entry", 1
     )[0]
     assert "DEV_JUMP_FLOW_ORDER" in dev_section
     assert "for step in DEV_JUMP_FLOW_ORDER:\n            _dev_jump_bullet(step)" in dev_section
     bullets_end = dev_section.index("all_names = sorted")
     assert dev_section.index("for step in DEV_JUMP_FLOW_ORDER") < bullets_end
-    assert dev_section.index("Meals filled: auto") < dev_section.index(
+    assert dev_section.index("Dev: Meals filled (auto)") < dev_section.index(
         'label="Dev: Pre-build grocery"'
     )
     assert dev_section.index('label="Dev: Pre-build grocery"') < dev_section.index(
@@ -159,7 +159,7 @@ def test_post_build_collapses_generate_controls() -> None:
     popover_fn = source.split("def _render_plan_builder_popover", 1)[1].split(
         "def _render_slot_manual_popover", 1
     )[0]
-    assert 'st.popover(\n        "Build your meal list"' in popover_fn
+    assert 'st.popover(\n        "Build meals"' in popover_fn
     assert "Change filters & rebuild" not in source
     assert 'key="plan_week_action_row"' in source
     assert "PLAN_FORCE_OPEN_1A_KEY" in source
@@ -169,6 +169,9 @@ def test_post_build_collapses_generate_controls() -> None:
 def test_weekly_tab_step_rail() -> None:
     source = ui_source()
     assert "**Steps:** 1. Meals → 2. Grocery list" not in source
+    assert 'st.markdown("### 1. Meals")' not in source
+    assert 'st.markdown("#### 1b. Your meals")' not in source
+    assert 'st.markdown("#### 1c. Save your plan")' not in source
     assert "render_weekly_step_rail" in source
     assert "Get started" in source
     assert "Plan meals" in source
@@ -341,7 +344,7 @@ def test_grocery_stage_uses_sub_block_anchors_and_scroll() -> None:
     assert "queue_weekly_scroll(BLOCK_WEEKLY_GROCERY_RECIPE_REVIEW)" in grocery_source
     assert "render_weekly_sub_block_anchor(BLOCK_WEEKLY_GROCERY_RECIPE_REVIEW)" in review_source
     assert "queue_weekly_scroll(BLOCK_WEEKLY_GROCERY_RESULT)" in review_source
-    assert 'st.expander("Summary (build result)", expanded=False)' in grocery_source
+    assert 'st.expander("Summary", expanded=False)' in grocery_source
 
 
 def test_cached_plan_ingredient_index_rebuilds_when_value_missing() -> None:

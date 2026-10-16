@@ -72,7 +72,7 @@ def test_explicit_save_plan_button_after_meals() -> None:
     assert 'key="save_weekly_plan"' in source
     save_button = source.split('key="save_weekly_plan"', 1)[0].rsplit("st.button", 1)[1]
     assert 'type="primary"' in save_button
-    assert "#### 1c. Save your plan" in source
+    assert 'st.markdown("#### Save plan")' in source
     assert 'key="weekly_meals_save"' in source
     assert "Replace saved plan for this week" in source
     assert "_render_save_plan_controls(_current_plan_names(), cached_recipes=all_recipes)" in source
@@ -86,7 +86,7 @@ def test_dev_mode_continue_to_grocery_without_notion_save() -> None:
     step_source = (UI_ROOT / "pages" / "weekly_plan" / "step_ui.py").read_text(encoding="utf-8")
     assert "_plan_meals_step_done(recipe_names)" in step_source
     entry_source = ui_source()
-    assert "Nothing is saved to Notion in dev mode." in entry_source
+    assert "nothing saved to Notion" in entry_source
 
 
 def test_weekly_plan_entry_app_test_smoke() -> None:
@@ -106,9 +106,7 @@ def test_weekly_plan_entry_app_test_smoke() -> None:
 def test_dev_mode_skips_notion_rejection_increments() -> None:
     source = ui_source()
     assert "_weekly_plan_persists_tracking_stats_to_notion" in source
-    swap = source.split("def _apply_plan_swap", 1)[1].split('st.markdown("#### 1b. Your meals"', 1)[
-        0
-    ]
+    swap = source.split("def _apply_plan_swap", 1)[1].split('st.markdown("#### Your meals"', 1)[0]
     assert "stats_targets and _weekly_plan_persists_tracking_stats_to_notion()" in swap
     regen = source.split('st.button("Re-generate all meals"', 1)[1].split(
         "_write_plan_names(plan)", 1
