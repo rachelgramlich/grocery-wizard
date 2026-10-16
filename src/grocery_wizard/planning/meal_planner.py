@@ -16,6 +16,7 @@ __all__ = [
 import json
 import random
 from dataclasses import dataclass, field
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -35,6 +36,8 @@ from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
 
 DIVERSITY_COLUMNS = ("Protein", "Dinner Category", "Cuisine")
 
+_INGREDIENT_KEYS_CACHE_SIZE = 4096
+
 DEFAULT_FILTER_MEAL = "Dinner"
 DEFAULT_FILTER_WEEKNIGHT_COLUMN = "Dinner: Weeknight Friendly"
 
@@ -51,20 +54,29 @@ class MealPlanFilters:
     ingredient_mode: str = "include"  # "include" or "exclude"
 
 
-def _recipe_normalized_ingredient_set(recipe: Recipe) -> set[str]:
-    """Return canonical filter keys for a recipe's ingredients (meal-plan picker)."""
-    raw = recipe.ingredients or ""
+@lru_cache(maxsize=_INGREDIENT_KEYS_CACHE_SIZE)
+def _ingredient_keys_for_text(raw: str) -> frozenset[str]:
+    """Filter keys for stored ingredient text; cached so only edited recipes are re-parsed."""
     if not raw.strip():
-        return set()
+        return frozenset()
     lines, _ = parse_ingredients_text(raw)
     result: set[str] = set()
     for line in lines:
         result.update(filter_ingredient_keys(line))
-    return result
+    return frozenset(result)
+
+
+def _recipe_normalized_ingredient_set(recipe: Recipe) -> set[str]:
+    """Return canonical filter keys for a recipe's ingredients (meal-plan picker)."""
+    return set(_ingredient_keys_for_text(recipe.ingredients or ""))
 
 
 def build_ingredient_index(recipes: list[Recipe]) -> dict[str, set[str]]:
-    """Return a mapping of recipe page_id → canonical meal-plan ingredient filter keys."""
+    """Return a mapping of recipe page_id → canonical meal-plan ingredient filter keys.
+
+    Keys are memoized per ingredient text for the life of the server process, so a rebuild after
+    a Notion refresh only parses recipes whose ingredients changed.
+    """
     return {recipe.page_id: _recipe_normalized_ingredient_set(recipe) for recipe in recipes}
 
 
