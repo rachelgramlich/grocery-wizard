@@ -137,6 +137,9 @@ def test_load_store_aisles_reloads_after_file_changes(tmp_path: Path) -> None:
         ("chicken", "meat/fish"),
         ("chimichurri", "refrigerated"),
         ("avocado oil", "oils & vinegars"),
+        ("apple chips", "nuts/desserts"),
+        ("cauliflower rice", "frozen"),
+        ("frozen cauliflower rice", "frozen"),
     ],
 )
 def test_classify_aisle(item: str, expected_aisle: str) -> None:
