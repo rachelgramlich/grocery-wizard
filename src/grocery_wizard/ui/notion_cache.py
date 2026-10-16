@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+from datetime import date
 from typing import TYPE_CHECKING
 
 import streamlit as st
@@ -98,3 +99,17 @@ def cached_saved_plans(
         saved_plans_cache_generation(),
         db,
     )
+
+
+def saved_plan_for_week(
+    saved_plans: list[SavedWeeklyPlan],
+    week_start: date,
+) -> SavedWeeklyPlan | None:
+    """Pick the (already de-duplicated) saved plan for a week from the cached list."""
+    return next((plan for plan in saved_plans if plan.week_start == week_start), None)
+
+
+def saved_plan_recipe_names(saved_plans: list[SavedWeeklyPlan], plan_name: str) -> list[str] | None:
+    """Recipe names for ``plan_name`` from the cached list, or ``None`` when absent."""
+    plan = next((plan for plan in saved_plans if plan.name == plan_name), None)
+    return list(plan.recipes) if plan is not None else None

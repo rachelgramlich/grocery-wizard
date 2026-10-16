@@ -50,7 +50,11 @@ from src.grocery_wizard.ui.meal_plan_filters import (
     recipes_ingredient_cache_key,
     render_meal_plan_filters,
 )
-from src.grocery_wizard.ui.notion_cache import cached_saved_plans, invalidate_notion_cache
+from src.grocery_wizard.ui.notion_cache import (
+    cached_saved_plans,
+    invalidate_notion_cache,
+    saved_plan_recipe_names,
+)
 from src.grocery_wizard.ui.recipe_match import (
     render_unmatched_plan_recipes_help,
     unmatched_plan_recipe_names,
@@ -413,7 +417,10 @@ def _render_plan_builder_popover(
         width="content",
         wrap=False,
         key=PLAN_BUILDER_POPOVER_KEY,
-    ):
+        on_change="rerun",
+    ) as builder_popover:
+        if not builder_popover.open:
+            return fallback
         filters = _render_generate_plan_controls(
             db,
             all_recipes=all_recipes,
@@ -440,7 +447,11 @@ def _render_slot_manual_popover(
         help="Pick a recipe for this meal slot (search or filter)",
         width="content",
         wrap=False,
-    ):
+        key=f"plan_slot_popover_{slot_index}",
+        on_change="rerun",
+    ) as slot_popover:
+        if not slot_popover.open:
+            return
         st.caption("Filters apply to this meal slot only.")
         _slot_manual_picker_fragment(slot_index)(
             all_recipes=all_recipes,
@@ -627,7 +638,9 @@ def _render_weekly_plan_entry() -> bool:
         _reset_weekly_plan_workflow(clear_mode=False)
         if choice == "saved" and selected_plan_name:
             with loading_indicator("Loading saved plan from Notion…"):
-                loaded_recipes = load_plan_recipes(selected_plan_name, recipes_db=get_db())
+                loaded_recipes = saved_plan_recipe_names(saved_plans, selected_plan_name)
+                if loaded_recipes is None:
+                    loaded_recipes = load_plan_recipes(selected_plan_name, recipes_db=get_db())
                 st.session_state.plan_meals_text = "\n".join(loaded_recipes)
             if len(loaded_recipes) > 1:
                 _queue_meals_list_batch_render()
