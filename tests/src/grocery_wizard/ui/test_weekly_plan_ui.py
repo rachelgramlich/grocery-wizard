@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import pytest
 from ui_source import APP_PATH, UI_ROOT, apptest_continue_to_meal_builder, ui_source
+
+from tests.notion_test_env import live_notion_smoke_enabled
 
 APP_FILE = str(APP_PATH)
 
@@ -91,6 +94,10 @@ def test_meal_plan_ingredient_filter_before_checkboxes() -> None:
     )
 
 
+@pytest.mark.skipif(
+    not live_notion_smoke_enabled(),
+    reason="Live Notion credentials required for AppTest smoke",
+)
 def test_weekly_plan_build_shows_per_meal_swap() -> None:
     """AppTest smoke test: Build my plan renders per-meal ↺ buttons."""
     from streamlit.testing.v1 import AppTest
@@ -259,10 +266,9 @@ def test_meal_count_continue_gates_meals_fragment() -> None:
         ui_source().split("def _render_plan_meal_count_continue", 1)[1].split("\ndef ", 1)[0]
     )
     assert 'key="weekly_plan_meal_count_continue"' in continue_fn
-    assert (
-        "on_change"
-        not in ui_source().split("def _render_meal_count_input", 1)[1].split("\ndef ", 1)[0]
-    )
+    meal_count_fn = ui_source().split("def _render_meal_count_input", 1)[1].split("\ndef ", 1)[0]
+    assert "on_change=_on_plan_meal_count_widget_change" in meal_count_fn
+    assert "_discard_stale_partial_plan" in ui_source()
 
 
 def test_plan_length_syncs_when_meal_count_drops() -> None:
