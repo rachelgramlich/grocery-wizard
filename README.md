@@ -1,8 +1,14 @@
 # Grocery Wizard
 
-Personal recipe and meal-planning tool backed by **Notion**: save recipes from the web, plan dinners, and build a grocery list sorted by store aisle.
+Plan dinners, manage pantry staples, and build aisle-sorted grocery lists from recipes stored in Notion.
 
-## What this repo is for
+Grocery Wizard is a Streamlit app for household meal planning: save recipes from the web (or NYT Cooking), pick a weekly menu with variety filters, subtract what is already in your pantry, and walk the store with a list grouped by aisle. Recipes, pantry, recurring items, and saved plans live in Notion; the app keeps secrets on the server when deployed.
+
+**Hosted app:** [grocerywizard.streamlit.app](https://grocerywizard.streamlit.app) (Google sign-in for household members). **Local:** `just grocery-ui` from this repo.
+
+> Streamlit Community Cloud uses this README for your [profile](https://share.streamlit.io) and link previews (title comes from `st.set_page_config`). After editing, allow up to ~24 hours for a new screenshot; the description updates when Cloud refreshes from GitHub.
+
+## What this app does
 
 - **Recipes** — scrape ingredients from URLs (or sync from NYT Cooking) into your Notion Recipes database.
 - **Weekly planning** — pick dinners with variety filters (protein, cuisine, weeknight-friendly, etc.).
@@ -31,6 +37,7 @@ Full command reference, NYT credentials, meal-planning defaults, aisle config, a
 |-----|----------|
 | [`src/grocery_wizard/README.md`](src/grocery_wizard/README.md) | Day-to-day usage (Streamlit), one-time Notion setup, project layout |
 | [`src/grocery_wizard/config/README.md`](src/grocery_wizard/config/README.md) | Pantry / recurring / weekly-plan Notion databases |
+| [`docs/household-deploy.md`](docs/household-deploy.md) | Streamlit Community Cloud deploy, auth, feedback inbox |
 | [`src/grocery_wizard/docs/remote-access.md`](src/grocery_wizard/docs/remote-access.md) | Phone access (local Wi‑Fi vs hosted) |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Lint, tests, and code review standards |
 | [`AGENTS.md`](AGENTS.md) | Cursor agents and GitHub backlog workflow |
@@ -54,7 +61,7 @@ Full command reference, NYT credentials, meal-planning defaults, aisle config, a
 
 ### Local setup
 
-1. Copy `.env.example` to `.env` and configure Notion (and optional NYT) — steps in [`src/grocery_wizard/README.md` § One-time setup](src/grocery_wizard/README.md#one-time-setup).
+1. Copy `secrets.toml.example` to **`secrets.toml`** at repo root (or `.env` from `.env.example`) and configure Notion — see [`src/grocery_wizard/README.md` § One-time setup](src/grocery_wizard/README.md#one-time-setup) and [`docs/household-deploy.md`](docs/household-deploy.md).
 2. Update the Python environment:
    ```shell
    just setup
