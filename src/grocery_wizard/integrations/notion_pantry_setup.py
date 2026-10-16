@@ -2,6 +2,13 @@
 
 from __future__ import annotations
 
+__all__ = [
+    "PantryAisleRemapResult",
+    "PantrySectionSyncResult",
+    "remap_pantry_aisles_from_item_names",
+    "sync_pantry_section_store_aisles",
+]
+
 from dataclasses import dataclass
 from typing import Any
 

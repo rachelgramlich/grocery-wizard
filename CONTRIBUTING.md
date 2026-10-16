@@ -333,7 +333,7 @@ text = "line one\nline two\nline three"
 src/grocery_wizard/
 ├── cli/          # removed-command hints only — no business logic
 ├── config/       # Config dataclass + data files (pantry, aisles, recurring)
-├── dev/          # Developer/maintenance commands (audit, validate)
+├── dev/          # Reserved package namespace (no CLI yet; use root scripts/ and `just` recipes)
 ├── ingredients/  # Storage (parsed/sync) vs grocery (normalize); see ingredients/ARCHITECTURE.md
 ├── integrations/ # External API clients (Notion, NYT Cooking)
 ├── lib/          # Shared utilities (prompts, feedback)

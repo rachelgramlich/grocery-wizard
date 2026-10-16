@@ -574,6 +574,7 @@ def _process_saved_recipe_in_sync(
     on_progress: NytSyncProgressCallback | None,
     recipe_total: int | None,
 ) -> None:
+    # Lazy import: add_recipe pulls NYT helpers; keep sync entry import-light.
     from src.grocery_wizard.recipes.add_recipe import add_prefetched_recipes
 
     summary.total += 1
@@ -815,6 +816,7 @@ def _metadata_for_recipe(
     total_minutes: float | None = None,
     ingredients: list[str] | None = None,
 ) -> dict[str, Any]:
+    # Lazy import: recipe classify stack is heavy; used on sync/reclassify paths only.
     from src.grocery_wizard.recipes.classify import classify_recipe
     from src.grocery_wizard.recipes.recipe_meal_plan_stats import filter_columns_for_recipe_classify
     from src.grocery_wizard.recipes.weeknight import DEFAULT_WEEKNIGHT_COLUMN
@@ -958,6 +960,7 @@ def _require_nyt_synced_column(db: Any) -> str:
 
 
 def _weeknight_column_for_reclassify(db: Any) -> str:
+    # Lazy import: weeknight defaults live in recipes package (avoid import at module load).
     from src.grocery_wizard.recipes.weeknight import DEFAULT_WEEKNIGHT_COLUMN
 
     weeknight_column = DEFAULT_WEEKNIGHT_COLUMN
@@ -996,6 +999,7 @@ def _build_reclassify_field_updates(
     weeknight_column: str,
     summary: NytReclassifySummary,
 ) -> dict[str, Any]:
+    # Lazy import: weeknight helper used only during NYT reclassify updates.
     from src.grocery_wizard.recipes.weeknight import is_weeknight_friendly
 
     title = recipe.name
@@ -1071,6 +1075,7 @@ def reclassify_nyt_synced_recipes(
     on_progress: NytSyncProgressCallback | None = None,
 ) -> NytReclassifySummary:
     """Re-run Meal and Weeknight Friendly for NYT-synced recipes in Notion."""
+    # Lazy import: classify stack (see ``_metadata_for_recipe``).
     from src.grocery_wizard.recipes.classify import classify_recipe
     from src.grocery_wizard.recipes.recipe_meal_plan_stats import filter_columns_for_recipe_classify
 
@@ -1190,6 +1195,7 @@ def _fetch_nyt_recipe_for_sync(
             pass
 
     if not ingredients and url.strip():
+        # Lazy import: scraper pulls ingredient pipeline; fallback when NYT API omits list.
         from src.grocery_wizard.recipes.scraper import ScrapeError, scrape_recipe
 
         try:

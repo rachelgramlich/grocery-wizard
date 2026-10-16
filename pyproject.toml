@@ -9,18 +9,17 @@ dependencies = [
     "ingredient-parser-nlp>=2.7.0",
     "loguru>=0.7.2",
     "notion-client>=2.2.1",
-    "pytest>=8.2.2",
     "pydantic-settings>=2.7.0",
     "python-dotenv>=1.0.1",
     "requests>=2.32.3",
-    "ruff>=0.15.6",
     "streamlit[auth]>=1.42.0",
 ]
 
-
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "mypy>=1.11",
+    "pytest>=8.2.2",
+    "ruff>=0.15.6",
 ]
 
 [tool.ruff]
