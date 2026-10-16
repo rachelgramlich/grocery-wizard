@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import html
 from collections.abc import Callable
+from typing import Literal
 
 import streamlit as st
 
@@ -301,8 +302,10 @@ def _set_plan_slot_recipe(plan: list[str], slot_index: int, recipe_name: str) ->
 
 def _slot_manual_picker_fragment(
     slot_index: int,
+    *,
+    widget_key_suffix: str = "",
 ) -> Callable[..., None]:
-    @st.fragment(key=f"plan_slot_manual_{slot_index}")
+    @st.fragment(key=f"plan_slot_manual{widget_key_suffix}_{slot_index}")
     def _render(
         *,
         all_recipes: list,
@@ -331,8 +334,8 @@ def _slot_manual_picker_fragment(
 
         _render_direct_recipe_pick(
             all_names,
-            selectbox_key=f"plan_slot_direct_pick_{slot_index}",
-            apply_button_key=f"plan_slot_apply_direct_{slot_index}",
+            selectbox_key=f"plan_slot_direct_pick{widget_key_suffix}_{slot_index}",
+            apply_button_key=f"plan_slot_apply_direct{widget_key_suffix}_{slot_index}",
             apply_button_label="Use this recipe",
             on_apply=_apply_picked,
         )
@@ -345,9 +348,9 @@ def _slot_manual_picker_fragment(
             filter_defaults=filter_defaults,
             schema_columns=schema_columns,
             ingredient_index=ingredient_index,
-            key_prefix=f"plan_slot_{slot_index}",
-            selectbox_key=f"plan_slot_pick_{slot_index}",
-            apply_button_key=f"plan_slot_apply_{slot_index}",
+            key_prefix=f"plan_slot{widget_key_suffix}_{slot_index}",
+            selectbox_key=f"plan_slot_pick{widget_key_suffix}_{slot_index}",
+            apply_button_key=f"plan_slot_apply{widget_key_suffix}_{slot_index}",
             apply_button_label="Use this recipe",
             on_apply=_apply_picked,
             filter_caption="Optional — narrow the list using the filters below.",
@@ -393,15 +396,17 @@ def _render_slot_manual_popover(
     filter_defaults: MealPlanFilters,
     schema_columns: dict[str, ColumnInfo],
     ingredient_index: dict[str, set[str]],
+    widget_key_suffix: str = "",
 ) -> None:
     with st.popover(
         "Choose manually",
         help="Pick a recipe for this meal slot (search or filter)",
         width="content",
         wrap=False,
+        key=f"meal_manual_popover{widget_key_suffix}_{slot_index}",
     ):
         st.caption("Filters apply to this meal slot only.")
-        _slot_manual_picker_fragment(slot_index)(
+        _slot_manual_picker_fragment(slot_index, widget_key_suffix=widget_key_suffix)(
             all_recipes=all_recipes,
             filter_columns=filter_columns,
             filter_defaults=filter_defaults,
@@ -724,6 +729,102 @@ def _render_generate_plan_controls(
     return build_filters
 
 
+def _render_meal_slot_row_actions(
+    *,
+    index: int,
+    recipe_name: str,
+    widget_key_suffix: str,
+    on_quick_swap: Callable[[list[str]], None],
+    all_recipes: list,
+    filter_columns: list[ColumnInfo],
+    filter_defaults: MealPlanFilters,
+    schema_columns: dict[str, ColumnInfo],
+    ingredient_index: dict[str, set[str]],
+) -> None:
+    if st.button(
+        "Quick swap",
+        key=f"swap_meal{widget_key_suffix}_{index}",
+        width="content",
+        help="Suggest a different recipe from this week's filter pool",
+    ):
+        on_quick_swap([recipe_name])
+    _render_slot_manual_popover(
+        slot_index=index,
+        all_recipes=all_recipes,
+        filter_columns=filter_columns,
+        filter_defaults=filter_defaults,
+        schema_columns=schema_columns,
+        ingredient_index=ingredient_index,
+        widget_key_suffix=widget_key_suffix,
+    )
+
+
+def _render_meal_slot_row(
+    *,
+    index: int,
+    recipe_name: str,
+    layout: Literal["desktop", "mobile"],
+    on_quick_swap: Callable[[list[str]], None],
+    all_recipes: list,
+    filter_columns: list[ColumnInfo],
+    filter_defaults: MealPlanFilters,
+    schema_columns: dict[str, ColumnInfo],
+    ingredient_index: dict[str, set[str]],
+) -> None:
+    """Render one meal row; desktop and mobile variants toggled with CSS (#378)."""
+    widget_key_suffix = "_m" if layout == "mobile" else ""
+    label_html = (
+        f'<p class="gw-meal-slot-label">'
+        f'<span class="gw-meal-slot-title">{index}.</span> '
+        f'<span class="gw-meal-slot-recipe">{html.escape(recipe_name)}</span></p>'
+    )
+    with st.container(key=f"meal_slot_{layout}_{index}"):
+        st.markdown(
+            f'<p class="gw-meal-slot-row-anchor gw-meal-slot-layout--{layout}" '
+            f'aria-hidden="true"></p>',
+            unsafe_allow_html=True,
+        )
+        action_kwargs = {
+            "index": index,
+            "recipe_name": recipe_name,
+            "widget_key_suffix": widget_key_suffix,
+            "on_quick_swap": on_quick_swap,
+            "all_recipes": all_recipes,
+            "filter_columns": filter_columns,
+            "filter_defaults": filter_defaults,
+            "schema_columns": schema_columns,
+            "ingredient_index": ingredient_index,
+        }
+        if layout == "mobile":
+            st.markdown(label_html, unsafe_allow_html=True)
+            with st.container(
+                key=f"meal_slot_action_row{widget_key_suffix}_{index}",
+                horizontal=True,
+                gap="small",
+                wrap=True,
+                width="stretch",
+                horizontal_alignment="left",
+            ):
+                _render_meal_slot_row_actions(**action_kwargs)
+            return
+
+        meal_col, actions_col = st.columns([1, 1], vertical_alignment="top")
+        with meal_col:
+            st.markdown(label_html, unsafe_allow_html=True)
+        with (
+            actions_col,
+            st.container(
+                key=f"meal_slot_action_row_{index}",
+                horizontal=True,
+                gap="small",
+                wrap=False,
+                width="content",
+                horizontal_alignment="left",
+            ),
+        ):
+            _render_meal_slot_row_actions(**action_kwargs)
+
+
 def _render_built_plan_meals(
     db: NotionRecipesDB,
     *,
@@ -783,47 +884,22 @@ def _render_built_plan_meals(
         context="meals",
     )
     st.markdown('<p class="gw-meal-slot-list" aria-hidden="true"></p>', unsafe_allow_html=True)
+    row_shared = {
+        "on_quick_swap": _apply_plan_swap,
+        "all_recipes": all_recipes,
+        "filter_columns": filter_columns,
+        "filter_defaults": filter_defaults,
+        "schema_columns": schema.all_columns,
+        "ingredient_index": ingredient_index,
+    }
     for index, name in enumerate(current_plan, start=1):
-        # Desktop: ``st.columns``; mobile stacks the same columns via CSS ``display: block`` (#378).
-        with st.container(key=f"meal_slot_row_{index}"):
-            st.markdown(
-                '<p class="gw-meal-slot-row-anchor" aria-hidden="true"></p>',
-                unsafe_allow_html=True,
+        for layout in ("desktop", "mobile"):
+            _render_meal_slot_row(
+                index=index,
+                recipe_name=name,
+                layout=layout,
+                **row_shared,
             )
-            meal_col, actions_col = st.columns([1, 1], vertical_alignment="top")
-            with meal_col:
-                st.markdown(
-                    f'<p class="gw-meal-slot-label">'
-                    f'<span class="gw-meal-slot-title">{index}.</span> '
-                    f'<span class="gw-meal-slot-recipe">{html.escape(name)}</span></p>',
-                    unsafe_allow_html=True,
-                )
-            with (
-                actions_col,
-                st.container(
-                    key=f"meal_slot_action_row_{index}",
-                    horizontal=True,
-                    gap="small",
-                    wrap=False,
-                    width="content",
-                    horizontal_alignment="left",
-                ),
-            ):
-                if st.button(
-                    "Quick swap",
-                    key=f"swap_meal_{index}",
-                    width="content",
-                    help="Suggest a different recipe from this week's filter pool",
-                ):
-                    _apply_plan_swap([name])
-                _render_slot_manual_popover(
-                    slot_index=index,
-                    all_recipes=all_recipes,
-                    filter_columns=filter_columns,
-                    filter_defaults=filter_defaults,
-                    schema_columns=schema.all_columns,
-                    ingredient_index=ingredient_index,
-                )
 
     fill_remaining = len(current_plan) < int(meal_count)
     with st.container(key="plan_week_action_row"):

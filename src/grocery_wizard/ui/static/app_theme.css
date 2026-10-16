@@ -268,8 +268,13 @@
             font-weight: inherit;
         }
 
-        [data-testid="stVerticalBlock"]:has(p.gw-meal-slot-list) [class*="st-key-meal_slot_row_"] {
+        [data-testid="stVerticalBlock"]:has(p.gw-meal-slot-list) [class*="st-key-meal_slot_desktop_"] {
             margin-left: 1.25rem !important;
+        }
+
+        /* Dual meal-row layouts (#378): mobile variant hidden unless narrow viewport. */
+        [class*="st-key-meal_slot_mobile_"] {
+            display: none !important;
         }
 
         [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) {
@@ -1019,39 +1024,22 @@
             }
         }
 
-        /*
-         * Meal rows: ``st.columns`` in Python for desktop; stack columns on narrow viewports
-         * with ``display: block`` (works when flex-direction column on the row does not).
-         */
         @media (max-width: 768px) {
-            [data-testid="stVerticalBlock"]:has(p.gw-meal-slot-list) [class*="st-key-meal_slot_row_"] {
+            [class*="st-key-meal_slot_desktop_"] {
+                display: none !important;
+            }
+
+            [class*="st-key-meal_slot_mobile_"] {
+                display: block !important;
+            }
+
+            [data-testid="stVerticalBlock"]:has(p.gw-meal-slot-list) [class*="st-key-meal_slot_mobile_"] {
                 margin-left: 0.35rem !important;
                 margin-right: 0 !important;
             }
 
-            [class*="st-key-meal_slot_row_"] [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label) {
-                display: block !important;
-            }
-
-            [class*="st-key-meal_slot_row_"]
-                [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label)
-                [data-testid="stColumn"] {
-                display: block !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                min-width: 0 !important;
-                flex: none !important;
-            }
-
-            [class*="st-key-meal_slot_row_"]
-                [data-testid="stHorizontalBlock"]:has(p.gw-meal-slot-label)
-                [data-testid="stColumn"]:last-child {
-                min-width: 0 !important;
-                margin-top: 0.35rem !important;
-            }
-
-            [class*="st-key-meal_slot_row_"] [class*="st-key-meal_slot_action_row"],
-            [class*="st-key-meal_slot_row_"]
+            [class*="st-key-meal_slot_mobile_"] [class*="st-key-meal_slot_action_row"],
+            [class*="st-key-meal_slot_mobile_"]
                 [class*="st-key-meal_slot_action_row"]
                 [data-testid="stHorizontalBlock"] {
                 width: 100% !important;
@@ -1059,16 +1047,17 @@
                 min-width: 0 !important;
             }
 
-            [class*="st-key-meal_slot_row_"] .stButton,
-            [class*="st-key-meal_slot_row_"] .stPopover,
-            [class*="st-key-meal_slot_row_"] button,
-            [class*="st-key-meal_slot_row_"] .stPopover button {
+            [class*="st-key-meal_slot_mobile_"] .stButton,
+            [class*="st-key-meal_slot_mobile_"] .stPopover,
+            [class*="st-key-meal_slot_mobile_"] button,
+            [class*="st-key-meal_slot_mobile_"] .stPopover button {
                 width: 100% !important;
                 min-width: 0 !important;
                 max-width: 100% !important;
             }
 
-            p.gw-meal-slot-label {
+            p.gw-meal-slot-layout--mobile + *,
+            [class*="st-key-meal_slot_mobile_"] p.gw-meal-slot-label {
                 padding-left: 0;
                 text-indent: 0;
             }

@@ -16,7 +16,9 @@ def test_weekly_plan_uses_fragments_for_meals_and_grocery() -> None:
 def test_meal_slot_manual_picker_uses_per_slot_fragment() -> None:
     source = ui_source()
     assert "_slot_manual_picker_fragment" in source
-    assert 'key=f"plan_slot_manual_{slot_index}"' in source
+    assert 'key=f"plan_slot_manual{widget_key_suffix}_{slot_index}"' in (
+        UI_ROOT / "views" / "weekly_plan" / "plan_entry.py"
+    ).read_text(encoding="utf-8")
 
 
 def test_ingredient_filter_single_searchable_multiselect() -> None:

@@ -10,13 +10,19 @@ APP_FILE = str(APP_PATH)
 def test_weekly_plan_has_per_meal_swap_buttons() -> None:
     source = ui_source()
     assert '"Quick swap"' in source
-    assert 'key=f"swap_meal_{index}"' in source
-    assert "meal_slot_row_" in source
+    assert 'key=f"swap_meal{widget_key_suffix}_{index}"' in (UI_ROOT / "views" / "weekly_plan" / "plan_entry.py").read_text(
+        encoding="utf-8"
+    )
+    assert "meal_slot_desktop_" in source
+    assert "meal_slot_mobile_" in source
+    assert "_render_meal_slot_row" in source
     assert "gw-meal-slot-row-anchor" in source
     assert "meal_slot_action_row_" in source
     assert "gw-meal-slot-label" in source
     assert "meal_col, actions_col = st.columns([1, 1]" in source
-    assert "display: block" in (UI_ROOT / "static" / "app_theme.css").read_text(encoding="utf-8")
+    css = (UI_ROOT / "static" / "app_theme.css").read_text(encoding="utf-8")
+    assert "st-key-meal_slot_mobile_" in css
+    assert "st-key-meal_slot_desktop_" in css
     assert (
         'width="content"'
         in source.split("def _render_slot_manual_popover", 1)[1].split(

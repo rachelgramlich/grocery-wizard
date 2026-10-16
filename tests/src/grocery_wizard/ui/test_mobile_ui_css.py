@@ -18,11 +18,11 @@ _REQUIRED_MOBILE_CSS_FRAGMENTS = (
     "st-key-global_global_page_picker",
     "st-key-gw_global_header",
     "st-key-meal_slot_action_row",
-    "st-key-meal_slot_row_",
+    "st-key-meal_slot_desktop_",
+    "st-key-meal_slot_mobile_",
+    "gw-meal-slot-layout--mobile",
     "p.gw-meal-slot-row-anchor",
     "@media (max-width: 768px)",
-    "display: block",
-    "gw-meal-slot-row-anchor",
 )
 
 
@@ -42,5 +42,7 @@ def test_app_exposes_page_picker_css_anchor() -> None:
 
 def test_meal_rows_use_stackable_container_keys() -> None:
     plan_entry = (UI_ROOT / "views" / "weekly_plan" / "plan_entry.py").read_text(encoding="utf-8")
-    assert 'key=f"meal_slot_row_{index}"' in plan_entry
+    assert 'key=f"meal_slot_{layout}_{index}"' in plan_entry
+    assert 'layout in ("desktop", "mobile")' in plan_entry
+    assert "_render_meal_slot_row" in plan_entry
     assert "gw-meal-slot-row-anchor" in plan_entry
