@@ -53,8 +53,8 @@ from src.grocery_wizard.ui.recipe_match import (
 from src.grocery_wizard.ui.views.weekly_plan.state import (
     PLAN_BUILDER_POPOVER_KEY,
     PLAN_FORCE_OPEN_1A_KEY,
-    PLAN_MEAL_COUNT_CONFIRMED_KEY,
     PLAN_MEAL_BUILDER_LOADING_KEY,
+    PLAN_MEAL_COUNT_CONFIRMED_KEY,
     PLAN_MEAL_COUNT_WIDGET_KEY,
     PLAN_PREBUILD_MANUAL_POPOVER_KEY,
     _clear_grocery_result,
