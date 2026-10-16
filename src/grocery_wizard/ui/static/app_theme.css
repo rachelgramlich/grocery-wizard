@@ -723,6 +723,12 @@
             opacity: 0.82;
         }
 
+        [class*="st-key-weekly_block_get_started"]:has(
+            p.gw-weekly-block-anchor[data-gw-weekly-step="get_started"][data-gw-weekly-state="done"][data-gw-weekly-expanded="false"]
+        ) {
+            display: none !important;
+        }
+
         [class*="st-key-weekly_block_"]:has(
             p.gw-weekly-block-anchor[data-gw-weekly-state="upcoming"]
         ) {

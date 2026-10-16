@@ -215,24 +215,7 @@ def _render_block_anchor(
 
 def _render_collapsed_summary(step: WeeklyRailStep) -> None:
     if step == WeeklyRailStep.GET_STARTED:
-        mode = _weekly_plan_mode()
-        labels = {
-            "new": "New weekly plan",
-            "saved": "Continue from a saved plan",
-            "dev": "Dev mode (do not save)",
-        }
-        label = labels.get(str(mode), "Started")
-        loaded = st.session_state.get("weekly_plan_loaded_name")
-        if mode == "saved" and loaded:
-            label = f"{label} — {loaded}"
-        st.markdown(f"**Started:** {label}")
-        if st.button("Change how I started", key="weekly_plan_change_mode_summary"):
-            from src.grocery_wizard.ui.views.weekly_plan.state import _reset_weekly_plan_workflow
-
-            _reset_weekly_plan_workflow(clear_mode=True)
-            st.session_state.weekly_plan_mode_choice = "new"
-            clear_expanded_step_override()
-            st.rerun()
+        # Done get-started is rail-only (no summary above Plan meals).
         return
 
     if step == WeeklyRailStep.PLAN_MEALS:

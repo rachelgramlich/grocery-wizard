@@ -44,7 +44,7 @@ Do not add a fourth rail step for copy/finish. Optionally show a **sub-caption**
 
 | Step | Done when |
 |------|-----------|
-| **Get started** | User clicked **Continue** (show compact “Started: … · Change”) |
+| **Get started** | User clicked **Continue** (step done on rail; body hidden until user clicks **Get started** on the rail) |
 | **Plan meals** | `_matching_saved_plan(recipe_names)` — plan in Notion matches current meals; in **dev mode**, **Continue to grocery list** (session ack, no Notion write) |
 | **Grocery list** | `grocery_result` in session state (final list shown) |
 
