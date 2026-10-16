@@ -111,6 +111,7 @@ def _slot_use_recipe_prepare(ctx: AuditContext) -> AppTest:
     if len(picker.options) < 2:
         raise ScenarioSkipError("Need at least two recipes to swap a slot")
     picker.set_value(picker.options[-1])
+    at.session_state["plan_slot_popover_1"] = True
     return at.run(timeout=ctx.timeout)
 
 
@@ -126,6 +127,7 @@ def _prebuild_pin_prepare(ctx: AuditContext) -> AppTest:
     if not picker.options:
         raise ScenarioSkipError("No recipes available to pin")
     picker.set_value(picker.options[0])
+    at.session_state[PLAN_PREBUILD_MANUAL_POPOVER_KEY] = True
     return at.run(timeout=ctx.timeout)
 
 
@@ -167,9 +169,7 @@ def _review_cancel_act(ctx: AuditContext, at: AppTest) -> AppTest:
 
 
 def _review_save_prepare(ctx: AuditContext) -> AppTest:
-    at = flows.start_new_plan_with_built_meals(ctx)
-    _click_save_plan(ctx, at)
-    flows.click(ctx, at, key="create_grocery")
+    at = flows.dev_jump(ctx, "per_recipe_review_btn_review")
     if not at.text_area:
         raise ScenarioSkipError("Per-recipe review did not render")
     at.text_area[0].set_value(f"{at.text_area[0].value}\n1 perf-audit test item")
