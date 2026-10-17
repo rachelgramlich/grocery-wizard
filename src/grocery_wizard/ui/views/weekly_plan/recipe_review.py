@@ -22,7 +22,7 @@ from src.grocery_wizard.ui.ids import (
     BLOCK_WEEKLY_GROCERY_RESULT,
 )
 from src.grocery_wizard.ui.loading import loading_indicator
-from src.grocery_wizard.ui.notion_cache import cached_query_recipes, invalidate_notion_cache
+from src.grocery_wizard.ui.notion_cache import cached_query_recipes, invalidate_recipes_after_write
 from src.grocery_wizard.ui.recipe_match import (
     render_unmatched_plan_recipes_help,
     unmatched_plan_recipe_names,
@@ -93,7 +93,7 @@ def _save_recipe_review_to_notion(
             baseline_review=baseline,
         )
     if updated:
-        invalidate_notion_cache()
+        invalidate_recipes_after_write()
         sync_grocery_stash_notion_generation(st.session_state)
         st.session_state["grocery_review_recipes"] = cached_query_recipes(db)
         lookup = recipe_lookup_key(name)

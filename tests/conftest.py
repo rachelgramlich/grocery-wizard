@@ -33,8 +33,10 @@ def pytest_configure(config: object) -> None:
 def _notion_test_doubles(monkeypatch: pytest.MonkeyPatch) -> None:
     """Avoid live Notion API calls during tests (CI has no integration secrets)."""
     from src.grocery_wizard.integrations.notion_table import clear_notion_database_metadata_cache
+    from src.grocery_wizard.ui.notion_cache import _recipe_store
 
     clear_notion_database_metadata_cache()
+    _recipe_store.clear()
     import src.grocery_wizard.shopping.pantry as pantry_mod
     import src.grocery_wizard.shopping.recurring_weekly_items as recurring_mod
     from src.grocery_wizard.integrations.notion import Recipe

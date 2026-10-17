@@ -3,11 +3,19 @@
 from __future__ import annotations
 
 from datetime import date
+from unittest.mock import MagicMock
 
 from ui_source import UI_ROOT
 
+from src.grocery_wizard.integrations.notion import Recipe
 from src.grocery_wizard.planning.saved_weekly_plans import SavedWeeklyPlan
-from src.grocery_wizard.ui.notion_cache import saved_plan_for_week, saved_plan_recipe_names
+from src.grocery_wizard.ui.notion_cache import (
+    cached_query_recipes,
+    invalidate_notion_cache,
+    invalidate_recipes_after_write,
+    saved_plan_for_week,
+    saved_plan_recipe_names,
+)
 
 _NOTION_CACHE_PATH = UI_ROOT / "notion_cache.py"
 
@@ -62,3 +70,65 @@ def test_pantry_write_helpers_do_not_clear_recipe_caches() -> None:
     block = cache_source.split("def invalidate_household_cache()", 1)[1].split("\n\n\n", 1)[0]
     assert "get_db.clear()" not in block
     assert "st.cache_data.clear()" not in block
+
+
+def _recipe(page_id: str, name: str, ingredients: str = "1 cup flour") -> Recipe:
+    return Recipe(page_id=page_id, name=name, link=None, ingredients=ingredients, properties={})
+
+
+def _stub_db(*recipes: Recipe) -> MagicMock:
+    db = MagicMock()
+    db._database_id = "db-1"
+    db.query_recipes.return_value = list(recipes)
+    db.query_recipes_edited_since.return_value = []
+    return db
+
+
+def test_recipe_reads_are_cached_until_a_write() -> None:
+    db = _stub_db(_recipe("a", "Soup"), _recipe("b", "Pie"))
+    assert [r.name for r in cached_query_recipes(db)] == ["Soup", "Pie"]
+    cached_query_recipes(db)
+    assert db.query_recipes.call_count == 1
+    db.query_recipes_edited_since.assert_not_called()
+
+
+def test_recipe_write_merges_only_edited_pages() -> None:
+    db = _stub_db(_recipe("a", "Soup"), _recipe("b", "Pie"))
+    cached_query_recipes(db)
+    db.query_recipes_edited_since.return_value = [
+        _recipe("b", "Pie", ingredients="2 cups sugar"),
+        _recipe("c", "Stew"),
+    ]
+    invalidate_recipes_after_write()
+    merged = cached_query_recipes(db)
+    assert [r.name for r in merged] == ["Soup", "Pie", "Stew"]
+    assert merged[1].ingredients == "2 cups sugar"
+    assert db.query_recipes.call_count == 1
+    assert db.query_recipes_edited_since.call_count == 1
+    cached_query_recipes(db)
+    assert db.query_recipes_edited_since.call_count == 1
+
+
+def test_recipe_delta_failure_falls_back_to_full_reload() -> None:
+    db = _stub_db(_recipe("a", "Soup"))
+    cached_query_recipes(db)
+    db.query_recipes_edited_since.side_effect = RuntimeError("notion down")
+    db.query_recipes.return_value = [_recipe("a", "Soup"), _recipe("d", "Curry")]
+    invalidate_recipes_after_write()
+    assert [r.name for r in cached_query_recipes(db)] == ["Soup", "Curry"]
+    assert db.query_recipes.call_count == 2
+
+
+def test_refresh_reloads_recipes_in_full() -> None:
+    db = _stub_db(_recipe("a", "Soup"))
+    cached_query_recipes(db)
+    invalidate_notion_cache()
+    cached_query_recipes(db)
+    assert db.query_recipes.call_count == 2
+
+
+def test_recipe_write_keeps_schema_unless_it_may_change() -> None:
+    source = _NOTION_CACHE_PATH.read_text(encoding="utf-8")
+    block = source.split("def invalidate_recipes_after_write", 1)[1].split("\n\n\n", 1)[0]
+    assert "st.cache_data.clear()" not in block
+    assert "if schema_may_change:" in block

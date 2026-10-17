@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import threading
 import time
-from datetime import date
+from dataclasses import dataclass, field
+from datetime import UTC, date, datetime, timedelta
 from typing import TYPE_CHECKING
 
 import streamlit as st
@@ -18,6 +20,25 @@ if TYPE_CHECKING:
 _GENERATION_KEY = "notion_cache_generation"
 _SAVED_PLANS_GENERATION_KEY = "notion_saved_plans_generation"
 _LAST_RECIPE_LOAD_KEY = "_notion_cache_last_recipe_load_s"
+# Notion stamps ``last_edited_time`` to the minute and clocks differ; re-read a little extra.
+_HOUSEHOLD_CACHE_GENERATION = 0
+_RECIPE_DELTA_OVERLAP = timedelta(minutes=5)
+
+
+@dataclass
+class _RecipeStore:
+    """Process-wide recipe copy kept fresh by reading only recently edited pages."""
+
+    lock: threading.Lock = field(default_factory=threading.Lock)
+    database_id: str | None = None
+    recipes: dict[str, Recipe] | None = None
+    synced_at: datetime | None = None
+    dirty: bool = False
+
+
+@st.cache_resource(show_spinner=False)
+def _recipe_store() -> _RecipeStore:
+    return _RecipeStore()
 
 
 def notion_cache_generation() -> int:
@@ -43,11 +64,26 @@ def invalidate_household_cache() -> None:
     _load_recurring_cached.clear()
 
 
+def invalidate_recipes_after_write(*, schema_may_change: bool = False) -> None:
+    """Recipe rows changed in Notion: the next read merges only the edited pages.
+
+    Pantry, recurring and saved-plan reads stay cached (a recipe write never changes them).
+    Set ``schema_may_change`` when the write can add select options or columns.
+    """
+    st.session_state[_GENERATION_KEY] = notion_cache_generation() + 1
+    store = _recipe_store()
+    with store.lock:
+        store.dirty = True
+    if schema_may_change:
+        get_db.clear()
+
+
 def invalidate_notion_cache() -> None:
-    """Drop cached Notion reads after a write or when the user requests refresh."""
+    """Drop every cached Notion read (the Refresh button); recipes reload in full."""
     st.session_state[_GENERATION_KEY] = notion_cache_generation() + 1
     invalidate_saved_plans_cache()
     get_db.clear()
+    _recipe_store.clear()
     st.cache_data.clear()
 
 
@@ -57,10 +93,26 @@ def last_recipe_cache_load_seconds() -> float | None:
     return float(value) if value is not None else None
 
 
-@st.cache_data(show_spinner=False)
-def _load_recipes_cached(database_id: str, generation: int, _db: NotionRecipesDB) -> list[Recipe]:
-    del database_id, generation
-    return _db.query_recipes()
+def _recipes_from_store(db: NotionRecipesDB) -> list[Recipe]:
+    store = _recipe_store()
+    with store.lock:
+        database_id = db._database_id
+        if store.recipes is None or store.database_id != database_id:
+            started = datetime.now(UTC)
+            store.recipes = {recipe.page_id: recipe for recipe in db.query_recipes()}
+            store.database_id = database_id
+            store.synced_at = started
+            store.dirty = False
+        elif store.dirty and store.synced_at is not None:
+            started = datetime.now(UTC)
+            try:
+                changed = db.query_recipes_edited_since(store.synced_at - _RECIPE_DELTA_OVERLAP)
+                store.recipes.update({recipe.page_id: recipe for recipe in changed})
+            except Exception:
+                store.recipes = {recipe.page_id: recipe for recipe in db.query_recipes()}
+            store.synced_at = started
+            store.dirty = False
+        return list(store.recipes.values())
 
 
 @st.cache_data(show_spinner=False)
@@ -92,7 +144,7 @@ def _load_saved_plans_cached(
 
 def cached_query_recipes(db: NotionRecipesDB) -> list[Recipe]:
     t0 = time.perf_counter()
-    recipes = _load_recipes_cached(db._database_id, notion_cache_generation(), db)
+    recipes = _recipes_from_store(db)
     elapsed = time.perf_counter() - t0
     if elapsed >= 0.05:
         st.session_state[_LAST_RECIPE_LOAD_KEY] = elapsed
@@ -100,7 +152,7 @@ def cached_query_recipes(db: NotionRecipesDB) -> list[Recipe]:
 
 
 def cached_pantry_entries(*, pantry_database_id: str) -> list[PantryEntry]:
-    return _load_pantry_cached(notion_cache_generation(), pantry_database_id)
+    return _load_pantry_cached(_HOUSEHOLD_CACHE_GENERATION, pantry_database_id)
 
 
 def cached_pantry_names(*, pantry_database_id: str) -> set[str]:
@@ -109,7 +161,7 @@ def cached_pantry_names(*, pantry_database_id: str) -> set[str]:
 
 
 def cached_recurring_items() -> list[str]:
-    return list(_load_recurring_cached(notion_cache_generation()))
+    return list(_load_recurring_cached(_HOUSEHOLD_CACHE_GENERATION))
 
 
 def cached_saved_plans(

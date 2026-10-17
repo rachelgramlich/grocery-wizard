@@ -20,7 +20,7 @@ from src.grocery_wizard.integrations.nyt_cooking import (
 )
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.loading import loading_indicator
-from src.grocery_wizard.ui.notion_cache import invalidate_notion_cache
+from src.grocery_wizard.ui.notion_cache import invalidate_recipes_after_write
 
 
 def _folder_option_label(folder: NytRecipeBoxFolder) -> str:
@@ -200,7 +200,7 @@ def _execute_nyt_recipe_box_sync(
             "Uncheck dry run and choose Sync to Notion to write new recipes."
         )
     elif summary.created:
-        invalidate_notion_cache()
+        invalidate_recipes_after_write(schema_may_change=True)
         st.success(f"Notion updated — added {summary.created} new recipe(s).")
     else:
         st.success("Notion updated — no new recipes were needed (already up to date).")
