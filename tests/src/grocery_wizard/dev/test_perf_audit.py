@@ -202,3 +202,24 @@ def test_noisy_flag_marks_unstable_warm_repetitions() -> None:
     )
     assert "NOISY" not in flags_for(stable, 0.4)
     assert "NOISY" in flags_for(noisy, 0.4)
+
+
+def test_tap_stubs_writes_and_records_the_calling_site() -> None:
+    from notion_client import Client
+
+    from src.grocery_wizard.dev.perf_audit.tap import NotionTap
+
+    tap = NotionTap()
+    tap.install()
+    try:
+        mark = tap.mark()
+        Client(auth="secret").pages.update(page_id="0" * 32, properties={})
+        snapshot = tap.since(mark)
+    finally:
+        tap.uninstall()
+
+    assert snapshot.writes == 1
+    assert snapshot.reads == 0
+    (caller,) = snapshot.callers
+    assert "test_perf_audit.py" in caller
+    assert "PATCH pages/{id}" in caller

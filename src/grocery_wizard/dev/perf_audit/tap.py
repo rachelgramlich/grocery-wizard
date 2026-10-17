@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import statistics
+import sys
 import time
 from collections import Counter
 from dataclasses import dataclass, field
@@ -65,12 +66,29 @@ def stub_write_response(method: str, path: str, body: dict[str, Any] | None) -> 
     return {"object": "stub", "id": "stub-id", "properties": properties}
 
 
+_CALLER_FRAMES = 3
+
+
+def caller_site() -> str:
+    """Nearest app frames that triggered a Notion request, e.g. ``a.py:10 <- b.py:20``."""
+    frame = sys._getframe(2)
+    sites: list[str] = []
+    while frame is not None and len(sites) < _CALLER_FRAMES:
+        filename = frame.f_code.co_filename.replace("\\", "/")
+        if "/grocery_wizard/" in filename and "/perf_audit/" not in filename:
+            short = filename.split("/grocery_wizard/", 1)[1]
+            sites.append(f"{short}:{frame.f_lineno}:{frame.f_code.co_name}")
+        frame = frame.f_back
+    return " <- ".join(sites) or "(outside app code)"
+
+
 @dataclass
 class CallRecord:
     endpoint: str
     seconds: float
     write: bool
     stubbed: bool
+    caller: str = ""
 
 
 @dataclass
@@ -79,6 +97,7 @@ class TapSnapshot:
     read_seconds: float = 0.0
     writes: int = 0
     by_endpoint: dict[str, int] = field(default_factory=dict)
+    callers: dict[str, int] = field(default_factory=dict)
     external_calls: int = 0
     external_seconds: float = 0.0
     external_hosts: dict[str, int] = field(default_factory=dict)
@@ -118,15 +137,20 @@ class NotionTap:
         ) -> Any:
             endpoint = normalize_endpoint(method, path)
             write = is_write_request(method, path)
+            caller = caller_site()
             if write and tap.stub_writes:
-                tap.records.append(CallRecord(endpoint, 0.0, write=True, stubbed=True))
+                tap.records.append(
+                    CallRecord(endpoint, 0.0, write=True, stubbed=True, caller=caller)
+                )
                 return stub_write_response(method, path, body)
             start = time.perf_counter()
             try:
                 return tap._orig_request(client, path, method, query, body, **kwargs)
             finally:
                 elapsed = time.perf_counter() - start
-                tap.records.append(CallRecord(endpoint, elapsed, write=write, stubbed=False))
+                tap.records.append(
+                    CallRecord(endpoint, elapsed, write=write, stubbed=False, caller=caller)
+                )
                 if not write:
                     tap._read_latencies.append(elapsed)
 
@@ -173,6 +197,7 @@ class NotionTap:
             read_seconds=sum(r.seconds for r in reads),
             writes=len(writes),
             by_endpoint=dict(counts.most_common()),
+            callers=dict(Counter(f"{r.endpoint}  {r.caller}" for r in window).most_common()),
             external_calls=len(external),
             external_seconds=sum(r.seconds for r in external),
             external_hosts=dict(Counter(r.host for r in external).most_common()),

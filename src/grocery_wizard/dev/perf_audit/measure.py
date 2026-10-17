@@ -25,6 +25,7 @@ class RunStats:
     notion_read_s: float = 0.0
     notion_writes: int = 0
     notion_by_endpoint: dict[str, int] = field(default_factory=dict)
+    notion_callers: dict[str, int] = field(default_factory=dict)
     external_calls: int = 0
     external_s: float = 0.0
     external_hosts: dict[str, int] = field(default_factory=dict)
@@ -107,6 +108,7 @@ def measure(
         notion_read_s=snapshot.read_seconds,
         notion_writes=snapshot.writes,
         notion_by_endpoint=snapshot.by_endpoint,
+        notion_callers=snapshot.callers,
         external_calls=snapshot.external_calls,
         external_s=snapshot.external_seconds,
         external_hosts=snapshot.external_hosts,

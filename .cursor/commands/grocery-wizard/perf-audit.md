@@ -17,6 +17,7 @@ description: Time every Streamlit control against live Notion, rank slowest-firs
 
 ## Do not in this turn (unless the user asks)
 
+- Run scenario `act` functions outside `just perf-audit` (no write stubbing: the pantry/recurring/plan buttons would write to the real Notion). Use the report's per-interaction caller list to find where requests come from.
 - Run `/work-on-issue` or open fix PRs during the **measure / issue** phases.
 - Run NYT sync, metadata/ingredient backfills, or feedback submit by hand: they hit external services and are marked `external` (skipped) in the catalogue; time them in the browser if the user cares.
 
