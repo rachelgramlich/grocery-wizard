@@ -32,5 +32,5 @@ def test_pantry_and_recurring_share_one_page() -> None:
     assert "Search pantry" in pantry_fn
     assert "st.expander" in pantry_fn
     assert "pantry_tab_remove_pick" not in pantry_fn
-    assert "invalidate_notion_cache()" in pantry_fn
+    assert "invalidate_household_cache()" in pantry_fn
     assert "_append_pantry_item_idempotent(name, aisle_label=aisle_name)" in pantry_fn

@@ -32,6 +32,9 @@ def pytest_configure(config: object) -> None:
 @pytest.fixture(autouse=True)
 def _notion_test_doubles(monkeypatch: pytest.MonkeyPatch) -> None:
     """Avoid live Notion API calls during tests (CI has no integration secrets)."""
+    from src.grocery_wizard.integrations.notion_table import clear_notion_database_metadata_cache
+
+    clear_notion_database_metadata_cache()
     import src.grocery_wizard.shopping.pantry as pantry_mod
     import src.grocery_wizard.shopping.recurring_weekly_items as recurring_mod
     from src.grocery_wizard.integrations.notion import Recipe
@@ -51,12 +54,8 @@ def _notion_test_doubles(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr(recurring_mod, "load_recurring_weekly_items", load_recurring)
     monkeypatch.setattr(
-        "src.grocery_wizard.ui.grocery_flow.load_recurring_weekly_items",
-        load_recurring,
-    )
-    monkeypatch.setattr(
-        "src.grocery_wizard.ui.views.pantry_recurring.load_recurring_weekly_items",
-        load_recurring,
+        "src.grocery_wizard.ui.notion_cache._load_recurring_cached",
+        lambda _generation: [],
     )
 
     fake_db = MagicMock()

@@ -29,6 +29,16 @@ class NotionPageRow:
     properties: dict[str, Any]
 
 
+# Resolving the data source and reading its schema costs two GETs per handle. Handles are built on
+# every pantry/grocery/plan action, so remember the answer per process (schemas rarely change).
+_METADATA_CACHE: dict[tuple[str, str], tuple[str, dict[str, str]]] = {}
+
+
+def clear_notion_database_metadata_cache() -> None:
+    """Forget remembered data-source ids and column types (after a manual refresh or in tests)."""
+    _METADATA_CACHE.clear()
+
+
 class NotionDatabase:
     """Minimal wrapper around a Notion database / data source."""
 
@@ -36,8 +46,15 @@ class NotionDatabase:
         self._config = config
         self._client = Client(auth=config.notion_api_key)
         self._database_id = database_id
-        self._data_source_id = self._resolve_data_source_id()
-        self.column_types = self._load_column_types()
+        cache_key = (config.notion_api_key, database_id)
+        cached = _METADATA_CACHE.get(cache_key)
+        if cached is None:
+            data_source_id = self._resolve_data_source_id()
+            self._data_source_id = data_source_id
+            cached = (data_source_id, self._load_column_types())
+            _METADATA_CACHE[cache_key] = cached
+        self._data_source_id = cached[0]
+        self.column_types = dict(cached[1])
 
     @property
     def data_source_id(self) -> str:

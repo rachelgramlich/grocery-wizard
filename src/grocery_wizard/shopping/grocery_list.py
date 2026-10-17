@@ -190,6 +190,7 @@ def build_grocery_list(
     include_recurring_weekly_items: bool = False,
     exclude_pantry: bool = True,
     ingredient_overrides: dict[str, str] | None = None,
+    pantry_names: set[str] | None = None,
 ) -> tuple[list[str], list[str], None, list[str], dict[str, list[str]], list[NameLinkMismatch]]:
     """Build grocery list items, excluded pantry items, and skipped recipe names (for UI use).
 
@@ -208,10 +209,11 @@ def build_grocery_list(
     for this session only.
 
     When ``recipes`` is provided, it is used instead of calling ``db.query_recipes()``.
+    When ``pantry_names`` is provided it replaces the pantry load (UI passes its cached copy).
     """
     recipe_list = recipes if recipes is not None else db.query_recipes()
     recipes_by_name = {recipe_lookup_key(recipe.name): recipe for recipe in recipe_list}
-    pantry = load_pantry(pantry_path)
+    pantry = set(pantry_names) if pantry_names is not None else load_pantry(pantry_path)
     if pantry_extra:
         pantry = pantry | {item.strip().lower() for item in pantry_extra if item.strip()}
 

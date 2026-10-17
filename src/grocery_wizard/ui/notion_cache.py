@@ -37,6 +37,12 @@ def invalidate_saved_plans_cache() -> None:
     st.session_state[_SAVED_PLANS_GENERATION_KEY] = saved_plans_cache_generation() + 1
 
 
+def invalidate_household_cache() -> None:
+    """Drop only pantry and recurring-item reads (a pantry write must not reload recipes)."""
+    _load_pantry_cached.clear()
+    _load_recurring_cached.clear()
+
+
 def invalidate_notion_cache() -> None:
     """Drop cached Notion reads after a write or when the user requests refresh."""
     st.session_state[_GENERATION_KEY] = notion_cache_generation() + 1
@@ -66,6 +72,14 @@ def _load_pantry_cached(generation: int, _household_db_id: str) -> list[PantryEn
 
 
 @st.cache_data(show_spinner=False)
+def _load_recurring_cached(generation: int) -> list[str]:
+    del generation
+    from src.grocery_wizard.integrations.notion_household import NotionRecurringDB
+
+    return NotionRecurringDB().load_items()
+
+
+@st.cache_data(show_spinner=False)
 def _load_saved_plans_cached(
     weekly_plans_database_id: str,
     saved_plans_generation: int,
@@ -87,6 +101,15 @@ def cached_query_recipes(db: NotionRecipesDB) -> list[Recipe]:
 
 def cached_pantry_entries(*, pantry_database_id: str) -> list[PantryEntry]:
     return _load_pantry_cached(notion_cache_generation(), pantry_database_id)
+
+
+def cached_pantry_names(*, pantry_database_id: str) -> set[str]:
+    entries = cached_pantry_entries(pantry_database_id=pantry_database_id)
+    return {entry.name.strip().lower() for entry in entries if entry.name.strip()}
+
+
+def cached_recurring_items() -> list[str]:
+    return list(_load_recurring_cached(notion_cache_generation()))
 
 
 def cached_saved_plans(

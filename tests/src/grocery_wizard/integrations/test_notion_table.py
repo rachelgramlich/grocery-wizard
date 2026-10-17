@@ -4,11 +4,15 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
+import pytest
+
 from src.grocery_wizard.config import Config
+from src.grocery_wizard.integrations import notion_table
 from src.grocery_wizard.integrations.notion_table import (
     NOTION_TEXT_BLOCK_MAX_LEN,
     NotionDatabase,
     build_notion_rich_text,
+    clear_notion_database_metadata_cache,
     write_notion_property,
 )
 
@@ -86,3 +90,43 @@ def test_household_db_ignores_global_notion_data_source_id() -> None:
 
     assert resolved == "pantry-ds-from-db"
     db._client.databases.retrieve.assert_called_once_with(database_id="pantry-db")
+
+
+def test_database_handles_share_one_metadata_lookup(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Perf guard (#410): building a handle must not re-fetch the data source and schema."""
+    client = MagicMock()
+    client.data_sources.retrieve.return_value = {"properties": {"Name": {"type": "title"}}}
+    monkeypatch.setattr(notion_table, "Client", lambda auth: client)
+    monkeypatch.setattr(
+        notion_table,
+        "resolve_notion_data_source_id",
+        MagicMock(return_value="pantry-ds"),
+    )
+    config = _config(data_source_id=None)
+
+    first = NotionDatabase(config, "pantry-db")
+    second = NotionDatabase(config, "pantry-db")
+
+    assert first.data_source_id == second.data_source_id == "pantry-ds"
+    assert second.column_types == {"Name": "title"}
+    assert second.column_types is not first.column_types
+    assert notion_table.resolve_notion_data_source_id.call_count == 1
+    assert client.data_sources.retrieve.call_count == 1
+
+
+def test_clearing_metadata_cache_refetches(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = MagicMock()
+    client.data_sources.retrieve.return_value = {"properties": {}}
+    monkeypatch.setattr(notion_table, "Client", lambda auth: client)
+    monkeypatch.setattr(
+        notion_table,
+        "resolve_notion_data_source_id",
+        MagicMock(return_value="ds"),
+    )
+    config = _config(data_source_id=None)
+
+    NotionDatabase(config, "db")
+    clear_notion_database_metadata_cache()
+    NotionDatabase(config, "db")
+
+    assert client.data_sources.retrieve.call_count == 2
