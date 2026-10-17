@@ -21,6 +21,7 @@ PYTHON_HEAVY_S = 1.0
 READ_FANOUT = 6
 WRITE_FANOUT = 3
 COLD_GAP_MIN_S = 1.0
+_CALLERS_SHOWN = 4
 NOISY_SPREAD_RATIO = 2.0
 NOISY_SPREAD_MIN_S = 1.0
 REGRESSION_PCT = 0.10
@@ -204,6 +205,10 @@ def render_markdown(report: AuditReport, *, comparison: list[dict[str, Any]] | N
             assert result.warm is not None
             calls = ", ".join(f"{n}x {e}" for e, n in result.warm.notion_by_endpoint.items())
             lines.append(f"- `{result.id}`: {calls}")
+            lines.extend(
+                f"  - {count}x {caller}"
+                for caller, count in list(result.warm.notion_callers.items())[:_CALLERS_SHOWN]
+            )
 
     profiled = [r for r in report.ranked() if r.warm and r.warm.profile][:6]
     if profiled:

@@ -24,6 +24,8 @@ Output lands in `.local/grocery_wizard/perf/perf-<stamp>.md|.json`; `latest.json
 
 Safe to run on the real databases: no Notion writes are issued, so no UAT cleanup is needed.
 
+**Never run a scenario's `act` outside the audit runner** (for example in a throwaway script that wraps `Client.request` to count calls). Without the tap the write buttons really write. Use the runner: the report lists the calling site of every Notion request under **Notion requests per interaction**, so you do not need ad-hoc tracing.
+
 ## Budgets (what “fast enough” means)
 
 | Interaction | Warm budget | Warm Notion reads |
