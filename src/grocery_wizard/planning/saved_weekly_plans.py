@@ -91,11 +91,20 @@ def plan_recipe_lookup_keys(recipe_names: list[str] | tuple[str, ...]) -> frozen
     return frozenset(recipe_lookup_key(name) for name in recipe_names)
 
 
-def list_saved_plans(*, recipes_db: NotionRecipesDB | None = None) -> list[SavedWeeklyPlan]:
-    """Return saved plans newest-first, one row per week."""
+def list_saved_plans(
+    *,
+    recipes_db: NotionRecipesDB | None = None,
+    recipe_names_by_page_id: dict[str, str] | None = None,
+) -> list[SavedWeeklyPlan]:
+    """Return saved plans newest-first, one row per week.
+
+    Pass ``recipe_names_by_page_id`` (from already-loaded recipes) to skip re-querying recipes.
+    """
     from src.grocery_wizard.integrations.notion_household import NotionWeeklyPlansDB
 
-    return NotionWeeklyPlansDB(recipes_db=recipes_db).list_plans()
+    return NotionWeeklyPlansDB(recipes_db=recipes_db).list_plans(
+        recipe_names_by_page_id=recipe_names_by_page_id,
+    )
 
 
 def load_plan_recipes(

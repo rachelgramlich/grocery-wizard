@@ -328,8 +328,16 @@ class NotionWeeklyPlansDB:
         self._db = NotionDatabase(cfg, db_id)
         self._recipes_db = recipes_db or NotionRecipesDB(cfg)
 
-    def list_plans(self) -> list[SavedWeeklyPlan]:
-        recipe_names_by_id = self._recipe_names_by_page_id()
+    def list_plans(
+        self,
+        *,
+        recipe_names_by_page_id: dict[str, str] | None = None,
+    ) -> list[SavedWeeklyPlan]:
+        recipe_names_by_id = (
+            recipe_names_by_page_id
+            if recipe_names_by_page_id is not None
+            else self._recipe_names_by_page_id()
+        )
         plans = self._plans_from_rows(self._db.query_all_pages(), recipe_names_by_id)
         return _dedupe_plans_by_week(plans)
 
