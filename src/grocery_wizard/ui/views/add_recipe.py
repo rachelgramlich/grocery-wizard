@@ -19,7 +19,7 @@ from src.grocery_wizard.recipes.add_recipe import (
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.ids import BLOCK_ADD_MANUAL, BLOCK_ADD_NYT, BLOCK_ADD_URL
 from src.grocery_wizard.ui.loading import loading_indicator
-from src.grocery_wizard.ui.notion_cache import invalidate_notion_cache
+from src.grocery_wizard.ui.notion_cache import invalidate_recipes_after_write
 from src.grocery_wizard.ui.nyt_sync import render_nyt_sync_controls
 
 _ENTRY_PATH_URL = BLOCK_ADD_URL.removeprefix("add.")
@@ -188,7 +188,7 @@ def _render_recipe_review(
 
             with loading_indicator("Saving recipe to Notion…"):
                 recipe = db.create_recipe(cleaned)
-                invalidate_notion_cache()
+                invalidate_recipes_after_write(schema_may_change=True)
             preview["status"] = "saved"
             preview["saved_name"] = recipe.name
             st.rerun()

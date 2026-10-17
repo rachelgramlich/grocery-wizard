@@ -30,7 +30,7 @@ from src.grocery_wizard.ui.meal_plan_status_ui import (
     render_meal_plan_status_for_recipe,
     render_meal_plan_status_unavailable,
 )
-from src.grocery_wizard.ui.notion_cache import cached_query_recipes, invalidate_notion_cache
+from src.grocery_wizard.ui.notion_cache import cached_query_recipes, invalidate_recipes_after_write
 
 
 def _nyt_client_if_configured() -> NYTCookingClient | None:
@@ -63,7 +63,7 @@ def _run_backfill_with_progress(
     progress_bar.progress(1.0, text=outcome)
     st.success(outcome)
     if summary.succeeded:
-        invalidate_notion_cache()
+        invalidate_recipes_after_write(schema_may_change=True)
 
 
 def _preview_count_line(count: int) -> None:

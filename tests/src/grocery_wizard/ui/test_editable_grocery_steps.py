@@ -43,7 +43,7 @@ def test_save_recipe_review_to_notion_syncs_stash_after_cache_invalidation() -> 
     save_block = source.split("def _save_recipe_review_to_notion", 1)[1].split(
         "def _render_per_recipe_review", 1
     )[0]
-    assert "invalidate_notion_cache()" in save_block
+    assert "invalidate_recipes_after_write()" in save_block
     assert "sync_grocery_stash_notion_generation" in save_block
     assert "queue_weekly_scroll(BLOCK_WEEKLY_GROCERY_RECIPE_REVIEW)" in save_block
 

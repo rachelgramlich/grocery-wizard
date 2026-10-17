@@ -15,7 +15,7 @@ from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
     meal_plan_status_column_name,
 )
 from src.grocery_wizard.ui.loading import loading_indicator
-from src.grocery_wizard.ui.notion_cache import invalidate_notion_cache
+from src.grocery_wizard.ui.notion_cache import invalidate_recipes_after_write
 
 
 @dataclass(frozen=True)
@@ -146,7 +146,7 @@ def render_meal_plan_status_for_recipe(
                 context=context,
             )
         if updated:
-            invalidate_notion_cache()
+            invalidate_recipes_after_write()
             st.success(f"Meal plan status for **{recipe.name}** is now **{new_status}**.")
             st.rerun()
         else:

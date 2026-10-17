@@ -16,6 +16,7 @@ __all__ = [
 ]
 
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from typing import Any
 
 from notion_client import Client
@@ -248,6 +249,26 @@ class NotionRecipesDB:
                 break
             cursor = response.get("next_cursor")
 
+        return [self._page_to_recipe(page) for page in pages]
+
+    def query_recipes_edited_since(self, since: datetime) -> list[Recipe]:
+        """Recipes created or edited at or after ``since`` (Notion stamps to the minute)."""
+        pages: list[dict[str, Any]] = []
+        cursor: str | None = None
+        edited_filter = {
+            "timestamp": "last_edited_time",
+            "last_edited_time": {"on_or_after": since.astimezone(UTC).isoformat()},
+        }
+        while True:
+            response = self._client.data_sources.query(
+                data_source_id=self._data_source_id,
+                filter=edited_filter,
+                start_cursor=cursor,
+            )
+            pages.extend(response.get("results", []))
+            if not response.get("has_more"):
+                break
+            cursor = response.get("next_cursor")
         return [self._page_to_recipe(page) for page in pages]
 
     def find_by_link(self, url: str) -> Recipe | None:

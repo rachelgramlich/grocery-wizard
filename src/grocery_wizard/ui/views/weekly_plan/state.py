@@ -40,7 +40,7 @@ from src.grocery_wizard.ui.grocery_helpers import parse_line_items_text
 from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.notion_cache import (
     cached_saved_plans,
-    invalidate_notion_cache,
+    invalidate_recipes_after_write,
     invalidate_saved_plans_cache,
     notion_cache_generation,
     saved_plan_for_week,
@@ -383,7 +383,7 @@ def _apply_weekly_plan_save_result(
         cached_recipes=cached_recipes,
     )
     if updated_stats:
-        invalidate_notion_cache()
+        invalidate_recipes_after_write()
     st.session_state.pop(_OVERWRITE_CONFIRM_FP_KEY, None)
 
 

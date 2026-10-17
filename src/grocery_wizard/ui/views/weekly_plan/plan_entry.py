@@ -52,7 +52,7 @@ from src.grocery_wizard.ui.meal_plan_filters import (
 )
 from src.grocery_wizard.ui.notion_cache import (
     cached_saved_plans,
-    invalidate_notion_cache,
+    invalidate_recipes_after_write,
     saved_plan_recipe_names,
 )
 from src.grocery_wizard.ui.recipe_match import (
@@ -840,7 +840,7 @@ def _render_built_plan_meals(
                     cached_recipes=all_recipes,
                 )
                 if updated_stats:
-                    invalidate_notion_cache()
+                    invalidate_recipes_after_write()
             _write_plan_names(new_plan)
             _set_plan_slot_origins(
                 origins_after_swap(current_plan, names_to_replace, origins, new_plan),
@@ -949,7 +949,7 @@ def _render_built_plan_meals(
                             cached_recipes=all_recipes,
                         )
                         if updated_stats:
-                            invalidate_notion_cache()
+                            invalidate_recipes_after_write()
                     rejected = set(st.session_state.get("plan_rejected_names", []))
                     plan = suggest_meals(
                         all_recipes,
