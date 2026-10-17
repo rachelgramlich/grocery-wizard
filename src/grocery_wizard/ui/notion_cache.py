@@ -139,7 +139,8 @@ def _load_saved_plans_cached(
 ) -> list[SavedWeeklyPlan]:
     del saved_plans_generation
     del weekly_plans_database_id
-    return list_saved_plans(recipes_db=_recipes_db)
+    recipe_names = {recipe.page_id: recipe.name for recipe in _recipes_from_store(_recipes_db)}
+    return list_saved_plans(recipes_db=_recipes_db, recipe_names_by_page_id=recipe_names)
 
 
 def cached_query_recipes(db: NotionRecipesDB) -> list[Recipe]:

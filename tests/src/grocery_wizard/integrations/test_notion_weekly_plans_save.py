@@ -67,3 +67,24 @@ def test_ensure_plan_writes_without_version_column(
     assert props["Name"] == plan_name
     assert result.outcome == "created"
     assert result.plan.name == plan_name
+
+
+def test_list_plans_uses_given_recipe_names_without_querying_recipes() -> None:
+    db_instance = MagicMock()
+    db_instance.query_all_pages.return_value = [NotionPageRow(page_id="plan-page", properties={})]
+
+    def _read(row: NotionPageRow, column: str) -> object:
+        return {"Name": "2026-10-11_plan", "Week start": "2026-10-11", "Recipes": ["recipe-a"]}.get(
+            column
+        )
+
+    db_instance.read.side_effect = _read
+    recipes_db = MagicMock()
+    plans_db = NotionWeeklyPlansDB.__new__(NotionWeeklyPlansDB)
+    plans_db._db = db_instance
+    plans_db._recipes_db = recipes_db
+
+    plans = plans_db.list_plans(recipe_names_by_page_id={"recipe-a": "Pasta"})
+
+    recipes_db.query_recipes.assert_not_called()
+    assert [plan.recipes for plan in plans] == [("Pasta",)]
