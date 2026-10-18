@@ -71,14 +71,30 @@ def contrast_ratio(foreground: str, background: str) -> float:
     return (lighter + 0.05) / (darker + 0.05)
 
 
+def approved_button_colors(tokens: ThemeTokens = GW_THEME) -> dict[str, tuple[str, str]]:
+    """Only (label, fill) combos a button may render with, keyed by Streamlit ``type``.
+
+    ``tests/src/grocery_wizard/ui/test_button_colors.py`` resolves the shipped CSS for
+    every button widget and fails if a button ends up with any other combo.
+    """
+    return {
+        "primary": (tokens.on_accent, tokens.accent),
+        "secondary": (tokens.text, tokens.input_bg),
+    }
+
+
 def theme_contrast_pairs(tokens: ThemeTokens = GW_THEME) -> list[tuple[str, str, str]]:
     """Foreground/background pairs that must stay readable in the UI."""
+    button_pairs = [
+        (f"{kind} button label", fg, bg)
+        for kind, (fg, bg) in approved_button_colors(tokens).items()
+    ]
     return [
         ("body text on page", tokens.text, tokens.bg),
         ("body text on inputs", tokens.text, tokens.input_bg),
         ("muted text on page", tokens.text_muted, tokens.bg),
         ("tag text on tag fill", tokens.blue_text, tokens.blue),
-        ("primary button label", tokens.on_accent, tokens.accent),
+        *button_pairs,
     ]
 
 
@@ -261,39 +277,56 @@ def app_theme_css(tokens: ThemeTokens = GW_THEME) -> str:
             border-bottom-color: var(--gw-accent) !important;
         }}
 
-        .stButton button[kind="primary"],
-        .stButton button[data-testid="stBaseButton-primary"],
-        .stButton button[data-testid="baseButton-primary"],
-        .stDownloadButton button[data-testid="stBaseButton-primary"],
-        .stDownloadButton button {{
+        .stButton button[kind^="primary"],
+        .stButton button[data-testid^="stBaseButton-primary"],
+        .stButton button[data-testid^="baseButton-primary"],
+        .stFormSubmitButton button[kind^="primary"],
+        .stFormSubmitButton button[data-testid^="stBaseButton-primary"],
+        .stDownloadButton button[kind^="primary"],
+        .stDownloadButton button[data-testid^="stBaseButton-primary"],
+        .stDownloadButton button,
+        .stLinkButton a[data-testid="stBaseLinkButton-primary"] {{
             background-color: var(--gw-accent) !important;
             border-color: var(--gw-accent) !important;
             color: {t.on_accent} !important;
             font-weight: 600 !important;
         }}
 
-        .stButton button[kind="primary"] *,
-        .stButton button[data-testid="stBaseButton-primary"] *,
-        .stButton button[data-testid="baseButton-primary"] *,
-        .stDownloadButton button[data-testid="stBaseButton-primary"] *,
-        .stDownloadButton button * {{
+        .stButton button[kind^="primary"] *,
+        .stButton button[data-testid^="stBaseButton-primary"] *,
+        .stButton button[data-testid^="baseButton-primary"] *,
+        .stFormSubmitButton button[kind^="primary"] *,
+        .stFormSubmitButton button[data-testid^="stBaseButton-primary"] *,
+        .stDownloadButton button[kind^="primary"] *,
+        .stDownloadButton button[data-testid^="stBaseButton-primary"] *,
+        .stDownloadButton button *,
+        .stLinkButton a[data-testid="stBaseLinkButton-primary"] * {{
             color: {t.on_accent} !important;
             -webkit-text-fill-color: {t.on_accent} !important;
             font-weight: 600 !important;
         }}
 
-        .stButton button[kind="secondary"],
-        .stButton button[data-testid="baseButton-secondary"] {{
+        .stButton button[kind^="secondary"],
+        .stButton button[data-testid^="stBaseButton-secondary"],
+        .stButton button[data-testid^="baseButton-secondary"],
+        .stFormSubmitButton button[kind^="secondary"],
+        .stFormSubmitButton button[data-testid^="stBaseButton-secondary"],
+        .stLinkButton a[data-testid="stBaseLinkButton-secondary"],
+        .stPopover button[data-testid="stPopoverButton"] {{
             background-color: var(--gw-input-bg) !important;
             border-color: {border} !important;
             color: var(--gw-text) !important;
         }}
 
-        .stButton button[kind="secondary"] p,
-        .stButton button[kind="secondary"] span,
-        .stButton button[data-testid="baseButton-secondary"] p,
-        .stButton button[data-testid="baseButton-secondary"] span {{
+        .stButton button[kind^="secondary"] *,
+        .stButton button[data-testid^="stBaseButton-secondary"] *,
+        .stButton button[data-testid^="baseButton-secondary"] *,
+        .stFormSubmitButton button[kind^="secondary"] *,
+        .stFormSubmitButton button[data-testid^="stBaseButton-secondary"] *,
+        .stLinkButton a[data-testid="stBaseLinkButton-secondary"] *,
+        .stPopover button[data-testid="stPopoverButton"] * {{
             color: var(--gw-text) !important;
+            -webkit-text-fill-color: var(--gw-text) !important;
         }}
 
         [data-testid="stExpander"] summary,
