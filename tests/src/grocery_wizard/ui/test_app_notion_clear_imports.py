@@ -18,3 +18,21 @@ def test_streamlit_app_module_imports_without_top_level_clear_helpers() -> None:
     """App startup must not depend on integration clear helpers at import time."""
     app = importlib.import_module("src.grocery_wizard.ui.app")
     assert callable(app._refresh_notion_cache_from_ui)
+
+
+def test_app_puts_repo_root_on_pythonpath_so_streamlit_reloads_all_modules(monkeypatch) -> None:
+    """Hot deploys must reload `shopping/` etc., not just `ui/` (stale-module TypeError)."""
+    import os
+    import sys
+
+    from streamlit import file_util
+
+    from tests.repo_paths import UI_SRC_ROOT
+
+    monkeypatch.delenv("PYTHONPATH", raising=False)
+    sys.modules.pop("src.grocery_wizard.ui.app", None)
+    importlib.import_module("src.grocery_wizard.ui.app")
+
+    shopping_file = str(UI_SRC_ROOT.parent / "shopping" / "grocery_list.py")
+    assert str(UI_SRC_ROOT.parents[2]) in os.environ["PYTHONPATH"].split(os.pathsep)
+    assert file_util.file_in_pythonpath(shopping_file)
