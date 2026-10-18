@@ -12,7 +12,8 @@ Run everything locally before pushing:
 
 ```bash
 just check        # ruff check + ruff format --check + pytest (local pre-push)
-just ci           # sync + same checks as just check (GitHub Actions)
+just ci           # locked sync + workflow lint + same checks as just check (GitHub Actions)
+just workflow-lint # actionlint on .github/workflows (needs network once)
 just format       # auto-format with ruff
 just lint         # ruff check --fix
 just lint-check   # ruff check (no fix)
@@ -21,7 +22,7 @@ just test         # pytest
 just pre-commit   # all pre-commit hooks (ruff --fix + ruff-format on commit)
 ```
 
-**GitHub Actions** runs `just ci` on push to `main` and on pull requests (`ruff check`, `ruff format --check`, `pytest`). Pre-commit still auto-fixes lint/format on each commit locally (or via [pre-commit.ci](https://pre-commit.ci) if enabled).
+**GitHub Actions** runs `just ci` on push to `main` and on pull requests (`actionlint`, `ruff check`, `ruff format --check`, `pytest`). CI fails if `uv.lock` is out of date, so run `uv lock` after editing dependencies. Workflow actions are pinned to commit SHAs; Dependabot (`.github/dependabot.yml`) opens weekly PRs to bump them and Python dependencies. Pre-commit still auto-fixes lint/format on each commit locally (or via [pre-commit.ci](https://pre-commit.ci) if enabled).
 
 ---
 

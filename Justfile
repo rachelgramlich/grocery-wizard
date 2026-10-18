@@ -91,8 +91,12 @@ clean:
 # Local pre-push: ruff lint + format check + tests (no auto-fix)
 check: lint-check format-check test
 
-# GitHub Actions entry point (sync + same checks as check)
-ci: sync lint-check format-check test
+# Lint GitHub Actions workflows (needs network once to fetch actionlint)
+workflow-lint:
+    uvx --from actionlint-py==1.7.12.25 actionlint
+
+# GitHub Actions entry point (sync + same checks as check + workflow lint)
+ci: sync workflow-lint lint-check format-check test
 
 # Run pre-commit checks
 pre-commit:
