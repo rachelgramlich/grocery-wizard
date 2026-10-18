@@ -1,12 +1,12 @@
-# Performance audit (`/perf-audit`)
+# Performance audit (`/performance-audit`)
 
-Repeatable, headless timing of **every control** in the Streamlit app against live Notion, ranked slowest-first, with flags that point at the likely cause. Slash command: `.cursor/commands/grocery-wizard/perf-audit.md`. Code: `src/grocery_wizard/dev/perf_audit/`.
+Repeatable, headless timing of **every control** in the Streamlit app against live Notion, ranked slowest-first, with flags that point at the likely cause. Slash command: `.cursor/commands/grocery-wizard/performance-audit.md`. Code: `src/grocery_wizard/dev/perf_audit/`.
 
 ```bash
-just perf-audit --list                              # catalogue (W = writes stubbed, X = external, skipped)
-just perf-audit --profile                           # full run, writes report + latest.json baseline
-just perf-audit --only 'weekly.meals.*' --reps 3 --compare latest   # targeted re-run vs baseline
-just perf-audit --fail-over 5                       # exit 1 if any warm scenario exceeds 5s
+just performance-audit --list                              # catalogue (W = writes stubbed, X = external, skipped)
+just performance-audit --profile                           # full run, writes report + latest.json baseline
+just performance-audit --only 'weekly.meals.*' --reps 3 --compare latest   # targeted re-run vs baseline
+just performance-audit --fail-over 5                       # exit 1 if any warm scenario exceeds 5s
 ```
 
 Output lands in `.local/grocery_wizard/perf/perf-<stamp>.md|.json`; `latest.json` is the baseline for `--compare latest`.
