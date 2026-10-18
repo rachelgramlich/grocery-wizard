@@ -109,6 +109,15 @@ def _normalize_recipe_field_values(
 
 DEFAULT_NYT_SYNCED_COLUMN = "Synced from NYT recipe box"
 
+# Meal-plan stat columns (also listed in recipe_meal_plan_stats); included on list queries.
+_STAT_NUMBER_COLUMNS = (
+    "Rejection count",
+    "Selection count",
+    "Suggestion rejections",
+    "Plan selections",
+)
+_STAT_STATUS_COLUMNS = ("Meal plan status",)
+
 
 class _NotionClearSelect:
     """Sentinel: clear a Notion select/status property on update."""
@@ -236,40 +245,65 @@ class NotionRecipesDB:
         return None
 
     def query_recipes(self) -> list[Recipe]:
-        pages: list[dict[str, Any]] = []
-        cursor: str | None = None
-
-        while True:
-            response = self._client.data_sources.query(
-                data_source_id=self._data_source_id,
-                start_cursor=cursor,
-            )
-            pages.extend(response.get("results", []))
-            if not response.get("has_more"):
-                break
-            cursor = response.get("next_cursor")
-
-        return [self._page_to_recipe(page) for page in pages]
+        return [self._page_to_recipe(page) for page in self._query_recipe_pages()]
 
     def query_recipes_edited_since(self, since: datetime) -> list[Recipe]:
         """Recipes created or edited at or after ``since`` (Notion stamps to the minute)."""
-        pages: list[dict[str, Any]] = []
-        cursor: str | None = None
         edited_filter = {
             "timestamp": "last_edited_time",
             "last_edited_time": {"on_or_after": since.astimezone(UTC).isoformat()},
         }
+        pages = self._query_recipe_pages(filter=edited_filter)
+        return [self._page_to_recipe(page) for page in pages]
+
+    def _recipe_query_filter_properties(self) -> list[str]:
+        """Notion property names for list queries — every field ``Recipe`` reads on refresh."""
+        schema = self.schema
+        names: set[str] = {schema.name_column, schema.link_column}
+        if schema.ingredients_column:
+            names.add(schema.ingredients_column)
+        for col in schema.filter_columns:
+            names.add(col.name)
+        for col in schema.checkbox_columns:
+            names.add(col.name)
+        for configured in (
+            self._config.suggestion_rejections_column,
+            self._config.plan_selections_column,
+            self._config.meal_plan_status_column,
+        ):
+            if configured and configured.strip():
+                names.add(configured.strip())
+        for column_name in (*_STAT_NUMBER_COLUMNS, *_STAT_STATUS_COLUMNS):
+            if column_name in schema.all_columns:
+                names.add(column_name)
+        nyt_column = self.nyt_synced_column_name()
+        if nyt_column:
+            names.add(nyt_column)
+        return sorted(names)
+
+    def _query_recipe_pages(
+        self,
+        *,
+        filter: dict[str, Any] | None = None,
+    ) -> list[dict[str, Any]]:
+        pages: list[dict[str, Any]] = []
+        cursor: str | None = None
+        filter_properties = self._recipe_query_filter_properties()
         while True:
-            response = self._client.data_sources.query(
-                data_source_id=self._data_source_id,
-                filter=edited_filter,
-                start_cursor=cursor,
-            )
+            query_kwargs: dict[str, Any] = {
+                "data_source_id": self._data_source_id,
+                "filter_properties": filter_properties,
+            }
+            if filter is not None:
+                query_kwargs["filter"] = filter
+            if cursor is not None:
+                query_kwargs["start_cursor"] = cursor
+            response = self._client.data_sources.query(**query_kwargs)
             pages.extend(response.get("results", []))
             if not response.get("has_more"):
                 break
             cursor = response.get("next_cursor")
-        return [self._page_to_recipe(page) for page in pages]
+        return pages
 
     def find_by_link(self, url: str) -> Recipe | None:
         stripped = url.strip()
@@ -290,6 +324,7 @@ class NotionRecipesDB:
         response = self._client.data_sources.query(
             data_source_id=self._data_source_id,
             filter={"property": link_column, "url": {"equals": url}},
+            filter_properties=self._recipe_query_filter_properties(),
         )
         for page in response.get("results", []):
             recipe = self._page_to_recipe(page)
