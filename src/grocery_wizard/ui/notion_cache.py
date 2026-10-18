@@ -156,7 +156,9 @@ def _list_saved_plans_for_ui(
             recipe_names_by_page_id=recipe_names_by_page_id,
         )
     except TypeError:
-        # Streamlit Cloud can briefly run mismatched deploy slices (#417).
+        # Partial Streamlit Cloud deploys can mix old ``list_saved_plans`` with new
+        # callers that pass ``recipe_names_by_page_id`` (#417). Retry without the kwarg
+        # so the weekly saved-plan picker still loads; not dead code — keep with lazy import.
         return list_saved_plans(recipes_db=recipes_db)
 
 

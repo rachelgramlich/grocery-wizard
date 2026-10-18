@@ -9,7 +9,12 @@ import importlib.util
 from datetime import date
 
 import pytest
-from ui_source import APP_PATH, apptest_assert_no_exception, apptest_open_page
+from ui_source import (
+    APP_PATH,
+    apptest_assert_no_exception,
+    apptest_open_page,
+    apptest_start_app,
+)
 
 from src.grocery_wizard.planning.saved_weekly_plans import SavedWeeklyPlan
 from src.grocery_wizard.ui import notion_cache
@@ -38,11 +43,7 @@ def test_app_py_imports_without_module_level_error() -> None:
 
 def test_holistic_first_run_renders_global_shell() -> None:
     """Equivalent to cold open: title row, refresh, feedback, weekly plan entry gate."""
-    from streamlit.testing.v1 import AppTest
-
-    at = AppTest.from_file(str(APP_PATH), default_timeout=120)
-    at.run(timeout=120)
-    apptest_assert_no_exception(at, context="first run")
+    at = apptest_start_app(timeout=120)
 
     labels = {button.label for button in at.button}
     assert "Refresh from Notion" in labels
@@ -64,10 +65,7 @@ def test_holistic_first_run_renders_global_shell() -> None:
     ],
 )
 def test_holistic_primary_page_opens(page_label: str, body_needle: str) -> None:
-    from streamlit.testing.v1 import AppTest
-
-    at = AppTest.from_file(str(APP_PATH), default_timeout=120)
-    at.run(timeout=120)
+    at = apptest_start_app(timeout=120)
     apptest_open_page(at, page_label, timeout=120)
     apptest_assert_no_exception(at, context=f"page {page_label!r}")
 
