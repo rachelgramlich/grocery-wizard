@@ -8,6 +8,7 @@
 | **`/triage-feedback-inbox`** | GitHub `user-feedback-inbox` → merge/split draft → promote backlog via **`gh`** (`.cursor/commands/grocery-wizard/triage-feedback-inbox.md`) |
 | **`/create-issues-from-backlog`** | Alias → **`/triage-feedback-inbox`** (`.cursor/commands/grocery-wizard/create-issues-from-backlog.md`) |
 | **`/app-review`** | Hands-on Streamlit UAT → findings → optional grouped **`gh`** issues (see `.cursor/commands/grocery-wizard/app-review.md`) |
+| **`/app-smoke`** | Holistic headless + browser sign-off before UI work is done (`.cursor/commands/grocery-wizard/app-smoke.md`) |
 | **`/architecture-review`** | Standards audit + optional **`audit`** issues (shared: `.cursor/commands/shared/architecture-review.md`) |
 | **`/list-enhancements`** | Open backlog (`grocery-wizard` label) via **`gh`** (`.cursor/commands/grocery-wizard/list-enhancements.md`) |
 | **`/work-on-issue N`** | Implement one issue — area → files and UAT rules **below** + shared `.cursor/commands/shared/work-on-issue.md` |
@@ -27,7 +28,8 @@
 | **Bug label** | `bug` |
 | **Area labels** | `gw-area-ui`, `gw-area-parser`, `gw-area-shopping`, `gw-area-recipes`, `gw-area-cli`, `gw-area-other` |
 | **List backlog** | **`/list-enhancements`** or `gh issue list --label grocery-wizard --state open` |
-| **Verify** | `just check` |
+| **Verify** | `just check` (includes holistic UI smoke tests) |
+| **Holistic UI smoke** | `just smoke-ui` (headless AppTest; mocked Notion in CI) |
 
 **Enhancement create example:** `gh issue create … --label grocery-wizard --label gw-area-ui` with template sections **Description**, **Expected behavior & manual test hints**, **Area**.
 
@@ -50,13 +52,18 @@ Area from label `gw-area-<name>` or `### Area` in the issue body.
 
 ### Manual verification (UI issues, for `/work-on-issue`)
 
+**Before claiming done / opening a UI PR for review:** run **`just smoke-ui`** (or full **`just check`**). Holistic smoke uses headless **AppTest** and covers app import, first run, weekly saved-plan list load, and every primary page (see **`/app-smoke`**).
+
 **Credential preflight:** `test -n "${NOTION_API_KEY:-}" && PYTHONPATH=src uv run python -c "from grocery_wizard.config import load_config; load_config(); print('notion ok')"`. Missing `.env` is OK when secrets are in the environment.
 
-When preflight succeeds: **browser smoke** required — `just grocery-ui` (or `uv run streamlit run src/grocery_wizard/ui/app.py`), then user spot-check in chat before `gh pr comment` sign-off (unless user delegates full UAT).
+When preflight succeeds: **browser smoke** required — `just grocery-ui` (or `uv run streamlit run src/grocery_wizard/ui/app.py`). Exercise **all** page picker tabs; on **Create weekly plan**, open **Continue a saved weekly plan** and confirm the saved-plan list loads without error. Then user spot-check in chat before `gh pr comment` sign-off (unless user delegates full UAT).
 
 **Notion UAT cleanup:** If browser smoke **writes** to Notion (status, ingredients, plans, pantry, etc.), **undo every test change before sign-off** — same UI/API path, restore prior values, and say what you reverted in chat/PR. Prefer read-only smoke when a write is not required to prove the feature.
 
-Always state in chat and PR: **`Browser smoke: ran`**, **`Browser smoke: skipped — <reason>`**, or **`Browser smoke: N/A (non-UI)`**.
+Always state in chat and PR:
+
+- **`Holistic smoke: ran`** (`just smoke-ui`), **`Holistic smoke: skipped — <reason>`**, or **`Holistic smoke: N/A (non-UI)`**
+- **`Browser smoke: ran`**, **`Browser smoke: skipped — <reason>`**, or **`Browser smoke: N/A (non-UI)`**
 
 Skills (committed): `.cursor/skills/tidy-first/SKILL.md` (mirrored under `.agents/skills/tidy-first/`). Do **not** add a `tidy-project` skill — it collides with the **`/tidy-project`** command in Cursor’s `/` menu.
 
@@ -79,7 +86,7 @@ Skills (committed): `.cursor/skills/tidy-first/SKILL.md` (mirrored under `.agent
 1. PR title: `#<issue-number>: <issue title>` (truncate title if needed for GitHub limits)
 2. PR template **Manual verification** + `Closes #<issue-number>`
 3. Create PRs **ready for review** (not draft) unless the user asks for a draft.
-4. Manual UAT: non-UI → agent runs checks and posts sign-off via **`gh pr comment`** (see `/work-on-issue`); UI → Cloud agents **must** browser-smoke Streamlit when `NOTION_*` secrets / `load_config()` preflight succeeds (secrets do not require a `.env` file), then user confirms in chat (default) before sign-off. **Always** state **`Browser smoke: ran`**, **`Browser smoke: skipped — <reason>`**, or **`Browser smoke: N/A (non-UI)`** in chat and the PR — details in `/work-on-issue`
+4. Manual UAT: non-UI → agent runs checks and posts sign-off via **`gh pr comment`** (see `/work-on-issue`); UI → run **`just smoke-ui`** before PR ready, and Cloud agents **must** browser-smoke Streamlit when `NOTION_*` secrets / `load_config()` preflight succeeds (secrets do not require a `.env` file), then user confirms in chat (default) before sign-off. **Always** state **`Holistic smoke: …`** and **`Browser smoke: …`** in chat and the PR — details in `/work-on-issue` and **`/app-smoke`**
 
 Do not close backlog issues by hand — merge with `Closes #N`.
 
