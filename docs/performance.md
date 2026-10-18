@@ -53,7 +53,7 @@ Same thresholds as the harness (details in [`docs/performance-audit.md`](perform
 
 ## Work shipped (issues #406–#411, PRs #405–#417)
 
-Audit-driven fixes merged on `main` in October 2026. Before numbers come from the **pre-fix perf-audit baseline** recorded in each GitHub issue; after numbers from the **full re-audit** at commit [`4fbc95b`](https://github.com/rachelgramlich/grocery-wizard/commit/4fbc95b) (309 recipes, 66 pantry items, 6 saved plans). `main` later picked up [#417](https://github.com/rachelgramlich/grocery-wizard/pull/417) (saved-plan list reuse).
+Audit-driven fixes merged on `main` in October 2026. Before numbers come from the **pre-fix performance-audit baseline** recorded in each GitHub issue; after numbers from the **full re-audit** at commit [`4fbc95b`](https://github.com/rachelgramlich/grocery-wizard/commit/4fbc95b) (309 recipes, 66 pantry items, 6 saved plans). `main` later picked up [#417](https://github.com/rachelgramlich/grocery-wizard/pull/417) (saved-plan list reuse).
 
 | Issue | Problem | Before (typical warm) | After (warm / notes) | PR |
 | --- | --- | --- | --- | --- |
