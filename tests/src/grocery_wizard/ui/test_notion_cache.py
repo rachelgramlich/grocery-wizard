@@ -55,6 +55,23 @@ def test_load_saved_plans_cached_forwards_recipe_names_by_page_id(
     assert captured["recipe_names_by_page_id"] == {"p1": "Soup", "p2": "Pie"}
 
 
+def test_list_saved_plans_for_ui_falls_back_on_kwarg_typeerror(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Regression: partial Streamlit Cloud deploy (#417) — retry without recipe_names_by_page_id."""
+    db = MagicMock()
+
+    def _legacy_list_saved_plans(*, recipes_db=None, recipe_names_by_page_id=None) -> list:
+        if recipe_names_by_page_id is not None:
+            raise TypeError("unexpected keyword argument 'recipe_names_by_page_id'")
+        assert recipes_db is db
+        return []
+
+    monkeypatch.setattr(notion_cache, "list_saved_plans", _legacy_list_saved_plans)
+
+    assert notion_cache._list_saved_plans_for_ui(db, {"p1": "Soup"}) == []
+
+
 def test_invalidate_notion_cache_clears_cached_db_resource() -> None:
     source = _NOTION_CACHE_PATH.read_text(encoding="utf-8")
     invalidate_block = source.split("def invalidate_notion_cache()", 1)[1].split("\ndef ", 1)[0]
