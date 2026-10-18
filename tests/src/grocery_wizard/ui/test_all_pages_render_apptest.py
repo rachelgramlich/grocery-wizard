@@ -1,7 +1,8 @@
-"""Every page in the picker renders and survives a Notion refresh (headless AppTest).
+"""Refresh-from-Notion and picker integrity smoke (headless AppTest).
 
-Runs in CI with the fake Notion DB from ``tests/conftest.py``. It checks real behavior:
-the script runs and raises no exception, which source-text assertions cannot prove.
+Primary page open + body checks live in ``test_holistic_ui_smoke_apptest.py``
+(``just smoke-ui``). This file keeps refresh-per-page, one-session page
+switching, and ids-module alignment — behavior source-text tests cannot prove.
 """
 
 from __future__ import annotations
@@ -23,8 +24,6 @@ from src.grocery_wizard.ui.views import (
     page_slug_for_label,
 )
 
-pytestmark = pytest.mark.holistic_ui_smoke
-
 REFRESH_LABEL = "Refresh from Notion"
 
 
@@ -38,35 +37,13 @@ def test_picker_lists_every_page_this_suite_covers() -> None:
 
 
 @pytest.mark.parametrize("label", PAGE_PICKER_LABELS)
-def test_page_renders_without_exception(label: str) -> None:
-    at = apptest_start_app()
-    apptest_open_page(at, label)
-    apptest_assert_no_exception(at, context=label)
-    assert at.session_state["gw_render_page_slug"] == page_slug_for_label(label)
-
-
-@pytest.mark.parametrize("label", PAGE_PICKER_LABELS)
-def test_page_renders_visible_content(label: str) -> None:
-    at = apptest_start_app()
-    apptest_open_page(at, label)
-    rendered = [
-        *(m.value for m in at.markdown if m.value),
-        *(s.value for s in at.subheader if s.value),
-        *(c.value for c in at.caption if c.value),
-        *(b.label for b in at.button if b.label),
-    ]
-    page_body = [text for text in rendered if text.strip() and "gw-" not in text]
-    assert len(page_body) > 3, f"{label!r} rendered almost nothing: {page_body}"
-
-
-@pytest.mark.parametrize("label", PAGE_PICKER_LABELS)
 def test_refresh_from_notion_keeps_page_and_does_not_raise(label: str) -> None:
     at = apptest_start_app()
     apptest_open_page(at, label)
     refresh = [b for b in at.button if b.label == REFRESH_LABEL]
     assert refresh, f"{REFRESH_LABEL!r} button missing on {label!r}"
     refresh[0].click().run(timeout=60)
-    apptest_assert_no_exception(at, context=f"refresh on {label}")
+    apptest_assert_no_exception(at, context=f"refresh on {label!r}")
     assert at.session_state["gw_render_page_slug"] == page_slug_for_label(label)
 
 

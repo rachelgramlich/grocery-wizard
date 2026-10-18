@@ -37,17 +37,7 @@ Headless **AppTest** against live Notion: reads are real; writes are stubbed and
 
 ## Budgets (“fast enough”)
 
-Same thresholds as the harness (details in [`docs/performance-audit.md`](performance-audit.md)):
-
-| Interaction kind | Warm budget | Warm Notion reads |
-| --- | --- | --- |
-| Idle rerun / widget tweak in an open step | ≤ 0.5s | 0 |
-| Non-write button | ≤ 1.0s | 0 |
-| Page open / step transition | ≤ 2.0s | 0 |
-| Write button | ≤ 1.5s + write latency | ideally write only |
-| Cold first load of a page | ≤ 5s | bounded |
-
-**Severity flags (warm wall time):** P0 ≥ 5s, P1 ≥ 2s, P2 ≥ 1s (estimated write cost included in **Warm est** when writes are stubbed).
+Warm interaction budgets and the full flag glossary live in [`docs/performance-audit.md`](performance-audit.md#budgets-what-fast-enough-means). **Severity flags (warm wall time):** P0 ≥ 5s, P1 ≥ 2s, P2 ≥ 1s (estimated write cost included in **Warm est** when writes are stubbed).
 
 ---
 
