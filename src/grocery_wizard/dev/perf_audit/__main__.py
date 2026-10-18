@@ -1,4 +1,4 @@
-"""CLI: ``just perf-audit`` (see ``docs/perf-audit.md``)."""
+"""CLI: ``just performance-audit`` (see ``docs/performance-audit.md``)."""
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ DEFAULT_OUT_DIR = Path(".local/grocery_wizard/perf")
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="perf-audit",
+        prog="performance-audit",
         description="Time every Streamlit control against live Notion (writes are stubbed).",
     )
     parser.add_argument(

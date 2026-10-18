@@ -40,6 +40,8 @@ Full command reference, NYT credentials, meal-planning defaults, aisle config, a
 | [`docs/household-deploy.md`](docs/household-deploy.md) | Streamlit Community Cloud deploy, auth, feedback inbox |
 | [`src/grocery_wizard/docs/remote-access.md`](src/grocery_wizard/docs/remote-access.md) | Phone access (local Wi‑Fi vs hosted) |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Lint, tests, and code review standards |
+| [`docs/performance.md`](docs/performance.md) | Load-time optimization report and perf baseline |
+| [`docs/performance-audit.md`](docs/performance-audit.md) | Repeatable performance-audit harness (`just performance-audit`) |
 | [`AGENTS.md`](AGENTS.md) | Cursor agents and GitHub backlog workflow |
 
 ---
