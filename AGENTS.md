@@ -13,7 +13,7 @@
 | **`/work-on-issue N`** | Implement one issue — area → files and UAT rules **below** + shared `.cursor/commands/shared/work-on-issue.md` |
 | **`/tidy-project`** | Repo-wide structure-only tidy PR(s) (shared: `.cursor/commands/shared/tidy-project.md`) |
 | **`/create-command`** | Add slash command or skill without name collisions (shared: `.cursor/commands/shared/create-command.md`) |
-| **`/performance-audit`** | Time every control (`just performance-audit`), rank slowest-first, research fixes, file grouped issues, fix and re-measure (`.cursor/commands/grocery-wizard/performance-audit.md`, guide: `docs/performance-audit.md`) |
+| **`/performance-audit`** | Time every control (`just performance-audit`), rank slowest-first, research fixes, file grouped issues, fix and re-measure (`.cursor/commands/grocery-wizard/performance-audit.md`, harness: `docs/performance-audit.md`, report: `docs/performance.md`) |
 | **`/sync-store-aisles`** | Notion → `store_aisles.txt` keyword sync (`.cursor/commands/grocery-wizard/sync-store-aisles.md`) |
 | *(automatic)* **`tidy-first` skill** | While implementing work: tidy inline, **S** vs **B** in separate commits; may file follow-up issues for **B** spotted during tidy (not in **S** commits) |
 

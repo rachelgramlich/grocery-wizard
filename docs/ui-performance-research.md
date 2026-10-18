@@ -12,6 +12,8 @@ Everyday slowness (buttons, navigation) is dominated by Streamlit’s **full-scr
 
 **Recommended path:** Stay on Streamlit. Measure with the sidebar “Last full recipe load” caption and `Refresh from Notion`. Revisit stack choice only if warm-cache P95 rerun time stays unacceptable after further section-level optimization.
 
+**Follow-up (2026):** The `/performance-audit` harness and the merged optimization pass are documented in [`docs/performance-audit.md`](performance-audit.md) and [`docs/performance.md`](performance.md).
+
 | Phase | Focus | Rough effort | Expected impact |
 | --- | --- | --- | --- |
 | **1** | Cache + dedupe Notion reads; lazy tabs | 2–4 days | High — often cuts rerun time by 50–90% when Notion-bound |

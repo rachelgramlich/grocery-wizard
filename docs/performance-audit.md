@@ -2,6 +2,8 @@
 
 Repeatable, headless timing of **every control** in the Streamlit app against live Notion, ranked slowest-first, with flags that point at the likely cause. Slash command: `.cursor/commands/grocery-wizard/performance-audit.md`. Code: `src/grocery_wizard/dev/perf_audit/`.
 
+**See also:** [`docs/performance.md`](performance.md) — load-time optimization summary, before/after table, and post-fix ranked baseline (architecture doc).
+
 ```bash
 just performance-audit --list                              # catalogue (W = writes stubbed, X = external, skipped)
 just performance-audit --profile                           # full run, writes report + latest.json baseline
