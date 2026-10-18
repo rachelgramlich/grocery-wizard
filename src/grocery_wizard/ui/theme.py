@@ -265,6 +265,8 @@ def app_theme_css(tokens: ThemeTokens = GW_THEME) -> str:
         .stButton button[data-testid="stBaseButton-primary"],
         .stButton button[data-testid="baseButton-primary"],
         .stDownloadButton button[data-testid="stBaseButton-primary"],
+        .stLinkButton a[data-testid="stBaseLinkButton-primary"]:not([disabled]),
+        .stFormSubmitButton button[data-testid="stBaseButton-primaryFormSubmit"],
         .stDownloadButton button {{
             background-color: var(--gw-accent) !important;
             border-color: var(--gw-accent) !important;
@@ -276,6 +278,8 @@ def app_theme_css(tokens: ThemeTokens = GW_THEME) -> str:
         .stButton button[data-testid="stBaseButton-primary"] *,
         .stButton button[data-testid="baseButton-primary"] *,
         .stDownloadButton button[data-testid="stBaseButton-primary"] *,
+        .stLinkButton a[data-testid="stBaseLinkButton-primary"]:not([disabled]) *,
+        .stFormSubmitButton button[data-testid="stBaseButton-primaryFormSubmit"] *,
         .stDownloadButton button * {{
             color: {t.on_accent} !important;
             -webkit-text-fill-color: {t.on_accent} !important;
