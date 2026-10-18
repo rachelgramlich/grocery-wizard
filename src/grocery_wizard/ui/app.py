@@ -16,8 +16,6 @@ from src.grocery_wizard.config import (
     ensure_streamlit_secrets_symlink,
     warn_if_missing_github_feedback_token_when_deployed,
 )
-from src.grocery_wizard.integrations.notion_table import clear_notion_database_metadata_cache
-from src.grocery_wizard.integrations.notion_views import clear_notion_view_url_cache
 from src.grocery_wizard.ui.access_gate import enforce_access_gate
 from src.grocery_wizard.ui.app_title import render_app_title
 from src.grocery_wizard.ui.db_access import get_db
@@ -89,6 +87,11 @@ def _sync_render_page_from_picker() -> None:
 
 def _refresh_notion_cache_from_ui() -> None:
     """Invalidate Notion caches; Streamlit reruns after the button callback."""
+    # Import here (not at module load) so a partial Streamlit Cloud deploy cannot crash startup
+    # when app.py updates before integration modules that define these helpers.
+    from src.grocery_wizard.integrations.notion_table import clear_notion_database_metadata_cache
+    from src.grocery_wizard.integrations.notion_views import clear_notion_view_url_cache
+
     st.session_state[_SKIP_PICKER_RENDER_SYNC] = True
     with loading_indicator("Refreshing from Notion…", use_global_banner=True):
         invalidate_notion_cache()
