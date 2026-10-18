@@ -518,6 +518,8 @@
         .stButton button[data-testid="stBaseButton-primary"],
         .stButton button[data-testid="baseButton-primary"],
         .stDownloadButton button[data-testid="stBaseButton-primary"],
+        .stLinkButton a[data-testid="stBaseLinkButton-primary"]:not([disabled]),
+        .stFormSubmitButton button[data-testid="stBaseButton-primaryFormSubmit"],
         .stDownloadButton button {
             background-color: var(--gw-accent) !important;
             border-color: var(--gw-accent) !important;
@@ -529,6 +531,8 @@
         .stButton button[data-testid="stBaseButton-primary"] *,
         .stButton button[data-testid="baseButton-primary"] *,
         .stDownloadButton button[data-testid="stBaseButton-primary"] *,
+        .stLinkButton a[data-testid="stBaseLinkButton-primary"]:not([disabled]) *,
+        .stFormSubmitButton button[data-testid="stBaseButton-primaryFormSubmit"] *,
         .stDownloadButton button * {
             color: #ffffff !important;
             -webkit-text-fill-color: #ffffff !important;
