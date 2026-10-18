@@ -714,11 +714,24 @@ def _render_plan_meal_count_continue(*, meal_count: int) -> bool:
 
 
 def _cached_plan_ingredient_index(all_recipes: list) -> dict[str, set[str]]:
+    from src.grocery_wizard.ui.ingredient_index_warm import (
+        schedule_ingredient_index_warm,
+        warmed_ingredient_index_if_ready,
+    )
+
     recipes_cache_key = recipes_ingredient_cache_key(all_recipes)
     cached_index = st.session_state.get("_ingredient_index")
-    if st.session_state.get("_ingredient_index_key") != recipes_cache_key or cached_index is None:
+    key_matches = st.session_state.get("_ingredient_index_key") == recipes_cache_key
+    if key_matches and cached_index is not None:
+        return cached_index
+    warmed = warmed_ingredient_index_if_ready(recipes_cache_key)
+    if warmed is not None:
         st.session_state["_ingredient_index_key"] = recipes_cache_key
-        st.session_state["_ingredient_index"] = build_ingredient_index(all_recipes)
+        st.session_state["_ingredient_index"] = warmed
+        return warmed
+    schedule_ingredient_index_warm(all_recipes)
+    st.session_state["_ingredient_index_key"] = recipes_cache_key
+    st.session_state["_ingredient_index"] = build_ingredient_index(all_recipes)
     return st.session_state["_ingredient_index"]
 
 

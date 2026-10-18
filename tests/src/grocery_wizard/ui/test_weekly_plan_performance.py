@@ -81,6 +81,7 @@ def test_plan_meals_warms_recipes_quietly_before_meal_count_continue() -> None:
     )[0]
     assert "_render_meal_count_input()" in plan_block
     assert "_warm_weekly_plan_recipes_quiet" in plan_block
+    assert "schedule_ingredient_index_warm" in flow_source
     assert plan_block.index("_render_meal_count_input()") < plan_block.index(
         "_warm_weekly_plan_recipes_quiet"
     )
