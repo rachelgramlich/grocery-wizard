@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from tests.repo_paths import UI_SRC_ROOT
+
+if TYPE_CHECKING:
+    from streamlit.testing.v1 import AppTest
 
 UI_ROOT = UI_SRC_ROOT
 APP_PATH = UI_ROOT / "app.py"
@@ -50,6 +55,16 @@ def apptest_rail_get_started(at, *, timeout: int = 60) -> None:
     rail[0].click().run(timeout=timeout)
 
 
+def apptest_start_app(*, timeout: int = 60) -> AppTest:
+    """Load ``app.py`` headless, run it once, and fail on any exception."""
+    from streamlit.testing.v1 import AppTest
+
+    at = AppTest.from_file(str(APP_PATH), default_timeout=timeout)
+    at.run(timeout=timeout)
+    apptest_assert_no_exception(at, context="first run")
+    return at
+
+
 def apptest_open_page(at, page_label: str, *, timeout: int = 60) -> None:
     """Switch primary pages via the global segmented control."""
     assert at.segmented_control, "Page segmented control missing"
@@ -57,4 +72,4 @@ def apptest_open_page(at, page_label: str, *, timeout: int = 60) -> None:
 
 
 def apptest_assert_no_exception(at, *, context: str = "AppTest run") -> None:
-    assert not at.exception, f"{context}: {at.exception}"
+    assert not at.exception, f"{context}: {[str(e.value) for e in at.exception]}"

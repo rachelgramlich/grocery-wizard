@@ -103,6 +103,8 @@ def test_holistic_weekly_entry_loads_saved_plans_list(monkeypatch: pytest.Monkey
     at = AppTest.from_file(str(APP_PATH), default_timeout=120)
     at.run(timeout=120)
     apptest_assert_no_exception(at, context="weekly saved plans load")
+    radios = [r for r in at.radio if r.label == "Weekly plan session"]
+    assert radios, "Weekly plan session radio missing"
 
 
 def test_holistic_continue_saved_plan_reaches_meals_step(monkeypatch: pytest.MonkeyPatch) -> None:
