@@ -15,6 +15,7 @@ __all__ = [
     "NotionDatabase",
     "NotionPageRow",
     "build_notion_rich_text",
+    "clear_notion_database_metadata_cache",
     "read_notion_property",
     "write_notion_property",
 ]
