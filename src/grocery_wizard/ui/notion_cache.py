@@ -80,10 +80,13 @@ def invalidate_recipes_after_write(*, schema_may_change: bool = False) -> None:
 
 def invalidate_notion_cache() -> None:
     """Drop every cached Notion read (the Refresh button); recipes reload in full."""
+    from src.grocery_wizard.ui.ingredient_index_warm import clear_ingredient_index_warm
+
     st.session_state[_GENERATION_KEY] = notion_cache_generation() + 1
     invalidate_saved_plans_cache()
     get_db.clear()
     _recipe_store.clear()
+    clear_ingredient_index_warm()
     st.cache_data.clear()
 
 

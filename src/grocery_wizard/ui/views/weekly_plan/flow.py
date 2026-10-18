@@ -6,6 +6,7 @@ import streamlit as st
 
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 from src.grocery_wizard.ui.db_access import get_db
+from src.grocery_wizard.ui.ingredient_index_warm import schedule_ingredient_index_warm
 from src.grocery_wizard.ui.loading import clear_global_loading_banner, loading_indicator
 from src.grocery_wizard.ui.notion_cache import cached_query_recipes, notion_cache_generation
 from src.grocery_wizard.ui.views.weekly_plan.grocery_list_ui import render_grocery_list_section
@@ -41,6 +42,7 @@ def _weekly_recipes_warm_for_current_cache() -> bool:
 
 def _load_weekly_plan_recipes(db: NotionRecipesDB) -> list[Recipe]:
     recipes = cached_query_recipes(db)
+    schedule_ingredient_index_warm(recipes)
     st.session_state[_WEEKLY_RECIPES_WARM_GENERATION_KEY] = notion_cache_generation()
     return recipes
 
@@ -48,7 +50,9 @@ def _load_weekly_plan_recipes(db: NotionRecipesDB) -> list[Recipe]:
 def _warm_weekly_plan_recipes_quiet(db: NotionRecipesDB) -> list[Recipe]:
     """Load Notion recipes + meal caches with no loading UI (issue #386)."""
     if _weekly_recipes_warm_for_current_cache():
-        return cached_query_recipes(db)
+        recipes = cached_query_recipes(db)
+        schedule_ingredient_index_warm(recipes)
+        return recipes
     return _load_weekly_plan_recipes(db)
 
 

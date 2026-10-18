@@ -371,4 +371,5 @@ def test_cached_plan_ingredient_index_rebuilds_when_value_missing() -> None:
     source = ui_source()
     fn = source.split("def _cached_plan_ingredient_index", 1)[1].split("\ndef ", 1)[0]
     assert 'st.session_state.get("_ingredient_index")' in fn
-    assert "cached_index is None" in fn
+    assert "cached_index is not None" in fn
+    assert "warmed_ingredient_index_if_ready" in fn

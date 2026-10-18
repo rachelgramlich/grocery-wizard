@@ -59,10 +59,10 @@ def test_find_by_link_uses_notion_url_filter() -> None:
 
     assert found is not None
     assert found.name == "Soup"
-    db._client.data_sources.query.assert_called_once_with(
-        data_source_id="ds-id",
-        filter={"property": "Link", "url": {"equals": "https://example.com/soup"}},
-    )
+    kwargs = db._client.data_sources.query.call_args.kwargs
+    assert kwargs["data_source_id"] == "ds-id"
+    assert kwargs["filter"] == {"property": "Link", "url": {"equals": "https://example.com/soup"}}
+    assert kwargs["filter_properties"] == ["Ingredients", "Link", "Name"]
     db.query_recipes = MagicMock()  # type: ignore[method-assign]
     assert db.query_recipes.call_count == 0
 

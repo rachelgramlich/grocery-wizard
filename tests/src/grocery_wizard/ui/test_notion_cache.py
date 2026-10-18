@@ -22,8 +22,9 @@ _NOTION_CACHE_PATH = UI_ROOT / "notion_cache.py"
 
 def test_invalidate_notion_cache_clears_cached_db_resource() -> None:
     source = _NOTION_CACHE_PATH.read_text(encoding="utf-8")
-    invalidate_block = source.split("def invalidate_notion_cache()", 1)[1].split("\n\n", 1)[0]
+    invalidate_block = source.split("def invalidate_notion_cache()", 1)[1].split("\ndef ", 1)[0]
     assert "get_db.clear()" in invalidate_block
+    assert "clear_ingredient_index_warm()" in invalidate_block
 
 
 def _plan(week: date, name: str, *recipes: str) -> SavedWeeklyPlan:
