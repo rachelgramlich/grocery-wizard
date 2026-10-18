@@ -20,6 +20,8 @@ from src.grocery_wizard.ui.views import (
     page_slug_for_label,
 )
 
+pytestmark = pytest.mark.holistic_ui_smoke
+
 REFRESH_LABEL = "Refresh from Notion"
 
 
