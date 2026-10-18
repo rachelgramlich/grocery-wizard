@@ -51,22 +51,22 @@ Same thresholds as the harness (details in [`docs/performance-audit.md`](perform
 
 ---
 
-## Work shipped (issues #406–#411, PRs #405–#417)
+## Work shipped (issues #406–#411, PRs #405–#420)
 
-Audit-driven fixes merged on `main` in October 2026. Before numbers come from the **pre-fix performance-audit baseline** recorded in each GitHub issue; after numbers from the **full re-audit** at commit [`4fbc95b`](https://github.com/rachelgramlich/grocery-wizard/commit/4fbc95b) (309 recipes, 66 pantry items, 6 saved plans). `main` later picked up [#417](https://github.com/rachelgramlich/grocery-wizard/pull/417) (saved-plan list reuse).
+Audit-driven fixes merged on `main` in October 2026. Before numbers come from the **pre-fix performance-audit baseline** recorded in each GitHub issue; after numbers from the **full re-audit** at commit [`4fbc95b`](https://github.com/rachelgramlich/grocery-wizard/commit/4fbc95b) (309 recipes, 66 pantry items, 6 saved plans), plus follow-ups [#417](https://github.com/rachelgramlich/grocery-wizard/pull/417), [#418](https://github.com/rachelgramlich/grocery-wizard/pull/418), [#420](https://github.com/rachelgramlich/grocery-wizard/pull/420).
 
 | Issue | Problem | Before (typical warm) | After (warm / notes) | PR |
 | --- | --- | --- | --- | --- |
+| [#406](https://github.com/rachelgramlich/grocery-wizard/issues/406) | Ingredient index rebuilt on cold picker open | cold count_continue ~14s (4fbc95b audit); warm ~0.01s | Background warm during meal-count step; prebuild pin ~0.01s warm / ~1.1s cold | [#420](https://github.com/rachelgramlich/grocery-wizard/pull/420) |
 | [#407](https://github.com/rachelgramlich/grocery-wizard/issues/407) | Meals step re-queried Notion every rerun | 1.5–3s, 7–15 reads | ≤ 0.02s, 0 reads on idle / build / continue | [#412](https://github.com/rachelgramlich/grocery-wizard/pull/412) |
 | [#408](https://github.com/rachelgramlich/grocery-wizard/issues/408) | Closed popovers still built ~300-option pickers | ~3,244 select options | 46 elements / 4 options on meals scenarios | [#412](https://github.com/rachelgramlich/grocery-wizard/pull/412) |
 | [#409](https://github.com/rachelgramlich/grocery-wizard/issues/409) | Any write cleared all caches → full recipe refetch | 3–6s after pantry swap / regenerate | Writes mostly ≤ 0.8s wall; recipe list kept on pantry writes | [#415](https://github.com/rachelgramlich/grocery-wizard/pull/415), [#414](https://github.com/rachelgramlich/grocery-wizard/pull/414) |
 | [#410](https://github.com/rachelgramlich/grocery-wizard/issues/410) | Pantry page rebuilt DB + queried every render | ~0.7s page open, 3 reads | 0.03s page, 0.01s search, 0 reads | [#414](https://github.com/rachelgramlich/grocery-wizard/pull/414) |
 | [#411](https://github.com/rachelgramlich/grocery-wizard/issues/411) | Maintenance re-PATCHed Notion views every render | 3–4s, ~19 Notion calls | 0.01s page switch warm; apply status 0.17s wall | [#413](https://github.com/rachelgramlich/grocery-wizard/pull/413) |
-| [#417](https://github.com/rachelgramlich/grocery-wizard/pull/417) | Saved-plan picker re-queried recipes | extra recipe query on continue | reuses loaded recipe cache | [#417](https://github.com/rachelgramlich/grocery-wizard/pull/417) |
+| — | Saved-plan picker re-queried recipes | extra recipe query on continue | reuses loaded recipe cache | [#417](https://github.com/rachelgramlich/grocery-wizard/pull/417) |
+| — | Refresh payload size | ~3.35s warm refresh (4fbc95b) | `filter_properties` on recipe queries; ~1.75s warm ([#420](https://github.com/rachelgramlich/grocery-wizard/pull/420)) | [#420](https://github.com/rachelgramlich/grocery-wizard/pull/420) |
 
-**Still open:** [#406](https://github.com/rachelgramlich/grocery-wizard/issues/406) — ingredient index / CRF parsing cost on **cold** paths (e.g. `weekly.meals.count_continue` cold ~14s in the 4fbc95b audit while warm is ~0.01s). Warm “Loading your meals…” is largely fixed; first session after restart or cache cold-start may still pay CPU until #406 lands.
-
-Harness addition: [#405](https://github.com/rachelgramlich/grocery-wizard/pull/405) introduced `src/grocery_wizard/dev/perf_audit/`; [#416](https://github.com/rachelgramlich/grocery-wizard/pull/416) logs Notion caller stacks in reports.
+Harness and docs: [#405](https://github.com/rachelgramlich/grocery-wizard/pull/405) introduced `src/grocery_wizard/dev/perf_audit/`; [#416](https://github.com/rachelgramlich/grocery-wizard/pull/416) logs Notion caller stacks; [#418](https://github.com/rachelgramlich/grocery-wizard/pull/418) added this report and renamed user-facing **`performance-audit`** (see [`docs/performance-audit.md`](performance-audit.md)).
 
 ---
 
@@ -91,7 +91,7 @@ Full audit: **2026-10-17**, commit `4fbc95b`, 36 measured scenarios (5 dev-jump 
 
 **Interpretation:**
 
-- **Refresh from Notion** is intentionally heavy (full invalidation + refetch) — P1 is acceptable for an explicit user action; avoid calling it on ordinary reruns.
+- **Refresh from Notion** is intentionally heavy (full invalidation + refetch). After [#420](https://github.com/rachelgramlich/grocery-wizard/pull/420) it is ~1.75s warm with `filter_properties`; the table above still reflects the pre-#420 `4fbc95b` snapshot until the next full audit.
 - **Write + refetch** (`POST_WRITE_REFETCH`) remains on pantry edits and meal regeneration; wall times are much lower than pre-#409 but still P2 when write latency is included.
 - **`add.url.duplicate`** still does one warm Notion read (`CACHE_MISS_WARM`) — candidate for filter-based lookup without full scan.
 - Many scenarios show **COLD_GAP** only: first load after cache clear is slower; warm path is fine.
@@ -116,7 +116,7 @@ Update this section when a new full audit becomes the team baseline (paste the t
 | Spike after small write | Targeted `cache_data.clear()` or in-place cache update, not global invalidation |
 | Huge select option counts | Gate popover/expander bodies until open; `@st.fragment` for local reruns |
 | View ensure on every render | Memoize ensured URLs per process (`notion_views.py`) |
-| CPU on meal open | Memoize ingredient lines / lazy-build index ([#406](https://github.com/rachelgramlich/grocery-wizard/issues/406)) |
+| CPU on meal open | Background warm during meal-count step; memoized parse ([#406](https://github.com/rachelgramlich/grocery-wizard/issues/406) / [#420](https://github.com/rachelgramlich/grocery-wizard/pull/420)) |
 
 Full flag → playbook table: [`docs/performance-audit.md`](performance-audit.md#fix-playbook-flag---cause---pattern).
 
