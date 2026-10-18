@@ -514,39 +514,66 @@
             border-bottom-color: var(--gw-accent) !important;
         }
 
-        .stButton button[kind="primary"],
-        .stButton button[data-testid="stBaseButton-primary"],
-        .stButton button[data-testid="baseButton-primary"],
-        .stDownloadButton button[data-testid="stBaseButton-primary"],
-        .stDownloadButton button {
+        /*
+         * Buttons: every Streamlit button widget gets one of two approved color combos
+         * (enforced by tests/.../test_button_colors.py):
+         *   primary   = white label on --gw-accent
+         *   secondary = --gw-text label on --gw-input-bg
+         * Widget roots: .stButton (st.button), .stFormSubmitButton (st.form_submit_button),
+         * .stDownloadButton, .stLinkButton (a, not button), .stPopover.
+         * Selectors use prefixes so variants like primaryFormSubmit are covered. Do not
+         * rely on the generic `.stApp p` rule for button labels.
+         */
+        .stButton button[kind^="primary"],
+        .stButton button[data-testid^="stBaseButton-primary"],
+        .stButton button[data-testid^="baseButton-primary"],
+        .stFormSubmitButton button[kind^="primary"],
+        .stFormSubmitButton button[data-testid^="stBaseButton-primary"],
+        .stDownloadButton button[kind^="primary"],
+        .stDownloadButton button[data-testid^="stBaseButton-primary"],
+        .stDownloadButton button,
+        .stLinkButton a[data-testid="stBaseLinkButton-primary"] {
             background-color: var(--gw-accent) !important;
             border-color: var(--gw-accent) !important;
             color: #ffffff !important;
             font-weight: 600 !important;
         }
 
-        .stButton button[kind="primary"] *,
-        .stButton button[data-testid="stBaseButton-primary"] *,
-        .stButton button[data-testid="baseButton-primary"] *,
-        .stDownloadButton button[data-testid="stBaseButton-primary"] *,
-        .stDownloadButton button * {
+        .stButton button[kind^="primary"] *,
+        .stButton button[data-testid^="stBaseButton-primary"] *,
+        .stButton button[data-testid^="baseButton-primary"] *,
+        .stFormSubmitButton button[kind^="primary"] *,
+        .stFormSubmitButton button[data-testid^="stBaseButton-primary"] *,
+        .stDownloadButton button[kind^="primary"] *,
+        .stDownloadButton button[data-testid^="stBaseButton-primary"] *,
+        .stDownloadButton button *,
+        .stLinkButton a[data-testid="stBaseLinkButton-primary"] * {
             color: #ffffff !important;
             -webkit-text-fill-color: #ffffff !important;
             font-weight: 600 !important;
         }
 
-        .stButton button[kind="secondary"],
-        .stButton button[data-testid="baseButton-secondary"] {
+        .stButton button[kind^="secondary"],
+        .stButton button[data-testid^="stBaseButton-secondary"],
+        .stButton button[data-testid^="baseButton-secondary"],
+        .stFormSubmitButton button[kind^="secondary"],
+        .stFormSubmitButton button[data-testid^="stBaseButton-secondary"],
+        .stLinkButton a[data-testid="stBaseLinkButton-secondary"],
+        .stPopover button[data-testid="stPopoverButton"] {
             background-color: var(--gw-input-bg) !important;
             border-color: #d48aad !important;
             color: var(--gw-text) !important;
         }
 
-        .stButton button[kind="secondary"] p,
-        .stButton button[kind="secondary"] span,
-        .stButton button[data-testid="baseButton-secondary"] p,
-        .stButton button[data-testid="baseButton-secondary"] span {
+        .stButton button[kind^="secondary"] *,
+        .stButton button[data-testid^="stBaseButton-secondary"] *,
+        .stButton button[data-testid^="baseButton-secondary"] *,
+        .stFormSubmitButton button[kind^="secondary"] *,
+        .stFormSubmitButton button[data-testid^="stBaseButton-secondary"] *,
+        .stLinkButton a[data-testid="stBaseLinkButton-secondary"] *,
+        .stPopover button[data-testid="stPopoverButton"] * {
             color: var(--gw-text) !important;
+            -webkit-text-fill-color: var(--gw-text) !important;
         }
 
         [data-testid="stExpander"] summary,
