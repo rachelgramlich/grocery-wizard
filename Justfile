@@ -41,6 +41,10 @@ format:
 test:
     uv run pytest
 
+# Headless holistic UI smoke (AppTest; mocked Notion — same cases run in full pytest / CI)
+smoke-ui:
+    uv run pytest -m holistic_ui_smoke
+
 # Run tests with coverage
 test-cov:
     uv run pytest --cov=. --cov-report=html

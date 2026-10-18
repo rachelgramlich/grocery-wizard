@@ -48,3 +48,13 @@ def apptest_rail_get_started(at, *, timeout: int = 60) -> None:
     rail = [b for b in at.button if b.label.endswith("Get started")]
     assert rail, "Get started rail button missing"
     rail[0].click().run(timeout=timeout)
+
+
+def apptest_open_page(at, page_label: str, *, timeout: int = 60) -> None:
+    """Switch primary pages via the global segmented control."""
+    assert at.segmented_control, "Page segmented control missing"
+    at.segmented_control[0].set_value(page_label).run(timeout=timeout)
+
+
+def apptest_assert_no_exception(at, *, context: str = "AppTest run") -> None:
+    assert not at.exception, f"{context}: {at.exception}"

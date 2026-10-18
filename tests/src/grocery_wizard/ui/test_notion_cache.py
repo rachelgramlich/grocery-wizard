@@ -5,10 +5,12 @@ from __future__ import annotations
 from datetime import date
 from unittest.mock import MagicMock
 
+import pytest
 from ui_source import UI_ROOT
 
 from src.grocery_wizard.integrations.notion import Recipe
 from src.grocery_wizard.planning.saved_weekly_plans import SavedWeeklyPlan
+from src.grocery_wizard.ui import notion_cache
 from src.grocery_wizard.ui.notion_cache import (
     cached_query_recipes,
     invalidate_notion_cache,
@@ -18,6 +20,39 @@ from src.grocery_wizard.ui.notion_cache import (
 )
 
 _NOTION_CACHE_PATH = UI_ROOT / "notion_cache.py"
+_LOAD_SAVED_PLANS_UNCACHED = notion_cache._load_saved_plans_cached.__wrapped__
+
+
+def test_load_saved_plans_cached_forwards_recipe_names_by_page_id(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Regression (#417): plan entry calls this on first paint; kwarg must match list_saved_plans."""
+    captured: dict[str, object] = {}
+
+    def _spy_list_saved_plans(
+        *,
+        recipes_db=None,
+        recipe_names_by_page_id=None,
+    ) -> list[SavedWeeklyPlan]:
+        captured["recipes_db"] = recipes_db
+        captured["recipe_names_by_page_id"] = recipe_names_by_page_id
+        return []
+
+    monkeypatch.setattr(notion_cache, "list_saved_plans", _spy_list_saved_plans)
+    monkeypatch.setattr(notion_cache, "_load_saved_plans_cached", _LOAD_SAVED_PLANS_UNCACHED)
+    monkeypatch.setattr(
+        notion_cache,
+        "_recipes_from_store",
+        lambda _db: [_recipe("p1", "Soup"), _recipe("p2", "Pie")],
+    )
+
+    db = MagicMock()
+    db._database_id = "recipes-db-id"
+
+    _LOAD_SAVED_PLANS_UNCACHED("weekly-plans-db", 0, db)
+
+    assert captured["recipes_db"] is db
+    assert captured["recipe_names_by_page_id"] == {"p1": "Soup", "p2": "Pie"}
 
 
 def test_invalidate_notion_cache_clears_cached_db_resource() -> None:

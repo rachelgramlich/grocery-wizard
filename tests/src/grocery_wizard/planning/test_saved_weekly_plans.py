@@ -3,13 +3,44 @@
 from __future__ import annotations
 
 from datetime import date
+from unittest.mock import MagicMock
+
+import pytest
 
 from src.grocery_wizard.planning.saved_weekly_plans import (
     canonical_plan_name,
+    list_saved_plans,
     needs_save_week_choice,
     saved_plan_week_start,
     week_start_sunday,
 )
+
+
+def test_list_saved_plans_accepts_recipe_names_by_page_id(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """list_saved_plans must forward recipe_names_by_page_id to NotionWeeklyPlansDB.list_plans."""
+    captured: dict[str, object] = {}
+
+    class _FakePlansDB:
+        def __init__(self, *, recipes_db=None) -> None:
+            captured["recipes_db"] = recipes_db
+
+        def list_plans(self, *, recipe_names_by_page_id=None) -> list:
+            captured["recipe_names_by_page_id"] = recipe_names_by_page_id
+            return []
+
+    monkeypatch.setattr(
+        "src.grocery_wizard.integrations.notion_household.NotionWeeklyPlansDB",
+        _FakePlansDB,
+    )
+    recipes_db = MagicMock()
+    recipe_map = {"recipe-a": "Pasta"}
+
+    list_saved_plans(recipes_db=recipes_db, recipe_names_by_page_id=recipe_map)
+
+    assert captured["recipes_db"] is recipes_db
+    assert captured["recipe_names_by_page_id"] == recipe_map
 
 
 def test_canonical_plan_name() -> None:

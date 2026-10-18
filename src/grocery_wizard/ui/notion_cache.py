@@ -143,7 +143,21 @@ def _load_saved_plans_cached(
     del saved_plans_generation
     del weekly_plans_database_id
     recipe_names = {recipe.page_id: recipe.name for recipe in _recipes_from_store(_recipes_db)}
-    return list_saved_plans(recipes_db=_recipes_db, recipe_names_by_page_id=recipe_names)
+    return _list_saved_plans_for_ui(_recipes_db, recipe_names)
+
+
+def _list_saved_plans_for_ui(
+    recipes_db: NotionRecipesDB,
+    recipe_names_by_page_id: dict[str, str],
+) -> list[SavedWeeklyPlan]:
+    try:
+        return list_saved_plans(
+            recipes_db=recipes_db,
+            recipe_names_by_page_id=recipe_names_by_page_id,
+        )
+    except TypeError:
+        # Streamlit Cloud can briefly run mismatched deploy slices (#417).
+        return list_saved_plans(recipes_db=recipes_db)
 
 
 def cached_query_recipes(db: NotionRecipesDB) -> list[Recipe]:
