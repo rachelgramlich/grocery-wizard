@@ -13,6 +13,7 @@ __all__ = [
     "scrape_recipe",
 ]
 
+import html
 import json
 import re
 from dataclasses import dataclass
@@ -599,10 +600,23 @@ def _top_level_ingredient_items(container: Tag) -> list[Tag]:
     return li_items or top_level
 
 
+_DOUBLE_PAREN_RE = re.compile(r"\(\s*(\([^()]*\))\s*\)")
+
+
+def _clean_scraped_ingredient_text(text: str) -> str:
+    """Decode HTML entities and unwrap doubled notes like ``( (optional))``."""
+    decoded = html.unescape(text).replace("\n", " ").strip()
+    previous = None
+    while previous != decoded:
+        previous = decoded
+        decoded = _DOUBLE_PAREN_RE.sub(r"\1", decoded)
+    return decoded
+
+
 def _clean_ingredient_texts(texts: list[str]) -> list[str]:
     cleaned: list[str] = []
     for text in texts:
-        stripped = re.sub(r"^[▢•*]\s*", "", text.strip())
+        stripped = re.sub(r"^[▢•*]\s*", "", _clean_scraped_ingredient_text(text))
         if stripped:
             cleaned.append(stripped)
     return cleaned
@@ -864,7 +878,7 @@ def _recipe_ingredients_from_json_ld(data: object) -> list[str]:
         raw_ingredients = data.get("recipeIngredient") or data.get("ingredients")
         if isinstance(raw_ingredients, list):
             cleaned = [
-                str(item).replace("\n", " ").strip()
+                _clean_scraped_ingredient_text(str(item))
                 for item in raw_ingredients
                 if str(item).strip()
             ]

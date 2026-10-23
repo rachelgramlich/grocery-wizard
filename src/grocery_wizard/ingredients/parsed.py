@@ -24,6 +24,10 @@ from urllib.parse import urlparse
 
 from ingredient_parser import parse_ingredient
 
+from src.grocery_wizard.ingredients._cleaning import (
+    mask_parenthetical_groups,
+    strip_parenthetical_groups,
+)
 from src.grocery_wizard.ingredients._patterns import (
     _AMOUNT_STR_RE,
     _LEADING_QTY_RE,
@@ -547,9 +551,26 @@ _FLOUR_TYPE_RE = re.compile(
 )
 
 
+# The leaf is the product (``bay leaf``), unlike herb leaves (``basil leaves`` → ``basil``).
+_LEAF_PRODUCT_RE = re.compile(
+    r"^(?:(?:fresh|dried|dry|whole|extra-large|large|medium|small)\s+)*"
+    r"((?:[a-z]+\s+)?(?:bay|curry|kaffir\s+lime|makrut\s+lime|pandan|banana|grape|fenugreek))"
+    r"\s+(?:leaf|leaves)$",
+    re.IGNORECASE,
+)
+
+
+def _leaf_product_name(lowered: str) -> str | None:
+    match = _LEAF_PRODUCT_RE.match(lowered)
+    if not match:
+        return None
+    product = " ".join(match.group(1).split())
+    return f"{product} leaf"
+
+
 def _simplify_parsed_name(name: str) -> str:
     cleaned = _first_alternative(name.strip())
-    cleaned = re.sub(r"\([^)]*\)", "", cleaned).strip()
+    cleaned = strip_parenthetical_groups(cleaned)
     cleaned = _TRAILING_CLAUSE_RE.sub("", cleaned).strip()
     cleaned = _TRAILING_MORE_RE.sub("", cleaned).strip(" ,")
     preserved = _match_preserved_product(cleaned)
@@ -562,6 +583,9 @@ def _simplify_parsed_name(name: str) -> str:
         return "lemons"
     if lowered in {"lime", "limes", "lime wedges", "lime juice"}:
         return "limes"
+    leaf_product = _leaf_product_name(lowered)
+    if leaf_product:
+        return leaf_product
     if lowered.endswith(" leaves"):
         return lowered.replace(" leaves", "")
     if lowered.startswith("freshly ground "):
@@ -842,7 +866,7 @@ def _is_celery_stalk_unit(unit: str, name: str) -> bool:
 def _should_preserve_raw_line(line: str) -> bool:
     return bool(
         _SUBSTITUTION_PAREN_RE.search(line)
-        or _TO_TASTE_RE.search(line)
+        or _TO_TASTE_RE.search(mask_parenthetical_groups(line))
         or line.strip().startswith(("[x]", "▢", "•", "*"))
     )
 
@@ -978,6 +1002,14 @@ def _parse_with_library(line: str) -> ParsedIngredient:
     return parse_ingredient(line, string_units=True, separate_names=False)
 
 
+# ``1 inch ginger`` is a prep size, not a shopping amount.
+_LEADING_INCH_RE = re.compile(
+    r"^(?:\d+\s+\d+/\d+|\d+/\d+|\d+(?:\.\d+)?)\s*-?\s*inch(?:es)?\s+"
+    r"(?:(?:piece|pieces|knob|knobs)\s+(?:of\s+)?)?",
+    re.IGNORECASE,
+)
+
+
 def _strip_leading_to_prefix(text: str) -> str:
     return re.sub(r"^to\s+(?=\d)", "", text, flags=re.IGNORECASE).strip()
 
@@ -998,7 +1030,7 @@ def format_ingredient_for_storage(line: str) -> str:
         return f"zest {fruit}"
     if _should_preserve_raw_line(line):
         return _strip_trailing_prep_commas(_normalize_unicode(line.strip()))
-    parse_text = _strip_parenthetical_notes(text)
+    parse_text = _LEADING_INCH_RE.sub("", _strip_parenthetical_notes(text))
     parsed = _parse_with_library(parse_text)
     return _build_storage_line(parsed, parse_text, source_line=text)
 
@@ -1032,7 +1064,7 @@ def ingredient_name(line: str) -> str:
 
 
 def _strip_parenthetical_notes(text: str) -> str:
-    return re.sub(r"\s*\([^)]*\)", "", text).strip()
+    return strip_parenthetical_groups(text)
 
 
 def _parse_stored_rest(qty_str: str, rest: str) -> tuple[str, str | None]:
@@ -1052,6 +1084,8 @@ def _parse_stored_rest(qty_str: str, rest: str) -> tuple[str, str | None]:
         unit = words[0]
         name = " ".join(words[1:])
         canonical = _unit_key(unit)
+        if not name and canonical == "clove":
+            return "cloves", qty_str
         if canonical in {"lb", "oz", "g", "kg"}:
             return _prefer_plural_form(_strip_size_descriptors(name)), f"{qty_str} {unit}"
         name = _prefer_plural_form(_strip_size_descriptors(name))
