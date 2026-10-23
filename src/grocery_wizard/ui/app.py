@@ -27,6 +27,7 @@ from src.grocery_wizard.config import (
 from src.grocery_wizard.ui.access_gate import enforce_access_gate
 from src.grocery_wizard.ui.app_title import render_app_title
 from src.grocery_wizard.ui.db_access import get_db
+from src.grocery_wizard.ui.dropdown_dismiss import install_dropdown_dismiss
 from src.grocery_wizard.ui.feedback import render_feedback_controls
 from src.grocery_wizard.ui.ids import (
     CONTROL_GLOBAL_FEEDBACK,
@@ -175,6 +176,8 @@ def main() -> None:
             render_pantry_and_recurring()
         elif active_slug == PAGE_SLUG_MAINTENANCE:
             render_recipe_maintenance()
+
+    install_dropdown_dismiss()
 
 
 if __name__ == "__main__":
