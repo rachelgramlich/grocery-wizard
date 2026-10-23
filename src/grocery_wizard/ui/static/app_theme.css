@@ -1004,6 +1004,17 @@
         }
 
         @media (max-width: 768px) {
+            /*
+             * Select / multiselect menus (#440): cap height so part of the screen stays
+             * outside the menu to tap and dismiss it, even with the soft keyboard open.
+             */
+            [data-testid="stSelectboxVirtualDropdown"],
+            [data-testid="stMultiSelectDropdown"] {
+                max-height: min(40vh, 18rem) !important;
+                max-height: min(40dvh, 18rem) !important;
+                overscroll-behavior: contain;
+            }
+
             [data-testid="stVerticalBlock"]:has(p.gw-meal-slot-list) [class*="st-key-meal_slot_row_"] {
                 margin-left: 0.35rem !important;
                 margin-right: 0 !important;
