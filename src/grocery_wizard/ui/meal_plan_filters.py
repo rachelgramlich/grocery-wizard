@@ -29,16 +29,18 @@ def scoped_ingredient_multiselect_options(
     *,
     max_matches: int = _INGREDIENT_SEARCH_MAX_MATCHES,
 ) -> list[str]:
-    """Options for ingredient multiselect: keep selections plus capped search matches."""
+    """Options for ingredient multiselect.
+
+    With no narrow query, every option is returned so typing in the multiselect's own search
+    box can find any ingredient (#439). A narrow query keeps selections plus capped matches.
+    """
     selected_set = {name for name in selected if name}
     query = search_query.strip().lower()
-    if query:
-        pool = [name for name in all_options if query in name.lower()]
-    else:
-        pool = list(all_options)
+    if not query:
+        return sorted(selected_set | set(all_options), key=str.lower)
     matches: list[str] = []
-    for name in pool:
-        if name in selected_set:
+    for name in all_options:
+        if query not in name.lower() or name in selected_set:
             continue
         matches.append(name)
         if len(matches) >= max_matches:
