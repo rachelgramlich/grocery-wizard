@@ -37,6 +37,7 @@ from src.grocery_wizard.ingredients._cleaning import (
     _prepare_line_for_parsing,
     _split_compound_parts_recursive,
     _split_leading_capitalized_ingredient,
+    mask_parenthetical_groups,
 )
 from src.grocery_wizard.ingredients._patterns import (
     _CHECKLIST_ITEM_RE,
@@ -323,7 +324,7 @@ def should_expand_ingredient_line(line: str) -> bool:
         return False
     if len(_split_trailing_appended_ingredient(stripped)) > 1:
         return True
-    if _CONJUNCTION_SPLIT_RE.search(stripped):
+    if _CONJUNCTION_SPLIT_RE.search(mask_parenthetical_groups(stripped)):
         return True
     if count_grocery_nouns(stripped) >= 2:
         return True
@@ -736,7 +737,7 @@ def looks_like_merged_ingredient_line(text: str) -> bool:
     stripped = text.strip()
     if not stripped or is_junk_ingredient(stripped):
         return False
-    if _CONJUNCTION_SPLIT_RE.search(stripped):
+    if _CONJUNCTION_SPLIT_RE.search(mask_parenthetical_groups(stripped)):
         return False
     if looks_like_stored_ingredient_line(stripped) and "," in stripped:
         appended = _split_trailing_appended_ingredient(stripped)
@@ -759,7 +760,7 @@ def split_recipe_title_bleed(text: str) -> list[str]:
         return expanded
 
     # Real compound ingredients use conjunctions; title bleed does not.
-    if _CONJUNCTION_SPLIT_RE.search(stripped):
+    if _CONJUNCTION_SPLIT_RE.search(mask_parenthetical_groups(stripped)):
         return [text]
 
     if _INGREDIENT_ALTERNATIVE_RE.search(stripped):

@@ -79,7 +79,7 @@
   {
     "recipe": "Tomatillo Beans",
     "raw_line": "1 tablespoon white wine vinegar (plus more to taste)",
-    "expect_after_prepare": null,
+    "expect_after_prepare": "white wine vinegar",
     "expect_normalized": "white wine vinegar",
     "notes": "parenthetical, to_taste"
   },

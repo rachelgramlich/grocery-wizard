@@ -22,6 +22,36 @@ from src.grocery_wizard.ingredients._patterns import (
     _UNSPLIT_AND_PHRASES,
 )
 
+_PAREN_GROUP_RE = re.compile(r"\s*\([^()]*\)")
+
+
+def strip_parenthetical_groups(text: str) -> str:
+    """Remove ``(...)`` notes, including nested groups like ``( (optional))``."""
+    previous = None
+    while previous != text:
+        previous = text
+        text = _PAREN_GROUP_RE.sub("", text)
+    open_index = text.find("(")
+    if open_index != -1:
+        text = text[:open_index]
+    return text.replace(")", "").strip()
+
+
+def mask_parenthetical_groups(text: str) -> str:
+    """Blank out text inside parentheses, keeping string length and offsets."""
+    depth = 0
+    masked: list[str] = []
+    for char in text:
+        if char == "(":
+            depth += 1
+        if depth > 0:
+            masked.append("_")
+        else:
+            masked.append(char)
+        if char == ")" and depth > 0:
+            depth -= 1
+    return "".join(masked)
+
 
 def _normalize_unicode_dashes(text: str) -> str:
     for dash in _UNICODE_DASHES:
@@ -73,12 +103,12 @@ def _split_compound_parts(text: str) -> list[str]:
 
 
 def _try_split_on_conjunction(text: str) -> tuple[str, str] | None:
-    main = re.sub(r"\([^)]*\)", "", text).split(",")[0].strip()
+    main = strip_parenthetical_groups(text).split(",")[0].strip()
     main = _TRAILING_CLAUSE_RE.sub("", main).strip().lower()
     if main in _UNSPLIT_AND_PHRASES:
         return None
 
-    match = _CONJUNCTION_SPLIT_RE.search(text)
+    match = _CONJUNCTION_SPLIT_RE.search(mask_parenthetical_groups(text))
     if match is None:
         return None
 
@@ -113,7 +143,7 @@ def _left_is_qty_plus_bare_color(left: str) -> bool:
 
 
 def _looks_like_ingredient(part: str) -> bool:
-    cleaned = re.sub(r"\([^)]*\)", "", part).strip()
+    cleaned = strip_parenthetical_groups(part)
     cleaned = cleaned.split(",")[0].strip()
     cleaned = _TRAILING_CLAUSE_RE.sub("", cleaned).strip()
     if not cleaned:
@@ -192,6 +222,8 @@ def _is_prep_only_segment(segment: str) -> bool:
 
     segment = _strip_leading_amount(segment)
     words = segment.split()
+    if words in (["clove"], ["cloves"]):
+        return False
     words = _strip_leading_tokens(words, _UNITS | _SIZES)
     words = _strip_prep_words(words)
     return not words
@@ -202,7 +234,7 @@ def _is_junk_only(text: str) -> bool:
     if not cleaned:
         return True
 
-    without_parens = re.sub(r"\([^)]*\)", "", cleaned).strip()
+    without_parens = strip_parenthetical_groups(cleaned)
     if _INSTRUCTION_ONLY_RE.match(without_parens):
         return True
 

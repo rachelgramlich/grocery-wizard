@@ -1,6 +1,7 @@
 import pytest
 from bs4 import BeautifulSoup
 
+from src.grocery_wizard.ingredients.sync import prepare_ingredients_for_notion
 from src.grocery_wizard.recipes.scraper import (
     ScrapeError,
     _extract_ingredients,
@@ -636,3 +637,51 @@ def test_extract_json_ld_cook_time_minutes_sums_prep_and_cook() -> None:
     """
     soup = BeautifulSoup(html, "html.parser")
     assert _extract_json_ld_cook_time_minutes(soup) == 80.0
+
+
+PANEER_JSON_LD_HTML = """
+<html>
+  <head>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Recipe",
+      "name": "Paneer Butter Masala",
+      "recipeIngredient": [
+        "1 tablespoon (15 ml) oil",
+        "2 green cardamoms ( (or ¼ to ⅓ tsp ground cardamom, elaichi))",
+        "1 inch (10 grams) ginger ((peeled &amp; sliced or use 1½ to 2 teaspoon ginger garlic paste, read notes))",
+        "1 teaspoon sea salt ( (adjust to taste))",
+        "¾ to 1 teaspoon garam masala ( (adjust to taste))",
+        "1 small bay leaf ((tej patta, optional))",
+        "3 cloves ((laung, optional))"
+      ]
+    }
+    </script>
+  </head>
+  <body><h1>Paneer Butter Masala</h1></body>
+</html>
+"""
+
+
+def test_json_ld_ingredients_unwrap_doubled_parentheses_and_entities() -> None:
+    soup = BeautifulSoup(PANEER_JSON_LD_HTML, "html.parser")
+    ingredients = _extract_json_ld_ingredients(soup)
+    assert ingredients[1] == "2 green cardamoms (or ¼ to ⅓ tsp ground cardamom, elaichi)"
+    assert ingredients[2].startswith("1 inch (10 grams) ginger (peeled & sliced")
+    assert "( (" not in " ".join(ingredients)
+    assert "&amp;" not in " ".join(ingredients)
+
+
+def test_scraped_paneer_recipe_prepares_clean_notion_lines() -> None:
+    soup = BeautifulSoup(PANEER_JSON_LD_HTML, "html.parser")
+    prepared = prepare_ingredients_for_notion("\n".join(_extract_ingredients(soup)))
+    assert prepared.splitlines() == [
+        "oil",
+        "2 green cardamoms",
+        "ginger",
+        "sea salt",
+        "garam masala",
+        "1 small bay leaf",
+        "3 cloves",
+    ]

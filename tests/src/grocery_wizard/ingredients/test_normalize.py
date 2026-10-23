@@ -845,3 +845,59 @@ def test_filter_ingredient_keys_grated_cheese_lines() -> None:
     assert filter_ingredient_keys(fontina) == {"fontina"}
     assert filter_ingredient_keys(parmesan) == {"parmesan"}
     assert filter_ingredient_keys("a few drops vanilla extract") == {"vanilla extract"}
+
+
+@pytest.mark.parametrize(
+    ("raw", "stored", "name"),
+    [
+        ("1 bay leaf", "1 bay leaf", "bay leaf"),
+        ("2 bay leaves", "2 bay leaf", "bay leaf"),
+        ("4 dried bay leaves", "4 bay leaf", "bay leaf"),
+        ("1 small bay leaf ((tej patta, optional))", "1 small bay leaf", "bay leaf"),
+        ("10 curry leaves", "10 curry leaf", "curry leaf"),
+        ("2 kaffir lime leaves", "2 kaffir lime leaf", "kaffir lime leaf"),
+        ("bay leaves", "bay leaf", "bay leaf"),
+    ],
+)
+def test_leaf_products_keep_leaf_in_name(raw: str, stored: str, name: str) -> None:
+    assert clean_ingredient_line_for_storage(raw) == stored
+    assert normalize_ingredient(raw) == name
+    assert normalize_ingredient(stored) == name
+
+
+@pytest.mark.parametrize(
+    ("raw", "stored"),
+    [
+        ("1 teaspoon sea salt ( (adjust to taste))", "sea salt"),
+        ("¾ to 1 teaspoon garam masala ( (adjust to taste))", "garam masala"),
+        ("1 teaspoon coriander powder ((daniya powder) (optional))", "coriander powder"),
+        (
+            (
+                "¾ to 1 teaspoon Kashmiri red chilli powder "
+                "((or paprika) (adjust to heat & color preference))"
+            ),
+            "Kashmiri red chilli powder",
+        ),
+        (
+            (
+                "1 inch (10 grams) ginger "
+                "((peeled & sliced or use 1½ to 2 teaspoon ginger garlic paste, read notes))"
+            ),
+            "ginger",
+        ),
+    ],
+)
+def test_nested_parenthetical_notes_do_not_leak_into_storage(raw: str, stored: str) -> None:
+    assert clean_ingredient_line_for_storage(raw) == stored
+    assert normalize_ingredient(stored) == stored.lower()
+
+
+def test_ampersand_inside_parentheses_does_not_split_line() -> None:
+    line = "1 inch ginger (peeled & sliced or use ginger garlic paste)"
+    assert expand_ingredient_line(line) == [line]
+
+
+def test_spice_cloves_without_garlic_are_kept() -> None:
+    assert clean_ingredient_line_for_storage("3 cloves (laung, optional)") == "3 cloves"
+    assert parse_amount("3 cloves") == ("cloves", "3")
+    assert not is_junk_ingredient("3 cloves")
