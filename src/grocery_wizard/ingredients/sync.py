@@ -118,7 +118,7 @@ def _merge_citrus_juice_fragments(lines: list[str]) -> list[str]:
                 and stripped
                 and not is_directive(next_line)
             ):
-                merged.append(f"{stripped} {next_line} {third_line}")
+                merged.append(f"{stripped} or {next_line}")
                 index += 3
                 continue
         if (

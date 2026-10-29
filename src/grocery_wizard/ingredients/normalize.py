@@ -519,6 +519,8 @@ def _is_prep_instruction_fragment(text: str) -> bool:
     stripped = text.strip()
     if not stripped:
         return True
+    if stripped.lower().startswith("grated on "):
+        return True
     if _DIMENSION_PREP_SEGMENT_RE.match(stripped):
         return True
     words = _sanitize_filter_words(stripped)

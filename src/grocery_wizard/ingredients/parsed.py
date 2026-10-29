@@ -599,6 +599,17 @@ def _prefer_stock_over_water(name: str) -> str:
 
 _TIED_WITH_TWINE_RE = re.compile(r"\s+tied with\b.*$", re.IGNORECASE)
 
+_LEMON_AND_LIME_RE = re.compile(
+    r"\blemon\b.*\blime\b|\blime\b.*\blemon\b",
+    re.IGNORECASE,
+)
+
+
+def _stored_lemon_or_lime_choice(text: str) -> str | None:
+    if not _LEMON_AND_LIME_RE.search(text):
+        return None
+    return "lemon or lime"
+
 
 def _is_citrus_zest_or_juice_only_line(text: str) -> bool:
     stripped = text.strip()
@@ -1169,6 +1180,11 @@ def _build_storage_line(
 
     raw_context = source_line or original
     context = _strip_more_modifiers(raw_context)
+    lemon_or_lime = _stored_lemon_or_lime_choice(raw_context) or _stored_lemon_or_lime_choice(
+        original
+    )
+    if lemon_or_lime:
+        return lemon_or_lime
     name = _simplify_parsed_name(parsed.name[0].text)
     purchased_shredded = _purchased_shredded_product(context, name)
     if purchased_shredded:

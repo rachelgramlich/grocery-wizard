@@ -431,7 +431,7 @@ def test_prepare_merges_split_lemon_lime_juice_lines() -> None:
     )
     lines = [line.strip().lower() for line in prepared.splitlines()]
     assert "juice" not in lines
-    assert "lemon lime juice" in prepared
+    assert "lemon or lime" in prepared
     assert "6 cloves garlic" in prepared
 
 
@@ -452,6 +452,17 @@ def test_storage_fresh_or_frozen_and_stock_sprigs() -> None:
         clean_ingredient_line_for_storage("12 cilantro sprigs tied with kitchen twine")
         == "12 cilantro sprigs"
     )
+
+
+def test_prepare_drops_box_grater_prep_line() -> None:
+    prepared = prepare_ingredients_for_notion(
+        "1 large tomato\n"
+        "grated on the large holes of a box grater or finely chopped, juices reserved\n"
+        "1 onion"
+    )
+    assert "grater" not in prepared.lower()
+    assert "1 large tomato" in prepared
+    assert "1 onion" in prepared
 
 
 def test_prepare_drops_crosswise_prep_only_line() -> None:
