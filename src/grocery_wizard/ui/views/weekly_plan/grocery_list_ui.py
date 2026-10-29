@@ -37,6 +37,7 @@ from src.grocery_wizard.ui.views.weekly_plan.state import (
     _clear_grocery_result,
     _ensure_weekly_plan_saved_before_grocery,
     _grocery_pre_extra_items_widget_key,
+    _render_pending_grocery_overwrite_prompt,
     _weekly_plan_mode,
 )
 from src.grocery_wizard.ui.views.weekly_plan.step_ui import (
@@ -199,6 +200,7 @@ def render_grocery_list_section(
             label_visibility="collapsed",
         )
 
+    _render_pending_grocery_overwrite_prompt(current_plan, cached_recipes=all_recipes)
     if st.button("Create grocery list", type="primary", key="create_grocery"):
         if not _ensure_weekly_plan_saved_before_grocery(current_plan, cached_recipes=all_recipes):
             return
