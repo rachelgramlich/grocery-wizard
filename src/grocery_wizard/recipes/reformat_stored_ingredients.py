@@ -3,7 +3,8 @@
 Use after parser/storage rules change. Reads each recipe's Ingredients column,
 runs ``prepare_ingredients_for_notion``, and optionally writes back when safe.
 
-See ``run_stored_ingredients_reformat`` for skip rules (line count, drops, major edits).
+See ``run_stored_ingredients_reformat`` for skip rules (unaccounted line-count drops,
+would-drop lines, major edits).
 """
 
 from __future__ import annotations
@@ -18,7 +19,10 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
 
-from src.grocery_wizard.ingredients.parsed import format_ingredient_for_storage
+from src.grocery_wizard.ingredients.parsed import (
+    _is_citrus_zest_or_juice_only_line,
+    format_ingredient_for_storage,
+)
 from src.grocery_wizard.ingredients.sync import (
     is_directive,
     is_instruction_line,
@@ -103,6 +107,87 @@ def _would_drop_before_line(line: str) -> bool:
     return not format_ingredient_for_storage(stripped)
 
 
+_AND_FRAGMENT_RE = re.compile(r"^and\b", re.IGNORECASE)
+_CONTINUATION_FRAGMENT_RE = re.compile(
+    r"^(?:"
+    r"greens separated|green parts|pale green parts|light green parts|"
+    r"in oil|syrup|maple|juices reserved|whites\b|white parts|"
+    r"discarded|the rest drained|well stirred|at room temperature|"
+    r"wedges(?:\s+for\s+serving)?|wheels for serving|washed,"
+    r")",
+    re.IGNORECASE,
+)
+_FOR_SERVING_RE = re.compile(r"\bfor serving\b", re.IGNORECASE)
+
+
+def _is_intentional_drop_line(line: str) -> bool:
+    """Lines we expect to lose when cleaning Notion ingredient blobs."""
+    stripped = line.strip()
+    if not stripped:
+        return True
+    if is_instruction_line(stripped) or is_metadata_line(stripped) or is_junk_ingredient(stripped):
+        return True
+    if _would_drop_before_line(stripped):
+        return True
+    if _is_citrus_zest_or_juice_only_line(stripped):
+        return True
+    if _AND_FRAGMENT_RE.match(stripped):
+        return True
+    if _CONTINUATION_FRAGMENT_RE.match(stripped):
+        return True
+    lowered = stripped.lower()
+    if lowered.startswith("grated on "):
+        return True
+    if "crosswise into" in lowered:
+        return True
+    if _FOR_SERVING_RE.search(stripped):
+        return True
+    if lowered.endswith(")") and "(" not in stripped:
+        return True
+    if re.search(r",\s*zested\s*$", stripped, re.IGNORECASE):
+        return True
+    if re.search(r"\b(?:stems|stalks)\s+finely chopped\b", stripped, re.IGNORECASE):
+        return True
+    if re.search(r"\bwhites?\s*$", stripped, re.IGNORECASE) and "," in stripped:
+        return True
+    if stripped.lower().startswith("fresh herbs, such as"):
+        return True
+    return bool(re.match(r"^\d+\s+Pour\b", stripped))
+
+
+def _before_line_accounted_in_after(line: str, after_ingredients: Sequence[str]) -> bool:
+    """True when a before row is junk/prep or its storage form appears in after."""
+    if _is_intentional_drop_line(line):
+        return True
+    formatted = format_ingredient_for_storage(line.strip()).strip()
+    if not formatted:
+        return True
+    formatted_lower = formatted.lower()
+    after_lower = [part.strip().lower() for part in after_ingredients]
+    if formatted_lower in after_lower:
+        return True
+    if any(
+        formatted_lower in after_line or after_line in formatted_lower for after_line in after_lower
+    ):
+        return True
+    line_lower = line.strip().lower()
+    if "lemon" in line_lower and any("lemon or lime" in after_line for after_line in after_lower):
+        return True
+    if "lime" in line_lower and "juice" not in line_lower:
+        if any("lemon or lime" in after_line for after_line in after_lower):
+            return True
+    return False
+
+
+def _line_count_drop_is_accounted(
+    before_ingredients: Sequence[str],
+    after_ingredients: Sequence[str],
+) -> bool:
+    if len(after_ingredients) >= len(before_ingredients):
+        return True
+    return all(_before_line_accounted_in_after(line, after_ingredients) for line in before_ingredients)
+
+
 def analyze_stored_ingredient_reformat(before_text: str) -> ReformatAnalysis:
     """Dry-run one Ingredients blob; does not call Notion."""
     before = (before_text or "").strip()
@@ -131,10 +216,19 @@ def analyze_stored_ingredient_reformat(before_text: str) -> ReformatAnalysis:
 
     reasons: list[str] = []
 
-    if len(after_ing) < len(before_ing):
+    if len(after_ing) < len(before_ing) and not _line_count_drop_is_accounted(
+        before_ing, after_ing
+    ):
         reasons.append(
             f"ingredient line count dropped {len(before_ing)} → {len(after_ing)}",
         )
+        unaccounted = [
+            line
+            for line in before_ing
+            if not _before_line_accounted_in_after(line, after_ing)
+        ]
+        if unaccounted:
+            reasons.append(f"unaccounted line(s), e.g. {unaccounted[0]!r}")
         return ReformatAnalysis(
             status=ReformatStatus.SKIP_LINE_COUNT,
             before=before,
@@ -144,7 +238,11 @@ def analyze_stored_ingredient_reformat(before_text: str) -> ReformatAnalysis:
             after_ingredient_line_count=len(after_ing),
         )
 
-    drop_candidates = [line for line in before_ing if _would_drop_before_line(line)]
+    drop_candidates = [
+        line
+        for line in before_ing
+        if _would_drop_before_line(line) and not _before_line_accounted_in_after(line, after_ing)
+    ]
     if drop_candidates:
         reasons.append(
             f"would drop {len(drop_candidates)} line(s), e.g. {drop_candidates[0]!r}",

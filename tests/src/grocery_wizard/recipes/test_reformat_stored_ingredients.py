@@ -46,6 +46,19 @@ def test_analyze_apply_ok_paren_ounce_can() -> None:
     assert analysis.after == "2 cans beans"
 
 
+def test_analyze_apply_ok_when_line_count_drops_from_intentional_cleanup() -> None:
+    before = (
+        "Kosher salt\n"
+        "and black pepper\n"
+        "1/2 teaspoon finely grated lemon zest (from 1/2 lemon)\n"
+        "1 can chickpeas"
+    )
+    analysis = analyze_stored_ingredient_reformat(before)
+    assert analysis.status == ReformatStatus.APPLY_OK
+    assert analysis.before_ingredient_line_count > analysis.after_ingredient_line_count
+    assert "1 can chickpeas" in analysis.after
+
+
 def test_run_dry_run_does_not_update_notion() -> None:
     schema = _schema()
     db = MagicMock()
