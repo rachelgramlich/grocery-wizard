@@ -37,7 +37,7 @@ from src.grocery_wizard.shopping.grocery_list import normalize_grocery_list_item
         ("1 can chickpeas, rinsed and drained", "chickpeas"),
         ("lime wedges", "limes"),
         ("1 lime, cut into wedges (optional)", "limes"),
-        ("3 packed cups coarsely chopped tuscan or curly kale", "kale"),
+        ("3 packed cups coarsely chopped tuscan or curly kale", "tuscan or curly kale"),
         ("4 teaspoons gochujang", "gochujang"),
         ("1 red onion, sliced into half-moons", "red onions"),
     ],
@@ -91,7 +91,7 @@ def test_normalize_ingredient_keeps_chicken_with_prep_segments() -> None:
 @pytest.mark.parametrize(
     ("raw", "expected"),
     [
-        ("Optional: 1 lb ground chicken, turkey, or beef", "ground chicken"),
+        ("Optional: 1 lb ground chicken, turkey, or beef", "ground chicken, turkey, or beef"),
         ("3 garlic cloves, minced or grated", "garlic"),
         ("Crushed red pepper", "crushed red pepper"),
         ("1 cup/110 grams almond flour (ground almonds)", "almond flour"),
@@ -274,7 +274,7 @@ def test_split_merged_ingredient_line() -> None:
         ("1 cup crumbled feta", "crumbled feta", None),
         ("8 ounces crumbled feta", "crumbled feta", "8 ounces"),
         ("4 ounces feta cheese, crumbled", "crumbled feta cheese", None),
-        ("12 ounces fontina or Gruyère", "fontina", "12 ounces"),
+        ("12 ounces fontina or Gruyère", "fontina or Gruyère", "12 ounces"),
         ("3/4 cup sliced almonds", "sliced almonds", None),
         ("sliced almonds", "sliced almonds", None),
         ("3/4 cup thinly sliced red onion", "red onions", None),
@@ -410,13 +410,18 @@ def test_storage_expands_such_as_herbs() -> None:
     )
 
 
-def test_storage_picks_first_herb_in_or_list() -> None:
-    assert clean_ingredient_line_for_storage("1/3 cup chopped cilantro, dill or parsley") == "cilantro"
-
-
-def test_storage_mixed_herb_sprigs() -> None:
+def test_storage_keeps_or_alternatives_in_name() -> None:
     assert (
-        clean_ingredient_line_for_storage("3 oregano, rosemary or sage sprigs") == "3 sprigs oregano"
+        clean_ingredient_line_for_storage("1/3 cup chopped cilantro, dill or parsley")
+        == "cilantro, dill or parsley"
+    )
+    assert (
+        clean_ingredient_line_for_storage("3 oregano, rosemary or sage sprigs")
+        == "3 oregano, rosemary or sage sprigs"
+    )
+    assert (
+        clean_ingredient_line_for_storage("1/3 cup chopped fresh cilantro or mint")
+        == "cilantro or mint"
     )
 
 
@@ -585,7 +590,7 @@ def test_clean_ingredient_line_for_storage_head_garlic() -> None:
         ("zest of 1 lemons", ""),
         ("lemon zest", ""),
         ("3 tablespoons sherry vinegar, more as needed", "sherry vinegar"),
-        ("4 cups cooked or canned chickpeas", "canned chickpeas"),
+        ("4 cups cooked or canned chickpeas", "cooked or canned chickpeas"),
         (
             "4 large or 6 small celery stalks, trimmed (reserve the leaves)",
             "celery",

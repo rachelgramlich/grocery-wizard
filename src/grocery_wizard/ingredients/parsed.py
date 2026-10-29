@@ -276,11 +276,6 @@ _MORE_MODIFIERS_RE = re.compile(
 
 _SUCH_AS_HERBS_RE = re.compile(r"\bsuch as\s+(.+)$", re.IGNORECASE)
 
-_MIXED_HERB_SPRIGS_RE = re.compile(
-    r"^((?:\d+\s+)?\d+/\d+|\d+(?:\.\d+)?)\s+(.+?)\s+sprigs?\s*$",
-    re.IGNORECASE,
-)
-
 _OR_ALTERNATIVE_RE = re.compile(r"\s+or\s+", re.IGNORECASE)
 
 _INLINE_OZ_CAN_RE = re.compile(r"\d+\s*oz\s+(can|cans)\b", re.IGNORECASE)
@@ -548,21 +543,6 @@ def _first_alternative(name: str) -> str:
     return max(parts, key=lambda part: len(part.split()))
 
 
-def _pick_shopping_name(name: str) -> str:
-    """When a recipe lists alternatives, store the first shoppable option."""
-    stripped = name.strip()
-    if not stripped:
-        return stripped
-    if re.search(r"\bor\b.*\b(?:stock|broth)\b", stripped, re.IGNORECASE):
-        return stripped
-    if " or " in stripped.lower():
-        left = re.split(r"\s+or\s+", stripped, maxsplit=1, flags=re.IGNORECASE)[0].strip()
-        if "," in left:
-            return left.split(",", 1)[0].strip()
-        return _first_alternative(stripped)
-    return stripped
-
-
 def _strip_more_modifiers(text: str) -> str:
     cleaned = _MORE_MODIFIERS_RE.sub("", text).strip()
     cleaned = _TRAILING_CLAUSE_RE.sub("", cleaned).strip(" ,")
@@ -580,16 +560,6 @@ def _herb_name_from_such_as(source_line: str, name: str) -> str:
     if options:
         return ", ".join(options)
     return name
-
-
-def _mixed_herb_sprig_line(source_line: str) -> str | None:
-    match = _MIXED_HERB_SPRIGS_RE.match(source_line.strip())
-    if not match or not re.search(r",|\bor\b", match.group(2), re.IGNORECASE):
-        return None
-    qty_str = match.group(1).strip()
-    herb = _pick_shopping_name(match.group(2).strip())
-    unit = _display_unit("sprig", _parse_qty(qty_str))
-    return f"{qty_str} {unit} {herb}".strip()
 
 
 def _is_citrus_zest_or_juice_only_line(text: str) -> bool:
@@ -718,8 +688,31 @@ def _leaf_product_name(lowered: str) -> str | None:
     return f"{product} leaf"
 
 
+def _is_alternative_list_name(name: str) -> bool:
+    return bool(re.search(r",\s*\S.+?\s+or\s+\S", name, re.IGNORECASE))
+
+
+def _keeps_or_alternative_phrasing(name: str) -> bool:
+    if not re.search(r"\s+or\s+", name, re.IGNORECASE):
+        return False
+    if re.search(r"\bor\b.*\b(?:stock|broth)\b", name, re.IGNORECASE):
+        return False
+    return True
+
+
 def _simplify_parsed_name(name: str) -> str:
-    cleaned = _pick_shopping_name(name.strip())
+    stripped = name.strip()
+    keep_or_options = _is_alternative_list_name(stripped) or _keeps_or_alternative_phrasing(
+        stripped
+    )
+    if keep_or_options:
+        cleaned = strip_parenthetical_groups(stripped)
+        cleaned = _strip_more_modifiers(cleaned)
+        cleaned = _TRAILING_MORE_RE.sub("", cleaned).strip(" ,")
+        if cleaned.lower().startswith("fresh "):
+            cleaned = cleaned[6:].strip()
+        return cleaned
+    cleaned = _first_alternative(stripped)
     cleaned = strip_parenthetical_groups(cleaned)
     cleaned = _TRAILING_CLAUSE_RE.sub("", cleaned).strip()
     cleaned = _TRAILING_MORE_RE.sub("", cleaned).strip(" ,")
@@ -1136,9 +1129,6 @@ def _build_storage_line(
 
     raw_context = source_line or original
     context = _strip_more_modifiers(raw_context)
-    sprig_line = _mixed_herb_sprig_line(raw_context)
-    if sprig_line:
-        return sprig_line
     name = _simplify_parsed_name(parsed.name[0].text)
     purchased_shredded = _purchased_shredded_product(context, name)
     if purchased_shredded:

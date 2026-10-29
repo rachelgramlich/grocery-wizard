@@ -96,8 +96,8 @@
   {
     "label": "Optional ground meat alternatives",
     "raw_line": "Optional: 1 lb ground chicken, turkey, or beef",
-    "expect_stored": "1 lb ground chicken",
-    "expect_grocery": "1 lb ground chicken"
+    "expect_stored": "1 lb ground chicken, turkey, or beef",
+    "expect_grocery": "1 lb ground chicken, turkey, or beef"
   },
   {
     "label": "Parenthetical substitution preserved",
