@@ -642,7 +642,7 @@ def _match_preserved_product(name: str) -> str | None:
             return product
     # ground meats (not ground pepper/spices)
     ground_match = re.search(r"\bground\s+([a-z]+)", lowered)
-    if ground_match and "pepper" not in lowered:
+    if ground_match and "pepper" not in lowered and "salt" not in lowered:
         return f"ground {ground_match.group(1)}"
     frozen_match = re.search(r"\bfrozen\s+([a-z]+(?:\s+[a-z]+)?)", lowered)
     if frozen_match:
@@ -792,6 +792,8 @@ def _simplify_parsed_name(name: str) -> str:
         cleaned = cleaned[7:].strip()
     elif lowered.startswith("fresh "):
         cleaned = cleaned[6:].strip()
+    cleaned = _LEADING_CLEAR_SPRINKLE_RE.sub("", cleaned)
+    cleaned = _LEADING_COLD_RE.sub("", cleaned)
     words = cleaned.split()
     while words and words[0].lower() in _DESCRIPTOR_WORDS:
         words.pop(0)
@@ -1083,6 +1085,12 @@ def _strip_trailing_prep_commas(text: str) -> str:
 _DESCRIPTOR_WORDS = frozenset(
     {"curly", "tuscan", "loosely", "firmly", "ripe", "coarsely", "packed"}
 )
+
+_LEADING_CLEAR_SPRINKLE_RE = re.compile(
+    r"^clear\s+(?=(?:coarse|sanding|sparkling|decorating)\b)", re.IGNORECASE
+)
+
+_LEADING_COLD_RE = re.compile(r"^cold\s+(?!foam\b|brew\b|cuts?\b|press)", re.IGNORECASE)
 
 _SIZE_WORDS = frozenset(
     {"large", "medium", "small", "extra-large", "extra", "jumbo", "baby", "thin", "thick"}
