@@ -14,6 +14,7 @@ __all__ = [
     "expand_ingredient_line",
     "filter_ingredient_key",
     "filter_ingredient_keys",
+    "grocery_dedupe_key_from_notion_line",
     "is_instruction_line",
     "is_junk_ingredient",
     "is_metadata_line",
@@ -21,6 +22,7 @@ __all__ = [
     "looks_like_merged_ingredient_line",
     "normalize_ingredient",
     "parse_amount",
+    "parse_notion_ingredient_for_grocery",
     "split_compound_ingredients",
     "split_merged_ingredient_line",
     "split_recipe_title_bleed",
@@ -944,6 +946,28 @@ def normalize_ingredient(line: str) -> str:
         return ""
     name, _ = _parse_stored_ingredient(stored)
     return name.lower()
+
+
+def parse_notion_ingredient_for_grocery(line: str) -> tuple[str, str | None]:
+    """Parse a Notion ``Ingredients`` line for the shopping list without rewriting it.
+
+    Uses the stored-line parser only. Does **not** call ``format_ingredient_for_storage``,
+    so manual Notion edits and saved storage shapes are preserved.
+    """
+    from src.grocery_wizard.ingredients.parsed import parse_stored_ingredient
+
+    if is_junk_ingredient(line):
+        return "", None
+    text = _prepare_line_for_parsing(line)
+    if not text:
+        return "", None
+    return parse_stored_ingredient(text)
+
+
+def grocery_dedupe_key_from_notion_line(line: str) -> str:
+    """Dedupe key for a Notion ingredient line (name only, lowercased)."""
+    name, _ = parse_notion_ingredient_for_grocery(line)
+    return name.lower() if name else ""
 
 
 def parse_amount(line: str) -> tuple[str, str | None]:

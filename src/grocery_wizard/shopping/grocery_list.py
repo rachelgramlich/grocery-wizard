@@ -36,8 +36,8 @@ from pathlib import Path
 
 from src.grocery_wizard.ingredients.normalize import (
     aggregate_amounts,
-    normalize_ingredient,
-    parse_amount,
+    grocery_dedupe_key_from_notion_line,
+    parse_notion_ingredient_for_grocery,
     should_show_amount,
 )
 from src.grocery_wizard.ingredients.parsed import (
@@ -344,21 +344,16 @@ def format_grocery_item(name: str, amount: str | None) -> str:
 
 
 def normalize_grocery_list_item(item: str) -> str:
-    """Normalize a raw grocery line for display, dedup, and aisle classification."""
+    """Normalize a grocery line for display, dedup, and aisle classification."""
     cleaned = strip_checklist_prefix(item)
     if not cleaned:
         return ""
-    name, amount = parse_amount(cleaned)
+    name, amount = parse_notion_ingredient_for_grocery(cleaned)
     if not name:
-        name = normalize_ingredient(cleaned)
-        if not name:
-            return ""
-        amount = None
-    else:
-        name = normalize_ingredient(name) or name
+        return ""
     if name.lower() == "garlic" and amount is not None:
         amount = aggregate_amounts([amount], name=name) or amount
-    return format_grocery_item(name, amount)
+    return format_grocery_item(name.lower(), amount)
 
 
 def merge_grocery_items(
@@ -418,7 +413,10 @@ def format_meals_and_grocery_list(
 
 def _normalized_item_key(name: str) -> str:
     cleaned = strip_checklist_prefix(name)
-    return (normalize_ingredient(cleaned) or ingredient_name(cleaned) or cleaned.strip()).lower()
+    key = grocery_dedupe_key_from_notion_line(cleaned)
+    if key:
+        return key
+    return (ingredient_name(cleaned) or cleaned.strip()).lower()
 
 
 def _append_unique_items(
@@ -461,10 +459,10 @@ def _collect_ingredient_line(
     if not stripped_line:
         return
     part = stripped_line
-    _name, amount = parse_amount(part)
-    display_name = normalize_ingredient(part) or _name
+    display_name, amount = parse_notion_ingredient_for_grocery(part)
     if not display_name:
         return
+    display_name = display_name.lower()
     keeps_amount = amount and not amount.startswith(("head:", "clove:", "zest:"))
     if keeps_amount and not should_show_amount(amount, part):
         amount = None

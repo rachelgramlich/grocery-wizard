@@ -47,16 +47,15 @@ Notion Ingredients (+ week plan)
   → shopping list output
 ```
 
-## Where prep words are stripped (and why not only at recipe add)
+## Grocery list must not rewrite Notion
 
-Notion `Ingredients` is also what you cook from, and NYT recipes are saved with `minimal_clean_for_storage` so the text still reads `1 cup chopped parsley`. About 70% of lines in a real Notion database are in that raw form, so the grocery-list stage has to strip prep (`chopped`, `minced`, `thinly sliced`, …) itself. Moving all stripping to recipe add would mean rewriting every saved recipe and losing the cooking text.
+**Notion `Ingredients` is the source of truth** for what you saved (including manual edits). When building the weekly list, use `parse_notion_ingredient_for_grocery` — it only runs `parse_stored_ingredient` on the line. It does **not** call `format_ingredient_for_storage` again.
 
-Rules that keep the two stages consistent:
+Prep stripping and product-form rules (`sliced almonds`, `crumbled feta`, …) belong in the **storage pipeline** (`prepare_ingredients_for_notion` when adding or syncing a recipe). Legacy lines that were never stored should be fixed in Notion (by hand or by re-saving that recipe), not silently rewritten at list time.
 
-- **Strip by default.** Knife-work words on produce and herbs are prep, not shopping items.
-- **Exceptions live in one place.** When the word is part of the product (`sliced almonds`, `sliced cheese`, `crumbled feta`, `shredded cheese`, `crushed tomatoes`), keep it. See `_PRODUCT_FORM_PATTERN` and `_match_preserved_product` in `parsed.py`.
-- **A cleaned line must survive being cleaned again.** Later list stages (merge, aisle sort, provenance) re-read built items. If an exception is only honored in one stage, the next stage strips it. `looks_like_stored_ingredient_line` must accept anything the formatter produces.
-- **Measurement quirks are fixed once**, in `_cleaning.normalize_measurement_text` (called from `_normalize_unicode`): `1 cup/240 grams`, `2 packed cups`, `11/2`, `medium or small`, `scant`/`heaping`, leading `About`.
+Shared measurement cleanup (`_cleaning.normalize_measurement_text`, via `_normalize_unicode`) still runs on read so dual measures like `1 cup/240 grams` parse without leaking `cup/240 grams` into the name.
+
+`normalize_ingredient` / `parse_amount` still exist for filters, review UI, and other callers that may need the old “re-format raw text” fallback. **Do not use them for Notion → grocery list.**
 
 ## Naming: avoid `ingredient_name` confusion
 

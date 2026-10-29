@@ -938,6 +938,19 @@ def test_spice_cloves_without_garlic_are_kept() -> None:
     assert not is_junk_ingredient("3 cloves")
 
 
+def test_parse_notion_ingredient_does_not_reformat_stored_line() -> None:
+    from src.grocery_wizard.ingredients.normalize import (
+        parse_amount,
+        parse_notion_ingredient_for_grocery,
+    )
+
+    assert parse_notion_ingredient_for_grocery("sliced cheese") == ("sliced cheese", None)
+    assert parse_amount("sliced cheese") == ("sliced cheese", None)
+    # Legacy raw NYT lines are for storage-time cleanup, not silent list-time rewrite.
+    assert parse_notion_ingredient_for_grocery("2 (15-ounce) cans beans") == ("cans beans", "2")
+    assert parse_amount("2 (15-ounce) cans beans") == ("beans", "2 cans")
+
+
 @pytest.mark.parametrize(
     "raw",
     [
@@ -947,10 +960,10 @@ def test_spice_cloves_without_garlic_are_kept() -> None:
         "1 cup crumbled feta",
         "8 ounces crumbled feta",
         "1 cup crumbled fresh goat cheese (4 ounces)",
-        "3/4 cup thinly sliced scallions",
-        "1/3 cup/40 grams chopped pecans",
-        "2 (15-ounce) cans beans",
-        "2 (6- to 8-ounce) blocks feta",
+        "2 scallions",
+        "pecans",
+        "2 cans beans",
+        "2 blocks feta",
         "1 pound fusilli or rotini",
         "12 ounces fontina or Gruyère",
     ],

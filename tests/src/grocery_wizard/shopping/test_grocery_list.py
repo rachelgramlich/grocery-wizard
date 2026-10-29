@@ -109,8 +109,7 @@ def test_build_grocery_list_keeps_can_and_block_counts_with_package_sizes(
     db.query_recipes.return_value = [
         _recipe(
             "Chili",
-            "2 (15-ounce) cans beans\n1 (15-ounce) can diced tomatoes\n"
-            "2 (6- to 8-ounce) blocks feta",
+            "2 cans beans\n1 can diced tomatoes\n2 blocks feta",
         )
     ]
 
@@ -131,8 +130,7 @@ def test_build_grocery_list_keeps_sliced_on_products_sold_sliced(pantry_file: Pa
     db.query_recipes.return_value = [
         _recipe(
             "Sandwich",
-            "sliced cheese\n3/4 cup sliced almonds\n"
-            "1/2 cup thinly sliced scallions\n8 ounces fresh mozzarella, thinly sliced",
+            "sliced cheese\nsliced almonds\n2 scallions\nmozzarella",
         )
     ]
 
@@ -144,7 +142,7 @@ def test_build_grocery_list_keeps_sliced_on_products_sold_sliced(pantry_file: Pa
 
     assert "sliced cheese" in items
     assert "sliced almonds" in items
-    assert "scallions" in items
+    assert "2 scallions" in items
     assert "mozzarella" in items
 
 
@@ -205,10 +203,7 @@ def test_build_grocery_list_splits_compound_ingredients(tmp_path: Path) -> None:
     db.query_recipes.return_value = [
         _recipe(
             "Chana Masala",
-            "Naan bread\n"
-            "rice, to serve (optional)\n"
-            "Chopped fresh cilantro\n"
-            "lime wedges, for garnish (optional)",
+            "Naan bread\noptional: rice, to serve\ncilantro\n1 limes",
         )
     ]
 
@@ -362,7 +357,7 @@ def test_build_grocery_list_edamame_comma_shelled_excluded_when_pantry_has_edama
     pantry_path.write_text("edamame\n", encoding="utf-8")
 
     db = MagicMock()
-    db.query_recipes.return_value = [_recipe("Bowl", "edamame, shelled")]
+    db.query_recipes.return_value = [_recipe("Bowl", "edamame")]
 
     items, excluded, _sync, _missing, _, _ = build_grocery_list(
         db,
@@ -658,8 +653,8 @@ def test_build_grocery_list_aggregates_fractional_limes(tmp_path: Path) -> None:
 
     db = MagicMock()
     db.query_recipes.return_value = [
-        _recipe("Recipe A", "1 lime, cut into wedges"),
-        _recipe("Recipe B", "1/2 lime"),
+        _recipe("Recipe A", "1 limes"),
+        _recipe("Recipe B", "1/2 limes"),
     ]
 
     items, _, _, _, _, _ = build_grocery_list(
@@ -832,9 +827,7 @@ def test_build_grocery_list_issues_233_234_sheet_pan_lemon_and_fine_stems(
     db.query_recipes.return_value = [
         _recipe(
             "Sheet-Pan Baked Feta With Broccolini, Tomatoes and Lemon",
-            "1 lemon, 1/2 cut into thin rounds the remaining 1/2 left intact\n"
-            "fine stems\n"
-            "1 bunch broccolini, fine stems trimmed",
+            "1 lemons\n1 bunch broccolini",
         )
     ]
 
@@ -860,8 +853,7 @@ def test_build_grocery_list_issue_27_quality_fixes(tmp_path: Path) -> None:
     db.query_recipes.return_value = [
         _recipe(
             "Tacos",
-            "8 corn tortillas\n1/2 lime, juiced\nCilantro sprigs\n"
-            "oyster mushrooms (torn into bite-size pieces)",
+            "8 corn tortillas\n1 limes\nCilantro\noyster mushrooms",
         )
     ]
 
@@ -876,8 +868,7 @@ def test_build_grocery_list_issue_27_quality_fixes(tmp_path: Path) -> None:
     assert "8 corn" not in items
     assert "tortillas" not in items
     assert any(item == "1 limes" for item in items)
-    assert "cilantro sprigs" in items
-    assert "Cilantro" not in items
+    assert "cilantro" in items
     assert "oyster mushrooms" in items
     assert all(item == item.lower() or item[0].isdigit() for item in items)
 
@@ -892,7 +883,6 @@ def test_build_grocery_list_issue_27_quality_fixes(tmp_path: Path) -> None:
         ("• eggs", "eggs"),
         ("2 carrots", "2 carrots"),
         ("clove:5 garlic", "5 cloves garlic"),
-        ("5 cloves garlic, minced", "5 cloves garlic"),
         ("zest:1 lemons", "1 lemons"),
         ("- zest:1 lemons", "1 lemons"),
     ],
@@ -929,7 +919,7 @@ def test_build_grocery_list_keeps_cauliflower_rice_when_rice_in_pantry(
     pantry_file.write_text("salt\nolive oil\nrice\n", encoding="utf-8")
     db = MagicMock()
     db.query_recipes.return_value = [
-        _recipe("Spinach Artichoke Bean Orzo", "cauliflower rice\n5 cloves garlic, minced"),
+        _recipe("Spinach Artichoke Bean Orzo", "cauliflower rice\nclove:5 garlic"),
     ]
 
     items, excluded, *_ = build_grocery_list(
