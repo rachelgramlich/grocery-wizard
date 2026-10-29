@@ -193,3 +193,59 @@ def test_append_and_remove_pantry_item(tmp_path: Path) -> None:
     assert append_pantry_item("cumin", path=path) is False
     assert remove_pantry_item_by_name("salt", path=path)
     assert "salt" not in load_pantry(path)
+
+
+@pytest.mark.parametrize(
+    "ingredient",
+    [
+        "fresno pepper",
+        "fresno peppers",
+        "jalapeno pepper",
+        "green pepper",
+        "red pepper",
+        "red bell pepper",
+        "2 red bell peppers",
+        "yellow pepper",
+        "serrano pepper",
+        "white pepper",
+        "pepper jack cheese",
+        "red-pepper flakes",
+    ],
+)
+@pytest.mark.parametrize("pantry_entry", ["pepper", "black pepper", "ground black pepper"])
+def test_only_table_pepper_is_matched_by_generic_pepper_pantry(
+    ingredient: str, pantry_entry: str
+) -> None:
+    assert not is_pantry_item(ingredient, {pantry_entry})
+
+
+@pytest.mark.parametrize(
+    "ingredient",
+    ["pepper", "black pepper", "ground black pepper", "salt and pepper"],
+)
+def test_table_pepper_is_matched_by_generic_pepper_pantry(ingredient: str) -> None:
+    assert is_pantry_item(ingredient, {"pepper"})
+
+
+def test_specific_pepper_pantry_entry_still_matches_itself() -> None:
+    assert is_pantry_item("fresno pepper", {"fresno pepper"})
+
+
+def test_remove_pepper_does_not_remove_fresno_pepper(tmp_path: Path) -> None:
+    path = tmp_path / "pantry.txt"
+    path.write_text("salt\nfresno pepper\njalapeno pepper\n", encoding="utf-8")
+    assert not remove_pantry_item_by_name("pepper", path)
+    assert load_pantry(path) == {"salt", "fresno pepper", "jalapeno pepper"}
+
+
+def test_remove_pepper_removes_black_pepper(tmp_path: Path) -> None:
+    path = tmp_path / "pantry.txt"
+    path.write_text("fresno pepper\nblack pepper\n", encoding="utf-8")
+    assert remove_pantry_item_by_name("pepper", path)
+    assert load_pantry(path) == {"fresno pepper"}
+
+
+def test_remove_fresno_pepper_does_not_remove_plain_pepper(tmp_path: Path) -> None:
+    path = tmp_path / "pantry.txt"
+    path.write_text("pepper\n", encoding="utf-8")
+    assert not remove_pantry_item_by_name("fresno pepper", path)

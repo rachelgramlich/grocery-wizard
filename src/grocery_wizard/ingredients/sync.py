@@ -39,7 +39,7 @@ from src.grocery_wizard.ingredients.parsed import (
 )
 from src.grocery_wizard.recipes.scraper import ingredients_to_text
 from src.grocery_wizard.shopping.line_items import strip_line_item
-from src.grocery_wizard.shopping.pantry import fresh_colored_pepper_blocks_generic_pepper
+from src.grocery_wizard.shopping.pantry import generic_pepper_blocks_match
 
 _REMOVAL_PREFIX_RE = re.compile(r"^remove\s*:?\s*(.+)$", re.IGNORECASE)
 _REMOVAL_DASH_RE = re.compile(r"^-\s+(.+)$")
@@ -440,7 +440,9 @@ def _matches_removal(line: str, removal_target: str) -> bool:
     target_norm = name_from_stored_line(removal_target)
     if not normalized or not target_norm:
         return False
-    if fresh_colored_pepper_blocks_generic_pepper(normalized, target_norm):
+    if generic_pepper_blocks_match(normalized, target_norm) or generic_pepper_blocks_match(
+        target_norm, normalized
+    ):
         return False
     if normalized == target_norm:
         return True
