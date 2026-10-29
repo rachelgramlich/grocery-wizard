@@ -1028,6 +1028,9 @@ def _build_storage_line(
         return _name_for_count(fruit, 1.0)
 
     if selected is None:
+        bare_fruit = name.lower()
+        if bare_fruit in {"avocado", "avocados", "lime", "limes", "lemon", "lemons"}:
+            return f"1 {_name_for_count(bare_fruit, 1.0)}"
         return _prefer_plural_form(name)
 
     unit = _amount_unit(selected)
