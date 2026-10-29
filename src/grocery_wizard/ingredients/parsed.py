@@ -925,6 +925,22 @@ def _purchased_shredded_product(source_line: str, parsed_name: str) -> str | Non
     return None
 
 
+_SLICED_CHEESE_RE = re.compile(r"^sliced\s+(?:[a-z]+\s+)?cheese\Z", re.IGNORECASE)
+
+
+def _purchased_sliced_cheese(source_line: str, parsed_name: str) -> str | None:
+    """Deli ``sliced cheese`` is a product, not prep (``mozzarella, thinly sliced`` is prep)."""
+    if "," in source_line:
+        return None
+    match = re.search(r"\bsliced\s+((?:[a-z]+\s+)?cheese)\b", source_line, re.IGNORECASE)
+    if not match:
+        return None
+    product = match.group(1).strip().lower()
+    if parsed_name.strip().lower() in product:
+        return f"sliced {product}"
+    return None
+
+
 def _build_storage_line(
     parsed: ParsedIngredient,
     original: str,
@@ -939,6 +955,9 @@ def _build_storage_line(
     purchased_shredded = _purchased_shredded_product(context, name)
     if purchased_shredded:
         name = purchased_shredded
+    purchased_sliced_cheese = _purchased_sliced_cheese(context, name)
+    if purchased_sliced_cheese:
+        name = purchased_sliced_cheese
     name = _include_size_in_name(parsed, name)
     amounts = list(parsed.amount or [])
     selected = _select_amount(amounts, original)
@@ -1308,7 +1327,7 @@ def looks_like_stored_ingredient_line(text: str) -> bool:
         r"peeled|beaten|smashed|packed)\b",
         stripped,
         re.IGNORECASE,
-    ):
+    ) and not _SLICED_CHEESE_RE.match(stripped):
         return False
     if _LEMON_LINE_RE.search(stripped):
         return False

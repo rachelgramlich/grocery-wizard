@@ -348,6 +348,7 @@ def test_classify_aisle_strips_checklist_prefix(item: str, expected_aisle: str) 
         ("dog treat oreos", "nuts/desserts"),
         ("old bay", "spices"),
         ("sneaky cheese shredded!", "refrigerated"),
+        ("sliced cheese", "refrigerated"),
     ],
 )
 def test_classify_aisle_misclassifications(item: str, expected_aisle: str) -> None:

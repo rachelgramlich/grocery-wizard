@@ -269,6 +269,10 @@ def test_split_merged_ingredient_line() -> None:
         ("2 (15-ounce) cans diced tomatoes", "diced tomatoes", "2 cans"),
         ("2 (6- to 8-ounce) blocks feta", "feta", "2 blocks"),
         ("2 blocks feta", "feta", "2 blocks"),
+        ("sliced cheese", "sliced cheese", None),
+        ("sliced swiss cheese", "sliced swiss cheese", None),
+        ("1 package sliced cheese", "sliced cheese", "1 package"),
+        ("8 ounces fresh mozzarella, thinly sliced", "mozzarella", None),
         # Bare count (no recognised unit) → bare number returned
         ("2 eggs", "eggs", "2"),
         ("4 large carrots, peeled", "carrots", "4"),
