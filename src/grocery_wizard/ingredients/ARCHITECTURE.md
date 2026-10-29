@@ -28,7 +28,7 @@ recipe URL or paste
   → Notion rich_text Ingredients
 ```
 
-Existing Notion rows are never bulk-rewritten. Re-save a recipe when you want its lines upgraded.
+Bulk upgrade of **existing** Notion text (no URL fetch): `python -m grocery_wizard.recipes.reformat_stored_ingredients` — dry-run by default; `--apply` writes only when line count, drops, and major-change guards pass. See module docstring.
 
 ## Grocery-list pipeline (read Notion → shop)
 
