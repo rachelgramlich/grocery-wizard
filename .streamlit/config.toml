@@ -11,3 +11,8 @@ gatherUsageStats = false
 # Custom in-app navigation (segmented control); ignore auto `pages/` sidebar.
 [client]
 showSidebarNavigation = false
+
+# Community Cloud shares one inotify limit per host; the watchdog watcher
+# exhausts it ("inotify instance limit reached"). Deployed apps need no hot reload.
+[server]
+fileWatcherType = "none"
