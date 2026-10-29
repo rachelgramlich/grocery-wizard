@@ -549,6 +549,30 @@ def _strip_more_modifiers(text: str) -> str:
     return cleaned
 
 
+def _format_or_option_list(options: list[str]) -> str:
+    cleaned = [part.strip() for part in options if part.strip()]
+    if not cleaned:
+        return ""
+    if len(cleaned) == 1:
+        return cleaned[0]
+    if len(cleaned) == 2:
+        return f"{cleaned[0]} or {cleaned[1]}"
+    return ", ".join(cleaned[:-1]) + f" or {cleaned[-1]}"
+
+
+def _expand_such_as_herb_options(tail: str) -> list[str]:
+    options: list[str] = []
+    for segment in tail.split(","):
+        segment = segment.strip()
+        if not segment:
+            continue
+        for part in re.split(r"\s+or\s+", segment, flags=re.IGNORECASE):
+            part = part.strip()
+            if part:
+                options.append(part)
+    return options
+
+
 def _herb_name_from_such_as(source_line: str, name: str) -> str:
     if "herb" not in name.lower():
         return name
@@ -556,10 +580,24 @@ def _herb_name_from_such_as(source_line: str, name: str) -> str:
     if not match:
         return name
     tail = _strip_more_modifiers(match.group(1))
-    options = [part.strip() for part in re.split(r",|\s+or\s+", tail, flags=re.IGNORECASE) if part.strip()]
+    options = _expand_such_as_herb_options(tail)
     if options:
-        return ", ".join(options)
+        return f"fresh herbs ({_format_or_option_list(options)})"
     return name
+
+
+def _prefer_stock_over_water(name: str) -> str:
+    lowered = name.lower()
+    if re.search(r"\b(?:stock|broth)\s+or\s+water\b", lowered):
+        return re.sub(r"\s+or\s+water\b", "", name, flags=re.IGNORECASE).strip()
+    if re.search(r"\bwater\s+or\s+(?:\w+\s+)?(?:stock|broth)\b", lowered):
+        match = re.search(r"(?:\w+\s+)?(?:stock|broth)", name, re.IGNORECASE)
+        if match:
+            return match.group(0).strip()
+    return name
+
+
+_TIED_WITH_TWINE_RE = re.compile(r"\s+tied with\b.*$", re.IGNORECASE)
 
 
 def _is_citrus_zest_or_juice_only_line(text: str) -> bool:
@@ -709,9 +747,11 @@ def _simplify_parsed_name(name: str) -> str:
         cleaned = strip_parenthetical_groups(stripped)
         cleaned = _strip_more_modifiers(cleaned)
         cleaned = _TRAILING_MORE_RE.sub("", cleaned).strip(" ,")
-        if cleaned.lower().startswith("fresh "):
+        if cleaned.lower().startswith("fresh ") and not re.search(
+            r"\bfresh\s+or\s+", cleaned, re.IGNORECASE
+        ):
             cleaned = cleaned[6:].strip()
-        return cleaned
+        return _prefer_stock_over_water(cleaned)
     cleaned = _first_alternative(stripped)
     cleaned = strip_parenthetical_groups(cleaned)
     cleaned = _TRAILING_CLAUSE_RE.sub("", cleaned).strip()
@@ -1196,6 +1236,13 @@ def _build_storage_line(
 
     if _is_garlic_clove_unit(unit_part, name):
         return f"{_format_qty(qty)} {_display_unit('clove', qty)} garlic"
+
+    if _unit_key(unit_part) == "sprig":
+        herb = _TIED_WITH_TWINE_RE.sub("", name).strip()
+        herb = re.sub(r"\bsprigs?\b", "", herb, flags=re.IGNORECASE).strip(" ,")
+        if herb:
+            sprig_word = _display_unit("sprig", qty)
+            return f"{_format_qty(qty)} {herb} {sprig_word}".strip()
 
     if (
         _is_spice_or_seasoning_name(name)

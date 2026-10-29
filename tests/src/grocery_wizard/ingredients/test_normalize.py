@@ -406,7 +406,7 @@ def test_storage_expands_such_as_herbs() -> None:
         clean_ingredient_line_for_storage(
             "1/4 cup chopped fresh herbs, such as dill, basil, mint or parsley, plus more for serving"
         )
-        == "dill, basil, mint, parsley"
+        == "fresh herbs (dill, basil, mint or parsley)"
     )
 
 
@@ -422,6 +422,35 @@ def test_storage_keeps_or_alternatives_in_name() -> None:
     assert (
         clean_ingredient_line_for_storage("1/3 cup chopped fresh cilantro or mint")
         == "cilantro or mint"
+    )
+
+
+def test_prepare_merges_split_lemon_lime_juice_lines() -> None:
+    prepared = prepare_ingredients_for_notion(
+        "2 tablespoons lemon\nlime\njuice\n6 large cloves garlic, finely grated"
+    )
+    lines = [line.strip().lower() for line in prepared.splitlines()]
+    assert "juice" not in lines
+    assert "lemon lime juice" in prepared
+    assert "6 cloves garlic" in prepared
+
+
+def test_storage_fresh_or_frozen_and_stock_sprigs() -> None:
+    assert (
+        clean_ingredient_line_for_storage(
+            "2 cups/8 ounces/266 grams fresh or frozen cranberries"
+        )
+        == "fresh or frozen cranberries"
+    )
+    assert (
+        clean_ingredient_line_for_storage(
+            "4 1/4 cups/1 liter vegetable stock or water, plus more if needed"
+        )
+        == "vegetable stock"
+    )
+    assert (
+        clean_ingredient_line_for_storage("12 cilantro sprigs tied with kitchen twine")
+        == "12 cilantro sprigs"
     )
 
 

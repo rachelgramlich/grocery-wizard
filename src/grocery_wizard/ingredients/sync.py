@@ -98,6 +98,42 @@ def _repair_mangled_lines(lines: list[str]) -> list[str]:
     return repaired
 
 
+def _merge_citrus_juice_fragments(lines: list[str]) -> list[str]:
+    """Rejoin ``lemon`` / ``lime`` / ``juice`` rows split across Notion lines."""
+    merged: list[str] = []
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        if is_directive(line):
+            merged.append(line)
+            index += 1
+            continue
+        stripped = line.strip()
+        if index + 2 < len(lines):
+            next_line = lines[index + 1].strip()
+            third_line = lines[index + 2].strip()
+            if (
+                next_line.lower() in {"lime", "lemon"}
+                and third_line.lower() == "juice"
+                and stripped
+                and not is_directive(next_line)
+            ):
+                merged.append(f"{stripped} {next_line} {third_line}")
+                index += 3
+                continue
+        if (
+            index + 1 < len(lines)
+            and stripped.lower() in {"lime", "lemon"}
+            and lines[index + 1].strip().lower() == "juice"
+        ):
+            merged.append(f"{stripped} {lines[index + 1].strip()}")
+            index += 2
+            continue
+        merged.append(line)
+        index += 1
+    return merged
+
+
 def _merge_continuation_lines(lines: list[str]) -> list[str]:
     """Join ingredient lines broken across rows (e.g. unclosed parentheses)."""
     merged: list[str] = []
@@ -185,6 +221,7 @@ def prepare_ingredients_for_notion(
         return ""
 
     lines = _repair_mangled_lines(lines)
+    lines = _merge_citrus_juice_fragments(lines)
     lines = _merge_continuation_lines(lines)
     lines = _truncate_at_instructions(lines)
 
@@ -192,8 +229,10 @@ def prepare_ingredients_for_notion(
     if not split.strip():
         return ""
 
+    post_split_lines = _merge_citrus_juice_fragments(split.splitlines())
+
     kept: list[str] = []
-    for line in split.splitlines():
+    for line in post_split_lines:
         stripped = line.strip()
         if not stripped:
             continue
