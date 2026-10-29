@@ -108,7 +108,7 @@
   {
     "label": "Garlic cloves with prep",
     "raw_line": "3 cloves garlic, minced",
-    "expect_stored": "3 garlic",
+    "expect_stored": "3 cloves garlic",
     "expect_grocery": "garlic"
   },
   {

@@ -856,6 +856,8 @@ def is_instruction_line(line: str) -> bool:
         return True
     if _INSTRUCTION_ONLY_RE.match(stripped):
         return True
+    if _is_prep_instruction_fragment(stripped):
+        return True
     return len(stripped) > 100 and bool(_INSTRUCTION_VERB_RE.search(stripped))
 
 

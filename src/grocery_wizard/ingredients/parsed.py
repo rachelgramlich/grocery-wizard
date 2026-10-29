@@ -1001,8 +1001,30 @@ _PRODUCT_FORM_LINE_RE = re.compile(rf"^{_PRODUCT_FORM_PATTERN}\Z", re.IGNORECASE
 _PRODUCT_FORM_RE = re.compile(rf"\b({_PRODUCT_FORM_PATTERN})\b", re.IGNORECASE)
 
 
+def _product_form_from_comma_prep(source_line: str, parsed_name: str) -> str | None:
+    """NYT often writes ``feta, crumbled`` — still store as ``crumbled feta``."""
+    head = source_line.split("(")[0]
+    if re.search(r",\s*crumbled\b", head, re.IGNORECASE):
+        lowered = parsed_name.strip().lower()
+        if "feta" in lowered and "cheese" in lowered:
+            return "crumbled feta cheese"
+        if "feta" in lowered:
+            return "crumbled feta"
+        if "cheese" in lowered:
+            return "crumbled cheese"
+    sliced = re.search(r",\s*(sliced\s+(?:cheese|almonds?))\b", head, re.IGNORECASE)
+    if sliced:
+        product = " ".join(sliced.group(1).lower().split())
+        if parsed_name.strip().lower() in product or "cheese" in parsed_name.lower():
+            return product
+    return None
+
+
 def _purchased_product_form(source_line: str, parsed_name: str) -> str | None:
     """Keep the prep word for products sold that way; ``mozzarella, thinly sliced`` is prep."""
+    from_comma = _product_form_from_comma_prep(source_line, parsed_name)
+    if from_comma:
+        return from_comma
     if "," in source_line:
         return None
     match = _PRODUCT_FORM_RE.search(source_line)

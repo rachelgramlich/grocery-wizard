@@ -51,7 +51,7 @@ def test_normalize_ingredient(raw: str, expected: str) -> None:
     [
         ("2 small yellow onions, sliced 1/4 inch thick lengthwise", "2 small yellow onions"),
         ("1 onion, diced", "1 onion"),
-        ("3 cloves garlic, minced", "3 garlic"),
+        ("3 cloves garlic, minced", "3 cloves garlic"),
         (
             "1 chicken bouillon cube (or substitute 2 cups chicken broth for the water bouillon)",
             "1 chicken bouillon cube (or substitute 2 cups chicken broth for the water bouillon)",
@@ -262,7 +262,7 @@ def test_split_merged_ingredient_line() -> None:
         ("1 lb chicken breast", "chicken breast", "1 lb"),
         ("2 cans white beans", "white beans", "2 cans"),
         ("2 pkgs gnocchi", "gnocchi", "2 pkgs"),
-        ("3 cloves garlic, minced", "garlic", "3"),
+        ("3 cloves garlic, minced", "garlic", "3 cloves"),
         ("8 oz tortellini", "tortellini", "8 oz"),
         ("1/2 cup all-purpose flour", "flour", None),
         ("2 tbsp olive oil, plus more for drizzling", "olive oil", None),
@@ -273,7 +273,7 @@ def test_split_merged_ingredient_line() -> None:
         ("sliced cheese", "sliced cheese", None),
         ("1 cup crumbled feta", "crumbled feta", None),
         ("8 ounces crumbled feta", "crumbled feta", "8 ounces"),
-        ("4 ounces feta cheese, crumbled", "feta cheese", None),
+        ("4 ounces feta cheese, crumbled", "crumbled feta cheese", None),
         ("12 ounces fontina or Gruyère", "fontina", "12 ounces"),
         ("3/4 cup sliced almonds", "sliced almonds", None),
         ("sliced almonds", "sliced almonds", None),
@@ -392,6 +392,22 @@ def test_expand_ingredient_line_splits_merged_stored_lines() -> None:
     assert "olive oil" in joined
     assert "garlic" in joined
     assert len(expanded) >= 3
+
+
+def test_storage_keeps_crumbled_feta_when_comma_after_feta() -> None:
+    assert (
+        clean_ingredient_line_for_storage("1 cup feta, crumbled (about 4 ounces)")
+        == "crumbled feta"
+    )
+
+
+def test_prepare_drops_crosswise_prep_only_line() -> None:
+    prepared = prepare_ingredients_for_notion(
+        "1 romaine heart\nsliced crosswise into 1/2-inch pieces\n1 can chickpeas"
+    )
+    assert "crosswise" not in prepared
+    assert "1 romaine heart" in prepared
+    assert "1 can chickpeas" in prepared
 
 
 def test_prepare_ingredients_does_not_merge_ground_cumin_continuation() -> None:
@@ -528,7 +544,7 @@ def test_aggregate_amounts_garlic_many_cloves_with_head() -> None:
 def test_clean_ingredient_line_for_storage_head_garlic() -> None:
     assert clean_ingredient_line_for_storage("1 head garlic") == "1 head garlic"
     assert clean_ingredient_line_for_storage("2 heads garlic") == "2 head garlic"
-    assert clean_ingredient_line_for_storage("12 cloves garlic, minced") == "12 garlic"
+    assert clean_ingredient_line_for_storage("12 cloves garlic, minced") == "12 cloves garlic"
 
 
 @pytest.mark.parametrize(
