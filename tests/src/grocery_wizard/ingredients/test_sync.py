@@ -62,6 +62,12 @@ def test_parse_ingredients_text_keeps_distinct_lines_after_comma_descriptor() ->
     assert ingredients == ["edamame, shelled", "carrots", "1 cup rice"]
 
 
+def test_prepare_ingredients_for_notion_dedupes_same_grocery_item() -> None:
+    text = "flour\n115 g all-purpose flour\nbrown sugar\n40 g brown sugar, packed"
+    prepared = prepare_ingredients_for_notion(text)
+    assert prepared.splitlines() == ["flour", "brown sugar"]
+
+
 def test_prepare_ingredients_for_notion_keeps_distinct_lines_after_comma_descriptor() -> None:
     text = "edamame, shelled\ncarrots\n1 cup rice"
     prepared = prepare_ingredients_for_notion(text)

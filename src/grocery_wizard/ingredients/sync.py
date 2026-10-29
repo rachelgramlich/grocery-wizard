@@ -30,9 +30,12 @@ from src.grocery_wizard.ingredients.normalize import (
     split_merged_ingredient_line,
 )
 from src.grocery_wizard.ingredients.parsed import (
+    aggregate_amounts,
     format_ingredient_for_storage,
+    format_storage_from_name_and_amount,
     format_stored_line_for_display,
     name_from_stored_line,
+    parse_stored_ingredient,
 )
 from src.grocery_wizard.recipes.scraper import ingredients_to_text
 from src.grocery_wizard.shopping.line_items import strip_line_item
@@ -262,6 +265,43 @@ def _truncate_at_instructions(lines: list[str]) -> list[str]:
     return kept
 
 
+def _combine_storage_lines(existing: str, duplicate: str) -> str:
+    name_existing, amount_existing = parse_stored_ingredient(existing)
+    name_duplicate, amount_duplicate = parse_stored_ingredient(duplicate)
+    name = name_existing or name_duplicate
+    if not name:
+        return existing
+    merged_amount = aggregate_amounts([amount_existing, amount_duplicate], name=name)
+    if merged_amount is None:
+        if amount_existing is not None:
+            return existing
+        if amount_duplicate is not None:
+            return duplicate
+        return existing
+    return format_storage_from_name_and_amount(name, merged_amount)
+
+
+def _dedupe_recipe_storage_lines(lines: list[str]) -> list[str]:
+    """Keep one line per grocery item name; combine amounts when duplicated."""
+    merged: list[str] = []
+    index_by_key: dict[str, int] = {}
+    for line in lines:
+        if is_directive(line):
+            merged.append(line)
+            continue
+        key = name_from_stored_line(line).lower()
+        if not key:
+            merged.append(line)
+            continue
+        if key not in index_by_key:
+            index_by_key[key] = len(merged)
+            merged.append(line)
+            continue
+        position = index_by_key[key]
+        merged[position] = _combine_storage_lines(merged[position], line)
+    return merged
+
+
 def prepare_ingredients_for_notion(
     text: str,
     *,
@@ -308,7 +348,7 @@ def prepare_ingredients_for_notion(
         cleaned = format_ingredient_for_storage(stripped)
         if cleaned:
             kept.append(cleaned)
-    return ingredients_to_text(kept)
+    return ingredients_to_text(_dedupe_recipe_storage_lines(kept))
 
 
 def format_ingredients_for_review(text: str) -> str:

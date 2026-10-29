@@ -1104,6 +1104,8 @@ def test_obsessed_cakes_apple_fritter_coffee_cake_ingredients_store_clean_names(
         ),
         "Clear coarse sanding sugar, for a generous sprinkle",
         "220 g (about 1 3/4 cups + 1 tablespoon) powdered sugar",
+        "115 g (about 1 cup) all-purpose flour",
+        "40 g (3 tablespoons) brown sugar, packed",
     ]
     assert prepare_ingredients_for_notion("\n".join(lines)).splitlines() == [
         "flour",
@@ -1111,7 +1113,16 @@ def test_obsessed_cakes_apple_fritter_coffee_cake_ingredients_store_clean_names(
         "butter",
         "plain Greek yogurt",
         "milk",
-        "Granny Smith apples",
+        "2 Granny Smith apples",
         "coarse sanding sugar",
         "powdered sugar",
+        "brown sugar",
     ]
+
+
+def test_gram_first_apple_line_keeps_piece_count_from_parenthetical_cups() -> None:
+    raw = (
+        "200 g (about 2 cups) Granny Smith apple, peeled, cored, "
+        "and cut into roughly 1/2-inch pieces"
+    )
+    assert clean_ingredient_line_for_storage(raw) == "2 Granny Smith apples"

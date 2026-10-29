@@ -9,6 +9,7 @@ from __future__ import annotations
 __all__ = [
     "aggregate_amounts",
     "format_ingredient_for_storage",
+    "format_storage_from_name_and_amount",
     "ingredient_name",
     "minimal_clean_for_storage",
     "name_from_stored_line",
@@ -834,6 +835,60 @@ def _amount_quantity(amount: IngredientAmount) -> float | None:
     return _fraction_to_float(amount.quantity)
 
 
+_APPLE_NAME_RE = re.compile(r"\bapples?\b", re.IGNORECASE)
+
+
+def _shopping_count_from_parenthetical_volume(
+    name: str,
+    amounts: list[IngredientAmount],
+    original: str,
+) -> tuple[float, str] | None:
+    """Use cup amounts from ``(about N cups)`` as a piece count for whole apples."""
+    if not _APPLE_NAME_RE.search(name):
+        return None
+    if "(" not in original:
+        return None
+    paren_text = " ".join(re.findall(r"\([^)]*\)", original)).lower()
+    best_qty: float | None = None
+    for amount in _flatten_amounts(amounts):
+        unit = _amount_unit(amount)
+        if not _is_volume_unit(unit):
+            continue
+        text = str(getattr(amount, "text", "") or "").lower()
+        if text and text not in paren_text:
+            continue
+        qty = _amount_quantity(amount)
+        if qty is None or qty <= 0:
+            continue
+        if best_qty is None or qty > best_qty:
+            best_qty = qty
+    if best_qty is None:
+        cup_match = re.search(
+            r"\(\s*(?:about\s+)?((?:\d+\s+)?\d+/\d+|\d+(?:\.\d+)?)\s+cups?\b",
+            original,
+            re.IGNORECASE,
+        )
+        if cup_match:
+            best_qty = _parse_qty(cup_match.group(1).strip())
+    if best_qty is None:
+        return None
+    display = _name_for_count(_prefer_plural_form(name), best_qty)
+    return best_qty, display
+
+
+def format_storage_from_name_and_amount(name: str, amount: str | None) -> str:
+    """Rebuild a Notion storage line from parsed name and amount parts."""
+    if not name:
+        return ""
+    if amount is None:
+        return name
+    stripped = amount.strip()
+    if re.fullmatch(r"(?:\d+\s+)?\d+/\d+|\d+(?:\.\d+)?", stripped):
+        qty = _parse_qty(stripped)
+        return f"{_format_qty(qty)} {_name_for_count(name, qty)}".strip()
+    return f"{stripped} {name}".strip()
+
+
 def _amounts_from_original_context(
     amounts: list[IngredientAmount],
     original: str,
@@ -1259,6 +1314,10 @@ def _build_storage_line(
 
     unit_lower = unit_part.lower()
     if _is_weight_unit_strip_at_storage(unit_part):
+        paren_count = _shopping_count_from_parenthetical_volume(name, amounts, raw_context)
+        if paren_count is not None:
+            count_qty, display_name = paren_count
+            return f"{_format_qty(count_qty)} {display_name}".strip()
         return _prefer_plural_form(name)
 
     if _is_garlic_clove_unit(unit_part, name):
