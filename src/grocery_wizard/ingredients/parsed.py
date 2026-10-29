@@ -270,7 +270,8 @@ _TRAILING_CLAUSE_RE = re.compile(
 _TRAILING_MORE_RE = re.compile(r"\s+more$", re.IGNORECASE)
 
 _MORE_MODIFIERS_RE = re.compile(
-    r",?\s*(?:plus\s+)?more(?:\s+(?:to taste|as needed|for seasoning|for serving|for drizzling))?\b.*$",
+    r",?\s*(?:plus\s+)?more"
+    r"(?:\s+(?:to taste|as needed|for seasoning|for serving|for drizzling))?\b.*$",
     re.IGNORECASE,
 )
 
@@ -284,14 +285,20 @@ _WEIGHT_UNITS_STRIP_AT_STORAGE = frozenset(
     {"oz", "ounce", "ounces", "g", "gram", "grams", "kg", "kilogram", "kilograms"}
 )
 
+
 def _is_spice_or_seasoning_name(name: str) -> bool:
     """Dry spices and seasonings — stored in Notion without tsp/cup amounts."""
     lowered = name.lower()
     ground_match = re.search(r"\bground\s+(\w+)", lowered)
     if ground_match:
-        if ground_match.group(1) in {"beef", "pork", "lamb", "turkey", "chicken", "meat"}:
-            return False
-        return True
+        return ground_match.group(1) not in {
+            "beef",
+            "pork",
+            "lamb",
+            "turkey",
+            "chicken",
+            "meat",
+        }
     if re.search(r"\b(?:powder|granulated|flakes|crushed)\b", lowered):
         return True
     seasonings = (
@@ -545,8 +552,7 @@ def _first_alternative(name: str) -> str:
 
 def _strip_more_modifiers(text: str) -> str:
     cleaned = _MORE_MODIFIERS_RE.sub("", text).strip()
-    cleaned = _TRAILING_CLAUSE_RE.sub("", cleaned).strip(" ,")
-    return cleaned
+    return _TRAILING_CLAUSE_RE.sub("", cleaned).strip(" ,")
 
 
 def _format_or_option_list(options: list[str]) -> str:
@@ -562,14 +568,14 @@ def _format_or_option_list(options: list[str]) -> str:
 
 def _expand_such_as_herb_options(tail: str) -> list[str]:
     options: list[str] = []
-    for segment in tail.split(","):
-        segment = segment.strip()
+    for raw_segment in tail.split(","):
+        segment = raw_segment.strip()
         if not segment:
             continue
-        for part in re.split(r"\s+or\s+", segment, flags=re.IGNORECASE):
-            part = part.strip()
-            if part:
-                options.append(part)
+        for raw_part in re.split(r"\s+or\s+", segment, flags=re.IGNORECASE):
+            option = raw_part.strip()
+            if option:
+                options.append(option)
     return options
 
 
@@ -742,11 +748,9 @@ def _is_alternative_list_name(name: str) -> bool:
 
 
 def _keeps_or_alternative_phrasing(name: str) -> bool:
-    if not re.search(r"\s+or\s+", name, re.IGNORECASE):
-        return False
-    if re.search(r"\bor\b.*\b(?:stock|broth)\b", name, re.IGNORECASE):
-        return False
-    return True
+    return bool(re.search(r"\s+or\s+", name, re.IGNORECASE)) and not re.search(
+        r"\bor\b.*\b(?:stock|broth)\b", name, re.IGNORECASE
+    )
 
 
 def _simplify_parsed_name(name: str) -> str:
@@ -1061,8 +1065,7 @@ def _is_celery_stalk_unit(unit: str, name: str) -> bool:
 def _should_preserve_raw_line(line: str) -> bool:
     stripped = _strip_more_modifiers(line.strip())
     return bool(
-        _SUBSTITUTION_PAREN_RE.search(stripped)
-        or stripped.startswith(("[x]", "▢", "•", "*"))
+        _SUBSTITUTION_PAREN_RE.search(stripped) or stripped.startswith(("[x]", "▢", "•", "*"))
     )
 
 
@@ -1260,12 +1263,7 @@ def _build_storage_line(
             sprig_word = _display_unit("sprig", qty)
             return f"{_format_qty(qty)} {herb} {sprig_word}".strip()
 
-    if (
-        _is_spice_or_seasoning_name(name)
-        and not unit_part.strip()
-        and qty is not None
-        and qty < 1
-    ):
+    if _is_spice_or_seasoning_name(name) and not unit_part.strip() and qty is not None and qty < 1:
         return _prefer_plural_form(name)
 
     if unit_lower in _DESCRIPTOR_COUNT_UNITS or unit_lower in {"stalk", "stalks"}:

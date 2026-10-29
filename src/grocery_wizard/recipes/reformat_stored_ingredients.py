@@ -34,6 +34,7 @@ from src.grocery_wizard.recipes.recipe_maintenance import (
     recipe_has_link,
 )
 
+
 class ReformatStatus(StrEnum):
     UNCHANGED = "unchanged"
     APPLY_OK = "apply_ok"

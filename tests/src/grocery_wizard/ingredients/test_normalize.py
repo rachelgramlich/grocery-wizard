@@ -437,9 +437,7 @@ def test_prepare_merges_split_lemon_lime_juice_lines() -> None:
 
 def test_storage_fresh_or_frozen_and_stock_sprigs() -> None:
     assert (
-        clean_ingredient_line_for_storage(
-            "2 cups/8 ounces/266 grams fresh or frozen cranberries"
-        )
+        clean_ingredient_line_for_storage("2 cups/8 ounces/266 grams fresh or frozen cranberries")
         == "fresh or frozen cranberries"
     )
     assert (
