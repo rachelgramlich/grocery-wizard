@@ -18,6 +18,7 @@ from src.grocery_wizard.ingredients.normalize import (
     split_recipe_title_bleed,
 )
 from src.grocery_wizard.ingredients.sync import prepare_ingredients_for_notion
+from src.grocery_wizard.shopping.grocery_list import normalize_grocery_list_item
 
 
 @pytest.mark.parametrize(
@@ -270,6 +271,21 @@ def test_split_merged_ingredient_line() -> None:
         ("2 (6- to 8-ounce) blocks feta", "feta", "2 blocks"),
         ("2 blocks feta", "feta", "2 blocks"),
         ("sliced cheese", "sliced cheese", None),
+        ("1 cup crumbled feta", "crumbled feta", None),
+        ("8 ounces crumbled feta", "crumbled feta", "8 ounces"),
+        ("4 ounces feta cheese, crumbled", "feta cheese", None),
+        ("1/3 cup/40 grams chopped pecans", "pecans", None),
+        ("1 cup/240 milliliters heavy cream", "heavy cream", None),
+        ("6 tablespoons/85 grams unsalted butter", "unsalted butter", None),
+        ("1 pound/454 grams strawberries", "strawberries", "1 pound"),
+        ("1/2 cup/4 ounces/113 grams cream cheese, cold", "cream cheese", None),
+        ("3 large/100 grams egg whites", "egg whites", "3"),
+        ("2 packed cups baby spinach", "spinach", None),
+        ("11/2 packed cups mint leaves", "mint", None),
+        ("1 pound medium or small shrimp", "shrimp", "1 pound"),
+        ("1 scant cup/190 grams granulated sugar", "granulated sugar", None),
+        ("About 1 heaping cup coarsely grated Parmesan", "Parmesan", None),
+        ("12 ounces fontina or Gruyère", "fontina", "12 ounces"),
         ("3/4 cup sliced almonds", "sliced almonds", None),
         ("sliced almonds", "sliced almonds", None),
         ("3/4 cup thinly sliced red onion", "red onions", None),
@@ -920,3 +936,26 @@ def test_spice_cloves_without_garlic_are_kept() -> None:
     assert clean_ingredient_line_for_storage("3 cloves (laung, optional)") == "3 cloves"
     assert parse_amount("3 cloves") == ("cloves", "3")
     assert not is_junk_ingredient("3 cloves")
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "sliced cheese",
+        "sliced swiss cheese",
+        "3/4 cup sliced almonds",
+        "1 cup crumbled feta",
+        "8 ounces crumbled feta",
+        "1 cup crumbled fresh goat cheese (4 ounces)",
+        "3/4 cup thinly sliced scallions",
+        "1/3 cup/40 grams chopped pecans",
+        "2 (15-ounce) cans beans",
+        "2 (6- to 8-ounce) blocks feta",
+        "1 pound fusilli or rotini",
+        "12 ounces fontina or Gruyère",
+    ],
+)
+def test_grocery_item_is_stable_when_cleaned_a_second_time(raw: str) -> None:
+    """Later list stages re-read built items; a second clean must not strip anything more."""
+    first = normalize_grocery_list_item(raw)
+    assert normalize_grocery_list_item(first) == first

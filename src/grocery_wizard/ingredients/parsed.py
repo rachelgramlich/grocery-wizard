@@ -26,6 +26,7 @@ from ingredient_parser import parse_ingredient
 
 from src.grocery_wizard.ingredients._cleaning import (
     mask_parenthetical_groups,
+    normalize_measurement_text,
     strip_parenthetical_groups,
 )
 from src.grocery_wizard.ingredients._patterns import (
@@ -301,7 +302,8 @@ _TO_TASTE_RE = re.compile(r"\bto taste\b", re.IGNORECASE)
 
 _PREP_TRAILING_RE = re.compile(
     r",\s*(?:"
-    r"beaten|chopped|diced|minced|sliced|grated|shredded|crushed|peeled|seeded|shelled|cored|"
+    r"beaten|chopped|diced|minced|sliced|grated|shredded|crumbled|crushed|peeled|seeded|shelled|"
+    r"cored|"
     r"trimmed|halved|quartered|julienned|cubed|mashed|softened|melted|thawed|rinsed|drained|"
     r"juiced|zested|"
     r"smashed(?:\s+and\s+peeled)?|peeled\s+and\s+grated|minced\s+or\s+grated|"
@@ -360,7 +362,7 @@ def _normalize_unicode(text: str) -> str:
         text = text.replace(dash, "-")
     for char, replacement in _UNICODE_FRACTIONS.items():
         text = text.replace(char, replacement)
-    return text
+    return normalize_measurement_text(text)
 
 
 def _strip_optional_prefix(text: str) -> str:
@@ -925,18 +927,21 @@ def _purchased_shredded_product(source_line: str, parsed_name: str) -> str | Non
     return None
 
 
-# ``sliced`` is part of the product for these (``sliced almonds``, deli ``sliced cheese``),
-# unlike home prep on produce (``thinly sliced scallions``) which is stripped.
-_SLICED_PRODUCT_PATTERN = r"sliced\s+(?:[a-z]+\s+)?(?:cheese|almonds?)"
-_SLICED_PRODUCT_LINE_RE = re.compile(rf"^{_SLICED_PRODUCT_PATTERN}\Z", re.IGNORECASE)
-_SLICED_PRODUCT_RE = re.compile(rf"\b({_SLICED_PRODUCT_PATTERN})\b", re.IGNORECASE)
+# The prep word is part of the product for these (``sliced almonds``, deli ``sliced cheese``,
+# ``crumbled feta``), unlike home prep on produce (``thinly sliced scallions``) which is stripped.
+_PRODUCT_FORM_PATTERN = (
+    r"(?:sliced\s+(?:[a-z]+\s+)?(?:cheese|almonds?)"
+    r"|crumbled\s+(?:[a-z]+\s+){0,2}(?:feta|cheese))"
+)
+_PRODUCT_FORM_LINE_RE = re.compile(rf"^{_PRODUCT_FORM_PATTERN}\Z", re.IGNORECASE)
+_PRODUCT_FORM_RE = re.compile(rf"\b({_PRODUCT_FORM_PATTERN})\b", re.IGNORECASE)
 
 
-def _purchased_sliced_product(source_line: str, parsed_name: str) -> str | None:
-    """Keep ``sliced`` for products sold sliced; ``mozzarella, thinly sliced`` is prep."""
+def _purchased_product_form(source_line: str, parsed_name: str) -> str | None:
+    """Keep the prep word for products sold that way; ``mozzarella, thinly sliced`` is prep."""
     if "," in source_line:
         return None
-    match = _SLICED_PRODUCT_RE.search(source_line)
+    match = _PRODUCT_FORM_RE.search(source_line)
     if not match:
         return None
     product = " ".join(match.group(1).lower().split())
@@ -959,9 +964,9 @@ def _build_storage_line(
     purchased_shredded = _purchased_shredded_product(context, name)
     if purchased_shredded:
         name = purchased_shredded
-    purchased_sliced = _purchased_sliced_product(context, name)
-    if purchased_sliced:
-        name = purchased_sliced
+    purchased_product_form = _purchased_product_form(context, name)
+    if purchased_product_form:
+        name = purchased_product_form
     name = _include_size_in_name(parsed, name)
     amounts = list(parsed.amount or [])
     selected = _select_amount(amounts, original)
@@ -1121,9 +1126,7 @@ def _parse_stored_rest(qty_str: str, rest: str) -> tuple[str, str | None]:
         canonical = _unit_key(unit)
         if not name and canonical == "clove":
             return "cloves", qty_str
-        if canonical in {"lb", "oz", "g", "kg"}:
-            return _prefer_plural_form(_strip_size_descriptors(name)), f"{qty_str} {unit}"
-        name = _prefer_plural_form(_strip_size_descriptors(name))
+        name = _prefer_plural_form(_strip_size_descriptors(_simplify_parsed_name(name)))
         return name, f"{qty_str} {unit}"
 
     name = _prefer_plural_form(_strip_size_descriptors(_simplify_parsed_name(rest)))
@@ -1331,13 +1334,13 @@ def looks_like_stored_ingredient_line(text: str) -> bool:
         r"peeled|beaten|smashed|packed)\b",
         stripped,
         re.IGNORECASE,
-    ) and not _SLICED_PRODUCT_LINE_RE.match(stripped):
+    ) and not _PRODUCT_FORM_LINE_RE.match(stripped):
         return False
     if _LEMON_LINE_RE.search(stripped):
         return False
     if re.search(
         r",\s*(?:"
-        r"minced|diced|chopped|grated|peeled|sliced|cut|smashed|drained|rinsed|beaten|"
+        r"minced|diced|chopped|grated|peeled|sliced|crumbled|cut|smashed|drained|rinsed|beaten|"
         r"(?:\d+(?:/\d+)?\s+)?cut\s+into|fine\s+stems|left\s+intact"
         r")\b",
         stripped,

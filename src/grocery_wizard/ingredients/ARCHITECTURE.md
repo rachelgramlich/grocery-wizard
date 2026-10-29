@@ -47,6 +47,17 @@ Notion Ingredients (+ week plan)
   → shopping list output
 ```
 
+## Where prep words are stripped (and why not only at recipe add)
+
+Notion `Ingredients` is also what you cook from, and NYT recipes are saved with `minimal_clean_for_storage` so the text still reads `1 cup chopped parsley`. About 70% of lines in a real Notion database are in that raw form, so the grocery-list stage has to strip prep (`chopped`, `minced`, `thinly sliced`, …) itself. Moving all stripping to recipe add would mean rewriting every saved recipe and losing the cooking text.
+
+Rules that keep the two stages consistent:
+
+- **Strip by default.** Knife-work words on produce and herbs are prep, not shopping items.
+- **Exceptions live in one place.** When the word is part of the product (`sliced almonds`, `sliced cheese`, `crumbled feta`, `shredded cheese`, `crushed tomatoes`), keep it. See `_PRODUCT_FORM_PATTERN` and `_match_preserved_product` in `parsed.py`.
+- **A cleaned line must survive being cleaned again.** Later list stages (merge, aisle sort, provenance) re-read built items. If an exception is only honored in one stage, the next stage strips it. `looks_like_stored_ingredient_line` must accept anything the formatter produces.
+- **Measurement quirks are fixed once**, in `_cleaning.normalize_measurement_text` (called from `_normalize_unicode`): `1 cup/240 grams`, `2 packed cups`, `11/2`, `medium or small`, `scant`/`heaping`, leading `About`.
+
 ## Naming: avoid `ingredient_name` confusion
 
 Three different “ingredient name” helpers existed historically:
