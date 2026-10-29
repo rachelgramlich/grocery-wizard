@@ -149,7 +149,7 @@
   {
     "recipe": "Celery Salad",
     "raw_line": "2 garlic cloves, smashed and peeled",
-    "expect_after_prepare": "2 garlic",
+    "expect_after_prepare": "2 cloves garlic",
     "expect_normalized": "garlic",
     "notes": "and"
   },

@@ -277,6 +277,44 @@ _WEIGHT_UNITS_STRIP_AT_STORAGE = frozenset(
     {"oz", "ounce", "ounces", "g", "gram", "grams", "kg", "kilogram", "kilograms"}
 )
 
+def _is_spice_or_seasoning_name(name: str) -> bool:
+    """Dry spices and seasonings — stored in Notion without tsp/cup amounts."""
+    lowered = name.lower()
+    ground_match = re.search(r"\bground\s+(\w+)", lowered)
+    if ground_match:
+        if ground_match.group(1) in {"beef", "pork", "lamb", "turkey", "chicken", "meat"}:
+            return False
+        return True
+    if re.search(r"\b(?:powder|granulated|flakes|crushed)\b", lowered):
+        return True
+    seasonings = (
+        "salt",
+        "pepper",
+        "cumin",
+        "coriander",
+        "turmeric",
+        "paprika",
+        "oregano",
+        "thyme",
+        "cinnamon",
+        "nutmeg",
+        "garam masala",
+        "curry powder",
+        "chile powder",
+        "chili powder",
+        "old bay",
+        "gochujang",
+        "allspice",
+        "cardamom",
+        "red-pepper flakes",
+        "pepper flakes",
+        "mustard seed",
+        "fennel seed",
+        "celery seed",
+    )
+    return any(token in lowered for token in seasonings)
+
+
 _LEMON_LINE_RE = re.compile(
     r"^(?:juice|zest|grated zest) of\s+",
     re.IGNORECASE,
@@ -1053,7 +1091,15 @@ def _build_storage_line(
         return _prefer_plural_form(name)
 
     if _is_garlic_clove_unit(unit_part, name):
-        return f"{_format_qty(qty)} garlic"
+        return f"{_format_qty(qty)} {_display_unit('clove', qty)} garlic"
+
+    if (
+        _is_spice_or_seasoning_name(name)
+        and not unit_part.strip()
+        and qty is not None
+        and qty < 1
+    ):
+        return _prefer_plural_form(name)
 
     if unit_lower in _DESCRIPTOR_COUNT_UNITS or unit_lower in {"stalk", "stalks"}:
         if "celery" in name.lower():
@@ -1416,6 +1462,15 @@ def _aggregate_garlic_amounts(amounts: list[str | None]) -> str | None:
         if amount.startswith("clove:"):
             clove_total += _parse_qty(amount[6:])
             continue
+        clove_unit_match = re.match(
+            r"^(?:(\d+\s+)?\d+/\d+|\d+(?:\.\d+)?)\s+cloves?\Z",
+            amount.strip(),
+            re.IGNORECASE,
+        )
+        if clove_unit_match:
+            qty_part = amount.strip().rsplit(maxsplit=1)[0]
+            clove_total += _parse_qty(qty_part)
+            continue
         try:
             clove_total += _parse_qty(amount)
         except (ValueError, ZeroDivisionError):
@@ -1436,7 +1491,11 @@ def _aggregate_garlic_amounts(amounts: list[str | None]) -> str | None:
             if amount
             and (
                 amount.startswith("clove:")
-                or re.match(r"^(?:\d+\s+)?\d+/\d+|\d+(?:\.\d+)?\Z", amount.strip())
+                or re.match(
+                    r"^(?:(\d+\s+)?\d+/\d+|\d+(?:\.\d+)?)(?:\s+cloves?)?\Z",
+                    amount.strip(),
+                    re.IGNORECASE,
+                )
             )
         )
         if clove_lines > 1:
