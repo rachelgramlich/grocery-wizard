@@ -52,17 +52,17 @@
     "issue_21": true
   },
   {
-    "label": "NYT-style: minimal clean (structured line)",
+    "label": "NYT-style: full format (volume stripped at storage)",
     "raw_line": "2 tablespoons extra-virgin olive oil, plus more for drizzling",
     "nyt": true,
-    "expect_stored": "2 tablespoons extra-virgin olive oil, plus more for drizzling",
+    "expect_stored": "extra-virgin olive oil",
     "expect_grocery": "extra-virgin olive oil"
   },
   {
-    "label": "NYT-style: onion with prep kept",
+    "label": "NYT-style: full format (prep stripped at storage)",
     "raw_line": "1 medium yellow onion, finely diced",
     "nyt": true,
-    "expect_stored": "1 medium yellow onion, finely diced",
+    "expect_stored": "1 medium yellow onion",
     "expect_grocery": "1 yellow onions"
   },
   {
@@ -81,7 +81,7 @@
     "label": "Compound cans: diced tomatoes",
     "raw_line": "2 (15-ounce) cans diced tomatoes",
     "expect_stored": "2 cans diced tomatoes",
-    "expect_grocery": "diced tomatoes"
+    "expect_grocery": "2 cans diced tomatoes"
   },
   {
     "label": "Lemon variant aggregation (juice + 1 + zest)",
@@ -96,19 +96,19 @@
   {
     "label": "Optional ground meat alternatives",
     "raw_line": "Optional: 1 lb ground chicken, turkey, or beef",
-    "expect_stored": "1 lb ground chicken",
-    "expect_grocery": "1 lb ground chicken"
+    "expect_stored": "1 lb ground chicken, turkey, or beef",
+    "expect_grocery": "1 lb ground chicken, turkey, or beef"
   },
   {
     "label": "Parenthetical substitution preserved",
     "raw_line": "1 chicken bouillon cube (or substitute 2 cups chicken broth for the water bouillon)",
     "expect_stored": "1 chicken bouillon cube (or substitute 2 cups chicken broth for the water bouillon)",
-    "expect_grocery": "chicken bouillon cube"
+    "expect_grocery": "1 chicken bouillon cube"
   },
   {
     "label": "Garlic cloves with prep",
     "raw_line": "3 cloves garlic, minced",
-    "expect_stored": "clove:3 garlic",
+    "expect_stored": "3 cloves garlic",
     "expect_grocery": "garlic"
   },
   {
@@ -177,7 +177,7 @@
   {
     "label": "To taste preserved raw",
     "raw_line": "Salt and pepper to taste",
-    "expect_stored": "Salt and pepper to taste",
+    "expect_stored": "Salt and pepper",
     "expect_grocery": "Salt and pepper"
   },
   {
@@ -216,7 +216,7 @@
   {
     "label": "Legacy lemon zest storage format",
     "raw_line": "lemon zest",
-    "expect_stored": "zest lemons",
+    "expect_stored": "",
     "expect_grocery": "lemons"
   },
   {

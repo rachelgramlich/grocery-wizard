@@ -14,6 +14,7 @@ __all__ = [
     "expand_ingredient_line",
     "filter_ingredient_key",
     "filter_ingredient_keys",
+    "grocery_dedupe_key_from_notion_line",
     "is_instruction_line",
     "is_junk_ingredient",
     "is_metadata_line",
@@ -21,6 +22,7 @@ __all__ = [
     "looks_like_merged_ingredient_line",
     "normalize_ingredient",
     "parse_amount",
+    "parse_notion_ingredient_for_grocery",
     "split_compound_ingredients",
     "split_merged_ingredient_line",
     "split_recipe_title_bleed",
@@ -517,6 +519,8 @@ def _is_prep_instruction_fragment(text: str) -> bool:
     stripped = text.strip()
     if not stripped:
         return True
+    if stripped.lower().startswith("grated on "):
+        return True
     if _DIMENSION_PREP_SEGMENT_RE.match(stripped):
         return True
     words = _sanitize_filter_words(stripped)
@@ -846,6 +850,10 @@ def is_instruction_line(line: str) -> bool:
     stripped = line.strip()
     if not stripped:
         return True
+    if re.search(r"\bfollow\s@", stripped, re.IGNORECASE):
+        return True
+    if re.match(r"^\d+\.?\s+Pour\b", stripped, re.IGNORECASE):
+        return True
     if _RECIPE_STEP_RE.match(stripped):
         return True
     if is_metadata_line(stripped):
@@ -853,6 +861,8 @@ def is_instruction_line(line: str) -> bool:
     if _INSTRUCTION_VERB_RE.match(stripped):
         return True
     if _INSTRUCTION_ONLY_RE.match(stripped):
+        return True
+    if _is_prep_instruction_fragment(stripped):
         return True
     return len(stripped) > 100 and bool(_INSTRUCTION_VERB_RE.search(stripped))
 
@@ -944,6 +954,29 @@ def normalize_ingredient(line: str) -> str:
         return ""
     name, _ = _parse_stored_ingredient(stored)
     return name.lower()
+
+
+def parse_notion_ingredient_for_grocery(line: str) -> tuple[str, str | None]:
+    """Split a stored Notion ingredient line into ``(name, amount)`` for list merge.
+
+    This is **not** the recipe-ingredient parser. It only understands the app's
+    stored Notion shape (leading qty + name, plus legacy ``clove:`` / ``zest:`` tags).
+    It does **not** call ``format_ingredient_for_storage`` or fix old messy rows.
+    """
+    from src.grocery_wizard.ingredients.parsed import parse_stored_ingredient
+
+    if is_junk_ingredient(line):
+        return "", None
+    text = _prepare_line_for_parsing(line)
+    if not text:
+        return "", None
+    return parse_stored_ingredient(text)
+
+
+def grocery_dedupe_key_from_notion_line(line: str) -> str:
+    """Dedupe key for a Notion ingredient line (name only, lowercased)."""
+    name, _ = parse_notion_ingredient_for_grocery(line)
+    return name.lower() if name else ""
 
 
 def parse_amount(line: str) -> tuple[str, str | None]:

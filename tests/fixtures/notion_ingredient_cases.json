@@ -9,7 +9,7 @@
   {
     "recipe": "Turmeric-Black Pepper Chicken With Asparagus",
     "raw_line": "1 lime, cut into wedges (optional)",
-    "expect_after_prepare": "1 limes",
+    "expect_after_prepare": "1 lime",
     "expect_normalized": "limes",
     "notes": "optional, prep_instruction, parenthetical"
   },
@@ -23,7 +23,7 @@
   {
     "recipe": "Chickpea curry",
     "raw_line": "Chopped fresh cilantro lime wedges, for garnish (optional)",
-    "expect_after_prepare": "cilantro\n1 limes",
+    "expect_after_prepare": "cilantro\n1 lime",
     "expect_normalized": "cilantro|limes",
     "notes": "optional, parenthetical"
   },
@@ -149,7 +149,7 @@
   {
     "recipe": "Celery Salad",
     "raw_line": "2 garlic cloves, smashed and peeled",
-    "expect_after_prepare": "clove:2 garlic",
+    "expect_after_prepare": "2 cloves garlic",
     "expect_normalized": "garlic",
     "notes": "and"
   },
@@ -163,36 +163,36 @@
   {
     "recipe": "Chickpea curry",
     "raw_line": "and pepper, to taste",
-    "expect_after_prepare": null,
-    "expect_normalized": "and pepper",
+    "expect_after_prepare": "pepper",
+    "expect_normalized": "pepper",
     "notes": "to_taste"
   },
   {
     "recipe": "Cinnamon Date Smoothie",
     "raw_line": "Salt, to taste",
-    "expect_after_prepare": null,
+    "expect_after_prepare": "Salt",
     "expect_normalized": "salt",
     "notes": "to_taste"
   },
   {
     "recipe": "Creamy lentil & Japanese sweet potato skillet",
     "raw_line": "1 Japanese sweet potato, peeled and cubed",
-    "expect_after_prepare": "1 Japanese sweet potatoes",
+    "expect_after_prepare": "1 Japanese sweet potato",
     "expect_normalized": "japanese sweet potatoes",
     "notes": "and"
   },
   {
     "recipe": "Creamy lentil & Japanese sweet potato skillet",
     "raw_line": "1/2 tsp sea salt, more to taste",
-    "expect_after_prepare": null,
+    "expect_after_prepare": "sea salt",
     "expect_normalized": "sea salt",
     "notes": "to_taste"
   },
   {
     "recipe": "Easy Chickpea Curry",
     "raw_line": "and pepper, to taste",
-    "expect_after_prepare": null,
-    "expect_normalized": "and pepper",
+    "expect_after_prepare": "pepper",
+    "expect_normalized": "pepper",
     "notes": "to_taste"
   },
   {
@@ -205,8 +205,8 @@
   {
     "recipe": "Easy Dal",
     "raw_line": "Juice of 1/2 lemon, to taste",
-    "expect_after_prepare": null,
-    "expect_normalized": "lemons",
+    "expect_after_prepare": "",
+    "expect_normalized": "",
     "notes": "to_taste"
   },
   {
@@ -268,7 +268,7 @@
   {
     "recipe": "Sweet potato sheet pan (synthetic)",
     "raw_line": "2 sweet potatoes and 1 red onion",
-    "expect_after_prepare": "2 sweet potatoes\n1 red onions",
+    "expect_after_prepare": "2 sweet potatoes\n1 red onion",
     "expect_normalized": "sweet potatoes and 1 red onions",
     "notes": "compound split"
   },
@@ -296,8 +296,8 @@
   {
     "recipe": "Bullet HTML (synthetic)",
     "raw_line": "\u25a2 2 cans white beans<br/>\u25a2 1 onion, diced",
-    "expect_after_prepare": "2 cans white beans\n1 onions",
-    "expect_normalized": "\u25a2 2 cans white beans<br/>\u25a2 1 onions",
+    "expect_after_prepare": "2 cans white beans\n1 onion",
+    "expect_normalized": "\u25a2 2 cans white beans<br/>\u25a2 1 onion",
     "notes": "bullet + html breaks"
   },
   {

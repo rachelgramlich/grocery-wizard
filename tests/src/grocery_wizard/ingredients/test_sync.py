@@ -248,7 +248,8 @@ def test_backfill_preserves_manual_substitution_notes() -> None:
     lines = prepared.splitlines()
     assert any("bouillon" in line for line in lines)
     assert any("see notes" in line for line in lines)
-    assert any("to taste" in line.lower() for line in lines)
+    assert not any("to taste" in line.lower() for line in lines)
+    assert any(line.strip() in {"Salt", "salt"} for line in lines)
     assert any(line.startswith("remove:") for line in lines)
 
 

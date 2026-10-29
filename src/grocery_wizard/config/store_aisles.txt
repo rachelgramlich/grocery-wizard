@@ -191,7 +191,6 @@ cracker
 crackers
 biscuit
 biscuits
-tamarind candy straws
 potato chips
 tortilla chips
 pita chips
@@ -287,6 +286,7 @@ scallop
 crab
 lobster
 fish
+fillet
 seafood
 meat
 turkey
@@ -347,6 +347,14 @@ dark chocolate
 chocolate chips
 cookie
 cookies
+oreo
+oreos
+
+# --- candy: Candy ---
+tamarind candy straws
+candy snacks
+candy bar
+candy
 
 # --- oils & vinegars: Oils & vinegars ---
 neutral oil
@@ -411,6 +419,8 @@ oregano
 turmeric
 cayenne
 chili powder
+chile powder
+old bay
 curry powder
 italian seasoning
 bay leaves
@@ -480,6 +490,12 @@ vanilla extract
 cocoa powder
 flour
 sugar
+brownie mix
+cornbread mix
+cake mix
+pancake mix
+muffin mix
+baking mix
 cornstarch
 yeast
 honey
@@ -586,6 +602,7 @@ frozen peas
 frozen corn
 frozen berries
 ice cream
+cookie dough
 frozen
 popsicle
 

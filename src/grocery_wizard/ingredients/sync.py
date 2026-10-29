@@ -32,8 +32,6 @@ from src.grocery_wizard.ingredients.normalize import (
 from src.grocery_wizard.ingredients.parsed import (
     format_ingredient_for_storage,
     format_stored_line_for_display,
-    is_nyt_cooking_url,
-    minimal_clean_for_storage,
     name_from_stored_line,
 )
 from src.grocery_wizard.recipes.scraper import ingredients_to_text
@@ -98,6 +96,100 @@ def _repair_mangled_lines(lines: list[str]) -> list[str]:
             continue
         repaired.extend(split_merged_ingredient_line(line))
     return repaired
+
+
+def _merge_citrus_juice_fragments(lines: list[str]) -> list[str]:
+    """Rejoin ``lemon`` / ``lime`` / ``juice`` rows split across Notion lines."""
+    merged: list[str] = []
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        if is_directive(line):
+            merged.append(line)
+            index += 1
+            continue
+        stripped = line.strip()
+        if index + 2 < len(lines):
+            next_line = lines[index + 1].strip()
+            third_line = lines[index + 2].strip()
+            if (
+                next_line.lower() in {"lime", "lemon"}
+                and third_line.lower() == "juice"
+                and stripped
+                and not is_directive(next_line)
+            ):
+                merged.append(f"{stripped} or {next_line}")
+                index += 3
+                continue
+        if (
+            index + 1 < len(lines)
+            and stripped.lower() in {"lime", "lemon"}
+            and lines[index + 1].strip().lower() == "juice"
+        ):
+            merged.append(f"{stripped} {lines[index + 1].strip()}")
+            index += 2
+            continue
+        merged.append(line)
+        index += 1
+    return merged
+
+
+def _merge_unbalanced_paren_lines(lines: list[str]) -> list[str]:
+    """Join rows when an opening parenthesis on the previous line was never closed."""
+    merged: list[str] = []
+    for line in lines:
+        if (
+            merged
+            and not is_directive(line)
+            and not is_directive(merged[-1])
+            and merged[-1].count("(") > merged[-1].count(")")
+        ):
+            merged[-1] = f"{merged[-1]} {line.strip()}"
+            continue
+        merged.append(line)
+    return merged
+
+
+def _is_post_split_continuation(previous: str, current: str) -> bool:
+    """Narrower merge rules after ``split_ingredients_text`` (avoids re-joining real rows)."""
+    stripped = current.strip()
+    if not stripped or looks_like_merged_ingredient_line(previous):
+        return False
+    if previous.count("(") > previous.count(")"):
+        return True
+    if re.match(r"^and\b", stripped, re.IGNORECASE):
+        return True
+    if previous.rstrip().endswith(","):
+        return True
+    if re.search(r"\bsuch as\b[^)]*$", previous, re.IGNORECASE) and stripped[0].islower():
+        return True
+    if re.search(r"\bor\s*$", previous, re.IGNORECASE) and stripped[0].islower():
+        return True
+    lowered = stripped.lower()
+    if lowered.startswith(("seeds removed", "membrane removed", "juiced ", "pestle,", "leaf ends")):
+        return True
+    return bool(lowered.startswith(("cremini", "vermicelli")))
+
+
+def _merge_post_split_lines(lines: list[str]) -> list[str]:
+    """Re-merge wrap/continuation rows after ``split_ingredients_text``."""
+    merged = _merge_citrus_juice_fragments(lines)
+    merged = _merge_unbalanced_paren_lines(merged)
+    joined: list[str] = []
+    for line in merged:
+        if is_directive(line):
+            joined.append(line)
+            continue
+        stripped = line.strip()
+        if (
+            joined
+            and not is_directive(joined[-1])
+            and _is_post_split_continuation(joined[-1], stripped)
+        ):
+            joined[-1] = f"{joined[-1]} {stripped}"
+        else:
+            joined.append(stripped)
+    return joined
 
 
 def _merge_continuation_lines(lines: list[str]) -> list[str]:
@@ -176,12 +268,18 @@ def prepare_ingredients_for_notion(
     source_url: str | None = None,
     force_full_format: bool = False,
 ) -> str:
-    """Clean, split, and normalize ingredient text before storing in Notion."""
+    """Clean, split, and normalize ingredient text before storing in Notion.
+
+    Every ingredient line is passed through ``format_ingredient_for_storage`` (full parser).
+    ``source_url`` and ``force_full_format`` are kept for call-site compatibility only.
+    """
+    _ = source_url, force_full_format
     lines = _normalize_stored_lines(text)
     if not lines:
         return ""
 
     lines = _repair_mangled_lines(lines)
+    lines = _merge_citrus_juice_fragments(lines)
     lines = _merge_continuation_lines(lines)
     lines = _truncate_at_instructions(lines)
 
@@ -189,9 +287,10 @@ def prepare_ingredients_for_notion(
     if not split.strip():
         return ""
 
-    use_minimal_cleanup = is_nyt_cooking_url(source_url) and not force_full_format
+    post_split_lines = _merge_post_split_lines(split.splitlines())
+
     kept: list[str] = []
-    for line in split.splitlines():
+    for line in post_split_lines:
         stripped = line.strip()
         if not stripped:
             continue
@@ -206,10 +305,7 @@ def prepare_ingredients_for_notion(
             continue
         if stripped.lower() == "recipe":
             continue
-        if use_minimal_cleanup:
-            cleaned = minimal_clean_for_storage(stripped)
-        else:
-            cleaned = format_ingredient_for_storage(stripped)
+        cleaned = format_ingredient_for_storage(stripped)
         if cleaned:
             kept.append(cleaned)
     return ingredients_to_text(kept)
