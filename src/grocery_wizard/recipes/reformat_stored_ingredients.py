@@ -152,7 +152,43 @@ def _is_intentional_drop_line(line: str) -> bool:
         return True
     if stripped.lower().startswith("fresh herbs, such as"):
         return True
+    if lowered.startswith("seeds removed") or lowered.startswith("membrane removed"):
+        return True
+    if lowered.startswith("juiced ") or lowered.startswith("juiced("):
+        return True
+    if lowered.startswith("pestle,") or "spice grinder" in lowered:
+        return True
+    if lowered.startswith("leaf ends trimmed") or lowered.startswith("leaf ends"):
+        return True
+    if lowered in {"drizzling", "membrane removed"}:
+        return True
+    if re.search(r"\bsee tip\b", lowered):
+        return True
+    if lowered in {"if you like", "if desired"}:
+        return True
     return bool(re.match(r"^\d+\s+Pour\b", stripped))
+
+
+def _comma_head_in_after(formatted: str, after_ingredients: Sequence[str]) -> bool:
+    head = formatted.split(",", maxsplit=1)[0].strip().lower()
+    if len(head) < 8:
+        return False
+    return any(head in after_line for after_line in after_ingredients)
+
+
+def _or_alternative_tail_in_after(line: str, after_ingredients: Sequence[str]) -> bool:
+    formatted = format_ingredient_for_storage(line.strip()).strip()
+    after_lower = [part.strip().lower() for part in after_ingredients]
+    for text in (formatted, line.strip()):
+        if " or " not in text.lower():
+            continue
+        tail = re.split(r"\s+or\s+", text, maxsplit=0, flags=re.IGNORECASE)[-1].strip(" ,")
+        tail_lower = tail.lower()
+        if len(tail_lower) < 6:
+            continue
+        if any(tail_lower in after_line or after_line in tail_lower for after_line in after_lower):
+            return True
+    return False
 
 
 def _before_line_accounted_in_after(line: str, after_ingredients: Sequence[str]) -> bool:
@@ -175,6 +211,13 @@ def _before_line_accounted_in_after(line: str, after_ingredients: Sequence[str])
         return True
     if "lime" in line_lower and "juice" not in line_lower:
         if any("lemon or lime" in after_line for after_line in after_lower):
+            return True
+    if _or_alternative_tail_in_after(line, after_ingredients):
+        return True
+    if _comma_head_in_after(formatted_lower, after_lower):
+        return True
+    if "fresh herbs (" in formatted_lower:
+        if any("herb" in after_line or "cilantro" in after_line for after_line in after_lower):
             return True
     return False
 

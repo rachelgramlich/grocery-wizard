@@ -46,6 +46,17 @@ def test_analyze_apply_ok_paren_ounce_can() -> None:
     assert analysis.after == "2 cans beans"
 
 
+def test_analyze_apply_ok_mushroom_or_continuation_line() -> None:
+    before = (
+        "3/4 pound mixed fresh mushrooms, such as shiitake\n"
+        "cremini, thinly sliced, or whole shimeji mushrooms\n"
+        "Kosher salt"
+    )
+    analysis = analyze_stored_ingredient_reformat(before)
+    assert analysis.status == ReformatStatus.APPLY_OK
+    assert "shimeji" in analysis.after.lower()
+
+
 def test_analyze_apply_ok_when_line_count_drops_from_intentional_cleanup() -> None:
     before = (
         "Kosher salt\n"

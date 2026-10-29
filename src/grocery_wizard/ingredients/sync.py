@@ -134,6 +134,66 @@ def _merge_citrus_juice_fragments(lines: list[str]) -> list[str]:
     return merged
 
 
+def _merge_unbalanced_paren_lines(lines: list[str]) -> list[str]:
+    """Join rows when an opening parenthesis on the previous line was never closed."""
+    merged: list[str] = []
+    for line in lines:
+        if (
+            merged
+            and not is_directive(line)
+            and not is_directive(merged[-1])
+            and merged[-1].count("(") > merged[-1].count(")")
+        ):
+            merged[-1] = f"{merged[-1]} {line.strip()}"
+            continue
+        merged.append(line)
+    return merged
+
+
+def _is_post_split_continuation(previous: str, current: str) -> bool:
+    """Narrower merge rules after ``split_ingredients_text`` (avoids re-joining real rows)."""
+    stripped = current.strip()
+    if not stripped or looks_like_merged_ingredient_line(previous):
+        return False
+    if previous.count("(") > previous.count(")"):
+        return True
+    if re.match(r"^and\b", stripped, re.IGNORECASE):
+        return True
+    if previous.rstrip().endswith(","):
+        return True
+    if re.search(r"\bsuch as\b[^)]*$", previous, re.IGNORECASE) and stripped[0].islower():
+        return True
+    if re.search(r"\bor\s*$", previous, re.IGNORECASE) and stripped[0].islower():
+        return True
+    lowered = stripped.lower()
+    if lowered.startswith(("seeds removed", "membrane removed", "juiced ", "pestle,", "leaf ends")):
+        return True
+    if lowered.startswith("cremini") or lowered.startswith("vermicelli"):
+        return True
+    return False
+
+
+def _merge_post_split_lines(lines: list[str]) -> list[str]:
+    """Re-merge wrap/continuation rows after ``split_ingredients_text``."""
+    merged = _merge_citrus_juice_fragments(lines)
+    merged = _merge_unbalanced_paren_lines(merged)
+    joined: list[str] = []
+    for line in merged:
+        if is_directive(line):
+            joined.append(line)
+            continue
+        stripped = line.strip()
+        if (
+            joined
+            and not is_directive(joined[-1])
+            and _is_post_split_continuation(joined[-1], stripped)
+        ):
+            joined[-1] = f"{joined[-1]} {stripped}"
+        else:
+            joined.append(stripped)
+    return joined
+
+
 def _merge_continuation_lines(lines: list[str]) -> list[str]:
     """Join ingredient lines broken across rows (e.g. unclosed parentheses)."""
     merged: list[str] = []
@@ -229,7 +289,7 @@ def prepare_ingredients_for_notion(
     if not split.strip():
         return ""
 
-    post_split_lines = _merge_citrus_juice_fragments(split.splitlines())
+    post_split_lines = _merge_post_split_lines(split.splitlines())
 
     kept: list[str] = []
     for line in post_split_lines:

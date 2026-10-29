@@ -452,6 +452,17 @@ def test_storage_fresh_or_frozen_and_stock_sprigs() -> None:
     )
 
 
+def test_prepare_merges_unclosed_paren_and_continuation_after_split() -> None:
+    prepared = prepare_ingredients_for_notion(
+        "1 1/2 cups tightly packed mixed herb leaves (such as cilantro, mint\n"
+        "Thai basil), torn if large\n"
+        "4 ounces rice\n"
+        "vermicelli noodles"
+    )
+    assert "Thai basil" not in prepared or "herb" in prepared.lower()
+    assert "vermicelli" in prepared.lower()
+
+
 def test_prepare_drops_box_grater_prep_line() -> None:
     prepared = prepare_ingredients_for_notion(
         "1 large tomato\n"
