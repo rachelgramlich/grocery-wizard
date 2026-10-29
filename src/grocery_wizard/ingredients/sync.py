@@ -168,9 +168,7 @@ def _is_post_split_continuation(previous: str, current: str) -> bool:
     lowered = stripped.lower()
     if lowered.startswith(("seeds removed", "membrane removed", "juiced ", "pestle,", "leaf ends")):
         return True
-    if lowered.startswith("cremini") or lowered.startswith("vermicelli"):
-        return True
-    return False
+    return bool(lowered.startswith(("cremini", "vermicelli")))
 
 
 def _merge_post_split_lines(lines: list[str]) -> list[str]:
