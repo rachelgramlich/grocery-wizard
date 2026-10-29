@@ -1074,3 +1074,44 @@ def test_grocery_item_is_stable_when_cleaned_a_second_time(raw: str) -> None:
     """Later list stages re-read built items; a second clean must not strip anything more."""
     first = normalize_grocery_list_item(raw)
     assert normalize_grocery_list_item(first) == first
+
+
+@pytest.mark.parametrize(
+    ("raw", "stored"),
+    [
+        ("85 g (6 tablespoons) cold butter, cubed", "butter"),
+        ("1 stick cold butter, cubed", "1 stick butter"),
+        ("1 cup cold water", "water"),
+        ("Clear coarse sanding sugar, for a generous sprinkle", "coarse sanding sugar"),
+        ("2 tablespoons clear honey", "clear honey"),
+        ("1 tbsp ground sea salt", "ground sea salt"),
+    ],
+)
+def test_cold_and_clear_sprinkle_words_are_cleaned(raw: str, stored: str) -> None:
+    assert clean_ingredient_line_for_storage(raw) == stored
+
+
+def test_obsessed_cakes_apple_fritter_coffee_cake_ingredients_store_clean_names() -> None:
+    lines = [
+        "115 g (about 1 cup) all-purpose flour",
+        "40 g (3 tablespoons + 1 teaspoon) granulated sugar",
+        "85 g (6 tablespoons) cold butter, cubed",
+        "200 g (3/4 cup + 1 tablespoon) plain Greek yogurt, room temperature",
+        "135 g (1/2 cup + 1 tablespoon) milk, room temperature",
+        (
+            "200 g (about 2 cups) Granny Smith apple, peeled, cored, "
+            "and cut into roughly 1/2-inch pieces"
+        ),
+        "Clear coarse sanding sugar, for a generous sprinkle",
+        "220 g (about 1 3/4 cups + 1 tablespoon) powdered sugar",
+    ]
+    assert prepare_ingredients_for_notion("\n".join(lines)).splitlines() == [
+        "flour",
+        "granulated sugar",
+        "butter",
+        "plain Greek yogurt",
+        "milk",
+        "Granny Smith apples",
+        "coarse sanding sugar",
+        "powdered sugar",
+    ]
