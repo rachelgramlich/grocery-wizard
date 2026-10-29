@@ -103,7 +103,10 @@ def field_values_from_scrape(
         total_minutes=scraped.total_time_minutes,
         weeknight_column=weeknight_column,
     )
-    ingredients_text = ingredients_to_text(scraped.ingredients) if schema.ingredients_column else ""
+    ingredients_text = ""
+    if schema.ingredients_column:
+        raw_text = ingredients_to_text(scraped.ingredients)
+        ingredients_text = prepare_ingredients_for_notion(raw_text, source_url=url) or raw_text
     return base_recipe_field_values(
         schema,
         url=url,
