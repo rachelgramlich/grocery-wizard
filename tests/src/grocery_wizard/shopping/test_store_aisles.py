@@ -104,7 +104,8 @@ def test_load_store_aisles_uses_committed_config() -> None:
     )
     assert config.aisle_order.index("meat/fish") < config.aisle_order.index("bakery")
     assert config.aisle_order.index("bakery") < config.aisle_order.index("nuts/desserts")
-    assert config.aisle_order.index("nuts/desserts") < config.aisle_order.index("oils & vinegars")
+    assert config.aisle_order.index("nuts/desserts") < config.aisle_order.index("candy")
+    assert config.aisle_order.index("candy") < config.aisle_order.index("oils & vinegars")
     assert config.aisle_order.index("oils & vinegars") < config.aisle_order.index("cereal")
     assert config.aisle_order.index("cereal") < config.aisle_order.index("spices")
     assert config.aisle_order.index("spices") < config.aisle_order.index("pasta/grains")
@@ -334,6 +335,19 @@ def test_classify_aisle_strips_checklist_prefix(item: str, expected_aisle: str) 
         ("apple cider vinegar", "oils & vinegars"),
         ("bay leaves", "spices"),
         ("chicken bouillon", "canned goods"),
+        ("1 can corn", "canned goods"),
+        ("2 cans chickpeas", "canned goods"),
+        ("1 1/2 lb skinless salmon fillet", "meat/fish"),
+        ("1 box cornbread mix", "baking"),
+        ("brownie mix", "baking"),
+        ("1 cauliflower head", "vegetables"),
+        ("butter for freezer", "dairy/eggs"),
+        ("candy snacks?", "candy"),
+        ("chile powder", "spices"),
+        ("cookie dough balls", "frozen"),
+        ("dog treat oreos", "nuts/desserts"),
+        ("old bay", "spices"),
+        ("sneaky cheese shredded!", "refrigerated"),
     ],
 )
 def test_classify_aisle_misclassifications(item: str, expected_aisle: str) -> None:
@@ -385,3 +399,14 @@ def test_canonical_pantry_section_label_from_aisle_id() -> None:
     assert canonical_pantry_section_label(None, aisle_id="fruit", config=config) == aisle_label(
         "fruit", config=config
     )
+
+
+def test_candy_sorts_after_dried_fruit() -> None:
+    items = ["candy snacks?", "dried apricots", "4 medjool dates", "avocado oil"]
+
+    assert sort_grocery_items(items) == [
+        "4 medjool dates",
+        "dried apricots",
+        "candy snacks?",
+        "avocado oil",
+    ]
