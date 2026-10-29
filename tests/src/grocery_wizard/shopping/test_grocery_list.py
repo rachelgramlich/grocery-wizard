@@ -126,10 +126,14 @@ def test_build_grocery_list_keeps_can_and_block_counts_with_package_sizes(
     assert not any("blockss" in item for item in items)
 
 
-def test_build_grocery_list_keeps_sliced_on_deli_cheese(pantry_file: Path) -> None:
+def test_build_grocery_list_keeps_sliced_on_products_sold_sliced(pantry_file: Path) -> None:
     db = MagicMock()
     db.query_recipes.return_value = [
-        _recipe("Sandwich", "sliced cheese\n8 ounces fresh mozzarella, thinly sliced")
+        _recipe(
+            "Sandwich",
+            "sliced cheese\n3/4 cup sliced almonds\n"
+            "1/2 cup thinly sliced scallions\n8 ounces fresh mozzarella, thinly sliced",
+        )
     ]
 
     items, _excluded, _sync, _missing, _, _ = build_grocery_list(
@@ -139,6 +143,8 @@ def test_build_grocery_list_keeps_sliced_on_deli_cheese(pantry_file: Path) -> No
     )
 
     assert "sliced cheese" in items
+    assert "sliced almonds" in items
+    assert "scallions" in items
     assert "mozzarella" in items
 
 
