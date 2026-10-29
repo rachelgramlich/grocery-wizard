@@ -949,10 +949,11 @@ def normalize_ingredient(line: str) -> str:
 
 
 def parse_notion_ingredient_for_grocery(line: str) -> tuple[str, str | None]:
-    """Parse a Notion ``Ingredients`` line for the shopping list without rewriting it.
+    """Split a stored Notion ingredient line into ``(name, amount)`` for list merge.
 
-    Uses the stored-line parser only. Does **not** call ``format_ingredient_for_storage``,
-    so manual Notion edits and saved storage shapes are preserved.
+    This is **not** the recipe-ingredient parser. It only understands the app's
+    stored Notion shape (leading qty + name, plus legacy ``clove:`` / ``zest:`` tags).
+    It does **not** call ``format_ingredient_for_storage`` or fix old messy rows.
     """
     from src.grocery_wizard.ingredients.parsed import parse_stored_ingredient
 

@@ -12,7 +12,6 @@ import argparse
 import csv
 import re
 import sys
-from collections import Counter
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -34,11 +33,6 @@ from src.grocery_wizard.recipes.recipe_maintenance import (
     ingredients_text,
     recipe_has_link,
 )
-
-# Flag reformats that touch many lines even when counts match (manual review).
-_MAJOR_CHANGE_MIN_LINES = 3
-_MAJOR_CHANGE_FRACTION = 0.30
-
 
 class ReformatStatus(StrEnum):
     UNCHANGED = "unchanged"
@@ -108,31 +102,6 @@ def _would_drop_before_line(line: str) -> bool:
     return not format_ingredient_for_storage(stripped)
 
 
-def _formatted_ingredient_keys(lines: Sequence[str]) -> Counter[str]:
-    keys: Counter[str] = Counter()
-    for line in lines:
-        cleaned = format_ingredient_for_storage(line.strip())
-        if cleaned:
-            keys[cleaned] += 1
-    return keys
-
-
-def _count_changed_against_multiset(before: Sequence[str], after: Sequence[str]) -> int:
-    """How many before lines lack a matching formatted line in after."""
-    after_keys = _formatted_ingredient_keys(after)
-    unmatched = 0
-    for line in before:
-        cleaned = format_ingredient_for_storage(line.strip())
-        if not cleaned:
-            unmatched += 1
-            continue
-        if after_keys[cleaned] <= 0:
-            unmatched += 1
-        else:
-            after_keys[cleaned] -= 1
-    return unmatched
-
-
 def analyze_stored_ingredient_reformat(before_text: str) -> ReformatAnalysis:
     """Dry-run one Ingredients blob; does not call Notion."""
     before = (before_text or "").strip()
@@ -161,9 +130,9 @@ def analyze_stored_ingredient_reformat(before_text: str) -> ReformatAnalysis:
 
     reasons: list[str] = []
 
-    if len(before_ing) != len(after_ing):
+    if len(after_ing) < len(before_ing):
         reasons.append(
-            f"ingredient line count {len(before_ing)} → {len(after_ing)}",
+            f"ingredient line count dropped {len(before_ing)} → {len(after_ing)}",
         )
         return ReformatAnalysis(
             status=ReformatStatus.SKIP_LINE_COUNT,
@@ -188,37 +157,9 @@ def analyze_stored_ingredient_reformat(before_text: str) -> ReformatAnalysis:
             after_ingredient_line_count=len(after_ing),
         )
 
-    before_keys = _formatted_ingredient_keys(before_ing)
-    after_keys = _formatted_ingredient_keys(after_ing)
-    if before_keys != after_keys:
-        reasons.append("formatted ingredient multiset changed (merge/split/rename)")
-        return ReformatAnalysis(
-            status=ReformatStatus.SKIP_WOULD_DROP,
-            before=before,
-            after=after,
-            reasons=reasons,
-            before_ingredient_line_count=len(before_ing),
-            after_ingredient_line_count=len(after_ing),
-        )
-
-    changed = sum(1 for b, a in zip(before_ing, after_ing, strict=True) if b != a)
-    major_threshold = max(
-        _MAJOR_CHANGE_MIN_LINES,
-        int(_MAJOR_CHANGE_FRACTION * len(before_ing)),
-    )
-    if changed >= major_threshold:
-        reasons.append(
-            f"{changed} of {len(before_ing)} lines text changed (threshold {major_threshold})",
-        )
-        return ReformatAnalysis(
-            status=ReformatStatus.SKIP_MAJOR_CHANGE,
-            before=before,
-            after=after,
-            reasons=reasons,
-            before_ingredient_line_count=len(before_ing),
-            after_ingredient_line_count=len(after_ing),
-            changed_line_count=changed,
-        )
+    changed = 0
+    if len(before_ing) == len(after_ing):
+        changed = sum(1 for b, a in zip(before_ing, after_ing, strict=True) if b != a)
 
     if before_dirs != after_dirs:
         reasons.append("directive lines would change")

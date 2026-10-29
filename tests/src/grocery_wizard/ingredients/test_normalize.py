@@ -50,8 +50,8 @@ def test_normalize_ingredient(raw: str, expected: str) -> None:
     ("raw", "expected"),
     [
         ("2 small yellow onions, sliced 1/4 inch thick lengthwise", "2 small yellow onions"),
-        ("1 onion, diced", "1 onions"),
-        ("3 cloves garlic, minced", "clove:3 garlic"),
+        ("1 onion, diced", "1 onion"),
+        ("3 cloves garlic, minced", "3 garlic"),
         (
             "1 chicken bouillon cube (or substitute 2 cups chicken broth for the water bouillon)",
             "1 chicken bouillon cube (or substitute 2 cups chicken broth for the water bouillon)",
@@ -262,7 +262,7 @@ def test_split_merged_ingredient_line() -> None:
         ("1 lb chicken breast", "chicken breast", "1 lb"),
         ("2 cans white beans", "white beans", "2 cans"),
         ("2 pkgs gnocchi", "gnocchi", "2 pkgs"),
-        ("3 cloves garlic, minced", "garlic", "clove:3"),
+        ("3 cloves garlic, minced", "garlic", "3"),
         ("8 oz tortellini", "tortellini", "8 oz"),
         ("1/2 cup all-purpose flour", "flour", None),
         ("2 tbsp olive oil, plus more for drizzling", "olive oil", None),
@@ -528,7 +528,7 @@ def test_aggregate_amounts_garlic_many_cloves_with_head() -> None:
 def test_clean_ingredient_line_for_storage_head_garlic() -> None:
     assert clean_ingredient_line_for_storage("1 head garlic") == "1 head garlic"
     assert clean_ingredient_line_for_storage("2 heads garlic") == "2 head garlic"
-    assert clean_ingredient_line_for_storage("12 cloves garlic, minced") == "clove:12 garlic"
+    assert clean_ingredient_line_for_storage("12 cloves garlic, minced") == "12 garlic"
 
 
 @pytest.mark.parametrize(

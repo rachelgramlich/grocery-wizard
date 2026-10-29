@@ -62,7 +62,7 @@
     "label": "NYT-style: full format (prep stripped at storage)",
     "raw_line": "1 medium yellow onion, finely diced",
     "nyt": true,
-    "expect_stored": "1 medium yellow onions",
+    "expect_stored": "1 medium yellow onion",
     "expect_grocery": "1 yellow onions"
   },
   {
@@ -108,7 +108,7 @@
   {
     "label": "Garlic cloves with prep",
     "raw_line": "3 cloves garlic, minced",
-    "expect_stored": "clove:3 garlic",
+    "expect_stored": "3 garlic",
     "expect_grocery": "garlic"
   },
   {

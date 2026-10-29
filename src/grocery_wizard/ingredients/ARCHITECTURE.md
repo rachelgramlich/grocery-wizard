@@ -32,23 +32,23 @@ Bulk upgrade of **existing** Notion text (no URL fetch): `python -m grocery_wiza
 
 ## Grocery-list pipeline (read Notion → shop)
 
-**Goal:** Read what Notion stores, merge amounts, pantry exclusion, aisle sort — **no second full parse / no `format_ingredient_for_storage`.**
+**Goal:** Treat Notion as source of truth: **split** each stored line into name + amount, **merge** duplicates across recipes, **count** for display — **no** re-scrape and **no** `format_ingredient_for_storage`.
 
 | Stage | Module | Typical functions |
 | --- | --- | --- |
 | Read plan + Notion | `shopping/grocery_list.py` | recipe ingredients text |
-| Parse directives | `ingredients/sync.py` | `parse_ingredients_text` |
-| Read stored shape | `ingredients/normalize.py` | `parse_notion_ingredient_for_grocery` → `parse_stored_ingredient` |
+| Directives / removals | `ingredients/sync.py` | `parse_ingredients_text` |
+| Split stored lines | `ingredients/normalize.py` | `parse_notion_ingredient_for_grocery` → `parse_stored_ingredient` |
 | Display & aisles | `shopping/grocery_list.py`, `shopping/store_aisles.py` | `format_grocery_item`, aisle keywords |
 
-`parse_stored_ingredient` uses read-side unicode only. It still understands common stored shapes, including `(15-ounce)` before `can`/`cans`, so a Notion line that was never re-saved can still list correctly without rewriting Notion.
+`parse_stored_ingredient` is a **stored-line splitter** (qty + name, garlic/citrus encodings). It is not the NYT/recipe parser. Legacy shapes like `(15-ounce)` before `can` are temporary read-side helpers until rows are migrated; **do not** add new “fix-up” parsing here — fix Notion via the storage pipeline instead.
 
 Flow:
 
 ```text
 Notion Ingredients (+ week plan)
   → parse_ingredients_text (removals, directives)
-  → parse_notion_ingredient_for_grocery (read only)
+  → parse_notion_ingredient_for_grocery (split stored lines only)
   → aggregate_amounts + format_grocery_item
   → merge/dedupe, pantry skip, aisle sort
 ```

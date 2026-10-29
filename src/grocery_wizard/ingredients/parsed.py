@@ -254,6 +254,8 @@ _PLURALS: dict[str, str] = {
     "shallot": "shallots",
 }
 
+_INVERSE_PLURALS: dict[str, str] = {plural: singular for singular, plural in _PLURALS.items()}
+
 _HIDE_AMOUNT_UNITS_RE = re.compile(
     r"\b(tsp|teaspoons?|tbsp|tablespoons?|cups?|packed|ounces?|oz)\b",
     re.IGNORECASE,
@@ -566,6 +568,20 @@ def _prefer_plural_form(name: str) -> str:
         return " ".join(words)
     if last == "garlic" and len(words) > 1 and words[0].lower() in {"clove", "cloves"}:
         return "garlic"
+    return name
+
+
+def _name_for_count(name: str, qty: float | None) -> str:
+    """Use singular nouns when the stored quantity is exactly one."""
+    if qty is not None and qty != 1:
+        return _prefer_plural_form(name)
+    words = name.split()
+    if not words:
+        return name
+    last = words[-1].lower()
+    if last in _INVERSE_PLURALS:
+        words[-1] = _INVERSE_PLURALS[last]
+        return " ".join(words)
     return name
 
 
@@ -1002,14 +1018,14 @@ def _build_storage_line(
             return f"zest {fruit}"
         citrus_qty = _citrus_quantity_from_parsed(parsed, original)
         if citrus_qty is not None:
-            return f"{_format_qty(citrus_qty)} {fruit}"
+            return f"{_format_qty(citrus_qty)} {_name_for_count(fruit, citrus_qty)}"
         if selected is not None:
             qty = _amount_quantity(selected)
             if qty is not None:
-                return f"{_format_qty(qty)} {fruit}"
+                return f"{_format_qty(qty)} {_name_for_count(fruit, qty)}"
         if re.search(r"\b(?:lime|lemon)\s+wedges?\b", context, re.IGNORECASE):
-            return f"1 {fruit}"
-        return fruit
+            return "1 lime" if "lime" in fruit.lower() else "1 lemon"
+        return _name_for_count(fruit, 1.0)
 
     if selected is None:
         return _prefer_plural_form(name)
@@ -1034,7 +1050,7 @@ def _build_storage_line(
         return _prefer_plural_form(name)
 
     if _is_garlic_clove_unit(unit_part, name):
-        return f"clove:{_format_qty(qty)} garlic"
+        return f"{_format_qty(qty)} garlic"
 
     if unit_lower in _DESCRIPTOR_COUNT_UNITS or unit_lower in {"stalk", "stalks"}:
         if "celery" in name.lower():
@@ -1042,9 +1058,10 @@ def _build_storage_line(
         return _format_with_descriptor_unit(qty, unit_part, name)
 
     amount_text = _format_amount_text(selected)
+    display_name = _name_for_count(name, qty)
     if amount_text is None:
-        return f"{_format_qty(qty)} {name}".strip()
-    return f"{amount_text} {name}".strip()
+        return f"{_format_qty(qty)} {display_name}".strip()
+    return f"{amount_text} {display_name}".strip()
 
 
 def _parse_with_library(line: str) -> ParsedIngredient:
@@ -1118,10 +1135,8 @@ def _parse_stored_rest(qty_str: str, rest: str) -> tuple[str, str | None]:
     if _is_volume_unit(first):
         name = " ".join(words[1:])
         return _prefer_plural_form(_strip_size_descriptors(_simplify_parsed_name(name))), None
-    if len(words) == 1 and words[0].lower() == "garlic":
-        return "garlic", None
-    if qty_str and rest.strip().lower() == "garlic":
-        return "garlic", None
+    if rest.strip().lower() == "garlic":
+        return "garlic", qty_str or None
     if _is_count_unit(first) or _unit_key(first) in {"lb", "oz", "g", "kg"}:
         unit = words[0]
         name = " ".join(words[1:])
@@ -1399,7 +1414,7 @@ def _aggregate_garlic_amounts(amounts: list[str | None]) -> str | None:
             clove_total += _parse_qty(amount[6:])
             continue
         try:
-            _parse_qty(amount)
+            clove_total += _parse_qty(amount)
         except (ValueError, ZeroDivisionError):
             has_bare_garlic = True
 
@@ -1412,7 +1427,15 @@ def _aggregate_garlic_amounts(amounts: list[str | None]) -> str | None:
     if total_heads > 0:
         return _format_qty(total_heads)
     if clove_total > 0:
-        clove_lines = sum(1 for amount in amounts if amount and amount.startswith("clove:"))
+        clove_lines = sum(
+            1
+            for amount in amounts
+            if amount
+            and (
+                amount.startswith("clove:")
+                or re.match(r"^(?:\d+\s+)?\d+/\d+|\d+(?:\.\d+)?\Z", amount.strip())
+            )
+        )
         if clove_lines > 1:
             return None
         return format_garlic_grocery_amount(f"clove:{_format_qty(clove_total)}")
