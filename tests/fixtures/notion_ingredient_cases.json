@@ -163,14 +163,14 @@
   {
     "recipe": "Chickpea curry",
     "raw_line": "and pepper, to taste",
-    "expect_after_prepare": null,
-    "expect_normalized": "and pepper",
+    "expect_after_prepare": "pepper",
+    "expect_normalized": "pepper",
     "notes": "to_taste"
   },
   {
     "recipe": "Cinnamon Date Smoothie",
     "raw_line": "Salt, to taste",
-    "expect_after_prepare": null,
+    "expect_after_prepare": "Salt",
     "expect_normalized": "salt",
     "notes": "to_taste"
   },
@@ -184,15 +184,15 @@
   {
     "recipe": "Creamy lentil & Japanese sweet potato skillet",
     "raw_line": "1/2 tsp sea salt, more to taste",
-    "expect_after_prepare": null,
+    "expect_after_prepare": "sea salt",
     "expect_normalized": "sea salt",
     "notes": "to_taste"
   },
   {
     "recipe": "Easy Chickpea Curry",
     "raw_line": "and pepper, to taste",
-    "expect_after_prepare": null,
-    "expect_normalized": "and pepper",
+    "expect_after_prepare": "pepper",
+    "expect_normalized": "pepper",
     "notes": "to_taste"
   },
   {
@@ -205,8 +205,8 @@
   {
     "recipe": "Easy Dal",
     "raw_line": "Juice of 1/2 lemon, to taste",
-    "expect_after_prepare": null,
-    "expect_normalized": "lemons",
+    "expect_after_prepare": "",
+    "expect_normalized": "",
     "notes": "to_taste"
   },
   {

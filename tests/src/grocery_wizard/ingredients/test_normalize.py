@@ -401,6 +401,25 @@ def test_storage_keeps_crumbled_feta_when_comma_after_feta() -> None:
     )
 
 
+def test_storage_expands_such_as_herbs() -> None:
+    assert (
+        clean_ingredient_line_for_storage(
+            "1/4 cup chopped fresh herbs, such as dill, basil, mint or parsley, plus more for serving"
+        )
+        == "dill, basil, mint, parsley"
+    )
+
+
+def test_storage_picks_first_herb_in_or_list() -> None:
+    assert clean_ingredient_line_for_storage("1/3 cup chopped cilantro, dill or parsley") == "cilantro"
+
+
+def test_storage_mixed_herb_sprigs() -> None:
+    assert (
+        clean_ingredient_line_for_storage("3 oregano, rosemary or sage sprigs") == "3 sprigs oregano"
+    )
+
+
 def test_prepare_drops_crosswise_prep_only_line() -> None:
     prepared = prepare_ingredients_for_notion(
         "1 romaine heart\nsliced crosswise into 1/2-inch pieces\n1 can chickpeas"
@@ -456,9 +475,6 @@ def test_aggregate_amounts_rounds_up_limes() -> None:
 @pytest.mark.parametrize(
     ("raw", "expected_name", "expected_amount"),
     [
-        ("juice of half a lemon", "lemons", "1/2"),
-        ("zest of 1 lemon", "lemons", "zest:1"),
-        ("Juice of 1/2 lemon, to taste", "lemons", "1/2"),
         ("1 lemon", "lemons", "1"),
         ("2 lemons", "lemons", "2"),
     ],
@@ -469,31 +485,41 @@ def test_parse_amount_lemon_variants(raw: str, expected_name: str, expected_amou
     assert amount == expected_amount
 
 
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "juice of half a lemon",
+        "zest of 1 lemon",
+        "Juice of 1/2 lemon, to taste",
+        "lemon zest",
+    ],
+)
+def test_parse_amount_drops_zest_and_juice_only_lines(raw: str) -> None:
+    assert parse_amount(raw) == ("", None)
+
+
 def test_aggregate_amounts_consolidates_lemon_variants() -> None:
     amounts = [
-        parse_amount("juice of half a lemon")[1],
         parse_amount("1 lemon")[1],
-        parse_amount("zest of 1 lemon")[1],
+        parse_amount("2 lemons")[1],
     ]
     assert aggregate_amounts(amounts) == "3"
 
 
 def test_aggregate_amounts_consolidates_lemon_variants_with_two_whole() -> None:
     amounts = [
-        parse_amount(clean_ingredient_line_for_storage("juice of half a lemon"))[1],
-        parse_amount(clean_ingredient_line_for_storage("zest of 1 lemon"))[1],
+        parse_amount(clean_ingredient_line_for_storage("1 lemon"))[1],
         parse_amount(clean_ingredient_line_for_storage("2 lemons"))[1],
     ]
-    assert aggregate_amounts(amounts) == "4"
+    assert aggregate_amounts(amounts) == "3"
 
 
 def test_aggregate_amounts_consolidates_lime_variants() -> None:
     amounts = [
-        parse_amount("juice of 1 lime")[1],
-        parse_amount("zest of 1 lime")[1],
-        parse_amount("1/2 lime, juiced")[1],
+        parse_amount("1 lime")[1],
+        parse_amount("1/2 lime")[1],
     ]
-    assert aggregate_amounts(amounts, name="limes") == "3"
+    assert aggregate_amounts(amounts, name="limes") == "2"
 
 
 def test_aggregate_amounts_garlic_cloves_do_not_sum() -> None:
@@ -555,9 +581,9 @@ def test_clean_ingredient_line_for_storage_head_garlic() -> None:
         ("extra-virgin olive oil more", "extra-virgin olive oil"),
         ("to 2 cups loosely packed celery leaves", "celery"),
         ("4 or 6 small celery stalks", "celery"),
-        ("juice of half a lemons", "lemons"),
-        ("zest of 1 lemons", "lemons"),
-        ("lemon zest", "lemons"),
+        ("juice of half a lemons", ""),
+        ("zest of 1 lemons", ""),
+        ("lemon zest", ""),
         ("3 tablespoons sherry vinegar, more as needed", "sherry vinegar"),
         ("4 cups cooked or canned chickpeas", "canned chickpeas"),
         (
@@ -609,19 +635,11 @@ def test_aggregate_stored_lemon_zest_with_whole_lemons() -> None:
 def test_legacy_lemon_zest_stored_format() -> None:
     from src.grocery_wizard.ingredients.parsed import format_ingredient_for_storage
 
-    assert format_ingredient_for_storage("lemon zest") == "zest lemons"
-    assert format_ingredient_for_storage("1/2 teaspoon lemon zest") == "zest lemons"
-    assert (
-        format_ingredient_for_storage("1 teaspoon finely grated lemon zest (from 1 lemon)")
-        == "zest lemons"
-    )
-    assert (
-        format_ingredient_for_storage("1/2 teaspoon lemon zest (from 1/2 lemon)")
-        == "zest 1/2 lemons"
-    )
-    name, amount = parse_amount("lemon zest")
-    assert name == "lemons"
-    assert amount == "zest:1"
+    assert format_ingredient_for_storage("lemon zest") == ""
+    assert format_ingredient_for_storage("1/2 teaspoon lemon zest") == ""
+    assert format_ingredient_for_storage("1 teaspoon finely grated lemon zest (from 1 lemon)") == ""
+    assert format_ingredient_for_storage("1/2 teaspoon lemon zest (from 1/2 lemon)") == ""
+    assert parse_amount("lemon zest") == ("", None)
 
 
 def test_celery_stalks_store_as_celery() -> None:

@@ -177,7 +177,7 @@
   {
     "label": "To taste preserved raw",
     "raw_line": "Salt and pepper to taste",
-    "expect_stored": "Salt and pepper to taste",
+    "expect_stored": "Salt and pepper",
     "expect_grocery": "Salt and pepper"
   },
   {
@@ -216,7 +216,7 @@
   {
     "label": "Legacy lemon zest storage format",
     "raw_line": "lemon zest",
-    "expect_stored": "zest lemons",
+    "expect_stored": "",
     "expect_grocery": "lemons"
   },
   {

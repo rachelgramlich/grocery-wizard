@@ -848,6 +848,10 @@ def is_instruction_line(line: str) -> bool:
     stripped = line.strip()
     if not stripped:
         return True
+    if re.search(r"\bfollow\s@", stripped, re.IGNORECASE):
+        return True
+    if re.match(r"^\d+\.?\s+Pour\b", stripped, re.IGNORECASE):
+        return True
     if _RECIPE_STEP_RE.match(stripped):
         return True
     if is_metadata_line(stripped):

@@ -262,12 +262,24 @@ _HIDE_AMOUNT_UNITS_RE = re.compile(
 )
 
 _TRAILING_CLAUSE_RE = re.compile(
-    r"\b(?:plus more for|plus more\b|such as|or to taste|to taste|for garnish|optional|"
+    r"\b(?:plus more for|plus more\b|or to taste|to taste|for garnish|optional|"
     r"as needed|if needed|for serving|for topping|to serve)\b.*",
     re.IGNORECASE,
 )
 
 _TRAILING_MORE_RE = re.compile(r"\s+more$", re.IGNORECASE)
+
+_MORE_MODIFIERS_RE = re.compile(
+    r",?\s*(?:plus\s+)?more(?:\s+(?:to taste|as needed|for seasoning|for serving|for drizzling))?\b.*$",
+    re.IGNORECASE,
+)
+
+_SUCH_AS_HERBS_RE = re.compile(r"\bsuch as\s+(.+)$", re.IGNORECASE)
+
+_MIXED_HERB_SPRIGS_RE = re.compile(
+    r"^((?:\d+\s+)?\d+/\d+|\d+(?:\.\d+)?)\s+(.+?)\s+sprigs?\s*$",
+    re.IGNORECASE,
+)
 
 _OR_ALTERNATIVE_RE = re.compile(r"\s+or\s+", re.IGNORECASE)
 
@@ -536,6 +548,66 @@ def _first_alternative(name: str) -> str:
     return max(parts, key=lambda part: len(part.split()))
 
 
+def _pick_shopping_name(name: str) -> str:
+    """When a recipe lists alternatives, store the first shoppable option."""
+    stripped = name.strip()
+    if not stripped:
+        return stripped
+    if re.search(r"\bor\b.*\b(?:stock|broth)\b", stripped, re.IGNORECASE):
+        return stripped
+    if " or " in stripped.lower():
+        left = re.split(r"\s+or\s+", stripped, maxsplit=1, flags=re.IGNORECASE)[0].strip()
+        if "," in left:
+            return left.split(",", 1)[0].strip()
+        return _first_alternative(stripped)
+    return stripped
+
+
+def _strip_more_modifiers(text: str) -> str:
+    cleaned = _MORE_MODIFIERS_RE.sub("", text).strip()
+    cleaned = _TRAILING_CLAUSE_RE.sub("", cleaned).strip(" ,")
+    return cleaned
+
+
+def _herb_name_from_such_as(source_line: str, name: str) -> str:
+    if "herb" not in name.lower():
+        return name
+    match = _SUCH_AS_HERBS_RE.search(source_line)
+    if not match:
+        return name
+    tail = _strip_more_modifiers(match.group(1))
+    options = [part.strip() for part in re.split(r",|\s+or\s+", tail, flags=re.IGNORECASE) if part.strip()]
+    if options:
+        return ", ".join(options)
+    return name
+
+
+def _mixed_herb_sprig_line(source_line: str) -> str | None:
+    match = _MIXED_HERB_SPRIGS_RE.match(source_line.strip())
+    if not match or not re.search(r",|\bor\b", match.group(2), re.IGNORECASE):
+        return None
+    qty_str = match.group(1).strip()
+    herb = _pick_shopping_name(match.group(2).strip())
+    unit = _display_unit("sprig", _parse_qty(qty_str))
+    return f"{qty_str} {unit} {herb}".strip()
+
+
+def _is_citrus_zest_or_juice_only_line(text: str) -> bool:
+    stripped = text.strip()
+    if not stripped:
+        return False
+    lowered = stripped.lower()
+    if lowered in {"lemon juice", "lime juice"}:
+        return True
+    if re.match(r"^juice\s+of\s+", lowered):
+        return True
+    if re.search(r"\b(?:lemon|lime)\s+zest\b", lowered):
+        return True
+    if re.match(r"^(?:finely|freshly\s+grated\s+)?(?:lemon|lime)\s+zest\Z", lowered):
+        return True
+    return bool(_LEMON_LINE_RE.match(stripped) and re.search(r"\bjuice\b", lowered, re.IGNORECASE))
+
+
 def _match_preserved_product(name: str) -> str | None:
     lowered = name.lower()
     if re.search(r"\bor\b.*\b(?:stock|broth)\b", lowered):
@@ -647,7 +719,7 @@ def _leaf_product_name(lowered: str) -> str | None:
 
 
 def _simplify_parsed_name(name: str) -> str:
-    cleaned = _first_alternative(name.strip())
+    cleaned = _pick_shopping_name(name.strip())
     cleaned = strip_parenthetical_groups(cleaned)
     cleaned = _TRAILING_CLAUSE_RE.sub("", cleaned).strip()
     cleaned = _TRAILING_MORE_RE.sub("", cleaned).strip(" ,")
@@ -675,9 +747,10 @@ def _simplify_parsed_name(name: str) -> str:
     words = cleaned.split()
     while words and words[0].lower() in _DESCRIPTOR_WORDS:
         words.pop(0)
-    while words and words[0].lower() == "or":
+    while words and words[0].lower() in {"or", "and"}:
         words.pop(0)
     cleaned = " ".join(words)
+    cleaned = _strip_more_modifiers(cleaned)
     return _prefer_plural_form(cleaned)
 
 
@@ -942,10 +1015,10 @@ def _is_celery_stalk_unit(unit: str, name: str) -> bool:
 
 
 def _should_preserve_raw_line(line: str) -> bool:
+    stripped = _strip_more_modifiers(line.strip())
     return bool(
-        _SUBSTITUTION_PAREN_RE.search(line)
-        or _TO_TASTE_RE.search(mask_parenthetical_groups(line))
-        or line.strip().startswith(("[x]", "▢", "•", "*"))
+        _SUBSTITUTION_PAREN_RE.search(stripped)
+        or stripped.startswith(("[x]", "▢", "•", "*"))
     )
 
 
@@ -1036,6 +1109,22 @@ def _purchased_product_form(source_line: str, parsed_name: str) -> str | None:
     return None
 
 
+def _normalize_legacy_stored_garlic_line(text: str) -> str | None:
+    match = _STORED_CLOVE_GARLIC_RE.match(text.strip())
+    if match:
+        qty = _parse_qty(match.group(1).strip())
+        return f"{_format_qty(qty)} {_display_unit('clove', qty)} garlic"
+    bare = re.match(
+        r"^((?:\d+\s+)?\d+/\d+|\d+(?:\.\d+)?)\s+garlic\Z",
+        text.strip(),
+        re.IGNORECASE,
+    )
+    if bare:
+        qty = _parse_qty(bare.group(1).strip())
+        return f"{_format_qty(qty)} {_display_unit('clove', qty)} garlic"
+    return None
+
+
 def _build_storage_line(
     parsed: ParsedIngredient,
     original: str,
@@ -1045,7 +1134,11 @@ def _build_storage_line(
     if not parsed.name:
         return _strip_trailing_prep_commas(original.strip())
 
-    context = source_line or original
+    raw_context = source_line or original
+    context = _strip_more_modifiers(raw_context)
+    sprig_line = _mixed_herb_sprig_line(raw_context)
+    if sprig_line:
+        return sprig_line
     name = _simplify_parsed_name(parsed.name[0].text)
     purchased_shredded = _purchased_shredded_product(context, name)
     if purchased_shredded:
@@ -1053,14 +1146,14 @@ def _build_storage_line(
     purchased_product_form = _purchased_product_form(context, name)
     if purchased_product_form:
         name = purchased_product_form
+    name = _herb_name_from_such_as(raw_context, name)
     name = _include_size_in_name(parsed, name)
     amounts = list(parsed.amount or [])
     selected = _select_amount(amounts, original)
 
     citrus_plural = _citrus_plural_from_text(context, name)
     if _is_citrus_zest_ingredient(context, name):
-        fruit = citrus_plural or "lemons"
-        return _format_citrus_zest_storage(_citrus_zest_quantity(context, parsed), fruit)
+        return ""
 
     if selected is None and not amounts:
         bare = original.strip().lower()
@@ -1070,12 +1163,11 @@ def _build_storage_line(
             return "lime"
 
     if _LEMON_LINE_RE.match(original.strip()) or citrus_plural or name in {"lemons", "limes"}:
+        if re.search(r"\bzest\b", context, re.IGNORECASE) or re.search(
+            r"\bjuice\b", context, re.IGNORECASE
+        ):
+            return ""
         fruit = citrus_plural or (name if name in {"lemons", "limes"} else "lemons")
-        if re.search(r"\bzest\b", original, re.IGNORECASE):
-            citrus_qty = _citrus_quantity_from_parsed(parsed, original)
-            if citrus_qty is not None and citrus_qty != 1:
-                return f"zest {_format_qty(citrus_qty)} {fruit}"
-            return f"zest {fruit}"
         citrus_qty = _citrus_quantity_from_parsed(parsed, original)
         if citrus_qty is not None:
             return f"{_format_qty(citrus_qty)} {_name_for_count(fruit, citrus_qty)}"
@@ -1103,7 +1195,7 @@ def _build_storage_line(
         return f"{_format_qty(qty)} celery"
 
     if _is_volume_unit(unit_part):
-        return name
+        return _strip_more_modifiers(name)
 
     if _has_inline_oz_before_can(original):
         return _prefer_plural_form(name)
@@ -1161,16 +1253,22 @@ def format_ingredient_for_storage(line: str) -> str:
     text = _strip_leading_to_prefix(
         _strip_or_prefix(_strip_optional_prefix(_normalize_unicode_for_storage(line.strip())))
     )
+    text = _strip_more_modifiers(text)
     if not text:
         return ""
-    if re.match(r"^(?:finely|freshly\s+grated\s+)?(?:lemon|lime)\s+zest\Z", text, re.IGNORECASE):
-        fruit = "limes" if re.search(r"\blime\b", text, re.IGNORECASE) else "lemons"
-        return f"zest {fruit}"
+    legacy_garlic = _normalize_legacy_stored_garlic_line(text)
+    if legacy_garlic:
+        return legacy_garlic
+    if _is_citrus_zest_or_juice_only_line(text):
+        return ""
     if _should_preserve_raw_line(line):
         return _strip_trailing_prep_commas(_normalize_unicode_for_storage(line.strip()))
     parse_text = _LEADING_INCH_RE.sub("", _strip_parenthetical_notes(text))
     parsed = _parse_with_library(parse_text)
-    return _build_storage_line(parsed, parse_text, source_line=text)
+    raw_source = _strip_leading_to_prefix(
+        _strip_or_prefix(_strip_optional_prefix(_normalize_unicode_for_storage(line.strip())))
+    )
+    return _build_storage_line(parsed, parse_text, source_line=raw_source)
 
 
 def minimal_clean_for_storage(line: str) -> str:
