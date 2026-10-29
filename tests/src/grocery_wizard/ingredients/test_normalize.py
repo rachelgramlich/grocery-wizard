@@ -274,17 +274,6 @@ def test_split_merged_ingredient_line() -> None:
         ("1 cup crumbled feta", "crumbled feta", None),
         ("8 ounces crumbled feta", "crumbled feta", "8 ounces"),
         ("4 ounces feta cheese, crumbled", "feta cheese", None),
-        ("1/3 cup/40 grams chopped pecans", "pecans", None),
-        ("1 cup/240 milliliters heavy cream", "heavy cream", None),
-        ("6 tablespoons/85 grams unsalted butter", "unsalted butter", None),
-        ("1 pound/454 grams strawberries", "strawberries", "1 pound"),
-        ("1/2 cup/4 ounces/113 grams cream cheese, cold", "cream cheese", None),
-        ("3 large/100 grams egg whites", "egg whites", "3"),
-        ("2 packed cups baby spinach", "spinach", None),
-        ("11/2 packed cups mint leaves", "mint", None),
-        ("1 pound medium or small shrimp", "shrimp", "1 pound"),
-        ("1 scant cup/190 grams granulated sugar", "granulated sugar", None),
-        ("About 1 heaping cup coarsely grated Parmesan", "Parmesan", None),
         ("12 ounces fontina or Gruyère", "fontina", "12 ounces"),
         ("3/4 cup sliced almonds", "sliced almonds", None),
         ("sliced almonds", "sliced almonds", None),
@@ -689,7 +678,32 @@ def test_nyt_prep_only_lines_are_junk(raw: str) -> None:
     assert normalize_ingredient(raw) == ""
 
 
-def test_nyt_minimal_cleanup_drops_prep_only_lines() -> None:
+def test_prepare_ingredients_formats_can_with_package_size() -> None:
+    prepared = prepare_ingredients_for_notion("2 (15-ounce) cans beans")
+    assert prepared.splitlines() == ["2 cans beans"]
+
+
+@pytest.mark.parametrize(
+    ("raw", "expect_stored"),
+    [
+        ("1/3 cup/40 grams chopped pecans", "pecans"),
+        ("1 cup/240 milliliters heavy cream", "heavy cream"),
+        ("6 tablespoons/85 grams unsalted butter", "unsalted butter"),
+        ("1 pound/454 grams strawberries", "1 lb strawberries"),
+        ("1/2 cup/4 ounces/113 grams cream cheese, cold", "cream cheese"),
+        ("3 large/100 grams egg whites", "3 large egg whites"),
+        ("2 packed cups baby spinach", "baby spinach"),
+        ("11/2 packed cups mint leaves", "mint"),
+        ("1 pound medium or small shrimp", "1 lb shrimp"),
+        ("1 scant cup/190 grams granulated sugar", "granulated sugar"),
+        ("About 1 heaping cup coarsely grated Parmesan", "Parmesan"),
+    ],
+)
+def test_format_ingredient_for_storage_strips_dual_measures(raw: str, expect_stored: str) -> None:
+    assert clean_ingredient_line_for_storage(raw) == expect_stored
+
+
+def test_nyt_url_uses_full_format_and_drops_prep_only_lines() -> None:
     prepared = prepare_ingredients_for_notion(
         "ribs removed, then minced\nshelled\n1 3/4 cups low-sodium chicken or vegetable stock",
         source_url="https://cooking.nytimes.com/recipes/12345-test",
@@ -947,8 +961,8 @@ def test_parse_notion_ingredient_does_not_reformat_stored_line() -> None:
     assert parse_notion_ingredient_for_grocery("sliced cheese") == ("sliced cheese", None)
     assert parse_amount("sliced cheese") == ("sliced cheese", None)
     # Legacy raw NYT lines are for storage-time cleanup, not silent list-time rewrite.
-    assert parse_notion_ingredient_for_grocery("2 (15-ounce) cans beans") == ("cans beans", "2")
-    assert parse_amount("2 (15-ounce) cans beans") == ("beans", "2 cans")
+    assert parse_notion_ingredient_for_grocery("2 (15-ounce) cans beans") == ("beans", "2 cans")
+    assert parse_notion_ingredient_for_grocery("2 cans beans") == ("beans", "2 cans")
 
 
 @pytest.mark.parametrize(

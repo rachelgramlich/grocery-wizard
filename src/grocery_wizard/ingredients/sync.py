@@ -32,8 +32,6 @@ from src.grocery_wizard.ingredients.normalize import (
 from src.grocery_wizard.ingredients.parsed import (
     format_ingredient_for_storage,
     format_stored_line_for_display,
-    is_nyt_cooking_url,
-    minimal_clean_for_storage,
     name_from_stored_line,
 )
 from src.grocery_wizard.recipes.scraper import ingredients_to_text
@@ -176,7 +174,12 @@ def prepare_ingredients_for_notion(
     source_url: str | None = None,
     force_full_format: bool = False,
 ) -> str:
-    """Clean, split, and normalize ingredient text before storing in Notion."""
+    """Clean, split, and normalize ingredient text before storing in Notion.
+
+    Every ingredient line is passed through ``format_ingredient_for_storage`` (full parser).
+    ``source_url`` and ``force_full_format`` are kept for call-site compatibility only.
+    """
+    _ = source_url, force_full_format
     lines = _normalize_stored_lines(text)
     if not lines:
         return ""
@@ -189,7 +192,6 @@ def prepare_ingredients_for_notion(
     if not split.strip():
         return ""
 
-    use_minimal_cleanup = is_nyt_cooking_url(source_url) and not force_full_format
     kept: list[str] = []
     for line in split.splitlines():
         stripped = line.strip()
@@ -206,10 +208,7 @@ def prepare_ingredients_for_notion(
             continue
         if stripped.lower() == "recipe":
             continue
-        if use_minimal_cleanup:
-            cleaned = minimal_clean_for_storage(stripped)
-        else:
-            cleaned = format_ingredient_for_storage(stripped)
+        cleaned = format_ingredient_for_storage(stripped)
         if cleaned:
             kept.append(cleaned)
     return ingredients_to_text(kept)

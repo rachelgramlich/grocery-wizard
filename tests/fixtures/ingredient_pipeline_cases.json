@@ -52,17 +52,17 @@
     "issue_21": true
   },
   {
-    "label": "NYT-style: minimal clean (structured line)",
+    "label": "NYT-style: full format (volume stripped at storage)",
     "raw_line": "2 tablespoons extra-virgin olive oil, plus more for drizzling",
     "nyt": true,
-    "expect_stored": "2 tablespoons extra-virgin olive oil, plus more for drizzling",
+    "expect_stored": "extra-virgin olive oil",
     "expect_grocery": "extra-virgin olive oil"
   },
   {
-    "label": "NYT-style: onion with prep kept",
+    "label": "NYT-style: full format (prep stripped at storage)",
     "raw_line": "1 medium yellow onion, finely diced",
     "nyt": true,
-    "expect_stored": "1 medium yellow onion, finely diced",
+    "expect_stored": "1 medium yellow onions",
     "expect_grocery": "1 yellow onions"
   },
   {

@@ -2,86 +2,78 @@
 
 Grocery Wizard treats recipe ingredients in two separate pipelines. They share helpers under `_cleaning.py` and `_patterns.py`, but **call different entry points** depending on whether you are writing to Notion or building a shopping list.
 
-## Storage pipeline (Notion `Ingredients` column)
+## Storage pipeline (Notion `Ingredients` column) — **the only full parser**
 
-**Goal:** Persist one line per grocery item in a stable `{quantity} {name}` (or lightly cleaned raw) form when adding or syncing recipes.
+**Goal:** When a recipe is added or synced, persist one stable line per grocery item: `{quantity} {name}` (prep stripped, package sizes like `(15-ounce)` dropped, dual `cup/240 grams` collapsed at save time).
 
 | Stage | Module | Typical functions |
 | --- | --- | --- |
 | Scrape / read URL | `recipes/scraper.py` | raw HTML → line list |
-| Drop junk & split legacy merges | `ingredients/normalize.py` | `drop_junk_ingredient_lines`, `expand_ingredient_line_if_needed`, `is_instruction_line`, … |
-| Format for Notion | `ingredients/parsed.py` | `format_ingredient_for_storage`, `minimal_clean_for_storage` (NYT) |
+| Drop junk & split legacy merges | `ingredients/normalize.py` | `drop_junk_ingredient_lines`, … |
+| Format for Notion | `ingredients/parsed.py` | `format_ingredient_for_storage` |
 | Orchestration | `ingredients/sync.py` | `prepare_ingredients_for_notion`, `merge_ingredients` |
 
-**Name for dedup / merge:** `parsed.name_from_stored_line` — parses the qty/name embedded in a storage line. Do **not** use this for grocery-list display keys.
+**All new recipe save paths** call `prepare_ingredients_for_notion`, which always runs `format_ingredient_for_storage`. There is no NYT “minimal clean” branch.
+
+Measurement cleanup (`normalize_measurement_text`: strip trailing `/240 grams`, `packed` before units, `11/2` typos, etc.) runs only inside `_normalize_unicode_for_storage`, used by the storage formatter — **not** on grocery-list read.
+
+Example: `2 (15-ounce) cans beans` → stored in Notion as `2 cans beans`.
 
 Flow:
 
 ```text
 recipe URL or paste
   → normalize (line filters only)
-  → parsed.format_ingredient_for_storage
+  → format_ingredient_for_storage  (full parser + measurement cleanup)
   → Notion rich_text Ingredients
 ```
 
+Existing Notion rows are never bulk-rewritten. Re-save a recipe when you want its lines upgraded.
+
 ## Grocery-list pipeline (read Notion → shop)
 
-**Goal:** Canonical lowercase item names, combined amounts, pantry exclusion, aisle sort — at list generation time only (see package README).
+**Goal:** Read what Notion stores, merge amounts, pantry exclusion, aisle sort — **no second full parse / no `format_ingredient_for_storage`.**
 
 | Stage | Module | Typical functions |
 | --- | --- | --- |
 | Read plan + Notion | `shopping/grocery_list.py` | recipe ingredients text |
 | Parse directives | `ingredients/sync.py` | `parse_ingredients_text` |
-| Normalize & amounts | `ingredients/normalize.py` | `normalize_ingredient`, `parse_amount`, `aggregate_amounts` |
-| Display & aisles | `shopping/grocery_list.py`, `shopping/store_aisles.py` | formatted lines, aisle keywords |
+| Read stored shape | `ingredients/normalize.py` | `parse_notion_ingredient_for_grocery` → `parse_stored_ingredient` |
+| Display & aisles | `shopping/grocery_list.py`, `shopping/store_aisles.py` | `format_grocery_item`, aisle keywords |
 
-**Canonical grocery name:** `normalize.normalize_ingredient` — handles checklist prefixes, `<br/>` splits, prep stripping, and stored-line fallbacks.
+`parse_stored_ingredient` uses read-side unicode only. It still understands common stored shapes, including `(15-ounce)` before `can`/`cans`, so a Notion line that was never re-saved can still list correctly without rewriting Notion.
 
 Flow:
 
 ```text
 Notion Ingredients (+ week plan)
   → parse_ingredients_text (removals, directives)
-  → normalize_ingredient / parse_amount
+  → parse_notion_ingredient_for_grocery (read only)
   → aggregate_amounts + format_grocery_item
-  → shopping list output
+  → merge/dedupe, pantry skip, aisle sort
 ```
-
-## Grocery list must not rewrite Notion
-
-**Notion `Ingredients` is the source of truth** for what you saved (including manual edits). When building the weekly list, use `parse_notion_ingredient_for_grocery` — it only runs `parse_stored_ingredient` on the line. It does **not** call `format_ingredient_for_storage` again.
-
-Prep stripping and product-form rules (`sliced almonds`, `crumbled feta`, …) belong in the **storage pipeline** (`prepare_ingredients_for_notion` when adding or syncing a recipe). Legacy lines that were never stored should be fixed in Notion (by hand or by re-saving that recipe), not silently rewritten at list time.
-
-Shared measurement cleanup (`_cleaning.normalize_measurement_text`, via `_normalize_unicode`) still runs on read so dual measures like `1 cup/240 grams` parse without leaking `cup/240 grams` into the name.
-
-`normalize_ingredient` / `parse_amount` still exist for filters, review UI, and other callers that may need the old “re-format raw text” fallback. **Do not use them for Notion → grocery list.**
 
 ## Naming: avoid `ingredient_name` confusion
 
-Three different “ingredient name” helpers existed historically:
-
 | Symbol | Where | Use when |
 | --- | --- | --- |
-| `normalize_ingredient` | `normalize.py` | Grocery keys, meal-plan ingredient filter, validation |
+| `parse_notion_ingredient_for_grocery` | `normalize.py` | **Notion → weekly grocery list** |
+| `format_ingredient_for_storage` | `parsed.py` | **Recipe add / sync → Notion** |
+| `normalize_ingredient` / `parse_amount` | `normalize.py` | Filters, review UI, legacy callers (may re-format raw text) |
 | `name_from_stored_line` | `parsed.py` | Merge/dedup of Notion storage lines in `sync.py` |
-| `ingredient_name` | `parsed.py` | Deprecated alias → `name_from_stored_line` |
 | `ingredient_name` | `shopping/store_aisles.py` | Strip qty prefix from **formatted list lines** for aisle keywords |
-
-Import from **`ingredients/parsed.py`**, **`ingredients/normalize.py`**, or **`ingredients/sync.py`** depending on pipeline (see table below).
 
 ## Module map
 
 | File | Role |
 | --- | --- |
 | `_patterns.py` | Shared regexes and unit/noun lists |
-| `_cleaning.py` | Shared line prep, compound splits |
+| `_cleaning.py` | Shared line prep, compound splits, `normalize_measurement_text` |
 | `parsed.py` | Library-backed parse → storage string; parse stored lines |
-| `normalize.py` | Grocery normalization, amounts, aggregation |
+| `normalize.py` | Grocery read helper, filters, aggregation |
 | `sync.py` | Notion sync, merge, refresh, review formatting |
 
 ## Tests
 
 - Unit cases: `tests/src/grocery_wizard/ingredients/test_normalize.py`, `test_sync.py`
 - End-to-end storage → grocery: `tests/src/grocery_wizard/ingredients/test_pipeline.py` (via `pipeline_helpers.py`)
-- Full app path: Streamlit weekly plan → ingredient review → grocery list (`tests/src/grocery_wizard/ingredients/test_pipeline.py` covers storage → list)

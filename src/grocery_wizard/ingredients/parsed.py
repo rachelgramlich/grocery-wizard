@@ -357,12 +357,22 @@ def _ensure_nltk_data() -> None:
     _nltk_ready = True
 
 
-def _normalize_unicode(text: str) -> str:
+def _normalize_unicode_read(text: str) -> str:
+    """Unicode dashes/fractions only (grocery read / parse stored lines)."""
     for dash in _UNICODE_DASHES:
         text = text.replace(dash, "-")
     for char, replacement in _UNICODE_FRACTIONS.items():
         text = text.replace(char, replacement)
-    return normalize_measurement_text(text)
+    return text
+
+
+def _normalize_unicode_for_storage(text: str) -> str:
+    """Storage pipeline: also strip dual measures (``cup/240 grams``), packed, typos, etc."""
+    return normalize_measurement_text(_normalize_unicode_read(text))
+
+
+def _normalize_unicode(text: str) -> str:
+    return _normalize_unicode_read(text)
 
 
 def _strip_optional_prefix(text: str) -> str:
@@ -1061,7 +1071,7 @@ def format_ingredient_for_storage(line: str) -> str:
     if is_junk_ingredient(line):
         return ""
     text = _strip_leading_to_prefix(
-        _strip_or_prefix(_strip_optional_prefix(_normalize_unicode(line.strip())))
+        _strip_or_prefix(_strip_optional_prefix(_normalize_unicode_for_storage(line.strip())))
     )
     if not text:
         return ""
@@ -1069,23 +1079,15 @@ def format_ingredient_for_storage(line: str) -> str:
         fruit = "limes" if re.search(r"\blime\b", text, re.IGNORECASE) else "lemons"
         return f"zest {fruit}"
     if _should_preserve_raw_line(line):
-        return _strip_trailing_prep_commas(_normalize_unicode(line.strip()))
+        return _strip_trailing_prep_commas(_normalize_unicode_for_storage(line.strip()))
     parse_text = _LEADING_INCH_RE.sub("", _strip_parenthetical_notes(text))
     parsed = _parse_with_library(parse_text)
     return _build_storage_line(parsed, parse_text, source_line=text)
 
 
 def minimal_clean_for_storage(line: str) -> str:
-    """Light cleanup for NYT Cooking lines that are already well-structured."""
-    from src.grocery_wizard.ingredients.normalize import is_junk_ingredient
-
-    text = _normalize_unicode(line.strip())
-    if not text or is_junk_ingredient(text):
-        return ""
-    text = _strip_or_prefix(_strip_optional_prefix(text))
-    text = _strip_prep_parenthetical_notes(text)
-    text = _strip_trailing_prep_commas(text)
-    return re.sub(r"\s+", " ", text).strip()
+    """Deprecated: use :func:`format_ingredient_for_storage` (full parser) instead."""
+    return format_ingredient_for_storage(line)
 
 
 def name_from_stored_line(line: str) -> str:
@@ -1267,7 +1269,7 @@ def parse_stored_ingredient(line: str) -> tuple[str, str | None]:
     match = _LEADING_QTY_RE.match(text)
     if match:
         qty_str = match.group(1).strip()
-        rest = text[match.end() :].strip()
+        rest = strip_parenthetical_groups(text[match.end() :].strip()).strip()
         if rest:
             return _parse_stored_rest(qty_str, rest)
 
