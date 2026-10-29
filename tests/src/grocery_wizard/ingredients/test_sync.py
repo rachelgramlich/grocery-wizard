@@ -275,3 +275,20 @@ def test_issue_287_weekly_plan_ingredient_normalization() -> None:
     leeks = "2 leeks, light green white parts only"
     assert prepare_ingredients_for_notion(leeks) == "2 leeks"
     assert normalize_ingredient(leeks) == "leeks"
+
+
+def test_apply_removals_pepper_only_removes_table_pepper() -> None:
+    lines = [
+        "1 fresno pepper, sliced",
+        "1 jalapeno pepper",
+        "2 green peppers",
+        "1/2 tsp ground black pepper",
+        "1/2 tsp pepper",
+    ]
+    result = apply_removals(lines, ["pepper"])
+    assert result == ["1 fresno pepper, sliced", "1 jalapeno pepper", "2 green peppers"]
+
+
+def test_apply_removals_fresno_pepper_does_not_remove_plain_pepper() -> None:
+    result = apply_removals(["1/2 tsp pepper", "1 fresno pepper"], ["fresno pepper"])
+    assert result == ["1/2 tsp pepper"]
