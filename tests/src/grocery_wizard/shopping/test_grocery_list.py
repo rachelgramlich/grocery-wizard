@@ -102,6 +102,30 @@ def test_build_grocery_list_excludes_pantry_by_default(pantry_file: Path) -> Non
     assert "garlic" in excluded
 
 
+def test_build_grocery_list_keeps_can_and_block_counts_with_package_sizes(
+    pantry_file: Path,
+) -> None:
+    db = MagicMock()
+    db.query_recipes.return_value = [
+        _recipe(
+            "Chili",
+            "2 (15-ounce) cans beans\n1 (15-ounce) can diced tomatoes\n"
+            "2 (6- to 8-ounce) blocks feta",
+        )
+    ]
+
+    items, _excluded, _sync, _missing, _, _ = build_grocery_list(
+        db,
+        recipe_names=["Chili"],
+        pantry_path=pantry_file,
+    )
+
+    assert "2 cans beans" in items
+    assert "1 can diced tomatoes" in items
+    assert "2 blocks feta" in items
+    assert not any("blockss" in item for item in items)
+
+
 def test_build_grocery_list_include_pantry(pantry_file: Path) -> None:
     db = MagicMock()
     db.query_recipes.return_value = [

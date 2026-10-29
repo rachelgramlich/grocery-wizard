@@ -97,6 +97,8 @@ _COUNT_UNITS = frozenset(
         "jars",
         "box",
         "boxes",
+        "block",
+        "blocks",
         "container",
         "containers",
         "packet",
@@ -189,6 +191,8 @@ _UNIT_CANONICAL: dict[str, str] = {
     "jars": "jar",
     "box": "box",
     "boxes": "box",
+    "block": "block",
+    "blocks": "block",
     "container": "container",
     "containers": "container",
     "packet": "packet",
@@ -225,6 +229,7 @@ _UNIT_DISPLAY: dict[str, tuple[str, str]] = {
     "bag": ("bag", "bags"),
     "jar": ("jar", "jars"),
     "box": ("box", "boxes"),
+    "block": ("block", "blocks"),
     "container": ("container", "containers"),
     "packet": ("packet", "packets"),
     "sheet": ("sheet", "sheets"),
@@ -443,8 +448,15 @@ def _is_count_unit(unit: str | None) -> bool:
     return unit.strip().lower().rstrip(".") in _COUNT_UNITS
 
 
+def _default_unit_display(unit: str) -> tuple[str, str]:
+    """Singular/plural for units missing from ``_UNIT_DISPLAY`` (never ``blockss``)."""
+    if unit.endswith("s"):
+        return unit, unit
+    return unit, f"{unit}s"
+
+
 def _display_unit(canonical: str, qty: float) -> str:
-    singular, plural = _UNIT_DISPLAY.get(canonical, (canonical, f"{canonical}s"))
+    singular, plural = _UNIT_DISPLAY.get(canonical, _default_unit_display(canonical))
     return plural if qty > 1 else singular
 
 
@@ -1325,7 +1337,8 @@ def should_show_amount(amount: str | None, raw_line: str) -> bool:
     """Return whether a parsed amount should appear on the grocery list."""
     if amount is None:
         return False
-    return _HIDE_AMOUNT_UNITS_RE.search(raw_line) is None
+    # Package sizes like ``(15-ounce)`` must not hide the can/block count.
+    return _HIDE_AMOUNT_UNITS_RE.search(mask_parenthetical_groups(raw_line)) is None
 
 
 def _aggregate_citrus_amounts(amounts: list[str]) -> str:
@@ -1419,7 +1432,7 @@ def aggregate_amounts(amounts: list[str | None], *, name: str | None = None) -> 
         return str(math.ceil(total))
 
     orig_unit = parsed[0][1]
-    singular, plural = _UNIT_DISPLAY.get(canonical, (orig_unit, f"{orig_unit}s"))
+    singular, plural = _UNIT_DISPLAY.get(canonical, _default_unit_display(orig_unit))
     display_unit = plural if total > 1 else singular
     return f"{qty_formatted} {display_unit}"
 

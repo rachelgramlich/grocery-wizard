@@ -111,6 +111,14 @@ def test_should_show_amount() -> None:
     assert should_show_amount("1 lb", "1 lb chicken breast") is True
 
 
+def test_should_show_amount_ignores_package_size_in_parentheses() -> None:
+    assert should_show_amount("2 cans", "2 (15-ounce) cans beans") is True
+    assert should_show_amount("1 can", "1 (15-ounce) can diced tomatoes") is True
+    assert should_show_amount("2 blocks", "2 (6- to 8-ounce) blocks feta") is True
+    assert should_show_amount("8 ounces", "8 ounces feta") is False
+    assert should_show_amount(None, "1 cup (4 ounces) feta") is False
+
+
 def test_normalize_ingredient_empty() -> None:
     assert normalize_ingredient("") == ""
     assert normalize_ingredient("   ") == ""
@@ -259,6 +267,8 @@ def test_split_merged_ingredient_line() -> None:
         ("2 tbsp olive oil, plus more for drizzling", "olive oil", None),
         # Inline descriptor stripped, unit still detected
         ("2 (15-ounce) cans diced tomatoes", "diced tomatoes", "2 cans"),
+        ("2 (6- to 8-ounce) blocks feta", "feta", "2 blocks"),
+        ("2 blocks feta", "feta", "2 blocks"),
         # Bare count (no recognised unit) → bare number returned
         ("2 eggs", "eggs", "2"),
         ("4 large carrots, peeled", "carrots", "4"),

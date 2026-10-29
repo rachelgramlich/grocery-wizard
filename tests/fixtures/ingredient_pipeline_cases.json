@@ -81,7 +81,7 @@
     "label": "Compound cans: diced tomatoes",
     "raw_line": "2 (15-ounce) cans diced tomatoes",
     "expect_stored": "2 cans diced tomatoes",
-    "expect_grocery": "diced tomatoes"
+    "expect_grocery": "2 cans diced tomatoes"
   },
   {
     "label": "Lemon variant aggregation (juice + 1 + zest)",
@@ -103,7 +103,7 @@
     "label": "Parenthetical substitution preserved",
     "raw_line": "1 chicken bouillon cube (or substitute 2 cups chicken broth for the water bouillon)",
     "expect_stored": "1 chicken bouillon cube (or substitute 2 cups chicken broth for the water bouillon)",
-    "expect_grocery": "chicken bouillon cube"
+    "expect_grocery": "1 chicken bouillon cube"
   },
   {
     "label": "Garlic cloves with prep",
