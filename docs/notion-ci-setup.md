@@ -54,6 +54,7 @@ Repo → **Settings** → **Secrets and variables** → **Actions** → **New re
 | `NOTION_CI_PANTRY_DATABASE_ID` | `[GW CI] Pantry Staples` database ID |
 | `NOTION_CI_RECURRING_WEEKLY_DATABASE_ID` | `[GW CI] Recurring Weekly Items` database ID |
 | `NOTION_CI_WEEKLY_MEAL_PLANS_DATABASE_ID` | `[GW CI] Weekly Meal Plans` database ID |
+| `NOTION_CI_DEBUG_LOGS_DATABASE_ID` *(optional)* | `[GW CI] List Debug Logs` — if unset, CI uses the weekly plans ID so `load_config()` passes (read-only smoke does not write logs). |
 
 The workflow maps `NOTION_CI_API_KEY` → `NOTION_API_KEY` and each `NOTION_CI_*_DATABASE_ID` → `NOTION_*_DATABASE_ID` inside the job so pytest calls `load_config()` with CI credentials only. Production IDs in your local `.env` are unchanged.
 

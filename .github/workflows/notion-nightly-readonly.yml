@@ -13,6 +13,7 @@
 #    NOTION_CI_PANTRY_DATABASE_ID
 #    NOTION_CI_RECURRING_WEEKLY_DATABASE_ID
 #    NOTION_CI_WEEKLY_MEAL_PLANS_DATABASE_ID
+#    (Optional: NOTION_CI_DEBUG_LOGS_DATABASE_ID — list debug logs DB; else weekly plans ID)
 #    (Optional: NOTION_DATA_SOURCE_ID — same as prod if used; see config/README.md)
 # 3. Open a PR to main (same repo): live read-only pytest runs when secrets are set.
 # 4. Fork PRs or missing NOTION_CI_API_KEY / CI database IDs: job exits 0 with a skip message.
@@ -50,6 +51,7 @@ jobs:
       NOTION_PANTRY_DATABASE_ID: ${{ secrets.NOTION_CI_PANTRY_DATABASE_ID }}
       NOTION_RECURRING_WEEKLY_DATABASE_ID: ${{ secrets.NOTION_CI_RECURRING_WEEKLY_DATABASE_ID }}
       NOTION_WEEKLY_MEAL_PLANS_DATABASE_ID: ${{ secrets.NOTION_CI_WEEKLY_MEAL_PLANS_DATABASE_ID }}
+      NOTION_DEBUG_LOGS_DATABASE_ID: ${{ secrets.NOTION_CI_DEBUG_LOGS_DATABASE_ID || secrets.NOTION_CI_WEEKLY_MEAL_PLANS_DATABASE_ID }}
     steps:
       - name: Detect Notion run eligibility
         id: notion
