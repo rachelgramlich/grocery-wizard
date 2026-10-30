@@ -132,6 +132,18 @@ def test_compute_grocery_drafts_merges_recurring_items_into_final_list() -> None
     assert "fruit" in final_items
 
 
+def test_compute_grocery_drafts_bare_milk_from_recurring_yields_to_recipe_specific_milk() -> None:
+    """Recipe 'almond milk' plus recurring 'milk' must not ship as two lines."""
+    _, final_items = compute_grocery_drafts(
+        ["bananas", "almond milk"],
+        [],
+        "",
+        recurring_items=["milk", "fruit"],
+    )
+    assert "almond milk" in final_items
+    assert "milk" not in final_items
+
+
 def test_user_flow_checklist_extras_strip_sort_dedupe() -> None:
     """Simulate pasting Notion checklist extras through the UI display pipeline."""
     extra_items_text = "- [ ] Bananas\n- [ ] Flowers\n- [ ] Bananas"

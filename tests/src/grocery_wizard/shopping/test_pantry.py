@@ -92,6 +92,19 @@ def test_is_pantry_item_single_token_last_word_rule(
 
 
 @pytest.mark.parametrize(
+    ("pantry_items", "expected"),
+    [
+        ({"milk"}, True),
+        ({"almond milk"}, True),
+        ({"coconut milk"}, True),
+        ({"salt"}, False),
+    ],
+)
+def test_is_pantry_item_bare_milk_matching(pantry_items: set[str], expected: bool) -> None:
+    assert is_pantry_item("milk", pantry_items) is expected
+
+
+@pytest.mark.parametrize(
     ("search", "item", "expected"),
     [
         ("salt", "salt", True),
