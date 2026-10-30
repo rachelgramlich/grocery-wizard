@@ -92,27 +92,6 @@ def test_load_store_aisles_uses_committed_config() -> None:
     assert config.aisle_order.index("fruit") < config.aisle_order.index("vegetables")
     assert "grape tomato" in config.aisle_keywords["vegetables"]
     assert config.aisle_order.index("vegetables") < config.aisle_order.index("refrigerated")
-    assert config.aisle_order.index("refrigerated") < config.aisle_order.index("coffee")
-    assert config.aisle_order.index("coffee") < config.aisle_order.index("snacks/crackers")
-    assert config.aisle_order.index("snacks/crackers") < config.aisle_order.index("drinks")
-    assert config.aisle_order.index("drinks") < config.aisle_order.index("dairy/eggs")
-    assert config.aisle_order.index("dairy/eggs") < config.aisle_order.index(
-        "household/personal care"
-    )
-    assert config.aisle_order.index("household/personal care") < config.aisle_order.index(
-        "meat/fish"
-    )
-    assert config.aisle_order.index("meat/fish") < config.aisle_order.index("bakery")
-    assert config.aisle_order.index("bakery") < config.aisle_order.index("nuts/desserts")
-    assert config.aisle_order.index("nuts/desserts") < config.aisle_order.index("candy")
-    assert config.aisle_order.index("candy") < config.aisle_order.index("oils & vinegars")
-    assert config.aisle_order.index("oils & vinegars") < config.aisle_order.index("cereal")
-    assert config.aisle_order.index("cereal") < config.aisle_order.index("spices")
-    assert config.aisle_order.index("spices") < config.aisle_order.index("pasta/grains")
-    assert config.aisle_order.index("pasta/grains") < config.aisle_order.index("baking")
-    assert config.aisle_order.index("baking") < config.aisle_order.index("sauces/condiments")
-    assert config.aisle_order.index("sauces/condiments") < config.aisle_order.index("canned goods")
-    assert config.aisle_order.index("canned goods") < config.aisle_order.index("frozen")
     assert config.aisle_labels["flowers"] == "Flowers"
     assert config.aisle_labels["household/personal care"] == "Household and personal care"
     assert config.aisle_labels["fruit"] == "Fruit"
@@ -125,6 +104,146 @@ def test_load_store_aisles_uses_committed_config() -> None:
     assert "peanut butter" in config.aisle_keywords["sauces/condiments"]
     assert "cumin" in config.aisle_keywords["spices"]
     assert "olive oil" in config.aisle_keywords["oils & vinegars"]
+
+
+EXPECTED_AISLE_WALK_ORDER = (
+    "flowers",
+    "fruit",
+    "vegetables",
+    "refrigerated",
+    "snacks/crackers",
+    "drinks",
+    "dairy/eggs",
+    "dog treats",
+    "household/personal care",
+    "meat/fish",
+    "bakery",
+    "nuts/desserts",
+    "candy",
+    "oils & vinegars",
+    "cereal",
+    "spices",
+    "pasta/grains",
+    "baking",
+    "sauces/condiments",
+    "canned goods",
+    "coffee",
+    "frozen",
+    "other",
+)
+
+
+def test_committed_aisle_walk_order_matches_store() -> None:
+    assert load_store_aisles().aisle_order == EXPECTED_AISLE_WALK_ORDER
+
+
+def test_dog_treats_aisle_label() -> None:
+    assert load_store_aisles().aisle_labels["dog treats"] == "Dog treats"
+
+
+@pytest.mark.parametrize(
+    ("item", "expected_aisle"),
+    [
+        ("dog treats", "dog treats"),
+        ("dog treat", "dog treats"),
+        ("2 bags dog treats", "dog treats"),
+        ("dog treat oreos", "dog treats"),
+        ("dog food", "other"),
+        ("coffee beans", "coffee"),
+    ],
+)
+def test_classify_dog_treats(item: str, expected_aisle: str) -> None:
+    assert classify_aisle(item) == expected_aisle
+
+
+@pytest.mark.parametrize(
+    ("item", "expected_aisle"),
+    [
+        ("creamer", "dairy/eggs"),
+        ("coffee creamer", "dairy/eggs"),
+        ("nondairy creamer", "dairy/eggs"),
+        ("2 bottles coffee creamer", "dairy/eggs"),
+        ("coffee beans", "coffee"),
+    ],
+)
+def test_classify_creamer_as_dairy(item: str, expected_aisle: str) -> None:
+    assert classify_aisle(item) == expected_aisle
+
+
+def test_sort_grocery_items_puts_dog_treats_after_dairy_and_coffee_after_canned() -> None:
+    items = ["frozen peas", "coffee beans", "2 cans white beans", "dog treats", "eggs", "soap"]
+
+    assert sort_grocery_items(items) == [
+        "eggs",
+        "dog treats",
+        "soap",
+        "2 cans white beans",
+        "coffee beans",
+        "frozen peas",
+    ]
+
+
+@pytest.mark.parametrize(
+    "item",
+    [
+        "red pepper",
+        "red peppers",
+        "2 orange peppers",
+        "yellow pepper",
+        "green pepper",
+        "1 sweet pepper",
+        "mini sweet peppers",
+        "hot pepper",
+        "chile pepper",
+        "jalape\u00f1o pepper",
+        "jalapeno pepper",
+        "jalape\u00f1o peppers",
+        "jalapeno peppers",
+        "serrano pepper",
+        "poblano peppers",
+        "fresno pepper",
+        "habanero pepper",
+        "anaheim peppers",
+        "banana pepper",
+        "cubanelle peppers",
+        "shishito peppers",
+        "padron peppers",
+        "scotch bonnet pepper",
+        "cherry peppers",
+        "1 red pepper, seeded",
+        "bell pepper",
+        "red bell pepper",
+        "2 red bell peppers",
+    ],
+)
+def test_fresh_peppers_classify_as_vegetables(item: str) -> None:
+    assert classify_aisle(item) == "vegetables"
+
+
+@pytest.mark.parametrize(
+    "item",
+    [
+        "pepper",
+        "black pepper",
+        "ground pepper",
+        "white pepper",
+        "cayenne pepper",
+        "red pepper flakes",
+        "red pepper flake",
+        "red-pepper flakes",
+        "crushed red pepper",
+        "crushed red pepper flakes",
+        "hot pepper flakes",
+    ],
+)
+def test_pepper_spices_stay_in_spices(item: str) -> None:
+    assert classify_aisle(item) == "spices"
+
+
+def test_pepper_lookalikes_keep_their_aisles() -> None:
+    assert classify_aisle("pepper jack cheese") == "refrigerated"
+    assert classify_aisle("pepperoni") == "other"
+    assert classify_aisle("peppermint") == "other"
 
 
 def test_load_store_aisles_warns_when_file_missing(
@@ -322,11 +441,12 @@ def test_classify_aisle_strips_checklist_prefix(item: str, expected_aisle: str) 
         ("thai green chiles", "vegetables"),
         ("buffalo sauce", "sauces/condiments"),
         ("hot sauce", "sauces/condiments"),
+        ("hot pepper sauce", "sauces/condiments"),
         ("teriyaki sauce", "sauces/condiments"),
         ("pkgs gnocchi", "pasta/grains"),
         ("gnocchi", "pasta/grains"),
         ("roti", "bakery"),
-        ("nondairy creamer", "coffee"),
+        ("nondairy creamer", "dairy/eggs"),
         ("laundry detergent", "household/personal care"),
         ("shaving cream", "household/personal care"),
         ("pumpkin candle", "household/personal care"),
@@ -345,7 +465,6 @@ def test_classify_aisle_strips_checklist_prefix(item: str, expected_aisle: str) 
         ("candy snacks?", "candy"),
         ("chile powder", "spices"),
         ("cookie dough balls", "frozen"),
-        ("dog treat oreos", "nuts/desserts"),
         ("old bay", "spices"),
         ("sneaky cheese shredded!", "refrigerated"),
         ("sliced cheese", "refrigerated"),

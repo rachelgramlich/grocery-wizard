@@ -190,6 +190,34 @@ garlic
 
 Unmatched items land in **Other** (always last). Longer keyword phrases win over shorter ones (`potato chips` → snacks, not produce).
 
+Current walk order (matches the store; `products` overrides are checked first):
+
+1. Flowers
+2. Fruit
+3. Vegetables
+4. Refrigerated (cheese/tofu)
+5. Crackers chips & snacks
+6. Drinks
+7. Dairy & eggs
+8. Dog treats (`dog treats`, `dog treat` only — not dog food)
+9. Household and personal care
+10. Meat & fish
+11. Bakery
+12. Nuts dessert & dried fruit
+13. Candy
+14. Oils & vinegars
+15. Cereal & granola
+16. Spices & seasonings
+17. Pasta grains & rice
+18. Baking
+19. Sauces & condiments
+20. Canned goods soups & broths
+21. Coffee & tea
+22. Frozen
+23. Other
+
+**Peppers:** fresh peppers (`jalapeño pepper`, `red pepper`, `banana pepper`, …) are product overrides that route to vegetables, because the spices keyword `pepper` would otherwise win. Spice forms (`red pepper flakes`, `crushed red pepper`, `black pepper`) stay in spices. Jarred peppers (`roasted red pepper`, `pepperoncini`) are not handled yet.
+
 ## Streamlit UI
 
 ```shell

@@ -13,6 +13,40 @@ frozen: cauliflower rice
 frozen: riced cauliflower
 frozen: frozen cauliflower rice
 meat/fish: lox pastrami kind
+# Fresh peppers: override the spices keyword ``pepper``. Plurals match automatically.
+vegetables: red pepper
+vegetables: orange pepper
+vegetables: yellow pepper
+vegetables: green pepper
+vegetables: sweet pepper
+vegetables: mini sweet pepper
+vegetables: hot pepper
+vegetables: chile pepper
+vegetables: jalapeño pepper
+vegetables: jalapeno pepper
+vegetables: serrano pepper
+vegetables: poblano pepper
+vegetables: fresno pepper
+vegetables: habanero pepper
+vegetables: anaheim pepper
+vegetables: banana pepper
+vegetables: cubanelle pepper
+vegetables: shishito pepper
+vegetables: padron pepper
+vegetables: scotch bonnet pepper
+vegetables: cherry pepper
+# Spice forms that contain a fresh-pepper phrase; the longer phrase wins.
+spices: red pepper flakes
+spices: red pepper flake
+spices: crushed red pepper
+spices: red pepper powder
+spices: hot pepper flakes
+spices: hot pepper flake
+spices: chile pepper flakes
+spices: chile pepper flake
+sauces/condiments: hot pepper sauce
+dairy/eggs: coffee creamer
+dairy/eggs: nondairy creamer
 
 # --- flowers: Flowers ---
 flowers
@@ -175,15 +209,6 @@ kimchi
 sauerkraut
 chimichurri
 
-# --- coffee: Coffee & tea ---
-nondairy creamer
-creamer
-coffee beans
-coffee
-espresso
-tea
-matcha
-
 # --- snacks/crackers: Crackers chips & snacks ---
 graham cracker
 ritz cracker
@@ -226,6 +251,9 @@ sour cream
 heavy cream
 whipping cream
 half and half
+coffee creamer
+nondairy creamer
+creamer
 greek yogurt
 greek yoghurt
 cottage cheese
@@ -235,6 +263,10 @@ yogurt
 egg
 eggs
 butter
+
+# --- dog treats: Dog treats ---
+dog treats
+dog treat
 
 # --- household/personal care: Household and personal care ---
 laundry detergent
@@ -589,6 +621,13 @@ chickpeas
 garbanzo
 canned
 beans
+
+# --- coffee: Coffee & tea ---
+coffee beans
+coffee
+espresso
+tea
+matcha
 
 # --- frozen: Frozen ---
 eomuk
