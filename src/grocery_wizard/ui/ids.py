@@ -31,9 +31,7 @@ BLOCK_WEEKLY_GROCERY_RECIPE_REVIEW: Final = "weekly.grocery_recipe_review"
 BLOCK_WEEKLY_GROCERY_RESULT: Final = "weekly.grocery_result"
 BLOCK_WEEKLY_GROCERY_RESULT_SUMMARY: Final = "weekly.grocery_result.summary"
 BLOCK_WEEKLY_GROCERY_RESULT_CUSTOMIZE: Final = "weekly.grocery_result.customize"
-CONTROL_WEEKLY_GROCERY_RESULT_DOWNLOAD_DEBUG_LOG: Final = (
-    "weekly.grocery_result.download_debug_log"
-)
+CONTROL_WEEKLY_GROCERY_RESULT_DOWNLOAD_DEBUG_LOG: Final = "weekly.grocery_result.download_debug_log"
 
 # --- Add blocks ---
 
