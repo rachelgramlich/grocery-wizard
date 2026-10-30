@@ -945,6 +945,59 @@ def test_merge_grocery_items_dedups_checklist_and_case_variants() -> None:
     assert merged == ["bananas", "berries", "milk"]
 
 
+def test_merge_grocery_items_drops_bare_milk_when_specific_milk_present() -> None:
+    assert merge_grocery_items(["milk"], ["almond milk"]) == ["almond milk"]
+
+
+def test_merge_grocery_items_keeps_bare_milk_alone() -> None:
+    assert merge_grocery_items(["milk"], ["- [ ] Milk", "2 cups milk"]) == ["milk"]
+
+
+def test_merge_grocery_items_keeps_distinct_specific_milks_and_drops_bare_milk() -> None:
+    merged = merge_grocery_items(["milk", "oat milk"], ["almond milk", "whole milk"])
+
+    assert sorted(merged) == ["almond milk", "oat milk", "whole milk"]
+
+
+def test_merge_grocery_items_drops_bare_milk_regardless_of_order_and_checklist_form() -> None:
+    assert merge_grocery_items(["- [ ] Soy Milk"], ["[ ] milk"]) == ["soy milk"]
+    assert merge_grocery_items(["milk"], ["soy milk"], ["cashew milk"]) == [
+        "soy milk",
+        "cashew milk",
+    ]
+
+
+def test_merge_grocery_items_specific_milk_keeps_its_amount() -> None:
+    merged = merge_grocery_items(["1 gallon milk"], ["1 quart almond milk"])
+
+    assert merged == ["1 quart almond milk"]
+
+
+@pytest.mark.parametrize(
+    "other_product",
+    [
+        "coconut milk",
+        "1 can coconut milk",
+        "sweetened condensed milk",
+        "buttermilk",
+        "evaporated milk",
+    ],
+)
+def test_merge_grocery_items_other_milk_products_do_not_absorb_bare_milk(
+    other_product: str,
+) -> None:
+    merged = merge_grocery_items(["milk"], [other_product])
+
+    assert "milk" in merged
+    assert len(merged) == 2
+
+
+def test_merge_grocery_items_other_milk_products_do_not_count_as_specific_milk() -> None:
+    merged = merge_grocery_items(["milk", "coconut milk", "buttermilk"], ["oat milk"])
+
+    assert sorted(merged) == ["buttermilk", "coconut milk", "oat milk"]
+
+
 def test_merge_grocery_items_follows_store_aisle_order() -> None:
     merged = merge_grocery_items(
         ["- [ ] Bananas", "onions"],
