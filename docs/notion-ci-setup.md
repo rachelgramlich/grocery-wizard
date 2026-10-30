@@ -2,6 +2,8 @@
 
 GitHub Actions can run **live read-only** pytest against a **CI copy** of your four Grocery Wizard Notion databases. Golden weeks and `just smoke-ui` still run on every PR without secrets; this setup is optional and catches Notion schema / API drift.
 
+Household production is **one** Streamlit Community Cloud app ([`docs/household-deploy.md`](household-deploy.md)); experiment on **`[GW CI]`** via local Streamlit (`NOTION_CI_*` / `GROCERY_WIZARD_NOTION_CI_LIVE`) or GitHub/Cursor CI secrets—not a second Cloud deploy ([#356](https://github.com/rachelgramlich/grocery-wizard/issues/356)).
+
 Workflow: [`.github/workflows/notion-nightly-readonly.yml`](../.github/workflows/notion-nightly-readonly.yml) (display name *Notion read-only integration*). Runs on **`pull_request`** to **`main`** (same repo, when secrets are set) and **`workflow_dispatch`** — no scheduled cron.
 
 ## What you need
