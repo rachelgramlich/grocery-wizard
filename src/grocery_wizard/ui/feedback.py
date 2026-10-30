@@ -14,12 +14,24 @@ _FEEDBACK_ERROR_KEY = "gw_feedback_error"
 _FEEDBACK_SUBMIT_KEY = "gw_feedback_submit"
 
 
+def _grocery_debug_log_url_from_session() -> str | None:
+    result = st.session_state.get("grocery_result")
+    if not isinstance(result, dict):
+        return None
+    url = result.get("debug_log_notion_url")
+    return str(url).strip() if url else None
+
+
 def _submit_feedback(*, surface: str | None) -> None:
     """Button callback — runs before widgets on the next rerun."""
     text = st.session_state.get(_FEEDBACK_NOTE_KEY, "").strip()
     if not text:
         st.session_state[_FEEDBACK_WARN_EMPTY] = True
         return
+
+    log_url = _grocery_debug_log_url_from_session()
+    if log_url:
+        text = f"{text.rstrip()}\n\n**Latest grocery list debug log (Notion):** {log_url}"
 
     try:
         outcome = submit_feedback(text, surface=surface)

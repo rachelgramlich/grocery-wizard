@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import streamlit as st
 
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
@@ -12,7 +15,10 @@ from src.grocery_wizard.shopping.grocery_list import (
     format_meals_copy_text,
 )
 from src.grocery_wizard.ui.db_access import get_db
-from src.grocery_wizard.ui.grocery_flow import default_pre_build_grocery_options
+from src.grocery_wizard.ui.grocery_flow import (
+    default_pre_build_grocery_options,
+    sync_list_debug_log_adjustments,
+)
 from src.grocery_wizard.ui.grocery_helpers import (
     compute_grocery_drafts,
     meal_entries_with_links,
@@ -26,6 +32,9 @@ from src.grocery_wizard.ui.ids import (
     BLOCK_WEEKLY_GROCERY_RESULT,
     BLOCK_WEEKLY_GROCERY_RESULT_CUSTOMIZE,
     BLOCK_WEEKLY_GROCERY_RESULT_SUMMARY,
+    CONTROL_WEEKLY_GROCERY_RESULT_DOWNLOAD_DEBUG_LOG,
+    CONTROL_WEEKLY_GROCERY_RESULT_VIEW_DEBUG_LOG_NOTION,
+    control_streamlit_key,
 )
 from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.notion_cache import cached_query_recipes
@@ -141,6 +150,56 @@ def _render_adjust_this_week_list(result: dict) -> None:
             )
         else:
             st.caption("No buy-list lines to remove for this run.")
+
+
+def _render_debug_log_download(result: dict) -> None:
+    path_value = result.get("debug_log_path")
+    log = result.get("debug_log")
+    if path_value:
+        path = Path(path_value)
+        if path.is_file():
+            payload = path.read_text(encoding="utf-8")
+            file_name = path.name
+        elif log:
+            payload = json.dumps(log, indent=2, ensure_ascii=False)
+            file_name = "grocery-list-debug.json"
+        else:
+            return
+    elif log:
+        payload = json.dumps(log, indent=2, ensure_ascii=False)
+        file_name = "grocery-list-debug.json"
+    else:
+        return
+    st.download_button(
+        "Download JSON copy",
+        data=payload,
+        file_name=file_name,
+        mime="application/json",
+        key=control_streamlit_key(CONTROL_WEEKLY_GROCERY_RESULT_DOWNLOAD_DEBUG_LOG),
+        help="Optional offline copy of this build trace.",
+    )
+
+
+def _render_debug_log_controls(result: dict) -> None:
+    url = result.get("debug_log_notion_url")
+    log = result.get("debug_log")
+    if not url and not log:
+        return
+    if url:
+        st.link_button(
+            "View debug log in Notion",
+            url=url,
+            type="secondary",
+            help="Opens the saved build trace in your Notion workspace (same from any browser).",
+            use_container_width=False,
+            key=control_streamlit_key(CONTROL_WEEKLY_GROCERY_RESULT_VIEW_DEBUG_LOG_NOTION),
+        )
+        st.caption(
+            "Each weekly list build is saved to your Notion **`[GW DEV] Debug logs`** database "
+            "(weekly grocery list traces only for now)."
+        )
+    with st.expander("Advanced: download JSON", expanded=False):
+        _render_debug_log_download(result)
 
 
 def _render_added_and_removed_summary(result: dict) -> None:
@@ -259,6 +318,12 @@ def _render_grocery_result() -> None:
         recurring_items=result.get("recurring_items"),
         run_removals=run_removals,
     )
+    sync_list_debug_log_adjustments(
+        result,
+        final_items=final_items,
+        readd=readd,
+        removed_once=sorted(run_removals),
+    )
 
     aligned_provenance = align_item_provenance_with_items(
         result.get("item_provenance", {}),
@@ -271,6 +336,7 @@ def _render_grocery_result() -> None:
 
     if final_items or meal_names:
         render_weekly_sub_block_anchor(BLOCK_WEEKLY_GROCERY_RESULT_CUSTOMIZE)
+        _render_debug_log_controls(result)
         db = get_db()
         meals = meal_entries_with_links(meal_names, cached_query_recipes(db))
         meals_copy_text = format_meals_copy_text(meals)
