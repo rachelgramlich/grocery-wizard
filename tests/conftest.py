@@ -9,7 +9,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from tests.notion_test_env import PYTEST_NOTION_API_KEY_PLACEHOLDER
+from tests.notion_test_env import (
+    PYTEST_NOTION_API_KEY_PLACEHOLDER,
+    apply_notion_ci_env_for_live_tests,
+)
 from tests.repo_paths import UI_TEST_HELPERS
 
 # Dummy Notion settings so CI and fresh clones can run tests without a real `.env`.
@@ -25,6 +28,7 @@ _PYTEST_NOTION_ENV: dict[str, str] = {
 
 def pytest_configure(config: object) -> None:
     del config
+    apply_notion_ci_env_for_live_tests()
     for key, value in _PYTEST_NOTION_ENV.items():
         os.environ.setdefault(key, value)
 

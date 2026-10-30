@@ -5,16 +5,20 @@
 #
 # Enablement (repo admin, one-time):
 # 1. Create a **separate test Notion workspace** with copies of the recipe, pantry, recurring,
-#    and weekly meal plan databases. Do not point this at production data.
-# 2. GitHub → Settings → Secrets and variables → Actions → New repository secret:
-#    NOTION_API_KEY
-#    NOTION_RECIPE_DATABASE_ID
-#    NOTION_PANTRY_DATABASE_ID
-#    NOTION_RECURRING_WEEKLY_DATABASE_ID
-#    NOTION_WEEKLY_MEAL_PLANS_DATABASE_ID
-#    (Optional: NOTION_DATA_SOURCE_ID — see src/grocery_wizard/config/README.md)
+#    and weekly meal plan databases. Name databases with **CI** in Notion so they are not
+#    confused with production.
+# 2. GitHub → Settings → Secrets and variables → Actions → New repository secret
+#    (paste targets use NOTION_CI_* — never prod NOTION_* names):
+#    NOTION_CI_API_KEY
+#    NOTION_CI_RECIPE_DATABASE_ID
+#    NOTION_CI_PANTRY_DATABASE_ID
+#    NOTION_CI_RECURRING_WEEKLY_DATABASE_ID
+#    NOTION_CI_WEEKLY_MEAL_PLANS_DATABASE_ID
+#    (Optional: NOTION_CI_DATA_SOURCE_ID — see src/grocery_wizard/config/README.md)
 # 3. Open a PR to main (same repo): live read-only pytest runs when secrets are set.
-# 4. Fork PRs and repos without NOTION_API_KEY: job exits 0 with a skip message (PR stays green).
+# 4. Fork PRs and repos without NOTION_CI_API_KEY: job exits 0 with a skip message (PR stays green).
+#
+# Job env maps NOTION_CI_* secrets → standard NOTION_* for load_config() / pytest (prod app unchanged).
 #
 # Golden weeks in the repo catch grocery **logic** regressions without secrets.
 # This workflow catches Notion **schema / live API** drift in the test workspace.
@@ -39,11 +43,18 @@ jobs:
   read-only:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      NOTION_API_KEY: ${{ secrets.NOTION_CI_API_KEY }}
+      NOTION_RECIPE_DATABASE_ID: ${{ secrets.NOTION_CI_RECIPE_DATABASE_ID }}
+      NOTION_PANTRY_DATABASE_ID: ${{ secrets.NOTION_CI_PANTRY_DATABASE_ID }}
+      NOTION_RECURRING_WEEKLY_DATABASE_ID: ${{ secrets.NOTION_CI_RECURRING_WEEKLY_DATABASE_ID }}
+      NOTION_WEEKLY_MEAL_PLANS_DATABASE_ID: ${{ secrets.NOTION_CI_WEEKLY_MEAL_PLANS_DATABASE_ID }}
+      NOTION_DATA_SOURCE_ID: ${{ secrets.NOTION_CI_DATA_SOURCE_ID }}
     steps:
       - name: Detect Notion run eligibility
         id: notion
         env:
-          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_CI_API_KEY: ${{ secrets.NOTION_CI_API_KEY }}
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ] && \
              [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
@@ -52,9 +63,9 @@ jobs:
             echo "Golden weeks and smoke-ui still run on every PR via CI."
             exit 0
           fi
-          if [ -z "${NOTION_API_KEY}" ]; then
+          if [ -z "${NOTION_CI_API_KEY}" ]; then
             echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "Skipped — NOTION_API_KEY is not set. See workflow file comments for enablement."
+            echo "Skipped — NOTION_CI_API_KEY is not set. See workflow file comments for enablement."
             echo "Golden weeks and smoke-ui still run on every PR via CI."
             exit 0
           fi
@@ -81,13 +92,6 @@ jobs:
       - name: Notion config preflight
         if: steps.notion.outputs.enabled == 'true'
         run: PYTHONPATH=src uv run python -c "from grocery_wizard.config import load_config; load_config(); print('notion ok')"
-        env:
-          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
-          NOTION_RECIPE_DATABASE_ID: ${{ secrets.NOTION_RECIPE_DATABASE_ID }}
-          NOTION_PANTRY_DATABASE_ID: ${{ secrets.NOTION_PANTRY_DATABASE_ID }}
-          NOTION_RECURRING_WEEKLY_DATABASE_ID: ${{ secrets.NOTION_RECURRING_WEEKLY_DATABASE_ID }}
-          NOTION_WEEKLY_MEAL_PLANS_DATABASE_ID: ${{ secrets.NOTION_WEEKLY_MEAL_PLANS_DATABASE_ID }}
-          NOTION_DATA_SOURCE_ID: ${{ secrets.NOTION_DATA_SOURCE_ID }}
 
       # Scaffold: expand with schema checks and live AppTest pages (#426).
       - name: Live Notion read-only smoke (optional tests)
@@ -97,10 +101,3 @@ jobs:
             tests/src/grocery_wizard/ui/test_holistic_ui_smoke_apptest.py \
             -k "live and read_only" \
             -q
-        env:
-          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
-          NOTION_RECIPE_DATABASE_ID: ${{ secrets.NOTION_RECIPE_DATABASE_ID }}
-          NOTION_PANTRY_DATABASE_ID: ${{ secrets.NOTION_PANTRY_DATABASE_ID }}
-          NOTION_RECURRING_WEEKLY_DATABASE_ID: ${{ secrets.NOTION_RECURRING_WEEKLY_DATABASE_ID }}
-          NOTION_WEEKLY_MEAL_PLANS_DATABASE_ID: ${{ secrets.NOTION_WEEKLY_MEAL_PLANS_DATABASE_ID }}
-          NOTION_DATA_SOURCE_ID: ${{ secrets.NOTION_DATA_SOURCE_ID }}

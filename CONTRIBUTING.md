@@ -316,7 +316,7 @@ Streamlit UI regression tests read concatenated sources via `tests/src/grocery_w
 
 ### Grocery list quality
 
-Weekly export regressions use **golden weeks** in `tests/fixtures/golden_grocery_weeks/` — run `just golden-grocery`. List-bug fixes should add or extend a fixture, not only a one-line normalize test. Sign-off flow: **`docs/grocery-quality.md`** and the **`/grocery-quality-review`** slash command. CI runs golden weeks and `just smoke-ui` with mocked Notion; live read-only Notion integration runs on PRs to `main` when repo secrets exist (skips cleanly otherwise) — see [#426](https://github.com/rachelgramlich/grocery-wizard/issues/426).
+Weekly export regressions use **golden weeks** in `tests/fixtures/golden_grocery_weeks/` — run `just golden-grocery`. List-bug fixes should add or extend a fixture, not only a one-line normalize test. Sign-off flow: **`docs/grocery-quality.md`** and the **`/grocery-quality-review`** slash command. CI runs golden weeks and `just smoke-ui` with mocked Notion; live read-only Notion integration runs on PRs to `main` when **`NOTION_CI_*`** GitHub Actions secrets exist (skips cleanly otherwise) — see [#426](https://github.com/rachelgramlich/grocery-wizard/issues/426).
 
 ### String literals in tests
 

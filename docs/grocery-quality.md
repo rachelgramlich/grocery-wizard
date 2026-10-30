@@ -73,10 +73,12 @@ Default **CI** (`just ci`) still uses fake Notion IDs — every PR runs golden w
 
 | Trigger | Behavior |
 | --- | --- |
-| **`pull_request` → `main`** (same repo) | When GitHub Actions secrets are configured, runs config preflight + live read-only AppTest cases (`live_notion_smoke_enabled()` / `-k "live and read_only"`). |
-| **Fork PR** or **no `NOTION_API_KEY`** | Job **succeeds** with a skip message — does not fail the PR. |
+| **`pull_request` → `main`** (same repo) | When GitHub Actions **`NOTION_CI_*`** secrets are configured, runs config preflight + live read-only AppTest cases (`live_notion_smoke_enabled()` / `-k "live and read_only"`). |
+| **Fork PR** or **no `NOTION_CI_API_KEY`** | Job **succeeds** with a skip message — does not fail the PR. |
 | **Nightly schedule** + **manual dispatch** | Same checks when secrets exist; catches drift if nothing merged via PR. |
 
-Use a **separate test Notion workspace** (not production). Setup steps: GitHub issue **#426**.
+Use a **separate test Notion workspace** (not production). Name databases with **CI** in Notion. GitHub paste targets use **`NOTION_CI_*`** secrets (mapped to `NOTION_*` inside the workflow only). Setup steps: GitHub issue **#426**.
+
+**Local live tests** against the CI workspace: put `NOTION_CI_*` in `.env` (keep prod `NOTION_*` for Streamlit). Pytest maps CI vars when `NOTION_CI_API_KEY` is set and `NOTION_API_KEY` is unset or the pytest placeholder — see `tests/notion_test_env.py`. Or one-shot: `export NOTION_API_KEY="$NOTION_CI_API_KEY"` (and the other IDs) before `pytest -k "live and read_only"`.
 
 Golden weeks catch **list logic** regressions without secrets; live integration catches **Notion schema / API** drift when secrets are present.
