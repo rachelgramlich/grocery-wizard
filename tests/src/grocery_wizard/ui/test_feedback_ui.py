@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
+import pytest
 from ui_source import APP_PATH, UI_ROOT
 
 
@@ -17,6 +18,30 @@ def test_feedback_header_controls_render_in_app() -> None:
     labels = {button.label for button in at.button}
     assert "Refresh from Notion" in labels
     assert "Submit feedback" in labels
+
+
+def test_submit_feedback_appends_latest_notion_log_url(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: dict[str, str] = {}
+
+    def fake_submit(text: str, *, surface: str | None = None) -> str:
+        captured["text"] = text
+        captured["surface"] = surface or ""
+        return "issue #1"
+
+    monkeypatch.setattr("src.grocery_wizard.ui.feedback.submit_feedback", fake_submit)
+
+    import streamlit as st
+
+    st.session_state["grocery_result"] = {
+        "debug_log_notion_url": "https://www.notion.so/testlogpage",
+    }
+    st.session_state["gw_feedback_note"] = "Milk showed up twice"
+
+    from src.grocery_wizard.ui.feedback import _submit_feedback
+
+    _submit_feedback(surface="weekly")
+    assert "https://www.notion.so/testlogpage" in captured["text"]
+    assert "Milk showed up twice" in captured["text"]
 
 
 def test_feedback_submit_files_github_issue() -> None:

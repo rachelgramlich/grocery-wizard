@@ -53,6 +53,8 @@ Rail steps (user-facing, not numbered): **Get started** → **Plan meals** → *
 | `weekly.grocery_result` | Grocery list — built list |
 | `weekly.grocery_result.summary` | Grocery list — summary (build result) |
 | `weekly.grocery_result.customize` | Grocery list — customize / copy |
+| `weekly.grocery_result.view_debug_log_notion` | Grocery list — open latest debug log in Notion |
+| `weekly.grocery_result.download_debug_log` | Grocery list — optional JSON download (advanced) |
 
 ### `add`
 

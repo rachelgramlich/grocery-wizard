@@ -33,6 +33,7 @@ import difflib
 import re
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from src.grocery_wizard.ingredients.normalize import (
     aggregate_amounts,
@@ -53,6 +54,9 @@ from src.grocery_wizard.shopping.store_aisles import (
     ingredient_name,
     sort_grocery_items,
 )
+
+if TYPE_CHECKING:
+    from src.grocery_wizard.shopping.list_log import ListTrace
 
 _NAME_LINK_MATCH_THRESHOLD = 0.85
 _NYT_SLUG_ID_PREFIX = re.compile(r"^\d+-")
@@ -194,6 +198,7 @@ def build_grocery_list(
     exclude_pantry: bool = True,
     ingredient_overrides: dict[str, str] | None = None,
     pantry_names: set[str] | None = None,
+    trace: ListTrace | None = None,
 ) -> tuple[list[str], list[str], None, list[str], dict[str, list[str]], list[NameLinkMismatch]]:
     """Build grocery list items, excluded pantry items, and skipped recipe names (for UI use).
 
@@ -213,6 +218,7 @@ def build_grocery_list(
 
     When ``recipes`` is provided, it is used instead of calling ``db.query_recipes()``.
     When ``pantry_names`` is provided it replaces the pantry load (UI passes its cached copy).
+    When ``trace`` is provided it collects facts for the list debug log (no effect on output).
     """
     recipe_list = recipes if recipes is not None else db.query_recipes()
     recipes_by_name = {recipe_lookup_key(recipe.name): recipe for recipe in recipe_list}
@@ -246,6 +252,8 @@ def build_grocery_list(
                 missing_ingredients.append(name)
                 continue
             source_name = name.strip() or name
+            if trace is not None:
+                trace.start_recipe(source_name, override_text, ingredient_source="review_edit")
             for line in ingredient_lines:
                 _collect_ingredient_line(
                     line,
@@ -255,6 +263,7 @@ def build_grocery_list(
                     excluded_pantry=excluded_pantry,
                     recipe_name=source_name,
                     provenance=provenance,
+                    trace=trace,
                 )
             continue
 
@@ -272,6 +281,12 @@ def build_grocery_list(
             missing_ingredients.append(recipe.name)
             continue
 
+        if trace is not None:
+            trace.start_recipe(
+                recipe.name,
+                override_text if override_text is not None else recipe.ingredients,
+                ingredient_source="review_edit" if override_text is not None else "notion",
+            )
         for line in ingredient_lines:
             _collect_ingredient_line(
                 line,
@@ -281,6 +296,7 @@ def build_grocery_list(
                 excluded_pantry=excluded_pantry,
                 recipe_name=recipe.name,
                 provenance=provenance,
+                trace=trace,
             )
 
     seen: set[str] = set(collected.keys())
@@ -290,8 +306,11 @@ def build_grocery_list(
     ]
     item_provenance = _build_item_provenance(collected, provenance)
 
+    staples_start = len(grocery_items)
     for staple in staples or []:
         _append_unique_items(grocery_items, seen, [staple])
+    if trace is not None:
+        trace.staples_added.extend(grocery_items[staples_start:])
 
     if include_recurring_weekly_items:
         recurring = (
@@ -302,7 +321,10 @@ def build_grocery_list(
                 interactive=False,
             )
         )
+        recurring_start = len(grocery_items)
         _append_unique_items(grocery_items, seen, recurring)
+        if trace is not None:
+            trace.recurring_added.extend(grocery_items[recurring_start:])
 
     grocery_items = sort_grocery_items(grocery_items)
     excluded_pantry.sort(key=str.lower)
@@ -464,6 +486,7 @@ def _collect_ingredient_line(
     excluded_pantry: list[str],
     recipe_name: str | None = None,
     provenance: dict[str, set[str]] | None = None,
+    trace: ListTrace | None = None,
 ) -> None:
     """Parse *line*, deduplicate by normalised name, and accumulate amounts.
 
@@ -476,6 +499,8 @@ def _collect_ingredient_line(
     part = stripped_line
     display_name, amount = parse_notion_ingredient_for_grocery(part)
     if not display_name:
+        if trace is not None:
+            trace.record_line(recipe_name, stripped_line, outcome="skipped_unparsed")
         return
     display_name = display_name.lower()
     keeps_amount = amount and not amount.startswith(("head:", "clove:", "zest:"))
@@ -484,6 +509,10 @@ def _collect_ingredient_line(
     if exclude_pantry and is_pantry_item(display_name, pantry):
         if display_name not in excluded_pantry:
             excluded_pantry.append(display_name)
+        if trace is not None:
+            trace.record_line(
+                recipe_name, stripped_line, outcome="skipped_pantry", item=display_name
+            )
         return
     key = _grocery_collection_key(display_name)
     if key in collected:
@@ -493,6 +522,10 @@ def _collect_ingredient_line(
         collected[key] = (display_name, amounts)
     else:
         collected[key] = (display_name, [amount])
+    if trace is not None:
+        trace.record_line(
+            recipe_name, stripped_line, outcome="kept", item=display_name, amount=amount
+        )
     if recipe_name and provenance is not None:
         provenance.setdefault(key, set()).add(recipe_name)
 
