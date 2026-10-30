@@ -212,7 +212,9 @@ def test_build_grocery_result_payload_reads_pantry_fresh_from_notion(
 
     loader = _FakePantryLoader()
     monkeypatch.setattr(notion_cache, "_load_pantry_cached", loader)
-    monkeypatch.setattr(grocery_flow, "load_config", lambda: MagicMock(notion_pantry_database_id="x"))
+    monkeypatch.setattr(
+        grocery_flow, "load_config", lambda: MagicMock(notion_pantry_database_id="x")
+    )
 
     recipes = [_recipe("Tacos", ingredients="2 tbsp avocado oil\n1 avocado")]
     grocery_flow.build_grocery_result_payload(
