@@ -45,6 +45,8 @@ spices: hot pepper flake
 spices: chile pepper flakes
 spices: chile pepper flake
 sauces/condiments: hot pepper sauce
+dairy/eggs: coffee creamer
+dairy/eggs: nondairy creamer
 
 # --- flowers: Flowers ---
 flowers
@@ -249,6 +251,9 @@ sour cream
 heavy cream
 whipping cream
 half and half
+coffee creamer
+nondairy creamer
+creamer
 greek yogurt
 greek yoghurt
 cottage cheese
@@ -618,8 +623,6 @@ canned
 beans
 
 # --- coffee: Coffee & tea ---
-nondairy creamer
-creamer
 coffee beans
 coffee
 espresso

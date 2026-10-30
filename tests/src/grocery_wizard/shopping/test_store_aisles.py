@@ -156,6 +156,20 @@ def test_classify_dog_treats(item: str, expected_aisle: str) -> None:
     assert classify_aisle(item) == expected_aisle
 
 
+@pytest.mark.parametrize(
+    ("item", "expected_aisle"),
+    [
+        ("creamer", "dairy/eggs"),
+        ("coffee creamer", "dairy/eggs"),
+        ("nondairy creamer", "dairy/eggs"),
+        ("2 bottles coffee creamer", "dairy/eggs"),
+        ("coffee beans", "coffee"),
+    ],
+)
+def test_classify_creamer_as_dairy(item: str, expected_aisle: str) -> None:
+    assert classify_aisle(item) == expected_aisle
+
+
 def test_sort_grocery_items_puts_dog_treats_after_dairy_and_coffee_after_canned() -> None:
     items = ["frozen peas", "coffee beans", "2 cans white beans", "dog treats", "eggs", "soap"]
 
@@ -432,7 +446,7 @@ def test_classify_aisle_strips_checklist_prefix(item: str, expected_aisle: str) 
         ("pkgs gnocchi", "pasta/grains"),
         ("gnocchi", "pasta/grains"),
         ("roti", "bakery"),
-        ("nondairy creamer", "coffee"),
+        ("nondairy creamer", "dairy/eggs"),
         ("laundry detergent", "household/personal care"),
         ("shaving cream", "household/personal care"),
         ("pumpkin candle", "household/personal care"),
