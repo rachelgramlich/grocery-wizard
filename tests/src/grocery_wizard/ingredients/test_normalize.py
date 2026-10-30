@@ -1126,3 +1126,56 @@ def test_gram_first_apple_line_keeps_piece_count_from_parenthetical_cups() -> No
         "and cut into roughly 1/2-inch pieces"
     )
     assert clean_ingredient_line_for_storage(raw) == "2 Granny Smith apples"
+
+
+@pytest.mark.parametrize(
+    ("raw", "stored"),
+    [
+        ("2 cans beans", "2 cans beans"),
+        ("2 cans black beans", "2 cans black beans"),
+        ("2 (15-ounce) cans beans", "2 cans beans"),
+        ("2 15-ounce cans beans", "2 cans beans"),
+        ("2 15-oz cans pinto beans", "2 cans pinto beans"),
+        ("Two 15-ounce cans beans", "2 cans beans"),
+        ("1 15-ounce can beans", "1 can beans"),
+        ("2 14.5-ounce cans diced tomatoes", "2 cans diced tomatoes"),
+        ("2 16-ounce packages tofu", "2 pkgs tofu"),
+        ("3 8-ounce blocks cream cheese", "3 blocks cream cheese"),
+    ],
+)
+def test_can_and_package_counts_survive_unparenthesized_package_size(raw: str, stored: str) -> None:
+    assert clean_ingredient_line_for_storage(raw) == stored
+
+
+@pytest.mark.parametrize(
+    ("raw", "stored"),
+    [
+        ("4 dates", "dates"),
+        ("12 Medjool dates", "Medjool dates"),
+        ("8 medjool dates, pitted", "medjool dates"),
+        ("1 cup pitted dates", "pitted dates"),
+        ("1/2 cup raisins", "raisins"),
+        ("1/4 cup dried cranberries", "dried cranberries"),
+        ("4 apples", "4 apples"),
+        ("4 large apples", "4 large apples"),
+        ("2 bananas", "2 bananas"),
+    ],
+)
+def test_box_style_dried_fruit_counts_are_stripped_at_storage(raw: str, stored: str) -> None:
+    assert clean_ingredient_line_for_storage(raw) == stored
+
+
+@pytest.mark.parametrize(
+    ("stored", "grocery"),
+    [
+        ("4 dates", "dates"),
+        ("12 medjool dates", "medjool dates"),
+        ("2 cans beans", "2 cans beans"),
+        ("2 cans black beans", "2 cans black beans"),
+        ("4 apples", "4 apples"),
+    ],
+)
+def test_grocery_list_strips_box_item_counts_and_keeps_can_counts(
+    stored: str, grocery: str
+) -> None:
+    assert normalize_grocery_list_item(stored) == grocery

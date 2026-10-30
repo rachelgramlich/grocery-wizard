@@ -46,3 +46,17 @@ def test_issue_21_hard_cases(pipeline_cases: list[dict[str, Any]]) -> None:
                 assert row.stored == case["expect_stored"]
             if "expect_grocery" in case:
                 assert row.grocery_line == case["expect_grocery"]
+
+
+def test_pipeline_keeps_can_count_and_strips_date_count() -> None:
+    """Weekly list shows ``2 cans beans`` but plain ``dates`` (issue #459)."""
+    beans = process_ingredient_line("2 15-ounce cans beans")
+    assert beans.stored == "2 cans beans"
+    assert beans.grocery_line == "2 cans beans"
+
+    dates = process_ingredient_line("4 Medjool dates, pitted")
+    assert dates.stored == "Medjool dates"
+    assert dates.grocery_line == "Medjool dates"
+
+    apples = process_ingredient_line("4 apples")
+    assert apples.grocery_line == "4 apples"
