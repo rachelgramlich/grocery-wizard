@@ -89,6 +89,12 @@ def base_recipe_field_values(
     return fields
 
 
+def cleaned_scraped_ingredients_text(ingredients: list[str], url: str) -> str:
+    """Run scraped or API ingredient lines through the same parser used on Save."""
+    raw_text = ingredients_to_text(ingredients)
+    return prepare_ingredients_for_notion(raw_text, source_url=url) or raw_text
+
+
 def field_values_from_scrape(
     schema: DatabaseSchema,
     url: str,
@@ -103,7 +109,11 @@ def field_values_from_scrape(
         total_minutes=scraped.total_time_minutes,
         weeknight_column=weeknight_column,
     )
-    ingredients_text = ingredients_to_text(scraped.ingredients) if schema.ingredients_column else ""
+    ingredients_text = (
+        cleaned_scraped_ingredients_text(scraped.ingredients, url)
+        if schema.ingredients_column
+        else ""
+    )
     return base_recipe_field_values(
         schema,
         url=url,
@@ -209,7 +219,9 @@ def add_prefetched_recipes(
             schema.link_column: url,
         }
         if include_ingredients and schema.ingredients_column:
-            field_values[schema.ingredients_column] = ingredients_to_text(ingredients)
+            field_values[schema.ingredients_column] = cleaned_scraped_ingredients_text(
+                ingredients, url
+            )
 
         field_values.update(inferred)
 
@@ -236,6 +248,12 @@ def add_prefetched_recipes(
         if not should_create:
             print("Skipped.")
             continue
+
+        if schema.ingredients_column and reviewed.get(schema.ingredients_column):
+            reviewed[schema.ingredients_column] = prepare_ingredients_for_notion(
+                reviewed[schema.ingredients_column],
+                source_url=url,
+            )
 
         recipe = db.create_recipe(reviewed)
         created.append(

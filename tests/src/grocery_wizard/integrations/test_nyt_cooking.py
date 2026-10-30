@@ -712,3 +712,43 @@ def test_format_sync_summary_includes_counts() -> None:
     assert "10 in NYT" in text
     assert "3 already in Notion" in text
     assert "2 created" in text
+
+
+def test_add_prefetched_recipes_cleans_ingredients_like_the_add_recipe_flow() -> None:
+    from src.grocery_wizard.integrations.notion import ColumnInfo, DatabaseSchema
+    from src.grocery_wizard.recipes.add_recipe import add_prefetched_recipes
+
+    db = MagicMock()
+    db.find_by_link.return_value = None
+    db.nyt_synced_column_name.return_value = None
+    db.create_recipe.return_value = MagicMock(page_id="p1", name="Cake")
+    db.schema = DatabaseSchema(
+        name_column="Name",
+        link_column="Link",
+        ingredients_column="Ingredients",
+        filter_columns=[],
+        checkbox_columns=[],
+        all_columns={
+            "Name": ColumnInfo(name="Name", type="title"),
+            "Link": ColumnInfo(name="Link", type="url"),
+            "Ingredients": ColumnInfo(name="Ingredients", type="rich_text"),
+        },
+    )
+
+    add_prefetched_recipes(
+        db,
+        [
+            (
+                "Cake",
+                "https://cooking.nytimes.com/recipes/1-cake",
+                [
+                    "115 g (about 1 cup) all-purpose flour",
+                    "85 g (6 tablespoons) cold butter, cubed",
+                ],
+            )
+        ],
+        no_confirm=True,
+    )
+
+    saved = db.create_recipe.call_args.args[0]
+    assert saved["Ingredients"].splitlines() == ["flour", "butter"]

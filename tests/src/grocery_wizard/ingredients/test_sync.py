@@ -62,6 +62,12 @@ def test_parse_ingredients_text_keeps_distinct_lines_after_comma_descriptor() ->
     assert ingredients == ["edamame, shelled", "carrots", "1 cup rice"]
 
 
+def test_prepare_ingredients_for_notion_dedupes_same_grocery_item() -> None:
+    text = "flour\n115 g all-purpose flour\nbrown sugar\n40 g brown sugar, packed"
+    prepared = prepare_ingredients_for_notion(text)
+    assert prepared.splitlines() == ["flour", "brown sugar"]
+
+
 def test_prepare_ingredients_for_notion_keeps_distinct_lines_after_comma_descriptor() -> None:
     text = "edamame, shelled\ncarrots\n1 cup rice"
     prepared = prepare_ingredients_for_notion(text)
@@ -248,7 +254,8 @@ def test_backfill_preserves_manual_substitution_notes() -> None:
     lines = prepared.splitlines()
     assert any("bouillon" in line for line in lines)
     assert any("see notes" in line for line in lines)
-    assert any("to taste" in line.lower() for line in lines)
+    assert not any("to taste" in line.lower() for line in lines)
+    assert any(line.strip() in {"Salt", "salt"} for line in lines)
     assert any(line.startswith("remove:") for line in lines)
 
 
@@ -275,3 +282,20 @@ def test_issue_287_weekly_plan_ingredient_normalization() -> None:
     leeks = "2 leeks, light green white parts only"
     assert prepare_ingredients_for_notion(leeks) == "2 leeks"
     assert normalize_ingredient(leeks) == "leeks"
+
+
+def test_apply_removals_pepper_only_removes_table_pepper() -> None:
+    lines = [
+        "1 fresno pepper, sliced",
+        "1 jalapeno pepper",
+        "2 green peppers",
+        "1/2 tsp ground black pepper",
+        "1/2 tsp pepper",
+    ]
+    result = apply_removals(lines, ["pepper"])
+    assert result == ["1 fresno pepper, sliced", "1 jalapeno pepper", "2 green peppers"]
+
+
+def test_apply_removals_fresno_pepper_does_not_remove_plain_pepper() -> None:
+    result = apply_removals(["1/2 tsp pepper", "1 fresno pepper"], ["fresno pepper"])
+    assert result == ["1/2 tsp pepper"]

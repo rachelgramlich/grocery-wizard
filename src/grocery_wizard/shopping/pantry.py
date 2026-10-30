@@ -13,7 +13,6 @@ __all__ = [
     "write_pantry_file",
 ]
 
-import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -39,22 +38,40 @@ def load_pantry(path: Path | None = None) -> set[str]:
     return NotionPantryDB().load_item_names()
 
 
-_FRESH_COLORED_PEPPER_RE = re.compile(
-    r"^(red|green|yellow|orange)\s+(?:bell\s+)?peppers?$",
-    re.IGNORECASE,
-)
-
-# Generic pantry ``pepper`` must not match fresh bell peppers (``red pepper``, ``red bell pepper``).
-_GENERIC_PEPPER_PANTRY = frozenset({"pepper", "peppers"})
+# Only these phrases are table pepper. A pantry/removal entry with one of them may match
+# ``pepper``, ``black pepper`` and ``ground black pepper`` and nothing else (not ``fresno pepper``,
+# ``red bell pepper``, ``jalapeno pepper``, ``pepper jack``, ...).
+_GENERIC_PEPPER_PANTRY = frozenset({"pepper", "peppers", "black pepper", "ground black pepper"})
+_PEPPER_CONNECTORS = frozenset({"and", "&"})
 
 
-def fresh_colored_pepper_blocks_generic_pepper(ingredient_name: str, pepper_phrase: str) -> bool:
-    """True when fresh colored bell pepper must not match generic pantry/removal ``pepper``."""
-    name = _pantry_match_key(ingredient_name)
-    phrase = _pantry_match_key(pepper_phrase)
-    if phrase not in _GENERIC_PEPPER_PANTRY:
+def _pepper_word_is_table_pepper(words: list[str], index: int) -> bool:
+    """True when the ``pepper`` word at *index* is plain, black, or ground black pepper."""
+    if index + 1 < len(words) and words[index + 1] not in _PEPPER_CONNECTORS:
         return False
-    return bool(_FRESH_COLORED_PEPPER_RE.match(name))
+    if index == 0 or words[index - 1] in _PEPPER_CONNECTORS:
+        return True
+    if words[index - 1] != "black":
+        return False
+    return index == 1 or words[index - 2] in _PEPPER_CONNECTORS or words[index - 2] == "ground"
+
+
+def generic_pepper_blocks_match(ingredient_name: str, pepper_phrase: str) -> bool:
+    """True when generic pantry/removal ``pepper`` must not match this ingredient.
+
+    Only ``pepper``, ``black pepper`` and ``ground black pepper`` are table pepper.
+    Any other pepper (``fresno pepper``, ``green pepper``, ``red pepper``) is produce or a
+    different product and stays on the list.
+    """
+    if _pantry_match_key(pepper_phrase) not in _GENERIC_PEPPER_PANTRY:
+        return False
+    words = _pantry_match_key(ingredient_name).split()
+    for index, word in enumerate(words):
+        if word == "peppers":
+            return True
+        if word == "pepper" and not _pepper_word_is_table_pepper(words, index):
+            return True
+    return False
 
 
 # Generic ``beans`` is not the same as named varieties (``butter beans``, ``white beans``).
@@ -130,20 +147,10 @@ def is_pantry_item(normalized: str, pantry: set[str]) -> bool:
 
     name_words = name.split()
 
-    # Fresh bell peppers (produce) must not match generic pantry ``pepper`` alone.
-    if _FRESH_COLORED_PEPPER_RE.match(name):
-        for item in pantry:
-            item_norm = _pantry_match_key(item)
-            if item_norm in _GENERIC_PEPPER_PANTRY:
-                continue
-            if name == item_norm:
-                return True
-            if _contains_word_phrase(name_words, item_norm.split()):
-                return True
-        return False
-
     for item in pantry:
         item_norm = _pantry_match_key(item)
+        if generic_pepper_blocks_match(name, item_norm):
+            continue
         if _skip_pantry_phrase_match(name, item_norm):
             continue
         if name == item_norm:
@@ -177,6 +184,10 @@ def _matches_pantry_search(search: str, item: str) -> bool:
         return False
     if lowered_search == lowered_item:
         return True
+    if generic_pepper_blocks_match(lowered_item, lowered_search) or generic_pepper_blocks_match(
+        lowered_search, lowered_item
+    ):
+        return False
     if lowered_item.startswith(lowered_search):
         return True
 

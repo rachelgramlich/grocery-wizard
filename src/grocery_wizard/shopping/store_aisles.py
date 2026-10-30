@@ -165,6 +165,26 @@ def ingredient_name(item: str) -> str:
     return name or cleaned.strip()
 
 
+# Free-text tails that are not part of the ingredient: ``butter for freezer``,
+# ``cheese shredded!``, ``cauliflower head``.
+_TRAILING_PUNCTUATION_RE = re.compile(r"[!?.\s]+$")
+_FOR_PHRASE_RE = re.compile(r"\s+for\s+\S.*$", re.IGNORECASE)
+_TRAILING_FORM_WORDS = frozenset(
+    {"head", "heads", "shredded", "grated", "chopped", "sliced", "diced", "minced"}
+)
+_CAN_UNITS = frozenset({"can", "cans"})
+
+
+def _strip_trailing_noise(name: str) -> str:
+    """Drop trailing punctuation, ``for ...`` phrases, and form words like ``head``."""
+    text = _TRAILING_PUNCTUATION_RE.sub("", name)
+    text = _FOR_PHRASE_RE.sub("", text)
+    words = text.split()
+    while len(words) > 1 and words[-1] in _TRAILING_FORM_WORDS:
+        words.pop()
+    return " ".join(words)
+
+
 def _strip_prep_suffix(name: str) -> str:
     """Remove trailing prep phrases so aisle keywords match the base ingredient."""
     text = name
@@ -188,7 +208,9 @@ def _aisle_classification_name(item: str) -> str:
         base = stripped
     else:
         base = (name_part or stripped).lower()
-    return _strip_prep_suffix(base)
+    if _amount and _amount.split()[-1].lower() in _CAN_UNITS:
+        base = f"canned {base}"
+    return _strip_trailing_noise(_strip_prep_suffix(base))
 
 
 def classify_aisle(item: str, *, config: StoreAisleConfig | None = None) -> str:

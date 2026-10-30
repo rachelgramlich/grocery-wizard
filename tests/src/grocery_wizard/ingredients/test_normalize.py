@@ -18,6 +18,7 @@ from src.grocery_wizard.ingredients.normalize import (
     split_recipe_title_bleed,
 )
 from src.grocery_wizard.ingredients.sync import prepare_ingredients_for_notion
+from src.grocery_wizard.shopping.grocery_list import normalize_grocery_list_item
 
 
 @pytest.mark.parametrize(
@@ -36,7 +37,7 @@ from src.grocery_wizard.ingredients.sync import prepare_ingredients_for_notion
         ("1 can chickpeas, rinsed and drained", "chickpeas"),
         ("lime wedges", "limes"),
         ("1 lime, cut into wedges (optional)", "limes"),
-        ("3 packed cups coarsely chopped tuscan or curly kale", "kale"),
+        ("3 packed cups coarsely chopped tuscan or curly kale", "tuscan or curly kale"),
         ("4 teaspoons gochujang", "gochujang"),
         ("1 red onion, sliced into half-moons", "red onions"),
     ],
@@ -49,8 +50,8 @@ def test_normalize_ingredient(raw: str, expected: str) -> None:
     ("raw", "expected"),
     [
         ("2 small yellow onions, sliced 1/4 inch thick lengthwise", "2 small yellow onions"),
-        ("1 onion, diced", "1 onions"),
-        ("3 cloves garlic, minced", "clove:3 garlic"),
+        ("1 onion, diced", "1 onion"),
+        ("3 cloves garlic, minced", "3 cloves garlic"),
         (
             "1 chicken bouillon cube (or substitute 2 cups chicken broth for the water bouillon)",
             "1 chicken bouillon cube (or substitute 2 cups chicken broth for the water bouillon)",
@@ -90,7 +91,7 @@ def test_normalize_ingredient_keeps_chicken_with_prep_segments() -> None:
 @pytest.mark.parametrize(
     ("raw", "expected"),
     [
-        ("Optional: 1 lb ground chicken, turkey, or beef", "ground chicken"),
+        ("Optional: 1 lb ground chicken, turkey, or beef", "ground chicken, turkey, or beef"),
         ("3 garlic cloves, minced or grated", "garlic"),
         ("Crushed red pepper", "crushed red pepper"),
         ("1 cup/110 grams almond flour (ground almonds)", "almond flour"),
@@ -109,6 +110,14 @@ def test_should_show_amount() -> None:
     assert should_show_amount("3", "3 packed cups kale") is False
     assert should_show_amount("2", "2 sweet potatoes") is True
     assert should_show_amount("1 lb", "1 lb chicken breast") is True
+
+
+def test_should_show_amount_ignores_package_size_in_parentheses() -> None:
+    assert should_show_amount("2 cans", "2 (15-ounce) cans beans") is True
+    assert should_show_amount("1 can", "1 (15-ounce) can diced tomatoes") is True
+    assert should_show_amount("2 blocks", "2 (6- to 8-ounce) blocks feta") is True
+    assert should_show_amount("8 ounces", "8 ounces feta") is False
+    assert should_show_amount(None, "1 cup (4 ounces) feta") is False
 
 
 def test_normalize_ingredient_empty() -> None:
@@ -253,12 +262,27 @@ def test_split_merged_ingredient_line() -> None:
         ("1 lb chicken breast", "chicken breast", "1 lb"),
         ("2 cans white beans", "white beans", "2 cans"),
         ("2 pkgs gnocchi", "gnocchi", "2 pkgs"),
-        ("3 cloves garlic, minced", "garlic", "clove:3"),
+        ("3 cloves garlic, minced", "garlic", "3 cloves"),
         ("8 oz tortellini", "tortellini", "8 oz"),
         ("1/2 cup all-purpose flour", "flour", None),
         ("2 tbsp olive oil, plus more for drizzling", "olive oil", None),
         # Inline descriptor stripped, unit still detected
         ("2 (15-ounce) cans diced tomatoes", "diced tomatoes", "2 cans"),
+        ("2 (6- to 8-ounce) blocks feta", "feta", "2 blocks"),
+        ("2 blocks feta", "feta", "2 blocks"),
+        ("sliced cheese", "sliced cheese", None),
+        ("1 cup crumbled feta", "crumbled feta", None),
+        ("8 ounces crumbled feta", "crumbled feta", "8 ounces"),
+        ("4 ounces feta cheese, crumbled", "crumbled feta cheese", None),
+        ("12 ounces fontina or Gruyère", "fontina or Gruyère", "12 ounces"),
+        ("3/4 cup sliced almonds", "sliced almonds", None),
+        ("sliced almonds", "sliced almonds", None),
+        ("3/4 cup thinly sliced red onion", "red onions", None),
+        ("1/2 cup thinly sliced scallions", "scallions", None),
+        ("3/4 cup sliced mushrooms", "mushrooms", None),
+        ("sliced swiss cheese", "sliced swiss cheese", None),
+        ("1 package sliced cheese", "sliced cheese", "1 package"),
+        ("8 ounces fresh mozzarella, thinly sliced", "mozzarella", None),
         # Bare count (no recognised unit) → bare number returned
         ("2 eggs", "eggs", "2"),
         ("4 large carrots, peeled", "carrots", "4"),
@@ -370,6 +394,95 @@ def test_expand_ingredient_line_splits_merged_stored_lines() -> None:
     assert len(expanded) >= 3
 
 
+def test_storage_keeps_crumbled_feta_when_comma_after_feta() -> None:
+    assert (
+        clean_ingredient_line_for_storage("1 cup feta, crumbled (about 4 ounces)")
+        == "crumbled feta"
+    )
+
+
+def test_storage_expands_such_as_herbs() -> None:
+    assert (
+        clean_ingredient_line_for_storage(
+            "1/4 cup chopped fresh herbs, such as dill, basil, mint or parsley, plus more for serving"
+        )
+        == "fresh herbs (dill, basil, mint or parsley)"
+    )
+
+
+def test_storage_keeps_or_alternatives_in_name() -> None:
+    assert (
+        clean_ingredient_line_for_storage("1/3 cup chopped cilantro, dill or parsley")
+        == "cilantro, dill or parsley"
+    )
+    assert (
+        clean_ingredient_line_for_storage("3 oregano, rosemary or sage sprigs")
+        == "3 oregano, rosemary or sage sprigs"
+    )
+    assert (
+        clean_ingredient_line_for_storage("1/3 cup chopped fresh cilantro or mint")
+        == "cilantro or mint"
+    )
+
+
+def test_prepare_merges_split_lemon_lime_juice_lines() -> None:
+    prepared = prepare_ingredients_for_notion(
+        "2 tablespoons lemon\nlime\njuice\n6 large cloves garlic, finely grated"
+    )
+    lines = [line.strip().lower() for line in prepared.splitlines()]
+    assert "juice" not in lines
+    assert "lemon or lime" in prepared
+    assert "6 cloves garlic" in prepared
+
+
+def test_storage_fresh_or_frozen_and_stock_sprigs() -> None:
+    assert (
+        clean_ingredient_line_for_storage("2 cups/8 ounces/266 grams fresh or frozen cranberries")
+        == "fresh or frozen cranberries"
+    )
+    assert (
+        clean_ingredient_line_for_storage(
+            "4 1/4 cups/1 liter vegetable stock or water, plus more if needed"
+        )
+        == "vegetable stock"
+    )
+    assert (
+        clean_ingredient_line_for_storage("12 cilantro sprigs tied with kitchen twine")
+        == "12 cilantro sprigs"
+    )
+
+
+def test_prepare_merges_unclosed_paren_and_continuation_after_split() -> None:
+    prepared = prepare_ingredients_for_notion(
+        "1 1/2 cups tightly packed mixed herb leaves (such as cilantro, mint\n"
+        "Thai basil), torn if large\n"
+        "4 ounces rice\n"
+        "vermicelli noodles"
+    )
+    assert "Thai basil" not in prepared or "herb" in prepared.lower()
+    assert "vermicelli" in prepared.lower()
+
+
+def test_prepare_drops_box_grater_prep_line() -> None:
+    prepared = prepare_ingredients_for_notion(
+        "1 large tomato\n"
+        "grated on the large holes of a box grater or finely chopped, juices reserved\n"
+        "1 onion"
+    )
+    assert "grater" not in prepared.lower()
+    assert "1 large tomato" in prepared
+    assert "1 onion" in prepared
+
+
+def test_prepare_drops_crosswise_prep_only_line() -> None:
+    prepared = prepare_ingredients_for_notion(
+        "1 romaine heart\nsliced crosswise into 1/2-inch pieces\n1 can chickpeas"
+    )
+    assert "crosswise" not in prepared
+    assert "1 romaine heart" in prepared
+    assert "1 can chickpeas" in prepared
+
+
 def test_prepare_ingredients_does_not_merge_ground_cumin_continuation() -> None:
     stored = (
         "2 lemons\n"
@@ -416,9 +529,6 @@ def test_aggregate_amounts_rounds_up_limes() -> None:
 @pytest.mark.parametrize(
     ("raw", "expected_name", "expected_amount"),
     [
-        ("juice of half a lemon", "lemons", "1/2"),
-        ("zest of 1 lemon", "lemons", "zest:1"),
-        ("Juice of 1/2 lemon, to taste", "lemons", "1/2"),
         ("1 lemon", "lemons", "1"),
         ("2 lemons", "lemons", "2"),
     ],
@@ -429,31 +539,41 @@ def test_parse_amount_lemon_variants(raw: str, expected_name: str, expected_amou
     assert amount == expected_amount
 
 
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "juice of half a lemon",
+        "zest of 1 lemon",
+        "Juice of 1/2 lemon, to taste",
+        "lemon zest",
+    ],
+)
+def test_parse_amount_drops_zest_and_juice_only_lines(raw: str) -> None:
+    assert parse_amount(raw) == ("", None)
+
+
 def test_aggregate_amounts_consolidates_lemon_variants() -> None:
     amounts = [
-        parse_amount("juice of half a lemon")[1],
         parse_amount("1 lemon")[1],
-        parse_amount("zest of 1 lemon")[1],
+        parse_amount("2 lemons")[1],
     ]
     assert aggregate_amounts(amounts) == "3"
 
 
 def test_aggregate_amounts_consolidates_lemon_variants_with_two_whole() -> None:
     amounts = [
-        parse_amount(clean_ingredient_line_for_storage("juice of half a lemon"))[1],
-        parse_amount(clean_ingredient_line_for_storage("zest of 1 lemon"))[1],
+        parse_amount(clean_ingredient_line_for_storage("1 lemon"))[1],
         parse_amount(clean_ingredient_line_for_storage("2 lemons"))[1],
     ]
-    assert aggregate_amounts(amounts) == "4"
+    assert aggregate_amounts(amounts) == "3"
 
 
 def test_aggregate_amounts_consolidates_lime_variants() -> None:
     amounts = [
-        parse_amount("juice of 1 lime")[1],
-        parse_amount("zest of 1 lime")[1],
-        parse_amount("1/2 lime, juiced")[1],
+        parse_amount("1 lime")[1],
+        parse_amount("1/2 lime")[1],
     ]
-    assert aggregate_amounts(amounts, name="limes") == "3"
+    assert aggregate_amounts(amounts, name="limes") == "2"
 
 
 def test_aggregate_amounts_garlic_cloves_do_not_sum() -> None:
@@ -504,7 +624,7 @@ def test_aggregate_amounts_garlic_many_cloves_with_head() -> None:
 def test_clean_ingredient_line_for_storage_head_garlic() -> None:
     assert clean_ingredient_line_for_storage("1 head garlic") == "1 head garlic"
     assert clean_ingredient_line_for_storage("2 heads garlic") == "2 head garlic"
-    assert clean_ingredient_line_for_storage("12 cloves garlic, minced") == "clove:12 garlic"
+    assert clean_ingredient_line_for_storage("12 cloves garlic, minced") == "12 cloves garlic"
 
 
 @pytest.mark.parametrize(
@@ -515,11 +635,11 @@ def test_clean_ingredient_line_for_storage_head_garlic() -> None:
         ("extra-virgin olive oil more", "extra-virgin olive oil"),
         ("to 2 cups loosely packed celery leaves", "celery"),
         ("4 or 6 small celery stalks", "celery"),
-        ("juice of half a lemons", "lemons"),
-        ("zest of 1 lemons", "lemons"),
-        ("lemon zest", "lemons"),
+        ("juice of half a lemons", ""),
+        ("zest of 1 lemons", ""),
+        ("lemon zest", ""),
         ("3 tablespoons sherry vinegar, more as needed", "sherry vinegar"),
-        ("4 cups cooked or canned chickpeas", "canned chickpeas"),
+        ("4 cups cooked or canned chickpeas", "cooked or canned chickpeas"),
         (
             "4 large or 6 small celery stalks, trimmed (reserve the leaves)",
             "celery",
@@ -569,19 +689,11 @@ def test_aggregate_stored_lemon_zest_with_whole_lemons() -> None:
 def test_legacy_lemon_zest_stored_format() -> None:
     from src.grocery_wizard.ingredients.parsed import format_ingredient_for_storage
 
-    assert format_ingredient_for_storage("lemon zest") == "zest lemons"
-    assert format_ingredient_for_storage("1/2 teaspoon lemon zest") == "zest lemons"
-    assert (
-        format_ingredient_for_storage("1 teaspoon finely grated lemon zest (from 1 lemon)")
-        == "zest lemons"
-    )
-    assert (
-        format_ingredient_for_storage("1/2 teaspoon lemon zest (from 1/2 lemon)")
-        == "zest 1/2 lemons"
-    )
-    name, amount = parse_amount("lemon zest")
-    assert name == "lemons"
-    assert amount == "zest:1"
+    assert format_ingredient_for_storage("lemon zest") == ""
+    assert format_ingredient_for_storage("1/2 teaspoon lemon zest") == ""
+    assert format_ingredient_for_storage("1 teaspoon finely grated lemon zest (from 1 lemon)") == ""
+    assert format_ingredient_for_storage("1/2 teaspoon lemon zest (from 1/2 lemon)") == ""
+    assert parse_amount("lemon zest") == ("", None)
 
 
 def test_celery_stalks_store_as_celery() -> None:
@@ -654,7 +766,32 @@ def test_nyt_prep_only_lines_are_junk(raw: str) -> None:
     assert normalize_ingredient(raw) == ""
 
 
-def test_nyt_minimal_cleanup_drops_prep_only_lines() -> None:
+def test_prepare_ingredients_formats_can_with_package_size() -> None:
+    prepared = prepare_ingredients_for_notion("2 (15-ounce) cans beans")
+    assert prepared.splitlines() == ["2 cans beans"]
+
+
+@pytest.mark.parametrize(
+    ("raw", "expect_stored"),
+    [
+        ("1/3 cup/40 grams chopped pecans", "pecans"),
+        ("1 cup/240 milliliters heavy cream", "heavy cream"),
+        ("6 tablespoons/85 grams unsalted butter", "unsalted butter"),
+        ("1 pound/454 grams strawberries", "1 lb strawberries"),
+        ("1/2 cup/4 ounces/113 grams cream cheese, cold", "cream cheese"),
+        ("3 large/100 grams egg whites", "3 large egg whites"),
+        ("2 packed cups baby spinach", "baby spinach"),
+        ("11/2 packed cups mint leaves", "mint"),
+        ("1 pound medium or small shrimp", "1 lb shrimp"),
+        ("1 scant cup/190 grams granulated sugar", "granulated sugar"),
+        ("About 1 heaping cup coarsely grated Parmesan", "Parmesan"),
+    ],
+)
+def test_format_ingredient_for_storage_strips_dual_measures(raw: str, expect_stored: str) -> None:
+    assert clean_ingredient_line_for_storage(raw) == expect_stored
+
+
+def test_nyt_url_uses_full_format_and_drops_prep_only_lines() -> None:
     prepared = prepare_ingredients_for_notion(
         "ribs removed, then minced\nshelled\n1 3/4 cups low-sodium chicken or vegetable stock",
         source_url="https://cooking.nytimes.com/recipes/12345-test",
@@ -901,3 +1038,91 @@ def test_spice_cloves_without_garlic_are_kept() -> None:
     assert clean_ingredient_line_for_storage("3 cloves (laung, optional)") == "3 cloves"
     assert parse_amount("3 cloves") == ("cloves", "3")
     assert not is_junk_ingredient("3 cloves")
+
+
+def test_parse_notion_ingredient_does_not_reformat_stored_line() -> None:
+    from src.grocery_wizard.ingredients.normalize import (
+        parse_amount,
+        parse_notion_ingredient_for_grocery,
+    )
+
+    assert parse_notion_ingredient_for_grocery("sliced cheese") == ("sliced cheese", None)
+    assert parse_amount("sliced cheese") == ("sliced cheese", None)
+    # Legacy raw NYT lines are for storage-time cleanup, not silent list-time rewrite.
+    assert parse_notion_ingredient_for_grocery("2 (15-ounce) cans beans") == ("beans", "2 cans")
+    assert parse_notion_ingredient_for_grocery("2 cans beans") == ("beans", "2 cans")
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "sliced cheese",
+        "sliced swiss cheese",
+        "3/4 cup sliced almonds",
+        "1 cup crumbled feta",
+        "8 ounces crumbled feta",
+        "1 cup crumbled fresh goat cheese (4 ounces)",
+        "2 scallions",
+        "pecans",
+        "2 cans beans",
+        "2 blocks feta",
+        "1 pound fusilli or rotini",
+        "12 ounces fontina or Gruyère",
+    ],
+)
+def test_grocery_item_is_stable_when_cleaned_a_second_time(raw: str) -> None:
+    """Later list stages re-read built items; a second clean must not strip anything more."""
+    first = normalize_grocery_list_item(raw)
+    assert normalize_grocery_list_item(first) == first
+
+
+@pytest.mark.parametrize(
+    ("raw", "stored"),
+    [
+        ("85 g (6 tablespoons) cold butter, cubed", "butter"),
+        ("1 stick cold butter, cubed", "1 stick butter"),
+        ("1 cup cold water", "water"),
+        ("Clear coarse sanding sugar, for a generous sprinkle", "coarse sanding sugar"),
+        ("2 tablespoons clear honey", "clear honey"),
+        ("1 tbsp ground sea salt", "ground sea salt"),
+    ],
+)
+def test_cold_and_clear_sprinkle_words_are_cleaned(raw: str, stored: str) -> None:
+    assert clean_ingredient_line_for_storage(raw) == stored
+
+
+def test_obsessed_cakes_apple_fritter_coffee_cake_ingredients_store_clean_names() -> None:
+    lines = [
+        "115 g (about 1 cup) all-purpose flour",
+        "40 g (3 tablespoons + 1 teaspoon) granulated sugar",
+        "85 g (6 tablespoons) cold butter, cubed",
+        "200 g (3/4 cup + 1 tablespoon) plain Greek yogurt, room temperature",
+        "135 g (1/2 cup + 1 tablespoon) milk, room temperature",
+        (
+            "200 g (about 2 cups) Granny Smith apple, peeled, cored, "
+            "and cut into roughly 1/2-inch pieces"
+        ),
+        "Clear coarse sanding sugar, for a generous sprinkle",
+        "220 g (about 1 3/4 cups + 1 tablespoon) powdered sugar",
+        "115 g (about 1 cup) all-purpose flour",
+        "40 g (3 tablespoons) brown sugar, packed",
+    ]
+    assert prepare_ingredients_for_notion("\n".join(lines)).splitlines() == [
+        "flour",
+        "granulated sugar",
+        "butter",
+        "plain Greek yogurt",
+        "milk",
+        "2 Granny Smith apples",
+        "coarse sanding sugar",
+        "powdered sugar",
+        "brown sugar",
+    ]
+
+
+def test_gram_first_apple_line_keeps_piece_count_from_parenthetical_cups() -> None:
+    raw = (
+        "200 g (about 2 cups) Granny Smith apple, peeled, cored, "
+        "and cut into roughly 1/2-inch pieces"
+    )
+    assert clean_ingredient_line_for_storage(raw) == "2 Granny Smith apples"

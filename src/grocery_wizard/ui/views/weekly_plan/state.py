@@ -61,6 +61,7 @@ PLAN_PREBUILD_MANUAL_POPOVER_KEY = "plan_prebuild_manual_popover"
 PLAN_BUILDER_POPOVER_KEY = "plan_builder_popover"
 _OVERWRITE_CONFIRM_FP_KEY = "weekly_plan_overwrite_confirm_fingerprint"
 _RUN_GROCERY_AFTER_OVERWRITE_KEY = "weekly_plan_run_grocery_after_overwrite"
+_GROCERY_OVERWRITE_PENDING_KEY = "weekly_plan_grocery_overwrite_pending"
 _DEV_PLAN_MEALS_ACK_FP_KEY = "weekly_dev_plan_meals_ack_fingerprint"
 
 
@@ -289,6 +290,7 @@ def _invalidate_weekly_plan_save_state() -> None:
     st.session_state.pop(_DEV_PLAN_MEALS_ACK_FP_KEY, None)
     st.session_state.pop(_OVERWRITE_CONFIRM_FP_KEY, None)
     st.session_state.pop(_RUN_GROCERY_AFTER_OVERWRITE_KEY, None)
+    st.session_state.pop(_GROCERY_OVERWRITE_PENDING_KEY, None)
 
 
 def _sync_weekly_plan_save_state(recipe_names: list[str], plan: SavedWeeklyPlan) -> None:
@@ -344,6 +346,7 @@ def _render_weekly_plan_overwrite_prompt(
     existing: SavedWeeklyPlan,
     *,
     confirm_button_key: str,
+    cached_recipes: list[Recipe] | None = None,
 ) -> None:
     removed, added = _plan_recipe_diff_markdown(previous=existing.recipes, new_names=recipe_names)
     st.warning(
@@ -357,6 +360,8 @@ def _render_weekly_plan_overwrite_prompt(
         st.markdown("**Adding:** " + ", ".join(added))
     if st.button("Replace saved plan for this week", type="primary", key=confirm_button_key):
         st.session_state[_OVERWRITE_CONFIRM_FP_KEY] = _overwrite_confirm_fingerprint(recipe_names)
+        with loading_indicator("Saving plan to Notion…"):
+            _commit_weekly_plan_to_notion(recipe_names, cached_recipes=cached_recipes)
         st.rerun()
 
 
@@ -368,6 +373,7 @@ def _apply_weekly_plan_save_result(
 ) -> None:
     save_week_plan(recipe_names, WEEK_PLAN_PATH)
     _sync_weekly_plan_save_state(recipe_names, result.plan)
+    st.session_state.pop(_GROCERY_OVERWRITE_PENDING_KEY, None)
     from src.grocery_wizard.ui.views.weekly_plan.step_ui import (
         collapse_after_plan_saved_to_notion,
     )
@@ -411,6 +417,7 @@ def _persist_weekly_plan_to_notion(
             recipe_names,
             existing,
             confirm_button_key=overwrite_confirm_key,
+            cached_recipes=cached_recipes,
         )
         return None
 
@@ -443,12 +450,40 @@ def _ensure_weekly_plan_saved_before_grocery(
         return True
     if _matching_saved_plan(recipe_names) is not None:
         return True
-    plan = _persist_weekly_plan_to_notion(
-        recipe_names,
-        cached_recipes=cached_recipes,
-        overwrite_confirm_key="weekly_plan_confirm_overwrite_grocery",
-    )
+    would_replace, existing = _weekly_plan_save_would_replace(recipe_names)
+    if (
+        would_replace
+        and existing is not None
+        and not _weekly_plan_overwrite_confirmed(recipe_names)
+    ):
+        # The prompt must outlive this button click, so it is drawn on the next run.
+        st.session_state[_GROCERY_OVERWRITE_PENDING_KEY] = True
+        st.rerun()
+    plan = _persist_weekly_plan_to_notion(recipe_names, cached_recipes=cached_recipes)
     return plan is not None
+
+
+def _render_pending_grocery_overwrite_prompt(
+    recipe_names: list[str],
+    *,
+    cached_recipes: list[Recipe] | None = None,
+) -> None:
+    """Show the replace prompt queued by **Create grocery list**; its button saves to Notion."""
+    if not st.session_state.get(_GROCERY_OVERWRITE_PENDING_KEY):
+        return
+    if _matching_saved_plan(recipe_names) is not None:
+        st.session_state.pop(_GROCERY_OVERWRITE_PENDING_KEY, None)
+        return
+    would_replace, existing = _weekly_plan_save_would_replace(recipe_names)
+    if not would_replace or existing is None:
+        st.session_state.pop(_GROCERY_OVERWRITE_PENDING_KEY, None)
+        return
+    _render_weekly_plan_overwrite_prompt(
+        recipe_names,
+        existing,
+        confirm_button_key="weekly_plan_confirm_overwrite_grocery",
+        cached_recipes=cached_recipes,
+    )
 
 
 def _render_save_plan_controls(
@@ -503,6 +538,7 @@ def _render_save_plan_controls(
             recipe_names,
             existing,
             confirm_button_key="weekly_plan_confirm_overwrite_save",
+            cached_recipes=cached_recipes,
         )
         return
 

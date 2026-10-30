@@ -37,6 +37,49 @@ def strip_parenthetical_groups(text: str) -> str:
     return text.replace(")", "").strip()
 
 
+_ALT_MEASURE_UNITS = (
+    r"grams?|g|kilograms?|kg|milliliters?|ml|liters?|ounces?|oz|pounds?|lbs?|"
+    r"cups?|tablespoons?|teaspoons?"
+)
+# NYT dual measures: ``1 cup/240 grams`` and ``1/2 cup/4 ounces/113 grams``.
+_ALT_MEASURE_RE = re.compile(
+    rf"(?<=[A-Za-z])\s*/\s*(?:about\s+|approximately\s+)?\d+(?:\.\d+)?(?:\s+\d+/\d+)?"
+    rf"\s*(?:{_ALT_MEASURE_UNITS})\b",
+    re.IGNORECASE,
+)
+# ``2 packed cups spinach`` -> ``2 cups spinach`` (packing is prep, not an ingredient).
+_PACKED_BEFORE_UNIT_RE = re.compile(
+    r"(?P<qty>\d[\d/ ]*?)\s+(?:(?:lightly|loosely|firmly)\s+)?packed\s+"
+    r"(?P<unit>cups?|tablespoons?|teaspoons?)\b",
+    re.IGNORECASE,
+)
+# Scraped ``1½`` can arrive as ``11/2`` (also ``13/4``, ``11/3``).
+_RUN_TOGETHER_MIXED_RE = re.compile(r"(?<![\d/.])(\d)(\d)/([2-9])(?=[\s-]|$)")
+_QUANTITY_HEDGE_RE = re.compile(r"\b(?:scant|heaping|heaped|rounded)\s+", re.IGNORECASE)
+_LEADING_APPROXIMATION_RE = re.compile(r"^(?:about|approximately|roughly)\s+(?=\d)", re.IGNORECASE)
+_SIZE_ALTERNATIVE_RE = re.compile(
+    r"\b(?:small|medium|large)\s+or\s+(?:small|medium|large)\b\s*",
+    re.IGNORECASE,
+)
+
+
+def _split_run_together_mixed(match: re.Match[str]) -> str:
+    whole, numerator, denominator = match.groups()
+    if 1 <= int(numerator) < int(denominator):
+        return f"{whole} {numerator}/{denominator}"
+    return match.group(0)
+
+
+def normalize_measurement_text(text: str) -> str:
+    """Clean measurement quirks that otherwise leak into ingredient names."""
+    text = _ALT_MEASURE_RE.sub("", text)
+    text = _PACKED_BEFORE_UNIT_RE.sub(r"\g<qty> \g<unit>", text)
+    text = _RUN_TOGETHER_MIXED_RE.sub(_split_run_together_mixed, text)
+    text = _QUANTITY_HEDGE_RE.sub("", text)
+    text = _LEADING_APPROXIMATION_RE.sub("", text.strip())
+    return _SIZE_ALTERNATIVE_RE.sub("", text)
+
+
 def mask_parenthetical_groups(text: str) -> str:
     """Blank out text inside parentheses, keeping string length and offsets."""
     depth = 0
