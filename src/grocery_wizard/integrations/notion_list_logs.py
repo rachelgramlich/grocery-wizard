@@ -1,4 +1,7 @@
-"""Notion database for grocery list build debug logs (one row per build)."""
+"""Notion database for weekly grocery list build debug logs (one row per build).
+
+Only the weekly grocery list flow writes here today; other app surfaces do not log yet.
+"""
 
 from __future__ import annotations
 
@@ -7,6 +10,8 @@ __all__ = [
     "LIST_LOG_JSON_COLUMN",
     "LIST_LOG_MEALS_COLUMN",
     "LIST_LOG_NAME_COLUMN",
+    "LIST_LOG_TYPE_VALUE",
+    "WEEKLY_LIST_LOG_TITLE_PREFIX",
     "NotionListDebugLogsDB",
     "list_log_notion_title",
     "persist_list_log_to_notion",
@@ -25,6 +30,9 @@ LIST_LOG_NAME_COLUMN = "Name"
 LIST_LOG_BUILT_AT_COLUMN = "Built at"
 LIST_LOG_MEALS_COLUMN = "Meals"
 LIST_LOG_JSON_COLUMN = "Log JSON"
+LIST_LOG_TYPE_COLUMNS = ("Type", "Surface")
+LIST_LOG_TYPE_VALUE = "weekly grocery list"
+WEEKLY_LIST_LOG_TITLE_PREFIX = "[weekly list]"
 
 _LOG = logging.getLogger(__name__)
 
@@ -40,11 +48,13 @@ def list_log_notion_title(log: dict[str, Any]) -> str:
     except ValueError:
         stamp = created[:19] if created else "Grocery list build"
     if not meals:
-        return stamp
-    preview = ", ".join(meals[:3])
-    if len(meals) > 3:
-        preview = f"{preview} (+{len(meals) - 3} more)"
-    title = f"{stamp} · {preview}"
+        body = stamp
+    else:
+        preview = ", ".join(meals[:3])
+        if len(meals) > 3:
+            preview = f"{preview} (+{len(meals) - 3} more)"
+        body = f"{stamp} · {preview}"
+    title = f"{WEEKLY_LIST_LOG_TITLE_PREFIX} {body}"
     return title[:2000]
 
 
@@ -53,9 +63,9 @@ class NotionListDebugLogsDB:
 
     def __init__(self, config: Config | None = None) -> None:
         cfg = config or load_config()
-        db_id = cfg.notion_list_debug_logs_database_id
+        db_id = cfg.notion_debug_logs_database_id
         if not db_id:
-            raise ValueError("NOTION_LIST_DEBUG_LOGS_DATABASE_ID is required")
+            raise ValueError("NOTION_DEBUG_LOGS_DATABASE_ID is required")
         self._db = NotionDatabase(cfg, db_id)
         for column in (LIST_LOG_NAME_COLUMN, LIST_LOG_JSON_COLUMN):
             if column not in self._db.column_types:
@@ -88,7 +98,15 @@ class NotionListDebugLogsDB:
             )
         if LIST_LOG_MEALS_COLUMN in self._db.column_types:
             props.update(self._db.property_payload(LIST_LOG_MEALS_COLUMN, _meals_summary(log)))
+        props.update(_optional_type_property(self._db))
         return props
+
+
+def _optional_type_property(db: NotionDatabase) -> dict[str, Any]:
+    for column in LIST_LOG_TYPE_COLUMNS:
+        if column in db.column_types:
+            return db.property_payload(column, LIST_LOG_TYPE_VALUE)
+    return {}
 
 
 def _meals_summary(log: dict[str, Any]) -> str:

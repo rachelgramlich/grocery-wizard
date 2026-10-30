@@ -8,6 +8,8 @@ from unittest.mock import MagicMock, patch
 from src.grocery_wizard.integrations.notion_list_logs import (
     LIST_LOG_JSON_COLUMN,
     LIST_LOG_NAME_COLUMN,
+    LIST_LOG_TYPE_VALUE,
+    WEEKLY_LIST_LOG_TITLE_PREFIX,
     NotionListDebugLogsDB,
     list_log_notion_title,
     persist_list_log_to_notion,
@@ -22,6 +24,7 @@ def test_list_log_notion_title_includes_meals() -> None:
         "meals": [{"name": "Tacos"}, {"name": "Soup"}],
     }
     title = list_log_notion_title(log)
+    assert title.startswith(WEEKLY_LIST_LOG_TITLE_PREFIX)
     assert "Tacos" in title
     assert "2026-10-30" in title
 
@@ -32,6 +35,7 @@ def test_save_log_creates_page(mock_db_cls: MagicMock) -> None:
     mock_db.column_types = {
         LIST_LOG_NAME_COLUMN: "title",
         LIST_LOG_JSON_COLUMN: "rich_text",
+        "Type": "select",
     }
     mock_db.property_payload.side_effect = lambda column, value: {column: value}
     mock_db.create_page.return_value = NotionPageRow(page_id="page-1", properties={})
@@ -49,10 +53,12 @@ def test_save_log_creates_page(mock_db_cls: MagicMock) -> None:
         final_items=[],
         created_at=datetime(2026, 10, 30, tzinfo=UTC),
     )
-    db = NotionListDebugLogsDB(MagicMock(notion_list_debug_logs_database_id="logs-db"))
+    db = NotionListDebugLogsDB(MagicMock(notion_debug_logs_database_id="logs-db"))
     page_id = db.save_log(log)
     assert page_id == "page-1"
     mock_db.create_page.assert_called_once()
+    create_kwargs = mock_db.create_page.call_args[0][0]
+    assert create_kwargs["Type"] == LIST_LOG_TYPE_VALUE
 
 
 @patch("src.grocery_wizard.integrations.notion_list_logs.NotionListDebugLogsDB")

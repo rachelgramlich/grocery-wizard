@@ -75,8 +75,11 @@ class Config(BaseSettings):
     notion_weekly_meal_plans_database_id: str = Field(
         validation_alias="NOTION_WEEKLY_MEAL_PLANS_DATABASE_ID",
     )
-    notion_list_debug_logs_database_id: str = Field(
-        validation_alias="NOTION_LIST_DEBUG_LOGS_DATABASE_ID",
+    notion_debug_logs_database_id: str = Field(
+        validation_alias=AliasChoices(
+            "NOTION_DEBUG_LOGS_DATABASE_ID",
+            "NOTION_LIST_DEBUG_LOGS_DATABASE_ID",
+        ),
     )
     default_meals: int = Field(default=7, validation_alias="GROCERY_WIZARD_DEFAULT_MEALS")
     dev_ui_enabled: bool = Field(default=False, validation_alias="GROCERY_WIZARD_DEV_UI")
@@ -135,7 +138,7 @@ class Config(BaseSettings):
         "notion_pantry_database_id",
         "notion_recurring_weekly_database_id",
         "notion_weekly_meal_plans_database_id",
-        "notion_list_debug_logs_database_id",
+        "notion_debug_logs_database_id",
         "notion_data_source_id",
         "name_column",
         "link_column",
@@ -202,13 +205,14 @@ class Config(BaseSettings):
             )
         return value
 
-    @field_validator("notion_list_debug_logs_database_id")
+    @field_validator("notion_debug_logs_database_id")
     @classmethod
-    def _require_list_debug_logs_database_id(cls, value: str | None) -> str:
+    def _require_debug_logs_database_id(cls, value: str | None) -> str:
         if not value:
             raise ValueError(
-                "NOTION_LIST_DEBUG_LOGS_DATABASE_ID is required "
-                "(set in .env or Cloud Agent Secrets)"
+                "NOTION_DEBUG_LOGS_DATABASE_ID is required "
+                "(legacy alias NOTION_LIST_DEBUG_LOGS_DATABASE_ID; "
+                "set in .env or Cloud Agent Secrets)"
             )
         return value
 
@@ -348,9 +352,10 @@ def load_config() -> Config:
                     "NOTION_WEEKLY_MEAL_PLANS_DATABASE_ID is required "
                     "(set in .env or Cloud Agent Secrets)"
                 ) from exc
-            if "notion_list_debug_logs_database_id" in loc:
+            if "notion_debug_logs_database_id" in loc:
                 raise ValueError(
-                    "NOTION_LIST_DEBUG_LOGS_DATABASE_ID is required "
-                    "(set in .env or Cloud Agent Secrets)"
+                    "NOTION_DEBUG_LOGS_DATABASE_ID is required "
+                    "(legacy alias NOTION_LIST_DEBUG_LOGS_DATABASE_ID; "
+                    "set in .env or Cloud Agent Secrets)"
                 ) from exc
         raise ValueError(_format_config_validation_error(exc)) from exc

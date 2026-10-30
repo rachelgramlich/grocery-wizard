@@ -194,7 +194,10 @@ def _render_debug_log_controls(result: dict) -> None:
             use_container_width=False,
             key=control_streamlit_key(CONTROL_WEEKLY_GROCERY_RESULT_VIEW_DEBUG_LOG_NOTION),
         )
-        st.caption("Each list build is saved to your Notion **Grocery list debug logs** database.")
+        st.caption(
+            "Each weekly list build is saved to your Notion **`[GW DEV] Debug logs`** database "
+            "(weekly grocery list traces only for now)."
+        )
     with st.expander("Advanced: download JSON", expanded=False):
         _render_debug_log_download(result)
 
