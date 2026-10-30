@@ -175,15 +175,6 @@ kimchi
 sauerkraut
 chimichurri
 
-# --- coffee: Coffee & tea ---
-nondairy creamer
-creamer
-coffee beans
-coffee
-espresso
-tea
-matcha
-
 # --- snacks/crackers: Crackers chips & snacks ---
 graham cracker
 ritz cracker
@@ -235,6 +226,10 @@ yogurt
 egg
 eggs
 butter
+
+# --- dog treats: Dog treats ---
+dog treats
+dog treat
 
 # --- household/personal care: Household and personal care ---
 laundry detergent
@@ -589,6 +584,15 @@ chickpeas
 garbanzo
 canned
 beans
+
+# --- coffee: Coffee & tea ---
+nondairy creamer
+creamer
+coffee beans
+coffee
+espresso
+tea
+matcha
 
 # --- frozen: Frozen ---
 eomuk
