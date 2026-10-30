@@ -15,11 +15,8 @@ from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe, reci
 from src.grocery_wizard.shopping.grocery_list import build_grocery_list
 from src.grocery_wizard.shopping.line_items import parse_line_items
 from src.grocery_wizard.shopping.recurring_weekly_items import apply_recurring_session_overrides
-from src.grocery_wizard.ui.notion_cache import (
-    _load_pantry_cached,
-    cached_pantry_names,
-    cached_recurring_items,
-)
+from src.grocery_wizard.ui import notion_cache
+from src.grocery_wizard.ui.notion_cache import cached_pantry_names, cached_recurring_items
 
 GROCERY_STASH_NOTION_GENERATION_KEY = "grocery_stash_notion_generation"
 
@@ -260,7 +257,9 @@ def build_grocery_result_payload(
     recurring_weekly_items = parse_line_items(recurring_text)
     resolved_pantry_names = pantry_names
     if resolved_pantry_names is None:
-        _load_pantry_cached.clear()
+        clear_pantry = getattr(notion_cache._load_pantry_cached, "clear", None)
+        if clear_pantry is not None:
+            clear_pantry()
         resolved_pantry_names = cached_pantry_names(
             pantry_database_id=load_config().notion_pantry_database_id,
         )
