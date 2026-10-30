@@ -32,6 +32,7 @@ from src.grocery_wizard.ingredients._cleaning import (
 )
 from src.grocery_wizard.ingredients._patterns import (
     _AMOUNT_STR_RE,
+    _BOXED_DRIED_FRUIT_NAME_RE,
     _LEADING_QTY_RE,
     _UNICODE_DASHES,
     _UNICODE_FRACTIONS,
@@ -285,6 +286,11 @@ _INLINE_OZ_CAN_RE = re.compile(r"\d+\s*oz\s+(can|cans)\b", re.IGNORECASE)
 _WEIGHT_UNITS_STRIP_AT_STORAGE = frozenset(
     {"oz", "ounce", "ounces", "g", "gram", "grams", "kg", "kilogram", "kilograms"}
 )
+
+
+def _is_boxed_dried_fruit_name(name: str) -> bool:
+    """Dried fruit bought by the box/bag, so a piece count is not a shopping amount."""
+    return _BOXED_DRIED_FRUIT_NAME_RE.search(name.strip()) is not None
 
 
 def _is_spice_or_seasoning_name(name: str) -> bool:
@@ -957,11 +963,38 @@ def _format_with_descriptor_unit(qty: float, unit: str, name: str) -> str:
     return f"{_format_qty(qty)} {name} {display}".strip()
 
 
+def _container_amount_beside_package_size(
+    amounts: list[IngredientAmount],
+) -> IngredientAmount | None:
+    """Pick ``2 cans`` over the ``15 ounces`` in ``2 15-ounce cans beans``.
+
+    Without parentheses the parser sees two amounts and the larger number (the
+    package size) would otherwise win, dropping the can count.
+    """
+    containers = [
+        amount
+        for amount in amounts
+        if _is_count_unit(_amount_unit(amount))
+        and not _is_weight_unit_strip_at_storage(_amount_unit(amount))
+        and _unit_key(_amount_unit(amount)) != "lb"
+    ]
+    package_sizes = [
+        amount for amount in amounts if _is_weight_unit_strip_at_storage(_amount_unit(amount))
+    ]
+    if not containers or len(containers) + len(package_sizes) != len(amounts):
+        return None
+    return max(containers, key=lambda amount: _amount_quantity(amount) or 0.0)
+
+
 def _select_amount(amounts: list[IngredientAmount], original: str = "") -> IngredientAmount | None:
     if not amounts:
         return None
 
     amounts = _amounts_from_original_context(amounts, original)
+
+    container_with_package_size = _container_amount_beside_package_size(amounts)
+    if container_with_package_size is not None:
+        return container_with_package_size
 
     if len(amounts) > 1:
         comparable = [amount for amount in amounts if _amount_quantity(amount) is not None]
@@ -1344,6 +1377,9 @@ def _build_storage_line(
     if _is_spice_or_seasoning_name(name) and not unit_part.strip() and qty is not None and qty < 1:
         return _prefer_plural_form(name)
 
+    if not unit_part.strip() and _is_boxed_dried_fruit_name(name):
+        return _prefer_plural_form(name)
+
     if unit_lower in _DESCRIPTOR_COUNT_UNITS or unit_lower in {"stalk", "stalks"}:
         if "celery" in name.lower():
             return f"{_format_qty(qty)} celery".strip()
@@ -1459,7 +1495,10 @@ def _parse_stored_rest(qty_str: str, rest: str) -> tuple[str, str | None]:
         name = _prefer_plural_form(
             _strip_size_descriptors(_simplify_parsed_name(f"{base} {unit_word}"))
         )
-    return _canonicalize_grocery_name(name), qty_str
+    name = _canonicalize_grocery_name(name)
+    if _is_boxed_dried_fruit_name(name):
+        return name, None
+    return name, qty_str
 
 
 _ZEST_CITRUS_RE = re.compile(

@@ -569,3 +569,10 @@ _STORAGE_KEEP_SEGMENTS = frozenset(
         "for topping",
     }
 )
+
+# Dried fruit sold by the box or bag: a recipe's "4 dates" is not 4 boxes.
+_BOXED_DRIED_FRUIT_NAME_RE = re.compile(
+    r"\b(?:dates?|raisins?|prunes?"
+    r"|dried\s+(?:apricots?|cranberries|cherries|figs?|mango(?:es)?|apples?|blueberries|fruit))\Z",
+    re.IGNORECASE,
+)

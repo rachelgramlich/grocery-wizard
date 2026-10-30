@@ -30,7 +30,7 @@ def process_ingredient_line(raw: str, *, nyt: bool = False) -> ProcessedIngredie
     from src.grocery_wizard.ingredients.normalize import parse_notion_ingredient_for_grocery
 
     name, amount = parse_notion_ingredient_for_grocery(stored or raw)
-    show_amount = should_show_amount(amount, raw)
+    show_amount = should_show_amount(amount, stored or raw)
     keeps_amount = amount and not str(amount).startswith(("head:", "clove:", "zest:"))
     if name == "garlic":
         agg = aggregate_amounts([amount], name=name)
