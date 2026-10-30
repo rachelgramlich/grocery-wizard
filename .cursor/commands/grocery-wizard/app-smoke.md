@@ -21,6 +21,7 @@ Same tests also run under **`just check`** / **`just ci`** (marker `holistic_ui_
 - AppTest first run (global refresh, feedback, weekly plan entry)
 - Weekly plan entry → **`cached_saved_plans`** / saved plan list (#417 path)
 - Continue saved plan → meals step (session only, no Notion writes)
+- **Dev mode → Dev: Final list** on the golden weekly fixture (real build/merge/sort; see `docs/grocery-quality.md`)
 - **Pantry & recurring**, **Add Recipe**, **Recipe maintenance** pages open
 
 Implementation: `tests/src/grocery_wizard/ui/test_holistic_ui_smoke_apptest.py`, helpers in `tests/src/grocery_wizard/ui/ui_source.py`.

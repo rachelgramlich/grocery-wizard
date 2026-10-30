@@ -9,6 +9,7 @@
 | **`/create-issues-from-backlog`** | Alias → **`/triage-feedback-inbox`** (`.cursor/commands/grocery-wizard/create-issues-from-backlog.md`) |
 | **`/app-review`** | Hands-on Streamlit UAT → findings → optional grouped **`gh`** issues (see `.cursor/commands/grocery-wizard/app-review.md`) |
 | **`/app-smoke`** | Holistic headless + browser sign-off before UI work is done (`.cursor/commands/grocery-wizard/app-smoke.md`) |
+| **`/grocery-quality-review`** | Weekly grocery list sign-off: golden weeks + smoke (`.cursor/commands/grocery-wizard/grocery-quality-review.md`, **`docs/grocery-quality.md`**) |
 | **`/architecture-review`** | Standards audit + optional **`audit`** issues (shared: `.cursor/commands/shared/architecture-review.md`) |
 | **`/list-enhancements`** | Open backlog (`grocery-wizard` label) via **`gh`** (`.cursor/commands/grocery-wizard/list-enhancements.md`) |
 | **`/work-on-issue N`** | Implement one issue — area → files and UAT rules **below** + shared `.cursor/commands/shared/work-on-issue.md` |
@@ -30,6 +31,7 @@
 | **List backlog** | **`/list-enhancements`** or `gh issue list --label grocery-wizard --state open` |
 | **Verify** | `just check` (includes holistic UI smoke tests) |
 | **Holistic UI smoke** | `just smoke-ui` (headless AppTest; mocked Notion in CI) |
+| **Grocery list quality** | `just golden-grocery` + **`docs/grocery-quality.md`** (no Notion secrets in CI) |
 
 **Enhancement create example:** `gh issue create … --label grocery-wizard --label gw-area-ui` with template sections **Description**, **Expected behavior & manual test hints**, **Area**.
 

@@ -12,6 +12,7 @@ import pytest
 from ui_source import (
     APP_PATH,
     apptest_assert_no_exception,
+    apptest_enter_dev_mode,
     apptest_open_page,
     apptest_start_app,
 )
@@ -200,3 +201,97 @@ def test_holistic_live_continue_saved_plan_meals_step_read_only(
             apptest_assert_no_exception(at, context="live meals step")
         if not at.session_state["plan_meals_text"].strip():
             pytest.skip("Selected saved plan had no recipes in Notion")
+
+
+def test_holistic_dev_jump_builds_golden_grocery_list(monkeypatch: pytest.MonkeyPatch) -> None:
+    """CI-safe: dev jump → final list runs real build/merge/sort (mock Notion golden week)."""
+    from unittest.mock import MagicMock
+
+    from streamlit.testing.v1 import AppTest
+
+    from src.grocery_wizard.shopping.grocery_invariants import assert_grocery_list_invariants
+    from src.grocery_wizard.shopping.grocery_list import format_grocery_items_copy_text
+    from src.grocery_wizard.ui.dev_jumps import DEV_JUMP_BUTTON_LABEL_FINAL_LIST
+    from src.grocery_wizard.ui.grocery_helpers import compute_grocery_drafts
+    from tests.src.grocery_wizard.shopping.golden_week_harness import (
+        GOLDEN_WEEKS_DIR,
+        export_grocery_lines_for_week,
+        golden_week_recipes_for_apptest,
+        load_golden_week,
+    )
+
+    week_path = GOLDEN_WEEKS_DIR / "parser_regression_bundle.json"
+    week = load_golden_week(week_path)
+    golden_recipes = golden_week_recipes_for_apptest(week)
+    # Dev jump skips the pre-build extras text area; full export (with extras) is `just golden-grocery`.
+    expected = export_grocery_lines_for_week({**week, "extra_items": ""})
+
+    fake_db = MagicMock()
+    fake_db.schema.all_columns = {}
+    fake_db.query_recipes.return_value = golden_recipes
+
+    get_db_targets = (
+        "src.grocery_wizard.ui.db_access",
+        "src.grocery_wizard.ui.app",
+        "src.grocery_wizard.ui.nyt_sync",
+        "src.grocery_wizard.ui.views.add_recipe",
+        "src.grocery_wizard.ui.views.weekly_plan.flow",
+        "src.grocery_wizard.ui.views.weekly_plan.plan_entry",
+        "src.grocery_wizard.ui.views.weekly_plan.grocery_list_ui",
+        "src.grocery_wizard.ui.views.weekly_plan.state",
+    )
+    for module_path in get_db_targets:
+        monkeypatch.setattr(f"{module_path}.get_db", lambda _db=fake_db: _db, raising=False)
+
+    pantry_names = {
+        str(item).strip().lower() for item in week.get("pantry", []) if str(item).strip()
+    }
+    recurring = list(week.get("recurring") or [])
+    monkeypatch.setattr(
+        "src.grocery_wizard.ui.grocery_flow.cached_pantry_names",
+        lambda **_kwargs: pantry_names,
+    )
+    monkeypatch.setattr(
+        "src.grocery_wizard.ui.grocery_flow.cached_recurring_items",
+        lambda: recurring,
+    )
+
+    monkeypatch.setenv("GROCERY_WIZARD_DEV_UI", "1")
+
+    at = AppTest.from_file(str(APP_PATH), default_timeout=180)
+    at.run(timeout=180)
+    apptest_enter_dev_mode(at, timeout=180)
+
+    dev_tools = [e for e in at.expander if e.label == "Dev: tools"]
+    assert dev_tools, "Dev: tools expander missing"
+    dev_panel = dev_tools[0]
+
+    manual_names = [recipe.name for recipe in golden_recipes]
+    multiselect = [m for m in dev_panel.multiselect if m.label == "Choose recipes manually"]
+    assert multiselect, "Dev manual recipe multiselect missing"
+    multiselect[0].set_value(manual_names).run(timeout=180)
+
+    at.session_state["grocery_pre_extra_items_epoch"] = 0
+    at.session_state["grocery_pre_extra_items_0"] = str(week.get("extra_items") or "")
+    at.run(timeout=180)
+
+    final_jump = [b for b in dev_panel.button if b.label == DEV_JUMP_BUTTON_LABEL_FINAL_LIST]
+    if not final_jump:
+        final_jump = [b for b in at.button if b.label == DEV_JUMP_BUTTON_LABEL_FINAL_LIST]
+    assert final_jump, "Dev jump Final list button missing"
+    final_jump[0].click().run(timeout=180)
+    apptest_assert_no_exception(at, context="dev jump final grocery list")
+
+    assert "grocery_result" in at.session_state
+    result = at.session_state["grocery_result"]
+
+    _, final_items = compute_grocery_drafts(
+        result["items"],
+        result.get("readd") or [],
+        result.get("additional_text") or "",
+        recurring_items=result.get("recurring_items"),
+    )
+    copy_text = format_grocery_items_copy_text(final_items)
+    actual = [line[2:].strip() for line in copy_text.splitlines() if line.strip()]
+    assert actual == expected
+    assert_grocery_list_invariants(actual)
