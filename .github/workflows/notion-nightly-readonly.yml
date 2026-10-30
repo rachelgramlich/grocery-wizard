@@ -135,7 +135,7 @@ jobs:
       issues: write
     steps:
       - name: Open GitHub issue on Notion CI failure
-        uses: actions/github-script@60a0d83039c877a2a3f256e47b362a167179b0e2 # v7.0.1
+        uses: actions/github-script@b7fb2001b410c9390cbe9e2c7d5cab7eefb7b29c # v7.0.1
         with:
           script: |
             const shortSha = context.sha.substring(0, 7);

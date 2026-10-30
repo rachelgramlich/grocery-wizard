@@ -45,7 +45,7 @@ Match production **property names** (see [`src/grocery_wizard/config/README.md`]
 
 1. Open the **full-page** database in the browser (not only an inline view).
 2. Copy the URL. Example: `https://www.notion.so/a061062d64d64f42a3b48bbb9cdc64ea?v=…`
-3. The **32-character hex block** before `?` or `v=` is the database ID. You may paste it **with or without** dashes (`a061062d-64d6-4f42-a3b48bbb9cdc64ea`).
+3. The **32-character hex block** before `?` or `v=` is the database ID. Paste **with or without** dashes; the app normalizes to standard UUID form (example: `a061062d-64d6-4f42-a3b4-8bbb9cdc64ea` — note **12** hex chars in the last segment, not 16).
 
 Use the **database** URL from the database’s own page, not a `collection://…` data-source id from API tools.
 
