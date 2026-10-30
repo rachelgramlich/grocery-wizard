@@ -33,6 +33,7 @@ from src.grocery_wizard.ui.ids import (
     BLOCK_WEEKLY_GROCERY_RESULT_CUSTOMIZE,
     BLOCK_WEEKLY_GROCERY_RESULT_SUMMARY,
     CONTROL_WEEKLY_GROCERY_RESULT_DOWNLOAD_DEBUG_LOG,
+    CONTROL_WEEKLY_GROCERY_RESULT_VIEW_DEBUG_LOG_NOTION,
     control_streamlit_key,
 )
 from src.grocery_wizard.ui.loading import loading_indicator
@@ -170,13 +171,32 @@ def _render_debug_log_download(result: dict) -> None:
     else:
         return
     st.download_button(
-        "Download debug log",
+        "Download JSON copy",
         data=payload,
         file_name=file_name,
         mime="application/json",
         key=control_streamlit_key(CONTROL_WEEKLY_GROCERY_RESULT_DOWNLOAD_DEBUG_LOG),
-        help="JSON trace of how this week's list was built (share when reporting list bugs).",
+        help="Optional offline copy of this build trace.",
     )
+
+
+def _render_debug_log_controls(result: dict) -> None:
+    url = result.get("debug_log_notion_url")
+    log = result.get("debug_log")
+    if not url and not log:
+        return
+    if url:
+        st.link_button(
+            "View debug log in Notion",
+            url=url,
+            type="secondary",
+            help="Opens the saved build trace in your Notion workspace (same from any browser).",
+            use_container_width=False,
+            key=control_streamlit_key(CONTROL_WEEKLY_GROCERY_RESULT_VIEW_DEBUG_LOG_NOTION),
+        )
+        st.caption("Each list build is saved to your Notion **Grocery list debug logs** database.")
+    with st.expander("Advanced: download JSON", expanded=False):
+        _render_debug_log_download(result)
 
 
 def _render_added_and_removed_summary(result: dict) -> None:
@@ -313,7 +333,7 @@ def _render_grocery_result() -> None:
 
     if final_items or meal_names:
         render_weekly_sub_block_anchor(BLOCK_WEEKLY_GROCERY_RESULT_CUSTOMIZE)
-        _render_debug_log_download(result)
+        _render_debug_log_controls(result)
         db = get_db()
         meals = meal_entries_with_links(meal_names, cached_query_recipes(db))
         meals_copy_text = format_meals_copy_text(meals)

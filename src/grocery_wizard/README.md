@@ -129,7 +129,7 @@ Normalization and pantry exclusion happen at grocery-list time only — not when
 4. Copy `.env.example` to `.env` and fill in:
    - `NOTION_API_KEY` — integration secret
    - `NOTION_RECIPE_DATABASE_ID` — Recipes database ID
-   - `NOTION_PANTRY_DATABASE_ID`, `NOTION_RECURRING_WEEKLY_DATABASE_ID`, `NOTION_WEEKLY_MEAL_PLANS_DATABASE_ID`
+   - `NOTION_PANTRY_DATABASE_ID`, `NOTION_RECURRING_WEEKLY_DATABASE_ID`, `NOTION_WEEKLY_MEAL_PLANS_DATABASE_ID`, `NOTION_LIST_DEBUG_LOGS_DATABASE_ID`
 5. From repo root: `just setup`
 6. Open **`just grocery-ui`** and confirm your Notion recipes load.
 

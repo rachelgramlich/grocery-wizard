@@ -1,8 +1,7 @@
 """Debug log for each built grocery list.
 
-Each build writes one small JSON file under ``LIST_HISTORY_DIR`` so a shared problem
-("where did plain milk come from?") can be traced. Only recipe names, ingredient lines,
-and list items are logged — never links, Notion IDs, or credentials.
+Each build writes one JSON debug record to Notion (household database) and optionally
+mirrors the newest files under ``LIST_HISTORY_DIR`` on the host running Streamlit.
 
 ``ListTrace`` is filled while the list is built; ``build_list_log`` turns it into the
 JSON-ready dict; ``write_list_log`` saves it and keeps only the newest files.
@@ -16,6 +15,7 @@ __all__ = [
     "ListTrace",
     "apply_adjustments",
     "build_list_log",
+    "dump_list_log",
     "latest_list_log_path",
     "rewrite_list_log",
     "write_list_log",
@@ -267,8 +267,13 @@ def _log_filename(created_at: str) -> str:
     return f"{stamp}.json"
 
 
-def _dump(log: dict[str, Any]) -> str:
+def dump_list_log(log: dict[str, Any]) -> str:
+    """Serialize a log dict for JSON files and Notion ``Log JSON`` columns."""
     return json.dumps(log, indent=2, ensure_ascii=False) + "\n"
+
+
+def _dump(log: dict[str, Any]) -> str:
+    return dump_list_log(log)
 
 
 def write_list_log(

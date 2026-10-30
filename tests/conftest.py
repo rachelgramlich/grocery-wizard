@@ -20,6 +20,7 @@ _PYTEST_NOTION_ENV: dict[str, str] = {
     "NOTION_PANTRY_DATABASE_ID": "00000000-0000-4000-8000-000000000002",
     "NOTION_RECURRING_WEEKLY_DATABASE_ID": "00000000-0000-4000-8000-000000000003",
     "NOTION_WEEKLY_MEAL_PLANS_DATABASE_ID": "00000000-0000-4000-8000-000000000004",
+    "NOTION_LIST_DEBUG_LOGS_DATABASE_ID": "00000000-0000-4000-8000-000000000005",
 }
 
 
@@ -94,6 +95,20 @@ def _notion_test_doubles(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "src.grocery_wizard.ui.notion_cache._load_saved_plans_cached",
         lambda _weekly_plans_database_id, _generation, _recipes_db: [],
+    )
+
+    def _fake_persist_list_log(log, *, config=None, page_id=None):
+        del log, config
+        pid = page_id or "00000000-0000-4000-8000-000000000099"
+        return pid, f"https://www.notion.so/{pid.replace('-', '')}"
+
+    monkeypatch.setattr(
+        "src.grocery_wizard.integrations.notion_list_logs.persist_list_log_to_notion",
+        _fake_persist_list_log,
+    )
+    monkeypatch.setattr(
+        "src.grocery_wizard.ui.grocery_flow.persist_list_log_to_notion",
+        _fake_persist_list_log,
     )
 
 

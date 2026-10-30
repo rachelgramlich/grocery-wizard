@@ -13,6 +13,7 @@ from src.grocery_wizard.ingredients.sync import (
     prepare_ingredients_for_notion,
 )
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe, recipe_lookup_key
+from src.grocery_wizard.integrations.notion_list_logs import persist_list_log_to_notion
 from src.grocery_wizard.shopping.grocery_list import build_grocery_list
 from src.grocery_wizard.shopping.line_items import parse_line_items
 from src.grocery_wizard.shopping.list_log import (
@@ -287,20 +288,24 @@ def build_grocery_result_payload(
             trace=trace,
         )
     )
-    debug_log, debug_log_path = _save_list_debug_log(
-        trace,
-        selected=selected,
-        exclude_pantry=exclude_pantry,
-        items=items,
-        excluded=excluded,
-        missing_ingredients=missing_ingredients,
-        item_provenance=item_provenance,
-        recurring_items=recurring_weekly_items,
-        extra_items_text=extra_items_text,
+    debug_log, debug_log_path, debug_log_notion_page_id, debug_log_notion_url = (
+        _save_list_debug_log(
+            trace,
+            selected=selected,
+            exclude_pantry=exclude_pantry,
+            items=items,
+            excluded=excluded,
+            missing_ingredients=missing_ingredients,
+            item_provenance=item_provenance,
+            recurring_items=recurring_weekly_items,
+            extra_items_text=extra_items_text,
+        )
     )
     return {
         "debug_log": debug_log,
         "debug_log_path": debug_log_path,
+        "debug_log_notion_page_id": debug_log_notion_page_id,
+        "debug_log_notion_url": debug_log_notion_url,
         "items": items,
         "excluded": excluded,
         "missing_ingredients": missing_ingredients,
@@ -326,7 +331,7 @@ def _save_list_debug_log(
     item_provenance: dict[str, list[str]],
     recurring_items: list[str],
     extra_items_text: str,
-) -> tuple[dict[str, Any], str | None]:
+) -> tuple[dict[str, Any], str | None, str | None, str | None]:
     _, final_items = compute_grocery_drafts(
         items, [], extra_items_text, recurring_items=recurring_items
     )
@@ -341,7 +346,8 @@ def _save_list_debug_log(
         final_items=final_items,
     )
     path = write_list_log(log)
-    return log, str(path) if path else None
+    page_id, url = persist_list_log_to_notion(log)
+    return log, str(path) if path else None, page_id, url
 
 
 def sync_list_debug_log_adjustments(
@@ -354,7 +360,8 @@ def sync_list_debug_log_adjustments(
     """Keep the saved debug log in step with "Adjust this week's list" choices."""
     log = result.get("debug_log")
     path = result.get("debug_log_path")
-    if not log or not path:
+    page_id = result.get("debug_log_notion_page_id")
+    if not log:
         return
     adjustments = {"pantry_readded": list(readd), "removed_once": list(removed_once)}
     if log.get("user_adjustments") == adjustments:
@@ -362,8 +369,13 @@ def sync_list_debug_log_adjustments(
     updated = apply_adjustments(
         log, final_items=final_items, readd=readd, removed_once=removed_once
     )
-    if rewrite_list_log(Path(path), updated):
-        result["debug_log"] = updated
+    result["debug_log"] = updated
+    if path:
+        rewrite_list_log(Path(path), updated)
+    if page_id:
+        _, url = persist_list_log_to_notion(updated, page_id=page_id)
+        if url:
+            result["debug_log_notion_url"] = url
 
 
 def stash_grocery_result(

@@ -20,6 +20,9 @@ Pantry staples, recurring weekly items, and saved weekly meal plans live in **No
 | Pantry staples | Pantry | **Name** (title), **Store Aisle** or **Aisle** (select — labels from `store_aisles.txt`) |
 | Recurring weekly items | Recurring | **Name** (title) only |
 | Saved weekly meal plans | Weekly plans | **Name**, **Week start**, **Recipes** (relation → Recipes) |
+| Grocery list debug logs | List debug logs | **Name** (title), **Log JSON** (rich text); optional **Built at** (date), **Meals** (rich text) |
+
+Each successful grocery list build appends one row (JSON trace: meals, pantry skips, sources, final list). Connect the database to the same Notion integration as Recipes.
 
 Plan **Name** is the sole identifier (e.g. `2026-09-13_plan`); no slug column.
 
@@ -41,6 +44,7 @@ Required for Grocery Wizard:
 - `NOTION_PANTRY_DATABASE_ID`
 - `NOTION_RECURRING_WEEKLY_DATABASE_ID`
 - `NOTION_WEEKLY_MEAL_PLANS_DATABASE_ID`
+- `NOTION_LIST_DEBUG_LOGS_DATABASE_ID`
 
 Cloud agents use the same names as Secrets.
 
