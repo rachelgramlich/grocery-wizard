@@ -67,4 +67,16 @@ For release-style sign-off on list correctness, use:
 
 ## Live Notion (#426)
 
-CI still uses a fake Notion DB. Nightly read-only tests against a **test workspace** catch schema drift; golden weeks catch **list logic** regressions without secrets.
+Default **CI** (`just ci`) still uses fake Notion IDs — every PR runs golden weeks and `smoke-ui` without secrets.
+
+**Read-only integration** (`.github/workflows/notion-nightly-readonly.yml`, workflow name *Notion read-only integration*):
+
+| Trigger | Behavior |
+| --- | --- |
+| **`pull_request` → `main`** (same repo) | When GitHub Actions secrets are configured, runs config preflight + live read-only AppTest cases (`live_notion_smoke_enabled()` / `-k "live and read_only"`). |
+| **Fork PR** or **no `NOTION_API_KEY`** | Job **succeeds** with a skip message — does not fail the PR. |
+| **Nightly schedule** + **manual dispatch** | Same checks when secrets exist; catches drift if nothing merged via PR. |
+
+Use a **separate test Notion workspace** (not production). Setup steps: GitHub issue **#426**.
+
+Golden weeks catch **list logic** regressions without secrets; live integration catches **Notion schema / API** drift when secrets are present.

@@ -1,4 +1,7 @@
-# Notion nightly read-only integration (#426) — NOT part of `just ci`, NOT a required PR check.
+# Notion read-only integration (#426) — NOT part of `just ci`.
+#
+# Primary: runs on pull_request to main (same-repo PRs when secrets exist).
+# Supplement: nightly schedule + manual dispatch for drift when no PR ran.
 #
 # Enablement (repo admin, one-time):
 # 1. Create a **separate test Notion workspace** with copies of the recipe, pantry, recurring,
@@ -10,15 +13,17 @@
 #    NOTION_RECURRING_WEEKLY_DATABASE_ID
 #    NOTION_WEEKLY_MEAL_PLANS_DATABASE_ID
 #    (Optional: NOTION_DATA_SOURCE_ID — see src/grocery_wizard/config/README.md)
-# 3. Run manually: Actions → "Notion nightly (read-only)" → Run workflow.
-# 4. Schedule runs daily; without NOTION_API_KEY the job exits 0 with "skipped".
+# 3. Open a PR to main (same repo): live read-only pytest runs when secrets are set.
+# 4. Fork PRs and repos without NOTION_API_KEY: job exits 0 with a skip message (PR stays green).
 #
 # Golden weeks in the repo catch grocery **logic** regressions without secrets.
 # This workflow catches Notion **schema / live API** drift in the test workspace.
 
-name: Notion nightly (read-only)
+name: Notion read-only integration
 
 on:
+  pull_request:
+    branches: [main]
   schedule:
     - cron: "0 14 * * *" # 09:00 US/Eastern (UTC-5) — adjust if needed
   workflow_dispatch:
@@ -27,7 +32,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: notion-nightly-readonly
+  group: notion-readonly-integration-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -35,18 +40,25 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Detect Notion secrets
+      - name: Detect Notion run eligibility
         id: notion
         env:
           NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
         run: |
+          if [ "${{ github.event_name }}" = "pull_request" ] && \
+             [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "Skipped — fork pull requests cannot use repository secrets."
+            echo "Golden weeks and smoke-ui still run on every PR via CI."
+            exit 0
+          fi
           if [ -z "${NOTION_API_KEY}" ]; then
             echo "enabled=false" >> "$GITHUB_OUTPUT"
             echo "Skipped — NOTION_API_KEY is not set. See workflow file comments for enablement."
             echo "Golden weeks and smoke-ui still run on every PR via CI."
-          else
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
 
       - name: Checkout
         if: steps.notion.outputs.enabled == 'true'
@@ -56,7 +68,7 @@ jobs:
 
       - name: Install uv
         if: steps.notion.outputs.enabled == 'true'
-        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
           enable-cache: true
 
