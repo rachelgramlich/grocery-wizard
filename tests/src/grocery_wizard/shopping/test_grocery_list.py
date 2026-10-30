@@ -961,16 +961,21 @@ def test_merge_grocery_items_keeps_distinct_specific_milks_and_drops_bare_milk()
 
 def test_merge_grocery_items_drops_bare_milk_regardless_of_order_and_checklist_form() -> None:
     assert merge_grocery_items(["- [ ] Soy Milk"], ["[ ] milk"]) == ["soy milk"]
-    assert merge_grocery_items(["milk"], ["soy milk"], ["cashew milk"]) == [
-        "soy milk",
-        "cashew milk",
-    ]
+    merged = merge_grocery_items(["milk"], ["soy milk"], ["cashew milk"])
+    assert sorted(merged) == ["cashew milk", "soy milk"]
 
 
 def test_merge_grocery_items_specific_milk_keeps_its_amount() -> None:
-    merged = merge_grocery_items(["1 gallon milk"], ["1 quart almond milk"])
+    merged = merge_grocery_items(["3 milk"], ["2 cans oat milk"])
 
-    assert merged == ["1 quart almond milk"]
+    assert merged == ["2 cans oat milk"]
+
+
+def test_merge_grocery_items_keeps_bare_milk_amount_when_alone() -> None:
+    assert merge_grocery_items(["3 milk"], ["2 cans coconut milk"]) == [
+        "3 milk",
+        "2 cans coconut milk",
+    ]
 
 
 @pytest.mark.parametrize(

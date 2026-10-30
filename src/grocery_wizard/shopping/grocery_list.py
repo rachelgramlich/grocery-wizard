@@ -60,6 +60,15 @@ _NYT_SLUG_ID_PREFIX = re.compile(r"^\d+-")
 _COLOR_ONION_RE = re.compile(r"^(?:red|yellow|white|sweet)\s+onions?$", re.IGNORECASE)
 _ONION_OR_ALTERNATIVE_DISPLAY = "red or yellow onions"
 
+# Different products: they never stand in for plain milk (see ``_is_specific_milk``).
+_NON_SPECIFIC_MILKS = (
+    "coconut milk",
+    "sweetened condensed milk",
+    "condensed milk",
+    "evaporated milk",
+    "buttermilk",
+)
+
 
 def _grocery_collection_key(display_name: str) -> str:
     """Canonical dedupe key; merges color onion variants with OR-alternative lines."""
@@ -363,6 +372,7 @@ def merge_grocery_items(
     """Merge grocery item lists, deduplicating on normalized keys."""
     merged: list[str] = []
     seen: set[str] = set()
+    has_specific_milk = False
     for items in item_lists:
         for raw in items:
             normalized = normalize_grocery_list_item(raw)
@@ -373,9 +383,21 @@ def merge_grocery_items(
                 continue
             seen.add(key)
             merged.append(normalized)
+            has_specific_milk = has_specific_milk or _is_specific_milk(key)
+    if has_specific_milk:
+        merged = [item for item in merged if not _is_bare_milk(_normalized_item_key(item))]
     if sort:
         merged = sort_grocery_items(merged)
     return merged
+
+
+def _is_bare_milk(key: str) -> bool:
+    return key == "milk"
+
+
+def _is_specific_milk(key: str) -> bool:
+    """True for almond milk, oat milk, whole milk, ...; not for other products like coconut milk."""
+    return key.endswith("milk") and key != "milk" and not key.endswith(_NON_SPECIFIC_MILKS)
 
 
 def format_meals_copy_text(meals: list[tuple[str, str | None]]) -> str:
