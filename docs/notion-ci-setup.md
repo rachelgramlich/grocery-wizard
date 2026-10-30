@@ -76,8 +76,11 @@ export NOTION_CI_PANTRY_DATABASE_ID='…'
 export NOTION_CI_RECURRING_WEEKLY_DATABASE_ID='…'
 export NOTION_CI_WEEKLY_MEAL_PLANS_DATABASE_ID='…'
 export GROCERY_WIZARD_NOTION_CI_LIVE=1
+PYTHONPATH=src uv run python -m grocery_wizard.integrations.notion_ci_schema
 PYTHONPATH=src uv run pytest -k "live and read_only" -q
 ```
+
+`notion_ci_schema` checks that each CI database is reachable, required columns exist (with clear errors on rename), and `query_recipes` returns parseable rows when pages exist (empty DB is a skip note, not a failure).
 
 See [`tests/notion_test_env.py`](../tests/notion_test_env.py).
 
