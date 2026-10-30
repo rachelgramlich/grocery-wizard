@@ -34,7 +34,7 @@ Pantry edits from the UI similarly distinguish one-off vs changing the saved sta
 
 ## Notion env
 
-**GitHub Actions paste targets:** `NOTION_CI_*` secrets only (workflow maps them to `NOTION_*` for pytest). **App, Streamlit, and local `.env`:** standard `NOTION_*` names only — never require `NOTION_CI_*` in production.
+**GitHub Actions:** use the same secret names as prod for `NOTION_API_KEY` and optional `NOTION_DATA_SOURCE_ID`. Use **`NOTION_CI_*_DATABASE_ID`** only for the four test-workspace database IDs (workflow maps them to `NOTION_*_DATABASE_ID` for pytest). **App, Streamlit, and local `.env`:** standard `NOTION_*` names only.
 
 Required for Grocery Wizard:
 

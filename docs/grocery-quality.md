@@ -73,12 +73,12 @@ Default **CI** (`just ci`) still uses fake Notion IDs — every PR runs golden w
 
 | Trigger | Behavior |
 | --- | --- |
-| **`pull_request` → `main`** (same repo) | When GitHub Actions **`NOTION_CI_*`** secrets are configured, runs config preflight + live read-only AppTest cases (`live_notion_smoke_enabled()` / `-k "live and read_only"`). |
-| **Fork PR** or **no `NOTION_CI_API_KEY`** | Job **succeeds** with a skip message — does not fail the PR. |
+| **`pull_request` → `main`** (same repo) | When **`NOTION_API_KEY`** plus the four **`NOTION_CI_*_DATABASE_ID`** secrets are set, runs config preflight + live read-only AppTest cases (`live_notion_smoke_enabled()` / `-k "live and read_only"`). |
+| **Fork PR** or **missing secrets** | Job **succeeds** with a skip message — does not fail the PR. |
 | **Nightly schedule** + **manual dispatch** | Same checks when secrets exist; catches drift if nothing merged via PR. |
 
-Use a **separate test Notion workspace** (not production). Name databases with **CI** in Notion. **GitHub paste: `NOTION_CI_*` only. App/prod: `NOTION_*` only.** Actions secrets map to `NOTION_*` inside the workflow job only. Setup steps: GitHub issue **#426**.
+Use a **separate test Notion workspace** (not production). Name databases with **CI** in Notion. **Same names as prod:** `NOTION_API_KEY` and optional `NOTION_DATA_SOURCE_ID`. **CI-only paste targets:** the four `NOTION_CI_*_DATABASE_ID` secrets (workflow maps them to `NOTION_*_DATABASE_ID` in the job). Setup steps: GitHub issue **#426**.
 
-**Local live tests:** default pytest loads prod `NOTION_*` from repo-root `.env` for `-k "live and read_only"`. To hit the **CI workspace** instead, export `NOTION_CI_*` and set `GROCERY_WIZARD_NOTION_CI_LIVE=1` (see `tests/notion_test_env.py`) — do not replace prod keys in `.env`.
+**Local live tests:** default pytest loads prod `NOTION_*` from repo-root `.env` for `-k "live and read_only"`. To hit the **CI workspace** instead, keep `NOTION_API_KEY` in `.env`, export the four `NOTION_CI_*_DATABASE_ID` values, and set `GROCERY_WIZARD_NOTION_CI_LIVE=1` (see `tests/notion_test_env.py`).
 
 Golden weeks catch **list logic** regressions without secrets; live integration catches **Notion schema / API** drift when secrets are present.
