@@ -84,6 +84,23 @@ _NOT_ACTUAL_RICE_PHRASES = frozenset({"cauliflower rice", "riced cauliflower"})
 # Pantry ``frozen …`` / ``canned …`` are specific products — not plain last-word staples.
 _PANTRY_SPECIFIC_PRODUCT_PREFIXES = frozenset({"canned", "frozen"})
 
+# ``chili powder`` / ``chile powder`` / ``chilli powder`` are the same pantry staple.
+_CHILI_POWDER_HEADS = frozenset({"chili", "chile", "chilli"})
+
+
+def _is_chili_powder_staple(phrase: str) -> bool:
+    words = phrase.split()
+    return len(words) == 2 and words[0] in _CHILI_POWDER_HEADS and words[1] == "powder"
+
+
+def _ingredient_matches_chili_powder_staple(ingredient_name: str, pantry_item_norm: str) -> bool:
+    """Match ``ancho chili powder`` and ``kashmiri red chile powder`` to pantry ``chili powder``."""
+    if not _is_chili_powder_staple(pantry_item_norm):
+        return False
+    words = ingredient_name.split()
+    return len(words) >= 2 and words[-1] == "powder" and words[-2] in _CHILI_POWDER_HEADS
+
+
 # Spreads named ``… butter`` are not dairy butter on the pantry list.
 _NOT_DAIRY_BUTTER_PHRASES = frozenset(
     {
@@ -100,6 +117,26 @@ _NOT_DAIRY_BUTTER_PHRASES = frozenset(
 
 def _pantry_match_key(text: str) -> str:
     return text.strip().lower().replace("-", " ")
+
+
+_CHILE_SPELLINGS = frozenset({"chile", "chili", "chilli"})
+
+
+def _pantry_match_words(text: str) -> list[str]:
+    """Lowercase pantry/ingredient words with shared chile/chili spellings unified."""
+    words = _pantry_match_key(text).split()
+    return ["chili" if word in _CHILE_SPELLINGS else word for word in words]
+
+
+def _pantry_staple_phrases_match(ingredient_name: str, pantry_item_norm: str) -> bool:
+    """True when a multi-word pantry staple matches this ingredient (incl. chile/chili powder)."""
+    ingredient_words = _pantry_match_words(ingredient_name)
+    pantry_words = _pantry_match_words(pantry_item_norm)
+    if not pantry_words or len(pantry_words) == 1:
+        return False
+    if ingredient_words == pantry_words:
+        return True
+    return _contains_word_phrase(ingredient_words, pantry_words)
 
 
 def _is_named_bean_ingredient(ingredient_name: str) -> bool:
@@ -154,6 +191,8 @@ def is_pantry_item(normalized: str, pantry: set[str]) -> bool:
         if _skip_pantry_phrase_match(name, item_norm):
             continue
         if name == item_norm:
+            return True
+        if _pantry_staple_phrases_match(name, item_norm):
             return True
         if _contains_word_phrase(name_words, item_norm.split()):
             return True

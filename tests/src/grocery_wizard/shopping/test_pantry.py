@@ -249,3 +249,42 @@ def test_remove_fresno_pepper_does_not_remove_plain_pepper(tmp_path: Path) -> No
     path = tmp_path / "pantry.txt"
     path.write_text("pepper\n", encoding="utf-8")
     assert not remove_pantry_item_by_name("fresno pepper", path)
+
+
+@pytest.mark.parametrize(
+    ("ingredient", "pantry_entry"),
+    [
+        ("avocado oil", "avocado oil"),
+        ("avocado oil spray", "avocado oil"),
+        ("old bay", "old bay"),
+        ("old bay seasoning", "old bay"),
+        ("chili powder", "chili powder"),
+        ("ancho chili powder", "chili powder"),
+        ("chile powder", "chili powder"),
+        ("chilli powder", "chili powder"),
+        ("chili powder", "chile powder"),
+        ("kashmiri red chile powder", "chili powder"),
+    ],
+)
+def test_multi_word_pantry_staples_match_recipe_names(ingredient: str, pantry_entry: str) -> None:
+    assert is_pantry_item(ingredient, {pantry_entry})
+
+
+@pytest.mark.parametrize(
+    ("ingredient", "pantry_entry"),
+    [
+        ("olive oil", "avocado oil"),
+        ("oil", "avocado oil spray"),
+        ("avocados", "avocado oil"),
+        ("bay leaves", "old bay"),
+        ("chili sauce", "chili powder"),
+        ("chile crisp", "chili powder"),
+        ("chile oil", "chili powder"),
+        ("green chile pepper", "chili powder"),
+        ("fresno pepper", "pepper"),
+    ],
+)
+def test_multi_word_pantry_staples_do_not_match_other_products(
+    ingredient: str, pantry_entry: str
+) -> None:
+    assert not is_pantry_item(ingredient, {pantry_entry})

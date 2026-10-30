@@ -188,3 +188,43 @@ def test_default_pre_build_respects_session_recurring() -> None:
     opts = default_pre_build_grocery_options(session)
     assert "flowers" in opts.default_recurring
     assert opts.extra_items_text == "extra line"
+
+
+def test_build_grocery_result_payload_reads_pantry_fresh_from_notion(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Pantry rows added in Notion after the cache was filled must still be skipped."""
+    from src.grocery_wizard.ui import grocery_flow, notion_cache
+
+    calls: list[str] = []
+
+    class _FakePantryLoader:
+        def __init__(self) -> None:
+            self.rows: list = []
+
+        def __call__(self, _generation: int, _household_db_id: str) -> list:
+            calls.append("read")
+            return self.rows
+
+        def clear(self) -> None:
+            calls.append("clear")
+            self.stale = False
+
+    loader = _FakePantryLoader()
+    monkeypatch.setattr(notion_cache, "_load_pantry_cached", loader)
+    monkeypatch.setattr(grocery_flow, "load_config", lambda: MagicMock(notion_pantry_database_id="x"))
+
+    recipes = [_recipe("Tacos", ingredients="2 tbsp avocado oil\n1 avocado")]
+    grocery_flow.build_grocery_result_payload(
+        MagicMock(),
+        ["Tacos"],
+        exclude_pantry=True,
+        recurring_text="",
+        extra_items_text="",
+        pantry_extra=set(),
+        ingredient_overrides=None,
+        recipes=recipes,
+    )
+
+    assert calls[0] == "clear"
+    assert "read" in calls

@@ -15,7 +15,11 @@ from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe, reci
 from src.grocery_wizard.shopping.grocery_list import build_grocery_list
 from src.grocery_wizard.shopping.line_items import parse_line_items
 from src.grocery_wizard.shopping.recurring_weekly_items import apply_recurring_session_overrides
-from src.grocery_wizard.ui.notion_cache import cached_pantry_names, cached_recurring_items
+from src.grocery_wizard.ui.notion_cache import (
+    _load_pantry_cached,
+    cached_pantry_names,
+    cached_recurring_items,
+)
 
 GROCERY_STASH_NOTION_GENERATION_KEY = "grocery_stash_notion_generation"
 
@@ -254,6 +258,12 @@ def build_grocery_result_payload(
     pantry_names: set[str] | None = None,
 ) -> dict[str, Any]:
     recurring_weekly_items = parse_line_items(recurring_text)
+    resolved_pantry_names = pantry_names
+    if resolved_pantry_names is None:
+        _load_pantry_cached.clear()
+        resolved_pantry_names = cached_pantry_names(
+            pantry_database_id=load_config().notion_pantry_database_id,
+        )
     items, excluded, _sync_summary, missing_ingredients, item_provenance, mismatches = (
         build_grocery_list(
             db,
@@ -264,13 +274,7 @@ def build_grocery_result_payload(
             recurring_weekly_items=recurring_weekly_items,
             include_recurring_weekly_items=True,
             ingredient_overrides=ingredient_overrides,
-            pantry_names=(
-                pantry_names
-                if pantry_names is not None
-                else cached_pantry_names(
-                    pantry_database_id=load_config().notion_pantry_database_id,
-                )
-            ),
+            pantry_names=resolved_pantry_names,
         )
     )
     return {
