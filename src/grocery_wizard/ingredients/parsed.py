@@ -1235,6 +1235,16 @@ def _normalize_legacy_stored_garlic_line(text: str) -> str | None:
     return None
 
 
+def _restore_preserved_product_split_by_parser(context: str, name: str) -> str:
+    """Undo parser splits like ``Crushed`` (prep) + ``red pepper`` (name)."""
+    lowered_context = context.lower()
+    lowered_name = name.lower()
+    for product in sorted(_PRESERVED_PRODUCTS, key=len, reverse=True):
+        if product in lowered_context and lowered_name != product and lowered_name in product:
+            return product
+    return name
+
+
 def _build_storage_line(
     parsed: ParsedIngredient,
     original: str,
@@ -1252,6 +1262,7 @@ def _build_storage_line(
     if lemon_or_lime:
         return lemon_or_lime
     name = _simplify_parsed_name(parsed.name[0].text)
+    name = _restore_preserved_product_split_by_parser(context, name)
     purchased_shredded = _purchased_shredded_product(context, name)
     if purchased_shredded:
         name = purchased_shredded
