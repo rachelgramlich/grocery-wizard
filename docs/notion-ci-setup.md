@@ -2,7 +2,7 @@
 
 GitHub Actions can run **live read-only** pytest against a **CI copy** of your four Grocery Wizard Notion databases. Golden weeks and `just smoke-ui` still run on every PR without secrets; this setup is optional and catches Notion schema / API drift.
 
-Workflow: [`.github/workflows/notion-nightly-readonly.yml`](../.github/workflows/notion-nightly-readonly.yml) (job name *Notion read-only integration*).
+Workflow: [`.github/workflows/notion-nightly-readonly.yml`](../.github/workflows/notion-nightly-readonly.yml) (display name *Notion read-only integration*). Runs on **`pull_request`** to **`main`** (same repo, when secrets are set) and **`workflow_dispatch`** — no scheduled cron.
 
 ## What you need
 
@@ -15,7 +15,11 @@ Workflow: [`.github/workflows/notion-nightly-readonly.yml`](../.github/workflows
 
 Optional: **`NOTION_DATA_SOURCE_ID`** — only if prod uses it (Recipes DB with multiple sources). CI Recipes has a single source; you usually omit this for CI.
 
-**Do not** commit API keys or database IDs into the repo. Set secrets only in GitHub → **Settings** → **Secrets and variables** → **Actions**.
+**Do not** commit API keys or database IDs into the repo. Set secrets in GitHub → **Settings** → **Secrets and variables** → **Actions**, and (for Cloud Agents) the same names in **Cursor → Cloud Agents → environment secrets** for this repo.
+
+### Cursor Cloud Agents
+
+Use the **same five secret names** as the GitHub checklist below. Agents map them to `NOTION_*` at runtime via `tests/notion_test_env.py` (see **`AGENTS.md`** — preflight one-liner). Target **`[GW CI]`** databases only; prefer read-only smoke and revert any test writes.
 
 ## Recommended database titles and schema
 

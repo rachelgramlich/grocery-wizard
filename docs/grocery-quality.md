@@ -75,7 +75,7 @@ Default **CI** (`just ci`) still uses fake Notion IDs — every PR runs golden w
 | --- | --- |
 | **`pull_request` → `main`** (same repo) | When **`NOTION_CI_API_KEY`** plus the four **`NOTION_CI_*_DATABASE_ID`** secrets are set, runs config preflight + live read-only AppTest cases (`live_notion_smoke_enabled()` / `-k "live and read_only"`). |
 | **Fork PR** or **missing secrets** | Job **succeeds** with a skip message — does not fail the PR. |
-| **Nightly schedule** + **manual dispatch** | Same checks when secrets exist; catches drift if nothing merged via PR. |
+| **`workflow_dispatch`** (manual) | Same checks when secrets exist — run from Actions tab when you want a live smoke without opening a PR. |
 
 Use a **separate test Notion workspace** (not production), or parallel **`[GW CI]`** databases with integration access scoped to CI. **GitHub Actions:** `NOTION_CI_API_KEY` (mapped to `NOTION_API_KEY` in the job), optional `NOTION_DATA_SOURCE_ID`, and the four `NOTION_CI_*_DATABASE_ID` secrets (mapped to `NOTION_*_DATABASE_ID`). Step-by-step setup: **[`docs/notion-ci-setup.md`](notion-ci-setup.md)** (GitHub issue **#426**).
 

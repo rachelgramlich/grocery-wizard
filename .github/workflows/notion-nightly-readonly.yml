@@ -1,7 +1,6 @@
 # Notion read-only integration (#426) — NOT part of `just ci`.
 #
-# Primary: runs on pull_request to main (same-repo PRs when secrets exist).
-# Supplement: nightly schedule + manual dispatch for drift when no PR ran.
+# Triggers: pull_request to main (same-repo PRs when secrets exist) and workflow_dispatch.
 #
 # Enablement (repo admin, one-time):
 # 1. Create a **separate test Notion workspace** with copies of the recipe, pantry, recurring,
@@ -29,8 +28,6 @@ name: Notion read-only integration
 on:
   pull_request:
     branches: [main]
-  schedule:
-    - cron: "0 14 * * *" # 09:00 US/Eastern (UTC-5) — adjust if needed
   workflow_dispatch:
 
 permissions:
