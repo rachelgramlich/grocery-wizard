@@ -60,6 +60,9 @@ _NYT_SLUG_ID_PREFIX = re.compile(r"^\d+-")
 _COLOR_ONION_RE = re.compile(r"^(?:red|yellow|white|sweet)\s+onions?$", re.IGNORECASE)
 _ONION_OR_ALTERNATIVE_DISPLAY = "red or yellow onions"
 
+# Bare ``milk`` merges away only when one of these normalized keys is on the list (#461).
+_MILK_MERGE_TARGETS = frozenset({"almond milk", "oat milk", "soy milk"})
+
 
 def _grocery_collection_key(display_name: str) -> str:
     """Canonical dedupe key; merges color onion variants with OR-alternative lines."""
@@ -363,6 +366,7 @@ def merge_grocery_items(
     """Merge grocery item lists, deduplicating on normalized keys."""
     merged: list[str] = []
     seen: set[str] = set()
+    has_milk_merge_target = False
     for items in item_lists:
         for raw in items:
             normalized = normalize_grocery_list_item(raw)
@@ -373,9 +377,20 @@ def merge_grocery_items(
                 continue
             seen.add(key)
             merged.append(normalized)
+            has_milk_merge_target = has_milk_merge_target or _is_milk_merge_target(key)
+    if has_milk_merge_target:
+        merged = [item for item in merged if not _is_bare_milk(_normalized_item_key(item))]
     if sort:
         merged = sort_grocery_items(merged)
     return merged
+
+
+def _is_bare_milk(key: str) -> bool:
+    return key == "milk"
+
+
+def _is_milk_merge_target(key: str) -> bool:
+    return key in _MILK_MERGE_TARGETS
 
 
 def format_meals_copy_text(meals: list[tuple[str, str | None]]) -> str:
