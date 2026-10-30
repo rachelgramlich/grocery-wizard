@@ -9,9 +9,9 @@ Workflow: [`.github/workflows/notion-nightly-readonly.yml`](../.github/workflows
 | Piece | Notes |
 | --- | --- |
 | **Four CI databases** | Titles should include **`CI`** so they are not confused with `[GW]` production. |
-| **`NOTION_API_KEY`** | Same secret name as prod — your Grocery Wizard Notion integration token. |
+| **`NOTION_CI_API_KEY`** | GitHub Actions secret — integration token with access to CI databases (may be the same token as local prod). |
 | **Four `NOTION_CI_*_DATABASE_ID` secrets** | Paste **database** IDs (not data-source / collection IDs). |
-| **Integration access** | The integration behind `NOTION_API_KEY` must be **connected** to each CI database (Notion → database → **⋯** → **Connections**). |
+| **Integration access** | The integration behind `NOTION_CI_API_KEY` must be **connected** to each CI database (Notion → database → **⋯** → **Connections**). |
 
 Optional: **`NOTION_DATA_SOURCE_ID`** — only if prod uses it (Recipes DB with multiple sources). CI Recipes has a single source; you usually omit this for CI.
 
@@ -49,15 +49,15 @@ Repo → **Settings** → **Secrets and variables** → **Actions** → **New re
 
 | Secret name | Value |
 | --- | --- |
-| `NOTION_API_KEY` | Integration secret (same token as local prod **if** it has access to CI databases). |
+| `NOTION_CI_API_KEY` | Integration secret (same token as local prod **if** it has access to CI databases). |
 | `NOTION_CI_RECIPE_DATABASE_ID` | `[GW CI] Recipes` database ID |
 | `NOTION_CI_PANTRY_DATABASE_ID` | `[GW CI] Pantry Staples` database ID |
 | `NOTION_CI_RECURRING_WEEKLY_DATABASE_ID` | `[GW CI] Recurring Weekly Items` database ID |
 | `NOTION_CI_WEEKLY_MEAL_PLANS_DATABASE_ID` | `[GW CI] Weekly Meal Plans` database ID |
 
-The workflow maps `NOTION_CI_*` → `NOTION_*_DATABASE_ID` inside the job so pytest calls `load_config()` with CI IDs only. Production IDs in your local `.env` are unchanged.
+The workflow maps `NOTION_CI_API_KEY` → `NOTION_API_KEY` and each `NOTION_CI_*_DATABASE_ID` → `NOTION_*_DATABASE_ID` inside the job so pytest calls `load_config()` with CI credentials only. Production IDs in your local `.env` are unchanged.
 
-**Same API key as prod:** fine when the integration is invited to **both** prod and CI databases. If you use a dedicated test workspace, create a separate integration there and paste **that** token as `NOTION_API_KEY` for CI only (prod Streamlit still uses your local `.env`).
+**Same API key as prod:** fine when the integration is invited to **both** prod and CI databases. If you use a dedicated test workspace, create a separate integration there and paste **that** token as `NOTION_CI_API_KEY` for CI only (prod Streamlit still uses `NOTION_API_KEY` in your local `.env`).
 
 ## Verify locally (optional)
 
