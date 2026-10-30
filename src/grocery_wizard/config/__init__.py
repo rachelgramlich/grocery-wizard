@@ -24,6 +24,7 @@ LEGACY_DATA_DIR = Path(".grocery_wizard")
 WEEK_PLAN_PATH = DATA_DIR / "week_plan.json"
 LEGACY_WEEK_PLAN_PATH = LEGACY_DATA_DIR / "week_plan.json"
 NYT_LAST_SYNC_PATH = DATA_DIR / "nyt_last_sync.json"
+LIST_HISTORY_DIR = DATA_DIR / "list_history"
 _REPO_SECRETS_PATH = _REPO_ROOT / "secrets.toml"
 _LEGACY_STREAMLIT_SECRETS_PATH = _REPO_ROOT / ".streamlit" / "secrets.toml"
 _STREAMLIT_SECRETS_SYMLINK = _LEGACY_STREAMLIT_SECRETS_PATH
