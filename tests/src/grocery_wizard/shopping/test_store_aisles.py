@@ -169,6 +169,69 @@ def test_sort_grocery_items_puts_dog_treats_after_dairy_and_coffee_after_canned(
     ]
 
 
+@pytest.mark.parametrize(
+    "item",
+    [
+        "red pepper",
+        "red peppers",
+        "2 orange peppers",
+        "yellow pepper",
+        "green pepper",
+        "1 sweet pepper",
+        "mini sweet peppers",
+        "hot pepper",
+        "chile pepper",
+        "jalape\u00f1o pepper",
+        "jalapeno pepper",
+        "jalape\u00f1o peppers",
+        "jalapeno peppers",
+        "serrano pepper",
+        "poblano peppers",
+        "fresno pepper",
+        "habanero pepper",
+        "anaheim peppers",
+        "banana pepper",
+        "cubanelle peppers",
+        "shishito peppers",
+        "padron peppers",
+        "scotch bonnet pepper",
+        "cherry peppers",
+        "1 red pepper, seeded",
+        "bell pepper",
+        "red bell pepper",
+        "2 red bell peppers",
+    ],
+)
+def test_fresh_peppers_classify_as_vegetables(item: str) -> None:
+    assert classify_aisle(item) == "vegetables"
+
+
+@pytest.mark.parametrize(
+    "item",
+    [
+        "pepper",
+        "black pepper",
+        "ground pepper",
+        "white pepper",
+        "cayenne pepper",
+        "red pepper flakes",
+        "red pepper flake",
+        "red-pepper flakes",
+        "crushed red pepper",
+        "crushed red pepper flakes",
+        "hot pepper flakes",
+    ],
+)
+def test_pepper_spices_stay_in_spices(item: str) -> None:
+    assert classify_aisle(item) == "spices"
+
+
+def test_pepper_lookalikes_keep_their_aisles() -> None:
+    assert classify_aisle("pepper jack cheese") == "refrigerated"
+    assert classify_aisle("pepperoni") == "other"
+    assert classify_aisle("peppermint") == "other"
+
+
 def test_load_store_aisles_warns_when_file_missing(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
@@ -364,6 +427,7 @@ def test_classify_aisle_strips_checklist_prefix(item: str, expected_aisle: str) 
         ("thai green chiles", "vegetables"),
         ("buffalo sauce", "sauces/condiments"),
         ("hot sauce", "sauces/condiments"),
+        ("hot pepper sauce", "sauces/condiments"),
         ("teriyaki sauce", "sauces/condiments"),
         ("pkgs gnocchi", "pasta/grains"),
         ("gnocchi", "pasta/grains"),
