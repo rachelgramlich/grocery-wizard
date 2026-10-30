@@ -28,11 +28,25 @@ def test_apply_notion_ci_skips_when_prod_key_set(monkeypatch: pytest.MonkeyPatch
 
 
 def test_apply_notion_ci_maps_db_ids_when_placeholder_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("NOTION_CI_API_KEY", raising=False)
     monkeypatch.setenv("NOTION_API_KEY", PYTEST_NOTION_API_KEY_PLACEHOLDER)
     monkeypatch.setenv("NOTION_CI_RECIPE_DATABASE_ID", "ci-recipe-id")
     apply_notion_ci_env_for_live_tests()
     assert os.environ["NOTION_API_KEY"] == PYTEST_NOTION_API_KEY_PLACEHOLDER
     assert os.environ["NOTION_RECIPE_DATABASE_ID"] == "ci-recipe-id"
+
+
+def test_apply_notion_ci_maps_api_key_when_only_ci_secrets(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("NOTION_API_KEY", raising=False)
+    monkeypatch.delenv("NOTION_DEBUG_LOGS_DATABASE_ID", raising=False)
+    monkeypatch.setenv("NOTION_CI_API_KEY", "ci-token")
+    monkeypatch.setenv("NOTION_CI_RECIPE_DATABASE_ID", "ci-recipe-id")
+    monkeypatch.setenv("NOTION_CI_WEEKLY_MEAL_PLANS_DATABASE_ID", "ci-weekly-id")
+    apply_notion_ci_env_for_live_tests()
+    assert os.environ["NOTION_API_KEY"] == "ci-token"
+    assert os.environ["NOTION_DEBUG_LOGS_DATABASE_ID"] == "ci-weekly-id"
 
 
 def test_apply_notion_ci_overrides_prod_db_when_explicit_flag(
@@ -42,8 +56,9 @@ def test_apply_notion_ci_overrides_prod_db_when_explicit_flag(
     monkeypatch.setenv("NOTION_API_KEY", "prod-key")
     monkeypatch.setenv("NOTION_RECIPE_DATABASE_ID", "prod-recipe-id")
     monkeypatch.setenv("NOTION_CI_RECIPE_DATABASE_ID", "ci-recipe-id")
+    monkeypatch.setenv("NOTION_CI_API_KEY", "ci-token")
     apply_notion_ci_env_for_live_tests()
-    assert os.environ["NOTION_API_KEY"] == "prod-key"
+    assert os.environ["NOTION_API_KEY"] == "ci-token"
     assert os.environ["NOTION_RECIPE_DATABASE_ID"] == "ci-recipe-id"
 
 

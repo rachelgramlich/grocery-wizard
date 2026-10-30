@@ -38,11 +38,19 @@ Read-only: real saved-plan list and optional continue → meal-count gate. **Do 
 
 ## Required for UI PRs: browser smoke (when Notion preflight succeeds)
 
-**Preflight:**
+**Preflight (local prod `NOTION_API_KEY` in env or `.env`):**
 
 ```bash
 test -n "${NOTION_API_KEY:-}" && PYTHONPATH=src uv run python -c "from grocery_wizard.config import load_config; load_config(); print('notion ok')"
 ```
+
+**Preflight (Cursor Cloud Agents with `NOTION_CI_*` secrets — `[GW CI]` databases only):**
+
+```bash
+PYTHONPATH=src uv run python -c "from tests.notion_test_env import apply_notion_ci_env_for_live_tests; apply_notion_ci_env_for_live_tests(); from grocery_wizard.config import load_config; load_config(); print('notion ok')"
+```
+
+Optional: `export GROCERY_WIZARD_NOTION_CI_LIVE=1` when a prod key exists in `.env` but smoke should hit CI data. See **`docs/notion-ci-setup.md`** and **`AGENTS.md`**.
 
 When preflight prints `notion ok`:
 

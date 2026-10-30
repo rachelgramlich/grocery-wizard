@@ -50,7 +50,7 @@ Required for Grocery Wizard:
 - `NOTION_WEEKLY_MEAL_PLANS_DATABASE_ID`
 - `NOTION_DEBUG_LOGS_DATABASE_ID` (legacy alias `NOTION_LIST_DEBUG_LOGS_DATABASE_ID`)
 
-Cloud agents use the same names as Secrets.
+**Cursor Cloud Agents:** use the same **`NOTION_CI_*`** secret names as GitHub Actions (not prod `NOTION_*` in the Cloud env). `tests/notion_test_env.py` maps them for live pytest / preflight; see **`docs/notion-ci-setup.md`** and **`AGENTS.md`**.
 
 Optional: `NOTION_DATA_SOURCE_ID` — force a specific data source when a Notion database exposes multiple sources (see `integrations/notion_data_source.py`). Recipes DB resolution prefers the source whose schema includes **Link** when unset.
 

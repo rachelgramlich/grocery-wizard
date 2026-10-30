@@ -21,6 +21,7 @@ _NOTION_CI_TO_STANDARD: tuple[tuple[str, str], ...] = (
     ("NOTION_CI_PANTRY_DATABASE_ID", "NOTION_PANTRY_DATABASE_ID"),
     ("NOTION_CI_RECURRING_WEEKLY_DATABASE_ID", "NOTION_RECURRING_WEEKLY_DATABASE_ID"),
     ("NOTION_CI_WEEKLY_MEAL_PLANS_DATABASE_ID", "NOTION_WEEKLY_MEAL_PLANS_DATABASE_ID"),
+    ("NOTION_CI_DEBUG_LOGS_DATABASE_ID", "NOTION_DEBUG_LOGS_DATABASE_ID"),
 )
 
 
@@ -40,6 +41,37 @@ def _apply_ci_database_id_mapping() -> None:
             os.environ[standard_key] = value
 
 
+def _apply_ci_api_key_mapping() -> None:
+    ci_key = os.environ.get("NOTION_CI_API_KEY", "").strip()
+    if not ci_key:
+        return
+    if _notion_ci_live_explicitly_enabled():
+        os.environ["NOTION_API_KEY"] = ci_key
+        return
+    api_key = os.environ.get("NOTION_API_KEY", "")
+    if not api_key or api_key == PYTEST_NOTION_API_KEY_PLACEHOLDER:
+        os.environ["NOTION_API_KEY"] = ci_key
+
+
+def _apply_debug_logs_database_id_fallback() -> None:
+    if os.environ.get("NOTION_DEBUG_LOGS_DATABASE_ID"):
+        return
+    weekly = os.environ.get("NOTION_WEEKLY_MEAL_PLANS_DATABASE_ID")
+    if weekly:
+        os.environ["NOTION_DEBUG_LOGS_DATABASE_ID"] = weekly
+
+
+def _should_use_ci_notion_env() -> bool:
+    if not _has_ci_database_ids() and not os.environ.get("NOTION_CI_API_KEY"):
+        return False
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        return False
+    if _notion_ci_live_explicitly_enabled():
+        return True
+    api_key = os.environ.get("NOTION_API_KEY", "")
+    return not api_key or api_key == PYTEST_NOTION_API_KEY_PLACEHOLDER
+
+
 def prime_notion_env_for_pytest() -> None:
     """Load repo ``.env`` into ``os.environ``, then optional CI→standard mapping."""
     load_dotenv(REPO_ROOT / ".env", override=False)
@@ -47,24 +79,21 @@ def prime_notion_env_for_pytest() -> None:
 
 
 def apply_notion_ci_env_for_live_tests() -> None:
-    """Copy ``NOTION_CI_*`` database IDs into ``NOTION_*`` for the CI workspace locally.
+    """Map ``NOTION_CI_*`` secrets into ``NOTION_*`` for CI / Cloud Agent live tests.
 
-    ``NOTION_API_KEY`` and optional ``NOTION_DATA_SOURCE_ID`` use standard names everywhere.
-    On GitHub Actions the workflow sets ``NOTION_API_KEY`` from ``NOTION_CI_API_KEY`` and mapped database IDs.
-    With ``GROCERY_WIZARD_NOTION_CI_LIVE=1``, CI database IDs win over prod IDs from ``.env``.
-    Otherwise mapping runs only when ``NOTION_API_KEY`` is unset or the pytest placeholder.
+    ``NOTION_API_KEY`` and optional ``NOTION_DATA_SOURCE_ID`` use standard names in the app.
+    GitHub Actions sets ``NOTION_API_KEY`` and database IDs in workflow env (no mapping here).
+    Cursor Cloud Agents and local runs: same secret names as Actions — this helper copies
+    ``NOTION_CI_API_KEY`` → ``NOTION_API_KEY`` and CI database IDs → ``NOTION_*`` when
+    ``GROCERY_WIZARD_NOTION_CI_LIVE=1``, or when ``NOTION_API_KEY`` is unset / pytest placeholder.
+    ``NOTION_DEBUG_LOGS_DATABASE_ID`` falls back to weekly meal plans when unset (matches Actions).
     """
-    if not _has_ci_database_ids():
+    if not _should_use_ci_notion_env():
         return
-    if os.environ.get("GITHUB_ACTIONS") == "true":
-        return
-    if _notion_ci_live_explicitly_enabled():
+    _apply_ci_api_key_mapping()
+    if _has_ci_database_ids():
         _apply_ci_database_id_mapping()
-        return
-    api_key = os.environ.get("NOTION_API_KEY", "")
-    if api_key and api_key != PYTEST_NOTION_API_KEY_PLACEHOLDER:
-        return
-    _apply_ci_database_id_mapping()
+    _apply_debug_logs_database_id_fallback()
 
 
 def live_notion_smoke_enabled() -> bool:
