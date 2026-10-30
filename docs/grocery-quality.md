@@ -77,8 +77,8 @@ Default **CI** (`just ci`) still uses fake Notion IDs — every PR runs golden w
 | **Fork PR** or **no `NOTION_CI_API_KEY`** | Job **succeeds** with a skip message — does not fail the PR. |
 | **Nightly schedule** + **manual dispatch** | Same checks when secrets exist; catches drift if nothing merged via PR. |
 
-Use a **separate test Notion workspace** (not production). Name databases with **CI** in Notion. GitHub paste targets use **`NOTION_CI_*`** secrets (mapped to `NOTION_*` inside the workflow only). Setup steps: GitHub issue **#426**.
+Use a **separate test Notion workspace** (not production). Name databases with **CI** in Notion. **GitHub paste: `NOTION_CI_*` only. App/prod: `NOTION_*` only.** Actions secrets map to `NOTION_*` inside the workflow job only. Setup steps: GitHub issue **#426**.
 
-**Local live tests** against the CI workspace: put `NOTION_CI_*` in `.env` (keep prod `NOTION_*` for Streamlit). Pytest maps CI vars when `NOTION_CI_API_KEY` is set and `NOTION_API_KEY` is unset or the pytest placeholder — see `tests/notion_test_env.py`. Or one-shot: `export NOTION_API_KEY="$NOTION_CI_API_KEY"` (and the other IDs) before `pytest -k "live and read_only"`.
+**Local live tests:** default pytest loads prod `NOTION_*` from repo-root `.env` for `-k "live and read_only"`. To hit the **CI workspace** instead, export `NOTION_CI_*` and set `GROCERY_WIZARD_NOTION_CI_LIVE=1` (see `tests/notion_test_env.py`) — do not replace prod keys in `.env`.
 
 Golden weeks catch **list logic** regressions without secrets; live integration catches **Notion schema / API** drift when secrets are present.

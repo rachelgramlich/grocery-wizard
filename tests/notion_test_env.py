@@ -4,10 +4,17 @@ from __future__ import annotations
 
 import os
 
+from dotenv import load_dotenv
+
+from tests.repo_paths import REPO_ROOT
+
 PYTEST_NOTION_API_KEY_PLACEHOLDER = "pytest-notion-integration-test-key"
 
-# GitHub Actions and local live tests against the CI workspace use NOTION_CI_* paste targets.
-# Map into standard NOTION_* names that load_config() expects (prod .env stays NOTION_* only).
+# Opt in when running live read-only tests against the CI Notion workspace locally.
+# GitHub Actions maps NOTION_CI_* → NOTION_* in the workflow; prod Streamlit never uses NOTION_CI_*.
+_NOTION_CI_LIVE_ENV = "GROCERY_WIZARD_NOTION_CI_LIVE"
+
+# GitHub paste targets use NOTION_CI_*; map into NOTION_* for load_config() during pytest only.
 _NOTION_CI_TO_STANDARD: tuple[tuple[str, str], ...] = (
     ("NOTION_CI_API_KEY", "NOTION_API_KEY"),
     ("NOTION_CI_RECIPE_DATABASE_ID", "NOTION_RECIPE_DATABASE_ID"),
@@ -18,14 +25,33 @@ _NOTION_CI_TO_STANDARD: tuple[tuple[str, str], ...] = (
 )
 
 
+def _notion_ci_live_explicitly_enabled() -> bool:
+    value = os.environ.get(_NOTION_CI_LIVE_ENV, "").strip().lower()
+    return value in {"1", "true", "yes", "on"}
+
+
+def prime_notion_env_for_pytest() -> None:
+    """Load repo ``.env`` into ``os.environ``, then optional CI→standard mapping."""
+    load_dotenv(REPO_ROOT / ".env", override=False)
+    apply_notion_ci_env_for_live_tests()
+
+
 def apply_notion_ci_env_for_live_tests() -> None:
     """Copy NOTION_CI_* into NOTION_* when testing the CI workspace locally.
 
-    Skips when GitHub Actions already mapped job env, or when a real prod NOTION_API_KEY is set.
+    Requires ``NOTION_CI_API_KEY``. On GitHub Actions the workflow already sets ``NOTION_*``.
+    With ``GROCERY_WIZARD_NOTION_CI_LIVE=1``, mapping wins over prod ``NOTION_*`` from ``.env``.
+    Otherwise mapping runs only when ``NOTION_API_KEY`` is unset or the pytest placeholder.
     """
     if not os.environ.get("NOTION_CI_API_KEY"):
         return
     if os.environ.get("GITHUB_ACTIONS") == "true":
+        return
+    if _notion_ci_live_explicitly_enabled():
+        for ci_key, standard_key in _NOTION_CI_TO_STANDARD:
+            value = os.environ.get(ci_key)
+            if value:
+                os.environ[standard_key] = value
         return
     api_key = os.environ.get("NOTION_API_KEY", "")
     if api_key and api_key != PYTEST_NOTION_API_KEY_PLACEHOLDER:
