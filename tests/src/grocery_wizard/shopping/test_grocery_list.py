@@ -1156,3 +1156,50 @@ def test_format_meals_and_grocery_list_excludes_provenance() -> None:
     assert "Item sources" not in text
     assert "Crispy Potato Quesadillas" not in text
     assert "peas" in text
+
+
+@pytest.mark.parametrize(
+    ("pantry_text", "recipe_line", "pantry_name"),
+    [
+        ("avocado oil\n", "2 tbsp avocado oil", "avocado oil"),
+        ("old bay\n", "1 tsp Old Bay seasoning", "old bay"),
+        ("chili powder\n", "2 tsp chili powder", "chili powder"),
+        ("chili powder\n", "2 tsp chile powder", "chile powder"),
+        ("chile powder\n", "2 tsp chili powder", "chili powder"),
+    ],
+)
+def test_build_grocery_list_skips_multi_word_pantry_items(
+    tmp_path: Path, pantry_text: str, recipe_line: str, pantry_name: str
+) -> None:
+    pantry_path = tmp_path / "pantry.txt"
+    pantry_path.write_text(pantry_text, encoding="utf-8")
+    db = MagicMock()
+    db.query_recipes.return_value = [_recipe("Tacos", f"{recipe_line}\n1 avocado")]
+
+    items, excluded, _, _, _, _ = build_grocery_list(
+        db, recipe_names=["Tacos"], pantry_path=pantry_path, exclude_pantry=True
+    )
+
+    assert [item for item in items if pantry_name.split()[-1] in item.lower()] == []
+    assert any(item.lower().startswith(pantry_name.split()[0]) for item in excluded)
+    assert any("avocado" in item for item in items)
+
+
+def test_build_grocery_list_keeps_olive_oil_and_bay_leaves_for_new_pantry_items(
+    tmp_path: Path,
+) -> None:
+    pantry_path = tmp_path / "pantry.txt"
+    pantry_path.write_text("avocado oil\nold bay\nchili powder\n", encoding="utf-8")
+    db = MagicMock()
+    db.query_recipes.return_value = [
+        _recipe("Soup", "2 tbsp olive oil\n2 bay leaves\n1 tbsp chili sauce"),
+    ]
+
+    items, excluded, _, _, _, _ = build_grocery_list(
+        db, recipe_names=["Soup"], pantry_path=pantry_path, exclude_pantry=True
+    )
+
+    lowered = [item.lower() for item in items]
+    assert any("olive oil" in item for item in lowered)
+    assert any("chili sauce" in item for item in lowered)
+    assert excluded == [] or not any("olive oil" in item for item in excluded)
