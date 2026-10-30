@@ -83,5 +83,6 @@ docstring-code-format = true
 pythonpath = ["."]
 testpaths = ["tests"]
 markers = [
+    "golden_grocery: full weekly grocery export snapshots (just golden-grocery)",
     "holistic_ui_smoke: headless AppTest smoke for app load and primary pages (just smoke-ui)",
 ]

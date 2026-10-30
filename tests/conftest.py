@@ -9,11 +9,14 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from tests.notion_test_env import PYTEST_NOTION_API_KEY_PLACEHOLDER
+from tests.notion_test_env import (
+    PYTEST_NOTION_API_KEY_PLACEHOLDER,
+    prime_notion_env_for_pytest,
+)
 from tests.repo_paths import UI_TEST_HELPERS
 
-# Dummy Notion settings so CI and fresh clones can run tests without a real `.env`.
-# Real credentials from the environment or `.env` take precedence (`setdefault`).
+# Placeholders so CI and fresh clones run without Notion secrets.
+# Shell exports and repo-root `.env` (via `prime_notion_env_for_pytest`) win over placeholders.
 _PYTEST_NOTION_ENV: dict[str, str] = {
     "NOTION_API_KEY": PYTEST_NOTION_API_KEY_PLACEHOLDER,
     "NOTION_RECIPE_DATABASE_ID": "00000000-0000-4000-8000-000000000001",
@@ -26,6 +29,7 @@ _PYTEST_NOTION_ENV: dict[str, str] = {
 
 def pytest_configure(config: object) -> None:
     del config
+    prime_notion_env_for_pytest()
     for key, value in _PYTEST_NOTION_ENV.items():
         os.environ.setdefault(key, value)
 

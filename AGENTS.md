@@ -9,6 +9,7 @@
 | **`/create-issues-from-backlog`** | Alias → **`/triage-feedback-inbox`** (`.cursor/commands/grocery-wizard/create-issues-from-backlog.md`) |
 | **`/app-review`** | Hands-on Streamlit UAT → findings → optional grouped **`gh`** issues (see `.cursor/commands/grocery-wizard/app-review.md`) |
 | **`/app-smoke`** | Holistic headless + browser sign-off before UI work is done (`.cursor/commands/grocery-wizard/app-smoke.md`) |
+| **`/grocery-quality-review`** | Weekly grocery list sign-off: golden weeks + smoke (`.cursor/commands/grocery-wizard/grocery-quality-review.md`, **`docs/grocery-quality.md`**) |
 | **`/architecture-review`** | Standards audit + optional **`audit`** issues (shared: `.cursor/commands/shared/architecture-review.md`) |
 | **`/list-enhancements`** | Open backlog (`grocery-wizard` label) via **`gh`** (`.cursor/commands/grocery-wizard/list-enhancements.md`) |
 | **`/work-on-issue N`** | Implement one issue — area → files and UAT rules **below** + shared `.cursor/commands/shared/work-on-issue.md` |
@@ -30,6 +31,7 @@
 | **List backlog** | **`/list-enhancements`** or `gh issue list --label grocery-wizard --state open` |
 | **Verify** | `just check` (includes holistic UI smoke tests) |
 | **Holistic UI smoke** | `just smoke-ui` (headless AppTest; mocked Notion in CI) |
+| **Grocery list quality** | `just golden-grocery` + **`docs/grocery-quality.md`** (no Notion secrets in CI) |
 
 **Enhancement create example:** `gh issue create … --label grocery-wizard --label gw-area-ui` with template sections **Description**, **Expected behavior & manual test hints**, **Area**.
 
@@ -54,7 +56,23 @@ Area from label `gw-area-<name>` or `### Area` in the issue body.
 
 **Before claiming done / opening a UI PR for review:** run **`just smoke-ui`** (or full **`just check`**). Holistic smoke uses headless **AppTest** and covers app import, first run, weekly saved-plan list load, and every primary page (see **`/app-smoke`**).
 
-**Credential preflight:** `test -n "${NOTION_API_KEY:-}" && PYTHONPATH=src uv run python -c "from grocery_wizard.config import load_config; load_config(); print('notion ok')"`. Missing `.env` is OK when secrets are in the environment.
+**Credential preflight (local prod `.env`):** `test -n "${NOTION_API_KEY:-}" && PYTHONPATH=src uv run python -c "from grocery_wizard.config import load_config; load_config(); print('notion ok')"`. Missing `.env` is OK when secrets are in the environment.
+
+**Cursor Cloud Agents — Notion CI secrets (optional live testing):** Configure the same five names as GitHub Actions: **`NOTION_CI_API_KEY`** plus the four **`NOTION_CI_*_DATABASE_ID`** values (see **`docs/notion-ci-setup.md`**). They point at **`[GW CI]`** databases, not household prod. Default agent runs use mocked Notion (`just smoke-ui` / `just check`); no secrets required. **GitHub Actions** live read-only job: **`pull_request`** → **`main`** or manual **`workflow_dispatch`** only (`.github/workflows/notion-nightly-readonly.yml`, #426) — no nightly schedule.
+
+When live Notion is needed (browser smoke, `-k "live and read_only"`, or Streamlit against CI data):
+
+1. Prefer **read-only** paths; undo any accidental writes to CI databases before sign-off.
+2. Optional: `export GROCERY_WIZARD_NOTION_CI_LIVE=1` to force CI IDs even if a prod `NOTION_API_KEY` is present in `.env`.
+3. **Preflight** (maps `NOTION_CI_*` → `NOTION_*` like Actions, then `load_config()`):
+
+```bash
+PYTHONPATH=src uv run python -c "from tests.notion_test_env import apply_notion_ci_env_for_live_tests; apply_notion_ci_env_for_live_tests(); from grocery_wizard.config import load_config; load_config(); print('notion ok')"
+```
+
+4. **Live pytest:** `uv run pytest tests/src/grocery_wizard/ui/test_holistic_ui_smoke_apptest.py -k "live and read_only" -q` (after preflight mapping, or rely on pytest startup via `tests/notion_test_env.py`).
+
+5. **Streamlit:** run preflight mapping in the same shell before `just grocery-ui`, or export `GROCERY_WIZARD_NOTION_CI_LIVE=1` and ensure Cloud secrets are set (no `.env` required).
 
 When preflight succeeds: **browser smoke** required — `just grocery-ui` (or `uv run streamlit run src/grocery_wizard/ui/app.py`). Exercise **all** page picker tabs; on **Create weekly plan**, open **Continue a saved weekly plan** and confirm the saved-plan list loads without error. Then user spot-check in chat before `gh pr comment` sign-off (unless user delegates full UAT).
 
@@ -86,7 +104,7 @@ Skills (committed): `.cursor/skills/tidy-first/SKILL.md` (mirrored under `.agent
 1. PR title: `#<issue-number>: <issue title>` (truncate title if needed for GitHub limits)
 2. PR template **Manual verification** + `Closes #<issue-number>`
 3. Create PRs **ready for review** (not draft) unless the user asks for a draft.
-4. Manual UAT: non-UI → agent runs checks and posts sign-off via **`gh pr comment`** (see `/work-on-issue`); UI → run **`just smoke-ui`** before PR ready, and Cloud agents **must** browser-smoke Streamlit when `NOTION_*` secrets / `load_config()` preflight succeeds (secrets do not require a `.env` file), then user confirms in chat (default) before sign-off. **Always** state **`Holistic smoke: …`** and **`Browser smoke: …`** in chat and the PR — details in `/work-on-issue` and **`/app-smoke`**
+4. Manual UAT: non-UI → agent runs checks and posts sign-off via **`gh pr comment`** (see `/work-on-issue`); UI → run **`just smoke-ui`** before PR ready, and Cloud agents **must** browser-smoke Streamlit when Notion preflight succeeds (**prod** `NOTION_*` in `.env` **or** Cloud **`NOTION_CI_*`** secrets per block above), then user confirms in chat (default) before sign-off. **Always** state **`Holistic smoke: …`** and **`Browser smoke: …`** in chat and the PR — details in `/work-on-issue` and **`/app-smoke`**
 
 Do not close backlog issues by hand — merge with `Closes #N`.
 
