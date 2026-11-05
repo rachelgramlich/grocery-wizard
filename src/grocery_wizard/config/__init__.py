@@ -219,16 +219,15 @@ class Config(BaseSettings):
 
 
 def normalize_notion_database_id(value: str) -> str:
-    """Format a Notion database id as lowercase UUID (32 hex chars, dashes optional)."""
-    stripped = value.strip().replace("-", "")
-    if len(stripped) != 32 or not re.fullmatch(r"[0-9a-fA-F]{32}", stripped):
-        raise ValueError(
-            "Notion database ID must be 32 hex characters (UUID). "
-            f"Got {len(stripped)} hex chars after removing dashes from {value.strip()!r}."
-        )
-    return (
-        f"{stripped[0:8]}-{stripped[8:12]}-{stripped[12:16]}-{stripped[16:20]}-{stripped[20:32]}"
-    ).lower()
+    """Format a Notion database id as lowercase UUID when value is 32 hex chars."""
+    cleaned = value.strip()
+    stripped = cleaned.replace("-", "")
+    if len(stripped) == 32 and re.fullmatch(r"[0-9a-fA-F]{32}", stripped):
+        return (
+            f"{stripped[0:8]}-{stripped[8:12]}-{stripped[12:16]}-"
+            f"{stripped[16:20]}-{stripped[20:32]}"
+        ).lower()
+    return cleaned
 
 
 def _secrets_toml_path() -> Path | None:
