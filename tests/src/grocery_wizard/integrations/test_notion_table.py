@@ -12,6 +12,7 @@ from src.grocery_wizard.integrations.notion_table import (
     NOTION_TEXT_BLOCK_MAX_LEN,
     NotionDatabase,
     build_notion_rich_text,
+    build_notion_text_property,
     clear_notion_database_metadata_cache,
     write_notion_property,
 )
@@ -52,6 +53,14 @@ def test_write_notion_property_rich_text_uses_chunks() -> None:
     text = "y" * (NOTION_TEXT_BLOCK_MAX_LEN * 2 + 1)
     payload = write_notion_property("rich_text", text)
     assert len(payload["rich_text"]) == 3
+
+
+def test_write_notion_property_text_uses_text_key() -> None:
+    payload = write_notion_property("text", '{"schema_version": 1}')
+    assert "text" in payload
+    assert "rich_text" not in payload
+    assert payload["text"][0]["text"]["content"].startswith("{")
+    assert build_notion_text_property("hi") == {"text": [{"text": {"content": "hi"}}]}
 
 
 def test_create_page_parents_row_under_data_source() -> None:

@@ -20,7 +20,7 @@ Pantry staples, recurring weekly items, and saved weekly meal plans live in **No
 | Pantry staples | Pantry | **Name** (title), **Store Aisle** or **Aisle** (select — labels from `store_aisles.txt`) |
 | Recurring weekly items | Recurring | **Name** (title) only |
 | Saved weekly meal plans | Weekly plans | **Name**, **Week start**, **Recipes** (relation → Recipes) |
-| Debug logs (weekly grocery list builds only) | **`[GW DEV] Debug logs`** | **Name** (title), **Log JSON** (rich text); optional **Built at** (date), **Meals** (rich text), **Type** or **Surface** (select — app sets `weekly grocery list`) |
+| Debug logs (weekly grocery list builds only) | **`[GW DEV] Debug logs`** | **Name** (title), **Log JSON** (Notion **Text** — API `text` or `rich_text`); optional **Built at** (date), **Meals** (Text), **Type** or **Surface** (select — app sets `weekly grocery list`) |
 
 Only **weekly grocery list** builds write to this database today. No other app pages or flows append rows yet.
 

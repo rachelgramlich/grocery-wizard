@@ -76,9 +76,9 @@ class NotionListDebugLogsDB:
         json_type = self._db.column_types.get(LIST_LOG_JSON_COLUMN, "")
         if json_type not in ("rich_text", "text"):
             raise ValueError(
-                f"List debug log {LIST_LOG_JSON_COLUMN!r} must be rich text "
-                f"(found type {json_type!r}). Empty-looking rows often mean this "
-                "property is the wrong type (e.g. URL) or hidden in the database view."
+                f"List debug log {LIST_LOG_JSON_COLUMN!r} must be Notion Text "
+                f"(API type rich_text or text; found {json_type!r}). Wrong types "
+                "(e.g. URL) save empty values. Show the column in your database view."
             )
 
     def save_log(self, log: dict[str, Any]) -> str:

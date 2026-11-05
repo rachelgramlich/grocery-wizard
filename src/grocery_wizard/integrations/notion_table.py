@@ -142,8 +142,11 @@ def read_notion_property(prop: dict[str, Any] | None, prop_type: str) -> Any:
     if prop_type == "title":
         texts = prop.get("title", [])
         return "".join(item.get("plain_text", "") for item in texts) or None
-    if prop_type in ("rich_text", "text"):
+    if prop_type == "rich_text":
         texts = prop.get("rich_text", [])
+        return "".join(item.get("plain_text", "") for item in texts) or None
+    if prop_type == "text":
+        texts = prop.get("text", []) or prop.get("rich_text", [])
         return "".join(item.get("plain_text", "") for item in texts) or None
     if prop_type == "url":
         return prop.get("url")
@@ -169,24 +172,31 @@ def read_notion_property(prop: dict[str, Any] | None, prop_type: str) -> Any:
     return None
 
 
-def build_notion_rich_text(value: Any) -> dict[str, list[dict[str, Any]]]:
-    """Build a Notion rich_text property payload (chunked at API segment limit)."""
+def _notion_text_segments(value: Any) -> list[dict[str, Any]]:
     if value is None or value == "":
-        return {"rich_text": []}
+        return []
     content = str(value)
     step = NOTION_TEXT_BLOCK_MAX_LEN
-    return {
-        "rich_text": [
-            {"text": {"content": content[i : i + step]}} for i in range(0, len(content), step)
-        ]
-    }
+    return [{"text": {"content": content[i : i + step]}} for i in range(0, len(content), step)]
+
+
+def build_notion_rich_text(value: Any) -> dict[str, list[dict[str, Any]]]:
+    """Build a Notion rich_text property payload (chunked at API segment limit)."""
+    return {"rich_text": _notion_text_segments(value)}
+
+
+def build_notion_text_property(value: Any) -> dict[str, list[dict[str, Any]]]:
+    """Legacy/database Text columns use the ``text`` key (Notion UI: Text)."""
+    return {"text": _notion_text_segments(value)}
 
 
 def write_notion_property(prop_type: str, value: Any) -> dict[str, Any]:
     if prop_type == "title":
         return {"title": [{"text": {"content": str(value)}}]}
-    if prop_type in ("rich_text", "text"):
+    if prop_type == "rich_text":
         return build_notion_rich_text(value)
+    if prop_type == "text":
+        return build_notion_text_property(value)
     if prop_type == "url":
         return {"url": str(value) if value else None}
     if prop_type == "select":

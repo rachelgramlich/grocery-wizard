@@ -39,8 +39,43 @@ def test_save_log_rejects_non_rich_text_json_column(mock_db_cls: MagicMock) -> N
         LIST_LOG_JSON_COLUMN: "url",
     }
     mock_db_cls.return_value = mock_db
-    with pytest.raises(ValueError, match="rich text"):
+    with pytest.raises(ValueError, match="Notion Text"):
         NotionListDebugLogsDB(MagicMock(notion_debug_logs_database_id="logs-db"))
+
+
+@patch("src.grocery_wizard.integrations.notion_list_logs.NotionDatabase")
+def test_save_log_creates_page_with_text_json_column(mock_db_cls: MagicMock) -> None:
+    from src.grocery_wizard.integrations.notion_table import write_notion_property
+
+    mock_db = MagicMock()
+    mock_db.column_types = {
+        LIST_LOG_NAME_COLUMN: "title",
+        LIST_LOG_JSON_COLUMN: "text",
+        "Type": "select",
+    }
+    mock_db.property_payload.side_effect = lambda column, value: {
+        column: write_notion_property(mock_db.column_types[column], value)
+    }
+    mock_db.create_page.return_value = NotionPageRow(page_id="page-text", properties={})
+    mock_db_cls.return_value = mock_db
+
+    trace = ListTrace()
+    log = build_list_log(
+        trace,
+        meals=["Tacos"],
+        exclude_pantry=True,
+        excluded_pantry=[],
+        missing_ingredients=[],
+        item_provenance={},
+        extra_items=[],
+        final_items=["bananas"],
+        created_at=datetime(2026, 10, 30, tzinfo=UTC),
+    )
+    db = NotionListDebugLogsDB(MagicMock(notion_debug_logs_database_id="logs-db"))
+    assert db.save_log(log) == "page-text"
+    props = mock_db.create_page.call_args[0][0]
+    assert "text" in props[LIST_LOG_JSON_COLUMN]
+    assert props[LIST_LOG_JSON_COLUMN]["text"][0]["text"]["content"].startswith("{")
 
 
 @patch("src.grocery_wizard.integrations.notion_list_logs.NotionDatabase")
