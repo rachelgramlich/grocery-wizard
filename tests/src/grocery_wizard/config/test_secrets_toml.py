@@ -98,3 +98,13 @@ GROCERY_WIZARD_AUTH_EMAIL_ALLOWLIST = "a@example.com"
 
     for key in ("GROCERY_WIZARD_REQUIRE_AUTH", "GROCERY_WIZARD_AUTH_EMAIL_ALLOWLIST"):
         monkeypatch.delenv(key, raising=False)
+
+
+def test_normalize_notion_database_id_repairs_wrong_dash_grouping() -> None:
+    from src.grocery_wizard.config import normalize_notion_database_id
+
+    # Common copy-paste mistake (16-char last segment) → standard UUID
+    assert (
+        normalize_notion_database_id("a061062d-64d6-4f42-a3b48bbb9cdc64ea")
+        == "a061062d-64d6-4f42-a3b4-8bbb9cdc64ea"
+    )

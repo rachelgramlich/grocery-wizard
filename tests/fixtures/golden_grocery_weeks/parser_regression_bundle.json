@@ -1,0 +1,37 @@
+{
+  "id": "parser_regression_bundle",
+  "description": "Multi-recipe week compiled from parser/shopping regression cases (#27, #233/#234, lemon aggregate). Replace or add files here from `export-golden-week` with your real saved plans.",
+  "pantry": ["salt", "pepper"],
+  "recurring": ["milk"],
+  "extra_items": "- [ ] Bananas",
+  "recipes": [
+    {
+      "name": "Tacos",
+      "ingredients": "8 corn tortillas\n1 limes\nCilantro\noyster mushrooms"
+    },
+    {
+      "name": "Sheet-Pan Baked Feta With Broccolini, Tomatoes and Lemon",
+      "ingredients": "1 lemons\n1 bunch broccolini"
+    },
+    {
+      "name": "Citrus Chicken",
+      "ingredients": "juice of half a lemon\nzest of 1 lemon\n2 lemons"
+    },
+    {
+      "name": "Bay Leaf Soup",
+      "ingredients": "1 bay leaf\n2 cups stock"
+    }
+  ],
+  "expect_grocery_lines": [
+    "1 limes",
+    "5 lemons",
+    "bananas",
+    "1 bunch broccolini",
+    "cilantro",
+    "oyster mushrooms",
+    "milk",
+    "8 corn tortillas",
+    "1 bay leaf",
+    "stock"
+  ]
+}

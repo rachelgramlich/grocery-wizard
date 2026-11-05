@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import tomllib
 from pathlib import Path
 
@@ -174,7 +175,7 @@ class Config(BaseSettings):
             raise ValueError(
                 "NOTION_RECIPE_DATABASE_ID is required (set in .env or Cloud Agent Secrets)"
             )
-        return value
+        return normalize_notion_database_id(value)
 
     @field_validator("notion_pantry_database_id")
     @classmethod
@@ -183,7 +184,7 @@ class Config(BaseSettings):
             raise ValueError(
                 "NOTION_PANTRY_DATABASE_ID is required (set in .env or Cloud Agent Secrets)"
             )
-        return value
+        return normalize_notion_database_id(value)
 
     @field_validator("notion_recurring_weekly_database_id")
     @classmethod
@@ -193,7 +194,7 @@ class Config(BaseSettings):
                 "NOTION_RECURRING_WEEKLY_DATABASE_ID is required "
                 "(set in .env or Cloud Agent Secrets)"
             )
-        return value
+        return normalize_notion_database_id(value)
 
     @field_validator("notion_weekly_meal_plans_database_id")
     @classmethod
@@ -203,7 +204,7 @@ class Config(BaseSettings):
                 "NOTION_WEEKLY_MEAL_PLANS_DATABASE_ID is required "
                 "(set in .env or Cloud Agent Secrets)"
             )
-        return value
+        return normalize_notion_database_id(value)
 
     @field_validator("notion_debug_logs_database_id")
     @classmethod
@@ -214,7 +215,19 @@ class Config(BaseSettings):
                 "(legacy alias NOTION_LIST_DEBUG_LOGS_DATABASE_ID; "
                 "set in .env or Cloud Agent Secrets)"
             )
-        return value
+        return normalize_notion_database_id(value)
+
+
+def normalize_notion_database_id(value: str) -> str:
+    """Format a Notion database id as lowercase UUID when value is 32 hex chars."""
+    cleaned = value.strip()
+    stripped = cleaned.replace("-", "")
+    if len(stripped) == 32 and re.fullmatch(r"[0-9a-fA-F]{32}", stripped):
+        return (
+            f"{stripped[0:8]}-{stripped[8:12]}-{stripped[12:16]}-"
+            f"{stripped[16:20]}-{stripped[20:32]}"
+        ).lower()
+    return cleaned
 
 
 def _secrets_toml_path() -> Path | None:

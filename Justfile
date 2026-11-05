@@ -45,6 +45,14 @@ test:
 smoke-ui:
     uv run pytest -m holistic_ui_smoke
 
+# Golden weekly grocery export snapshots (full pipeline, not single-line normalize cases)
+golden-grocery:
+    uv run pytest -m golden_grocery
+
+# Export your real Notion meal plan into tests/fixtures/golden_grocery_weeks/<id>.json
+export-golden-week ID RECIPES *ARGS:
+    PYTHONPATH=src uv run python -m src.grocery_wizard.dev.export_golden_week --id {{ID}} {{RECIPES}} {{ARGS}}
+
 # Run tests with coverage
 test-cov:
     uv run pytest --cov=. --cov-report=html

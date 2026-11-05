@@ -314,6 +314,10 @@ with pytest.raises(MyError, match="message"):
 
 Streamlit UI regression tests read concatenated sources via `tests/src/grocery_wizard/ui/ui_source.py`. Import `APP_PATH`, `UI_ROOT`, `ui_source()`, and `pantry_page_source()` from that module (or `from ui_source import …` inside `tests/src/grocery_wizard/ui/`). UI page/block/control IDs live in `docs/ui-map.md` and `src/grocery_wizard/ui/ids.py`. Do not duplicate `Path(...)/app.py` literals across test files.
 
+### Grocery list quality
+
+Weekly export regressions use **golden weeks** in `tests/fixtures/golden_grocery_weeks/` — run `just golden-grocery`. List-bug fixes should add or extend a fixture, not only a one-line normalize test. Sign-off flow: **`docs/grocery-quality.md`** and the **`/grocery-quality-review`** slash command. CI runs golden weeks and `just smoke-ui` with mocked Notion; live read-only Notion integration runs on PRs to `main` when **`NOTION_CI_API_KEY`** and the four **`NOTION_CI_*_DATABASE_ID`** GitHub Actions secrets exist (skips cleanly otherwise) — see [#426](https://github.com/rachelgramlich/grocery-wizard/issues/426).
+
 ### String literals in tests
 
 Use f-strings or plain literals instead of `"\n".join([...])` for short multi-line strings:

@@ -157,4 +157,4 @@ List inbox issues: `gh issue list --label user-feedback-inbox --state open --rep
 
 ## Staging Notion
 
-**Deferred** — [#356](https://github.com/rachelgramlich/grocery-wizard/issues/356). Household MVP uses one production Notion integration; revert test writes per `AGENTS.md` UAT rules.
+Resolved ([#356](https://github.com/rachelgramlich/grocery-wizard/issues/356)) — **no second Streamlit Cloud app**. Staging for humans, agents, and read-only CI uses **`[GW CI]`** Notion copies ([`docs/notion-ci-setup.md`](notion-ci-setup.md); live checks [#426](https://github.com/rachelgramlich/grocery-wizard/issues/426)). Production Cloud keeps one `[GW]` integration; revert test writes per `AGENTS.md` UAT rules.

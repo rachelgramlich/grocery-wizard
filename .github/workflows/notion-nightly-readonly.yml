@@ -1,0 +1,174 @@
+# Notion read-only integration (#426) — NOT part of `just ci`.
+#
+# Triggers: pull_request to main (same-repo PRs when secrets exist) and workflow_dispatch.
+#
+# Enablement (repo admin, one-time):
+# 1. Create a **separate test Notion workspace** with copies of the recipe, pantry, recurring,
+#    and weekly meal plan databases. Name databases with **CI** in Notion so they are not
+#    confused with production.
+# 2. GitHub → Settings → Secrets and variables → Actions → New repository secret:
+#    NOTION_CI_API_KEY — integration token with access to CI databases (may match prod token)
+#    NOTION_CI_RECIPE_DATABASE_ID
+#    NOTION_CI_PANTRY_DATABASE_ID
+#    NOTION_CI_RECURRING_WEEKLY_DATABASE_ID
+#    NOTION_CI_WEEKLY_MEAL_PLANS_DATABASE_ID
+#    (Optional: NOTION_CI_DEBUG_LOGS_DATABASE_ID — list debug logs DB; else weekly plans ID)
+#    (Optional: NOTION_DATA_SOURCE_ID — same as prod if used; see config/README.md)
+# 3. Open a PR to main (same repo): live read-only pytest runs when secrets are set.
+# 4. Fork PRs or missing NOTION_CI_API_KEY / CI database IDs: job exits 0 with a skip message.
+#
+# Job env: NOTION_CI_API_KEY → NOTION_API_KEY for load_config() / pytest;
+# optional NOTION_DATA_SOURCE_ID; NOTION_CI_* database IDs map → NOTION_*_DATABASE_ID.
+#
+# Golden weeks in the repo catch grocery **logic** regressions without secrets.
+# This workflow catches Notion **schema / live API** drift in the test workspace.
+
+name: Notion read-only integration
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Alert job adds issues: write only when read-only checks fail.
+
+concurrency:
+  group: notion-readonly-integration-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  read-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      notion_enabled: ${{ steps.notion.outputs.enabled }}
+    env:
+      NOTION_API_KEY: ${{ secrets.NOTION_CI_API_KEY }}
+      NOTION_DATA_SOURCE_ID: ${{ secrets.NOTION_DATA_SOURCE_ID }}
+      NOTION_RECIPE_DATABASE_ID: ${{ secrets.NOTION_CI_RECIPE_DATABASE_ID }}
+      NOTION_PANTRY_DATABASE_ID: ${{ secrets.NOTION_CI_PANTRY_DATABASE_ID }}
+      NOTION_RECURRING_WEEKLY_DATABASE_ID: ${{ secrets.NOTION_CI_RECURRING_WEEKLY_DATABASE_ID }}
+      NOTION_WEEKLY_MEAL_PLANS_DATABASE_ID: ${{ secrets.NOTION_CI_WEEKLY_MEAL_PLANS_DATABASE_ID }}
+      NOTION_DEBUG_LOGS_DATABASE_ID: ${{ secrets.NOTION_CI_DEBUG_LOGS_DATABASE_ID || secrets.NOTION_CI_WEEKLY_MEAL_PLANS_DATABASE_ID }}
+    steps:
+      - name: Detect Notion run eligibility
+        id: notion
+        env:
+          NOTION_CI_API_KEY: ${{ secrets.NOTION_CI_API_KEY }}
+          NOTION_CI_RECIPE_DATABASE_ID: ${{ secrets.NOTION_CI_RECIPE_DATABASE_ID }}
+          NOTION_CI_PANTRY_DATABASE_ID: ${{ secrets.NOTION_CI_PANTRY_DATABASE_ID }}
+          NOTION_CI_RECURRING_WEEKLY_DATABASE_ID: ${{ secrets.NOTION_CI_RECURRING_WEEKLY_DATABASE_ID }}
+          NOTION_CI_WEEKLY_MEAL_PLANS_DATABASE_ID: ${{ secrets.NOTION_CI_WEEKLY_MEAL_PLANS_DATABASE_ID }}
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ] && \
+             [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "Skipped — fork pull requests cannot use repository secrets."
+            echo "Golden weeks and smoke-ui still run on every PR via CI."
+            exit 0
+          fi
+          if [ -z "${NOTION_CI_API_KEY}" ]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "Skipped — NOTION_CI_API_KEY is not set. See workflow file comments for enablement."
+            echo "Golden weeks and smoke-ui still run on every PR via CI."
+            exit 0
+          fi
+          missing=""
+          for name in NOTION_CI_RECIPE_DATABASE_ID NOTION_CI_PANTRY_DATABASE_ID \
+            NOTION_CI_RECURRING_WEEKLY_DATABASE_ID NOTION_CI_WEEKLY_MEAL_PLANS_DATABASE_ID; do
+            eval "val=\$${name}"
+            if [ -z "${val}" ]; then
+              missing="${missing} ${name}"
+            fi
+          done
+          if [ -n "${missing}" ]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "Skipped — missing CI database secrets:${missing}"
+            echo "Golden weeks and smoke-ui still run on every PR via CI."
+            exit 0
+          fi
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout
+        if: steps.notion.outputs.enabled == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        if: steps.notion.outputs.enabled == 'true'
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          enable-cache: true
+
+      - name: Sync dependencies
+        if: steps.notion.outputs.enabled == 'true'
+        run: uv sync --all-extras --group dev
+        env:
+          UV_LOCKED: "1"
+
+      - name: Notion config preflight
+        if: steps.notion.outputs.enabled == 'true'
+        run: PYTHONPATH=src uv run python -c "from grocery_wizard.config import load_config; load_config(); print('notion ok')"
+
+      - name: Notion CI schema and recipe query smoke
+        if: steps.notion.outputs.enabled == 'true'
+        run: PYTHONPATH=src uv run python -m grocery_wizard.integrations.notion_ci_schema
+
+      - name: Live Notion read-only smoke (optional tests)
+        if: steps.notion.outputs.enabled == 'true'
+        run: |
+          uv run pytest \
+            tests/src/grocery_wizard/ui/test_holistic_ui_smoke_apptest.py \
+            -k "live and read_only" \
+            -q
+
+  notion-ci-failure-alert:
+    needs: read-only
+    if: failure() && needs.read-only.outputs.notion_enabled == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Open GitHub issue on Notion CI failure
+        uses: actions/github-script@b7fb2001b410c9390cbe9e2c7d5cab7eefb7b29c # v7.0.1
+        with:
+          script: |
+            const shortSha = context.sha.substring(0, 7);
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const title = `Notion CI read-only failed (${shortSha})`;
+            const body = [
+              "The **Notion read-only integration** workflow failed against the `[GW CI]` workspace.",
+              "",
+              `- Run: ${runUrl}`,
+              `- Commit: \`${context.sha}\``,
+              "",
+              "Fix schema drift or CI seed data, then re-run the workflow from the Actions tab.",
+              "See `docs/notion-ci-setup.md` and issue #426.",
+            ].join("\n");
+            const { data: existing } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              per_page: 20,
+            });
+            if (existing.some((issue) => issue.title === title)) {
+              core.info(`Issue already open: ${title}`);
+              return;
+            }
+            const payload = {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body,
+            };
+            try {
+              await github.rest.issues.create({ ...payload, labels: ["notion-ci", "grocery-wizard"] });
+            } catch (error) {
+              core.warning(`Could not apply notion-ci label (${error.message}); using grocery-wizard only.`);
+              await github.rest.issues.create({ ...payload, labels: ["grocery-wizard"] });
+            }
