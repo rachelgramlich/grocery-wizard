@@ -20,7 +20,7 @@ def test_feedback_header_controls_render_in_app() -> None:
     assert "Submit feedback" in labels
 
 
-def test_submit_feedback_appends_latest_notion_log_url(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_submit_feedback_appends_latest_list_debug_log(monkeypatch: pytest.MonkeyPatch) -> None:
     captured: dict[str, str] = {}
 
     def fake_submit(text: str, *, surface: str | None = None) -> str:
@@ -32,7 +32,21 @@ def test_submit_feedback_appends_latest_notion_log_url(monkeypatch: pytest.Monke
 
     import streamlit as st
 
+    from src.grocery_wizard.shopping.list_log import ListTrace, build_list_log
+
+    trace = ListTrace()
+    debug_log = build_list_log(
+        trace,
+        meals=["Soup"],
+        exclude_pantry=False,
+        excluded_pantry=[],
+        missing_ingredients=[],
+        item_provenance={},
+        extra_items=[],
+        final_items=["flour"],
+    )
     st.session_state["grocery_result"] = {
+        "debug_log": debug_log,
         "debug_log_notion_url": "https://www.notion.so/testlogpage",
     }
     st.session_state["gw_feedback_note"] = "Milk showed up twice"
@@ -42,6 +56,7 @@ def test_submit_feedback_appends_latest_notion_log_url(monkeypatch: pytest.Monke
     _submit_feedback(surface="weekly")
     assert "https://www.notion.so/testlogpage" in captured["text"]
     assert "Milk showed up twice" in captured["text"]
+    assert '"final_list"' in captured["text"]
 
 
 def test_feedback_submit_files_github_issue() -> None:
