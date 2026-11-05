@@ -51,8 +51,9 @@ Commit the new JSON. CI will fail if the list changes until you update `expect_g
 ## When a user reports a bad line
 
 1. Fix the parser/shopping bug.
-2. Add a **golden week** (or extend an existing one), not only a single-line normalize test.
-3. Optional: keep a minimal line case if it documents a tricky edge.
+2. Add a **focused test** in `tests/src/grocery_wizard/shopping/test_grocery_list.py` (merge/dedupe/pantry) or extend **`parser_regression_bundle.json`** when the bug needs a tiny multi-recipe week — not a one-line normalize test alone.
+3. Refresh a **real golden week** only when a whole saved plan should become a new long-term anchor (occasionally), not after every fix.
+4. **`just golden-grocery`** still runs all fixtures + invariants on every PR.
 
 ## Architecture review vs grocery quality
 
@@ -63,7 +64,7 @@ For release-style sign-off on list correctness, use:
 - `just golden-grocery`
 - `just smoke-ui`
 - `/app-review` with the golden week meal set (browser)
-- `/triage-feedback-inbox` → every list bug promotes a golden fixture task
+- `/triage-feedback-inbox` → list bugs get a **shopping/parser test** (or bundle fixture), not necessarily a new exported Notion week
 
 ## Live Notion (#426)
 

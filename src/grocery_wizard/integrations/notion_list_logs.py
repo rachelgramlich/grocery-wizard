@@ -73,8 +73,18 @@ class NotionListDebugLogsDB:
                     f"List debug log database needs a {column!r} column "
                     f"(found: {sorted(self._db.column_types)})"
                 )
+        json_type = self._db.column_types.get(LIST_LOG_JSON_COLUMN, "")
+        if json_type not in ("rich_text", "text"):
+            raise ValueError(
+                f"List debug log {LIST_LOG_JSON_COLUMN!r} must be rich text "
+                f"(found type {json_type!r}). Empty-looking rows often mean this "
+                "property is the wrong type (e.g. URL) or hidden in the database view."
+            )
 
     def save_log(self, log: dict[str, Any]) -> str:
+        payload_json = dump_list_log(log)
+        if len(payload_json.strip()) < 2:
+            raise ValueError("Refusing to save an empty grocery list debug log to Notion")
         row = self._db.create_page(self._properties_for_log(log))
         return row.page_id
 

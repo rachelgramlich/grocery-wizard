@@ -5,6 +5,8 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from src.grocery_wizard.integrations.notion_list_logs import (
     LIST_LOG_JSON_COLUMN,
     LIST_LOG_NAME_COLUMN,
@@ -27,6 +29,18 @@ def test_list_log_notion_title_includes_meals() -> None:
     assert title.startswith(WEEKLY_LIST_LOG_TITLE_PREFIX)
     assert "Tacos" in title
     assert "2026-10-30" in title
+
+
+@patch("src.grocery_wizard.integrations.notion_list_logs.NotionDatabase")
+def test_save_log_rejects_non_rich_text_json_column(mock_db_cls: MagicMock) -> None:
+    mock_db = MagicMock()
+    mock_db.column_types = {
+        LIST_LOG_NAME_COLUMN: "title",
+        LIST_LOG_JSON_COLUMN: "url",
+    }
+    mock_db_cls.return_value = mock_db
+    with pytest.raises(ValueError, match="rich text"):
+        NotionListDebugLogsDB(MagicMock(notion_debug_logs_database_id="logs-db"))
 
 
 @patch("src.grocery_wizard.integrations.notion_list_logs.NotionDatabase")
