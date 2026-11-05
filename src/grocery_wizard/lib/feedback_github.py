@@ -9,6 +9,12 @@ import requests
 
 FEEDBACK_GITHUB_INBOX_LABEL = "user-feedback-inbox"
 MAX_FEEDBACK_BODY_CHARS = 4000
+_DEBUG_LOG_JSON_FENCE_OPEN = "```json\n"
+_DEBUG_LOG_JSON_FENCE_CLOSE = "\n```"
+_DEBUG_LOG_TRUNCATION_NOTE = (
+    "\n\n_(Debug log JSON truncated to fit GitHub issue size limits. "
+    "Use the Notion link above or the download control in the app for the full log.)_"
+)
 _GITHUB_API = "https://api.github.com"
 
 
@@ -22,13 +28,83 @@ def _issue_title(text: str) -> str:
     return f"{prefix}{one_line[: room - 1].rstrip()}…"
 
 
-def _issue_body(*, text: str, surface: str | None, timestamp: str) -> str:
+def _issue_body_shell(*, surface: str | None, timestamp: str) -> tuple[list[str], str]:
     lines = [f"**Submitted:** {timestamp}"]
     if surface:
         lines.append(f"**Surface:** {surface}")
     footer = "_Auto-filed from Grocery Wizard Send feedback._"
-    lines.extend(["", text.rstrip(), "", "---", footer])
-    body = "\n".join(lines)
+    return lines, footer
+
+
+def _issue_body_for_text(*, text: str, surface: str | None, timestamp: str) -> str:
+    header_lines, footer = _issue_body_shell(surface=surface, timestamp=timestamp)
+    lines = [*header_lines, "", text.rstrip(), "", "---", footer]
+    return "\n".join(lines)
+
+
+def _truncate_debug_log_json_in_text(
+    text: str,
+    *,
+    surface: str | None,
+    timestamp: str,
+) -> str | None:
+    open_idx = text.find(_DEBUG_LOG_JSON_FENCE_OPEN)
+    if open_idx < 0:
+        return None
+    close_idx = text.find(_DEBUG_LOG_JSON_FENCE_CLOSE, open_idx + len(_DEBUG_LOG_JSON_FENCE_OPEN))
+    if close_idx < 0:
+        return None
+    prefix = text[: open_idx + len(_DEBUG_LOG_JSON_FENCE_OPEN)]
+    suffix = text[close_idx:]
+    json_start = open_idx + len(_DEBUG_LOG_JSON_FENCE_OPEN)
+    json_blob = text[json_start:close_idx]
+    if not json_blob:
+        return None
+    for length in range(len(json_blob), 0, -1):
+        candidate = f"{prefix}{json_blob[:length].rstrip()}…{_DEBUG_LOG_TRUNCATION_NOTE}{suffix}"
+        if len(_issue_body_for_text(text=candidate, surface=surface, timestamp=timestamp)) <= (
+            MAX_FEEDBACK_BODY_CHARS
+        ):
+            return candidate
+    return f"{prefix}…{_DEBUG_LOG_TRUNCATION_NOTE}{suffix}"
+
+
+def fit_feedback_text_to_issue_body(
+    text: str,
+    *,
+    surface: str | None,
+    timestamp: str,
+) -> str:
+    """Shrink embedded debug JSON so the GitHub issue body stays under the cap."""
+    trimmed = text.rstrip()
+    if len(_issue_body_for_text(text=trimmed, surface=surface, timestamp=timestamp)) <= (
+        MAX_FEEDBACK_BODY_CHARS
+    ):
+        return trimmed
+
+    truncated = _truncate_debug_log_json_in_text(trimmed, surface=surface, timestamp=timestamp)
+    if truncated is not None:
+        trimmed = truncated
+        if len(_issue_body_for_text(text=trimmed, surface=surface, timestamp=timestamp)) <= (
+            MAX_FEEDBACK_BODY_CHARS
+        ):
+            return trimmed
+
+    note_cap = MAX_FEEDBACK_BODY_CHARS - 200
+    if len(trimmed) > note_cap:
+        trimmed = trimmed[: note_cap - 1].rstrip() + "…"
+    while (
+        len(_issue_body_for_text(text=trimmed, surface=surface, timestamp=timestamp))
+        > MAX_FEEDBACK_BODY_CHARS
+        and len(trimmed) > 1
+    ):
+        trimmed = trimmed[: max(1, len(trimmed) * 9 // 10)].rstrip() + "…"
+    return trimmed
+
+
+def _issue_body(*, text: str, surface: str | None, timestamp: str) -> str:
+    fitted = fit_feedback_text_to_issue_body(text, surface=surface, timestamp=timestamp)
+    body = _issue_body_for_text(text=fitted, surface=surface, timestamp=timestamp)
     if len(body) > MAX_FEEDBACK_BODY_CHARS:
         raise ValueError(f"feedback body exceeds {MAX_FEEDBACK_BODY_CHARS} characters")
     return body

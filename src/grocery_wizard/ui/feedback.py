@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import streamlit as st
 
+from src.grocery_wizard.lib.feedback_list_log import enrich_feedback_with_list_debug_log
 from src.grocery_wizard.lib.feedback_submit import submit_feedback
 from src.grocery_wizard.ui.ids import control_streamlit_key
 
@@ -14,12 +17,15 @@ _FEEDBACK_ERROR_KEY = "gw_feedback_error"
 _FEEDBACK_SUBMIT_KEY = "gw_feedback_submit"
 
 
-def _grocery_debug_log_url_from_session() -> str | None:
+def _latest_list_debug_log_from_session() -> tuple[dict[str, Any] | None, str | None]:
     result = st.session_state.get("grocery_result")
     if not isinstance(result, dict):
-        return None
+        return None, None
+    raw_log = result.get("debug_log")
+    debug_log = raw_log if isinstance(raw_log, dict) else None
     url = result.get("debug_log_notion_url")
-    return str(url).strip() if url else None
+    notion_url = str(url).strip() if url else None
+    return debug_log, notion_url
 
 
 def _submit_feedback(*, surface: str | None) -> None:
@@ -29,9 +35,8 @@ def _submit_feedback(*, surface: str | None) -> None:
         st.session_state[_FEEDBACK_WARN_EMPTY] = True
         return
 
-    log_url = _grocery_debug_log_url_from_session()
-    if log_url:
-        text = f"{text.rstrip()}\n\n**Latest grocery list debug log (Notion):** {log_url}"
+    debug_log, notion_url = _latest_list_debug_log_from_session()
+    text = enrich_feedback_with_list_debug_log(text, debug_log=debug_log, notion_url=notion_url)
 
     try:
         outcome = submit_feedback(text, surface=surface)
