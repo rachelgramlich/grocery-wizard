@@ -16,10 +16,6 @@ from src.grocery_wizard.recipes.add_recipe import (
     ordered_recipe_field_names,
     preview_recipe_urls,
 )
-from src.grocery_wizard.recipes.ingredient_file import (
-    SUPPORTED_MIME_TYPES,
-    ingredient_text_from_upload,
-)
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.ids import BLOCK_ADD_MANUAL, BLOCK_ADD_NYT, BLOCK_ADD_URL
 from src.grocery_wizard.ui.loading import loading_indicator
@@ -167,33 +163,6 @@ def _render_recipe_review(
 
     with st.expander(title, expanded=True):
         key_prefix = _recipe_editor_key_prefix(index, _resolve_entry_path(preview))
-        ingredients_column = schema.ingredients_column
-        ingredient_widget_key = f"{key_prefix}_{ingredients_column}" if ingredients_column else None
-
-        if ingredients_column and ingredient_widget_key:
-            upload = st.file_uploader(
-                "Ingredients from PDF or photo (optional)",
-                type=["pdf", "jpg", "jpeg", "png", "webp"],
-                help=(
-                    "Pull text from a recipe card or printout into the ingredients box. "
-                    "Photos need Tesseract OCR installed on the machine running the app."
-                ),
-                key=f"{key_prefix}_ingredient_file",
-            )
-            if upload is not None:
-                mime = upload.type or ""
-                if mime not in SUPPORTED_MIME_TYPES:
-                    st.warning("Use a PDF, JPEG, PNG, or WebP file.")
-                else:
-                    try:
-                        extracted = ingredient_text_from_upload(upload.getvalue(), mime)
-                    except (RuntimeError, ValueError) as exc:
-                        st.error(str(exc))
-                    else:
-                        st.session_state[ingredient_widget_key] = extracted
-                        st.success("Ingredients filled from file — review and edit below.")
-                        st.rerun()
-
         edited = _render_recipe_field_editors(schema, fields, key_prefix=key_prefix)
 
         if st.button("Save to Notion", key=f"save_{index}", type="primary"):

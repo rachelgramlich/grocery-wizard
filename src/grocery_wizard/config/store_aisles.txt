@@ -47,7 +47,7 @@ spices: chile pepper flake
 sauces/condiments: hot pepper sauce
 dairy/eggs: coffee creamer
 dairy/eggs: nondairy creamer
-snacks/crackers: dog treat oreos
+pet treats: dog treat oreos
 
 # --- flowers: Flowers ---
 flowers
@@ -229,12 +229,14 @@ pretzel
 pretzels
 trail mix
 protein bar
+chips
+snack
+
+# --- pet treats: Pet treats ---
 cat treats
 pet treats
 dog treats
 dog treat
-chips
-snack
 
 # --- drinks: Drinks ---
 apple cider

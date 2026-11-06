@@ -68,8 +68,8 @@ def test_format_meals_and_grocery_list_includes_both_sections() -> None:
         "- Chicken Tikka (https://example.com/tikka)\n"
         "- Salad\n\n"
         "Grocery List\n"
-        "- onions\n"
         "- lettuce\n"
+        "- onions\n"
         "- chicken breast"
     )
 
@@ -149,7 +149,7 @@ def test_build_grocery_list_keeps_sliced_on_products_sold_sliced(pantry_file: Pa
 def test_build_grocery_list_hides_count_for_bunch_scallions(pantry_file: Path) -> None:
     db = MagicMock()
     db.query_recipes.return_value = [
-        _recipe("Udon", "2 scallions bunch\n4 carrots"),
+        _recipe("Udon", "2 scallions bunch\n4 carrots bunch"),
     ]
 
     items, _excluded, _sync, _missing, _, _ = build_grocery_list(
@@ -159,8 +159,23 @@ def test_build_grocery_list_hides_count_for_bunch_scallions(pantry_file: Path) -
     )
 
     assert "scallions" in items
-    assert "4 carrots" in items
+    assert "carrots" in items
     assert not any("bunch" in item for item in items)
+
+
+def test_build_grocery_list_merges_grapefruit_singular_and_plural(pantry_file: Path) -> None:
+    db = MagicMock()
+    db.query_recipes.return_value = [_recipe("Brunch", "1 grapefruit\n2 grapefruits")]
+
+    items, _excluded, _sync, _missing, _, _ = build_grocery_list(
+        db,
+        recipe_names=["Brunch"],
+        pantry_path=pantry_file,
+    )
+
+    grapefruit_lines = [line for line in items if "grapefruit" in line]
+    assert len(grapefruit_lines) == 1
+    assert grapefruit_lines[0].startswith("3 ")
 
 
 def test_build_grocery_list_include_pantry(pantry_file: Path) -> None:

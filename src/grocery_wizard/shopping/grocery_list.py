@@ -44,6 +44,7 @@ from src.grocery_wizard.ingredients.normalize import (
 from src.grocery_wizard.ingredients.parsed import (
     format_citrus_grocery_amount,
     format_garlic_grocery_amount,
+    grocery_merge_key_for_display_name,
 )
 from src.grocery_wizard.ingredients.sync import apply_removals, parse_ingredients_text
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe, recipe_lookup_key
@@ -67,8 +68,10 @@ _ONION_OR_ALTERNATIVE_DISPLAY = "red or yellow onions"
 # Bare ``milk`` merges away only when one of these normalized keys is on the list (#461).
 _MILK_MERGE_TARGETS = frozenset({"almond milk", "oat milk", "soy milk"})
 
-# Sold by the bunch: a recipe count is usually stalks from one bunch, not separate bags.
-_GROCERY_HIDE_COUNT_NAMES = frozenset({"scallions", "green onions", "spring onions"})
+# Sold by the bunch: recipe counts are often pieces from one bunch, not separate bags.
+_GROCERY_HIDE_COUNT_NAMES = frozenset(
+    {"scallions", "green onions", "spring onions", "carrots", "celery"}
+)
 
 
 def _grocery_collection_key(display_name: str) -> str:
@@ -78,7 +81,7 @@ def _grocery_collection_key(display_name: str) -> str:
         return lowered
     if _COLOR_ONION_RE.match(lowered):
         return _ONION_OR_ALTERNATIVE_DISPLAY.lower()
-    return lowered
+    return grocery_merge_key_for_display_name(lowered)
 
 
 def _prefer_onion_display_name(existing: str, incoming: str) -> str:

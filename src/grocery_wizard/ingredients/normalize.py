@@ -974,9 +974,13 @@ def parse_notion_ingredient_for_grocery(line: str) -> tuple[str, str | None]:
 
 
 def grocery_dedupe_key_from_notion_line(line: str) -> str:
-    """Dedupe key for a Notion ingredient line (name only, lowercased)."""
+    """Dedupe key for a Notion ingredient line (name only, merged singular/plural)."""
+    from src.grocery_wizard.ingredients.parsed import grocery_merge_key_for_display_name
+
     name, _ = parse_notion_ingredient_for_grocery(line)
-    return name.lower() if name else ""
+    if not name:
+        return ""
+    return grocery_merge_key_for_display_name(name)
 
 
 def parse_amount(line: str) -> tuple[str, str | None]:

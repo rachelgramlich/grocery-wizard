@@ -112,6 +112,7 @@ EXPECTED_AISLE_WALK_ORDER = (
     "vegetables",
     "refrigerated",
     "snacks/crackers",
+    "pet treats",
     "drinks",
     "dairy/eggs",
     "household/personal care",
@@ -139,12 +140,12 @@ def test_committed_aisle_walk_order_matches_store() -> None:
 @pytest.mark.parametrize(
     ("item", "expected_aisle"),
     [
-        ("dog treats", "snacks/crackers"),
-        ("dog treat", "snacks/crackers"),
-        ("pet treats", "snacks/crackers"),
-        ("cat treats", "snacks/crackers"),
-        ("2 bags dog treats", "snacks/crackers"),
-        ("dog treat oreos", "snacks/crackers"),
+        ("dog treats", "pet treats"),
+        ("dog treat", "pet treats"),
+        ("pet treats", "pet treats"),
+        ("cat treats", "pet treats"),
+        ("2 bags dog treats", "pet treats"),
+        ("dog treat oreos", "pet treats"),
         ("dog food", "other"),
         ("coffee beans", "coffee"),
     ],
@@ -168,13 +169,6 @@ def test_classify_feedback_routing(item: str, expected_aisle: str) -> None:
     assert classify_aisle(item) == expected_aisle
 
 
-def test_sort_grocery_items_plural_before_singular_within_aisle() -> None:
-    assert sort_grocery_items(["2 grapefruits", "1 grapefruit"]) == [
-        "2 grapefruits",
-        "1 grapefruit",
-    ]
-
-
 @pytest.mark.parametrize(
     ("item", "expected_aisle"),
     [
@@ -189,7 +183,7 @@ def test_classify_creamer_as_dairy(item: str, expected_aisle: str) -> None:
     assert classify_aisle(item) == expected_aisle
 
 
-def test_sort_grocery_items_puts_pet_treats_in_snacks_before_dairy() -> None:
+def test_sort_grocery_items_puts_pet_treats_after_snacks_before_drinks() -> None:
     items = ["frozen peas", "coffee beans", "2 cans white beans", "dog treats", "eggs", "soap"]
 
     assert sort_grocery_items(items) == [

@@ -346,12 +346,9 @@ def sort_grocery_items(
     cfg = config or load_store_aisles()
     aisle_rank = {aisle: index for index, aisle in enumerate(cfg.aisle_order)}
 
-    def sort_key(item: str) -> tuple[int, int, str]:
+    def sort_key(item: str) -> tuple[int, str]:
         aisle = classify_aisle(item, config=cfg)
-        lowered = item.lower()
-        # Prefer plural-looking lines before singular (``2 grapefruits`` before ``1 grapefruit``).
-        plural_first = 0 if lowered.endswith("s") else 1
-        return aisle_rank.get(aisle, len(cfg.aisle_order)), plural_first, lowered
+        return aisle_rank.get(aisle, len(cfg.aisle_order)), item.lower()
 
     return sorted(items, key=sort_key)
 
