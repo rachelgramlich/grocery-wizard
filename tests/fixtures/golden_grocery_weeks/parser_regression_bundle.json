@@ -1,8 +1,13 @@
 {
   "id": "parser_regression_bundle",
   "description": "Multi-recipe week compiled from parser/shopping regression cases (#27, #233/#234, lemon aggregate). Replace or add files here from `export-golden-week` with your real saved plans.",
-  "pantry": ["salt", "pepper"],
-  "recurring": ["milk"],
+  "pantry": [
+    "salt",
+    "pepper"
+  ],
+  "recurring": [
+    "milk"
+  ],
   "extra_items": "- [ ] Bananas",
   "recipes": [
     {

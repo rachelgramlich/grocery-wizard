@@ -44,6 +44,7 @@ from src.grocery_wizard.ingredients.normalize import (
 from src.grocery_wizard.ingredients.parsed import (
     format_citrus_grocery_amount,
     format_garlic_grocery_amount,
+    grocery_merge_key_for_display_name,
 )
 from src.grocery_wizard.ingredients.sync import apply_removals, parse_ingredients_text
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe, recipe_lookup_key
@@ -67,6 +68,12 @@ _ONION_OR_ALTERNATIVE_DISPLAY = "red or yellow onions"
 # Bare ``milk`` merges away only when one of these normalized keys is on the list (#461).
 _MILK_MERGE_TARGETS = frozenset({"almond milk", "oat milk", "soy milk"})
 
+# Sold by the bunch / bag: leading counts often mean pieces from one unit at the store,
+# not separate shopping units. Match on merge key so ``carrot`` and ``carrots`` both hide.
+_GROCERY_HIDE_COUNT_MERGE_KEYS = frozenset(
+    {"scallion", "carrot", "green onions", "spring onions"},
+)
+
 
 def _grocery_collection_key(display_name: str) -> str:
     """Canonical dedupe key; merges color onion variants with OR-alternative lines."""
@@ -75,7 +82,7 @@ def _grocery_collection_key(display_name: str) -> str:
         return lowered
     if _COLOR_ONION_RE.match(lowered):
         return _ONION_OR_ALTERNATIVE_DISPLAY.lower()
-    return lowered
+    return grocery_merge_key_for_display_name(lowered)
 
 
 def _prefer_onion_display_name(existing: str, incoming: str) -> str:
@@ -360,6 +367,8 @@ def _amount_for_grocery_display(name: str, amount: str | None) -> str | None:
 
 def format_grocery_item(name: str, amount: str | None) -> str:
     """Format a grocery item for display: ``"amount name"`` or just ``name``."""
+    if grocery_merge_key_for_display_name(name.lower()) in _GROCERY_HIDE_COUNT_MERGE_KEYS:
+        amount = None
     amount = _amount_for_grocery_display(name, amount)
     if name.lower() in {"lemons", "limes"} and amount is not None:
         amount = format_citrus_grocery_amount(amount)
@@ -503,6 +512,8 @@ def _collect_ingredient_line(
             trace.record_line(recipe_name, stripped_line, outcome="skipped_unparsed")
         return
     display_name = display_name.lower()
+    if grocery_merge_key_for_display_name(display_name) in _GROCERY_HIDE_COUNT_MERGE_KEYS:
+        amount = None
     keeps_amount = amount and not amount.startswith(("head:", "clove:", "zest:"))
     if keeps_amount and not should_show_amount(amount, part):
         amount = None

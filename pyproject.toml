@@ -25,6 +25,10 @@ dev = [
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+# Cursor slash-command symlinks under `.cursor/commands/` point into `.cursor/rg-ai/`
+# (git submodule). CI checks out without submodules, so broken symlink targets make
+# `ruff format --check` fail with ENOENT. Commands are Markdown, not Python.
+extend-exclude = [".cursor"]
 
 [tool.ruff.lint]
 select = [

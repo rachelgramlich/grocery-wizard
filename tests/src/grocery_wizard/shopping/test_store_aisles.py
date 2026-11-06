@@ -112,9 +112,9 @@ EXPECTED_AISLE_WALK_ORDER = (
     "vegetables",
     "refrigerated",
     "snacks/crackers",
+    "pet treats",
     "drinks",
     "dairy/eggs",
-    "dog treats",
     "household/personal care",
     "meat/fish",
     "bakery",
@@ -137,22 +137,35 @@ def test_committed_aisle_walk_order_matches_store() -> None:
     assert load_store_aisles().aisle_order == EXPECTED_AISLE_WALK_ORDER
 
 
-def test_dog_treats_aisle_label() -> None:
-    assert load_store_aisles().aisle_labels["dog treats"] == "Dog treats"
+@pytest.mark.parametrize(
+    ("item", "expected_aisle"),
+    [
+        ("dog treats", "pet treats"),
+        ("dog treat", "pet treats"),
+        ("pet treats", "pet treats"),
+        ("cat treats", "pet treats"),
+        ("2 bags dog treats", "pet treats"),
+        ("dog treat oreos", "pet treats"),
+        ("dog food", "other"),
+        ("coffee beans", "coffee"),
+    ],
+)
+def test_classify_pet_treats_and_dog_food(item: str, expected_aisle: str) -> None:
+    assert classify_aisle(item) == expected_aisle
 
 
 @pytest.mark.parametrize(
     ("item", "expected_aisle"),
     [
-        ("dog treats", "dog treats"),
-        ("dog treat", "dog treats"),
-        ("2 bags dog treats", "dog treats"),
-        ("dog treat oreos", "dog treats"),
-        ("dog food", "other"),
-        ("coffee beans", "coffee"),
+        ("2 grapefruits", "fruit"),
+        ("salsa", "sauces/condiments"),
+        ("mini chocolate chips", "baking"),
+        ("tortellini", "refrigerated"),
+        ("cheese tortellini", "refrigerated"),
+        ("ravioli", "refrigerated"),
     ],
 )
-def test_classify_dog_treats(item: str, expected_aisle: str) -> None:
+def test_classify_feedback_routing(item: str, expected_aisle: str) -> None:
     assert classify_aisle(item) == expected_aisle
 
 
@@ -170,12 +183,12 @@ def test_classify_creamer_as_dairy(item: str, expected_aisle: str) -> None:
     assert classify_aisle(item) == expected_aisle
 
 
-def test_sort_grocery_items_puts_dog_treats_after_dairy_and_coffee_after_canned() -> None:
+def test_sort_grocery_items_puts_pet_treats_after_snacks_before_drinks() -> None:
     items = ["frozen peas", "coffee beans", "2 cans white beans", "dog treats", "eggs", "soap"]
 
     assert sort_grocery_items(items) == [
-        "eggs",
         "dog treats",
+        "eggs",
         "soap",
         "2 cans white beans",
         "coffee beans",

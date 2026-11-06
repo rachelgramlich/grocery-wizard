@@ -47,6 +47,7 @@ spices: chile pepper flake
 sauces/condiments: hot pepper sauce
 dairy/eggs: coffee creamer
 dairy/eggs: nondairy creamer
+pet treats: dog treat oreos
 
 # --- flowers: Flowers ---
 flowers
@@ -63,6 +64,8 @@ apple
 apples
 avocado
 avocados
+grapefruit
+grapefruits
 lime
 lemon
 lemons
@@ -200,6 +203,8 @@ paneer
 cheese
 tofu
 tempeh
+ravioli
+tortellini
 white miso
 red miso
 sweet miso
@@ -226,6 +231,12 @@ trail mix
 protein bar
 chips
 snack
+
+# --- pet treats: Pet treats ---
+cat treats
+pet treats
+dog treats
+dog treat
 
 # --- drinks: Drinks ---
 apple cider
@@ -263,10 +274,6 @@ yogurt
 egg
 eggs
 butter
-
-# --- dog treats: Dog treats ---
-dog treats
-dog treat
 
 # --- household/personal care: Household and personal care ---
 laundry detergent
@@ -376,7 +383,6 @@ prunes
 dried fruit
 bittersweet chocolate
 dark chocolate
-chocolate chips
 cookie
 cookies
 oreo
@@ -481,8 +487,6 @@ orzo
 noodle
 noodles
 ramen
-tortellini
-ravioli
 lentils
 split peas
 brown rice
@@ -534,6 +538,11 @@ honey
 maple syrup
 molasses
 vanilla bean paste
+chocolate chips
+mini chocolate chips
+white chocolate chips
+butterscotch chips
+peanut butter chips
 
 # --- sauces/condiments: Sauces & condiments ---
 thai red curry paste
@@ -560,6 +569,7 @@ whole-grain mustard
 dijon mustard
 mayonnaise
 ketchup
+salsa
 jarred salsa verde
 salsa verde
 pickled pepperoncini

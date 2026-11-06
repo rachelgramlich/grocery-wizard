@@ -197,9 +197,9 @@ Current walk order (matches the store; `products` overrides are checked first):
 3. Vegetables
 4. Refrigerated (cheese/tofu)
 5. Crackers chips & snacks
-6. Drinks
-7. Dairy & eggs
-8. Dog treats (`dog treats`, `dog treat` only — not dog food)
+6. Pet treats (after crackers/chips, before drinks)
+7. Drinks
+8. Dairy & eggs
 9. Household and personal care
 10. Meat & fish
 11. Bakery

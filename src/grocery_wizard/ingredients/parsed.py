@@ -10,6 +10,7 @@ __all__ = [
     "aggregate_amounts",
     "format_ingredient_for_storage",
     "format_storage_from_name_and_amount",
+    "grocery_merge_key_for_display_name",
     "ingredient_name",
     "minimal_clean_for_storage",
     "name_from_stored_line",
@@ -252,11 +253,21 @@ _PLURALS: dict[str, str] = {
     "apple": "apples",
     "banana": "bananas",
     "avocado": "avocados",
+    "grapefruit": "grapefruits",
     "scallion": "scallions",
     "shallot": "shallots",
 }
 
 _INVERSE_PLURALS: dict[str, str] = {plural: singular for singular, plural in _PLURALS.items()}
+
+
+def grocery_merge_key_for_display_name(name: str) -> str:
+    """Stable merge key for grocery lines: singular/plural variants share one key."""
+    lowered = name.lower().strip()
+    if not lowered:
+        return ""
+    return _INVERSE_PLURALS.get(lowered, lowered)
+
 
 _HIDE_AMOUNT_UNITS_RE = re.compile(
     r"\b(tsp|teaspoons?|tbsp|tablespoons?|cups?|packed|ounces?|oz)\b",
@@ -1480,6 +1491,22 @@ def _parse_stored_rest(qty_str: str, rest: str) -> tuple[str, str | None]:
         name = _prefer_plural_form(_strip_size_descriptors(_simplify_parsed_name(name)))
         return name, f"{qty_str} {unit}"
 
+    rest_words = rest.split()
+    # ``2 scallions bunch`` → count applies to the bunch unit, not multiple bunches.
+    # Keep ``1 kale bunch`` / ``1 broccolini bunch`` storage shapes unchanged.
+    if (
+        qty_str
+        and len(rest_words) >= 2
+        and rest_words[-1].lower() in {"bunch", "bunches"}
+        and any(word.lower().rstrip(".,) ") in _BUNCH_TAIL_COUNT_ROOTS for word in rest_words[:-1])
+    ):
+        base = " ".join(rest_words[:-1])
+        name = _prefer_plural_form(_strip_size_descriptors(_simplify_parsed_name(base)))
+        name = _canonicalize_grocery_name(name)
+        if _is_boxed_dried_fruit_name(name):
+            return name, None
+        return name, qty_str
+
     name = _prefer_plural_form(_strip_size_descriptors(_simplify_parsed_name(rest)))
     if len(rest.split()) >= 2 and rest.split()[-1].lower() in {
         "stalks",
@@ -1499,6 +1526,10 @@ def _parse_stored_rest(qty_str: str, rest: str) -> tuple[str, str | None]:
     if _is_boxed_dried_fruit_name(name):
         return name, None
     return name, qty_str
+
+
+# ``2 scallions bunch`` / ``4 carrots bunch``: count is pieces from one bunch, not bags.
+_BUNCH_TAIL_COUNT_ROOTS = frozenset({"scallion", "scallions", "carrot", "carrots", "celery"})
 
 
 _ZEST_CITRUS_RE = re.compile(

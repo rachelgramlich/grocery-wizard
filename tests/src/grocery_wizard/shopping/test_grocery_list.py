@@ -142,8 +142,55 @@ def test_build_grocery_list_keeps_sliced_on_products_sold_sliced(pantry_file: Pa
 
     assert "sliced cheese" in items
     assert "sliced almonds" in items
-    assert "2 scallions" in items
+    assert "scallions" in items
     assert "mozzarella" in items
+
+
+def test_build_grocery_list_hides_count_for_bunch_scallions(pantry_file: Path) -> None:
+    db = MagicMock()
+    db.query_recipes.return_value = [
+        _recipe("Udon", "2 scallions bunch\n4 carrots bunch"),
+    ]
+
+    items, _excluded, _sync, _missing, _, _ = build_grocery_list(
+        db,
+        recipe_names=["Udon"],
+        pantry_path=pantry_file,
+    )
+
+    assert "scallions" in items
+    assert "carrots" in items
+    assert not any("bunch" in item for item in items)
+
+
+def test_build_grocery_list_hides_count_for_carrot_singular_and_plural(pantry_file: Path) -> None:
+    db = MagicMock()
+    db.query_recipes.return_value = [_recipe("Stew", "4 carrot\n2 carrots")]
+
+    items, _excluded, _sync, _missing, _, _ = build_grocery_list(
+        db,
+        recipe_names=["Stew"],
+        pantry_path=pantry_file,
+    )
+
+    carrot_lines = [line for line in items if "carrot" in line]
+    assert len(carrot_lines) == 1
+    assert carrot_lines[0] == "carrots"
+
+
+def test_build_grocery_list_merges_grapefruit_singular_and_plural(pantry_file: Path) -> None:
+    db = MagicMock()
+    db.query_recipes.return_value = [_recipe("Brunch", "1 grapefruit\n2 grapefruits")]
+
+    items, _excluded, _sync, _missing, _, _ = build_grocery_list(
+        db,
+        recipe_names=["Brunch"],
+        pantry_path=pantry_file,
+    )
+
+    grapefruit_lines = [line for line in items if "grapefruit" in line]
+    assert len(grapefruit_lines) == 1
+    assert grapefruit_lines[0].startswith("3 ")
 
 
 def test_build_grocery_list_include_pantry(pantry_file: Path) -> None:
@@ -881,7 +928,7 @@ def test_build_grocery_list_issue_27_quality_fixes(tmp_path: Path) -> None:
         ("- [x] Berries", "berries"),
         ("1. [ ] Apples", "apples"),
         ("• eggs", "eggs"),
-        ("2 carrots", "2 carrots"),
+        ("2 carrots", "carrots"),
         ("clove:5 garlic", "5 cloves garlic"),
         ("zest:1 lemons", "1 lemons"),
         ("- zest:1 lemons", "1 lemons"),
