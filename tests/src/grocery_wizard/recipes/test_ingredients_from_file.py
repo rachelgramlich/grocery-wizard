@@ -5,6 +5,7 @@ from __future__ import annotations
 import io
 
 import fitz
+import pillow_heif
 import pytest
 from PIL import Image, ImageDraw, ImageFont
 
@@ -13,6 +14,7 @@ from src.grocery_wizard.recipes.ingredients_from_file import (
     extract_ingredients_from_file_bytes,
     guess_mime_type,
 )
+from src.grocery_wizard.recipes.ocr_line_fixes import apply_ocr_line_fixes
 
 
 def _build_simple_pdf_with_text(text: str) -> bytes:
@@ -28,6 +30,11 @@ def test_guess_mime_type_sniffs_signatures() -> None:
     assert guess_mime_type(b"%PDF-1.4\n") == "application/pdf"
     assert guess_mime_type(b"\xff\xd8\xff\xe0") == "image/jpeg"
     assert guess_mime_type(b"\x89PNG\r\n\x1a\n") == "image/png"
+    assert guess_mime_type(b"\x00\x00\x00\x18ftypheic\x00\x00\x00\x00") == "image/heic"
+
+
+def test_ocr_line_fixes_json_replaces_garbled_brown_sugar() -> None:
+    assert apply_ocr_line_fixes("10 Oram Bune") == "1 cup packed brown sugar"
 
 
 def test_extract_from_pdf_text_layer() -> None:
@@ -88,3 +95,26 @@ def test_extract_from_jpeg_ocr_when_tesseract_present() -> None:
     joined = " ".join(lines).lower()
     assert "flour" in joined
     assert any("cup" in ln.lower() for ln in lines)
+
+
+def test_extract_from_heic_when_pillow_heif_and_tesseract_present() -> None:
+    pytesseract = pytest.importorskip("pytesseract")
+    try:
+        pytesseract.get_tesseract_version()
+    except (pytesseract.TesseractNotFoundError, OSError):
+        pytest.skip("Tesseract OCR not installed")
+
+    img = Image.new("RGB", (600, 200), color="white")
+    draw = ImageDraw.Draw(img)
+    try:
+        font = ImageFont.truetype("DejaVuSans.ttf", 28)
+    except OSError:
+        font = ImageFont.load_default()
+    draw.text((40, 80), "2 tbsp sugar", fill="black", font=font)
+    out = io.BytesIO()
+    pillow_heif.encode("RGB", img.size, img.tobytes(), out)
+    data = out.getvalue()
+
+    lines = extract_ingredients_from_file_bytes(data, mime_type="image/heic")
+    joined = " ".join(lines).lower()
+    assert "sugar" in joined

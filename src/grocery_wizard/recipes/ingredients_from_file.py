@@ -4,6 +4,10 @@ Uses **PyMuPDF** for PDF text and **pytesseract** for images (and PDFs where emb
 text is empty). Lines are filtered with the same heuristics as URL scrapes
 (``looks_like_ingredient_line``) plus instruction/metadata filters from the
 ingredients pipeline.
+
+**HEIC / HEIF** (common iPhone exports): requires ``pillow-heif``; registered on first decode.
+
+OCR typo repair uses ``recipes/data/ocr_line_fixes.json`` (regex ``match`` → ``replace``).
 """
 
 from __future__ import annotations
@@ -29,12 +33,39 @@ from src.grocery_wizard.ingredients.normalize import (
     is_recipe_step_line,
 )
 from src.grocery_wizard.ingredients.sync import is_directive
+from src.grocery_wizard.recipes.ocr_line_fixes import apply_ocr_line_fixes
 from src.grocery_wizard.recipes.scraper import ingredients_to_text, looks_like_ingredient_line
 
 _PDF_SIG = b"%PDF-"
 _JPEG_SOI = b"\xff\xd8\xff"
 _PNG_SIG = b"\x89PNG\r\n\x1a\n"
 _WEBP_RIFF = b"RIFF"
+_HEIF_REGISTERED = False
+
+
+def _register_heif_opener() -> None:
+    """Register HEIF/HEIC decode with Pillow (optional dependency ``pillow-heif``)."""
+    global _HEIF_REGISTERED  # noqa: PLW0603
+    if _HEIF_REGISTERED:
+        return
+    try:
+        import pillow_heif
+    except ImportError:
+        return
+    pillow_heif.register_heif_opener()
+    _HEIF_REGISTERED = True
+
+
+def _is_heif_brand(data: bytes) -> bool:
+    """ISO BMFF ``ftyp`` box: HEIC/HEIF/AVIF family brands in the first ~32 bytes."""
+    if len(data) < 12 or data[4:8] != b"ftyp":
+        return False
+    head = data[8:32]
+    return any(
+        marker in head
+        for marker in (b"heic", b"heix", b"heim", b"heis", b"mif1", b"msf1", b"avis", b"avif")
+    )
+
 
 _INGREDIENTS_HEADING = re.compile(r"^\s*ingredients\b", re.IGNORECASE)
 _SECTION_HEADING = re.compile(
@@ -72,11 +103,6 @@ _OCR_INSTRUCTION_HINT = re.compile(
 # OCR often drops the space in ``1½`` → ``11/2``.
 _GLUED_MIXED_FRACTION = re.compile(r"\b(1|2|3|4)(1|2|3|4)/(2|3|4)\b")
 
-_OCR_LINE_FIXES: tuple[tuple[re.Pattern[str], str], ...] = (
-    # Kirsten's card: "10 Oram Bune" ≈ brown sugar (quantity misread).
-    (re.compile(r"^10\s+oram\s+bune\.?$", re.IGNORECASE), "1 cup packed brown sugar"),
-)
-
 # OCR paragraphs split mid-sentence — a new sentence after a period is almost always a step.
 _MULTI_SENTENCE = re.compile(r"\.\s+[A-Z]")
 
@@ -92,7 +118,7 @@ class FileIngredientsError(Exception):
 
 
 def guess_mime_type(data: bytes) -> str:
-    """Return a coarse MIME type for ``data`` (pdf, jpeg, png, webp) or application/octet-stream."""
+    """Return a coarse MIME type for ``data`` (pdf, jpeg, png, webp, heic) or octet-stream."""
     if len(data) >= 5 and data.startswith(_PDF_SIG):
         return "application/pdf"
     if len(data) >= 3 and data.startswith(_JPEG_SOI):
@@ -101,6 +127,8 @@ def guess_mime_type(data: bytes) -> str:
         return "image/png"
     if len(data) >= 12 and data.startswith(_WEBP_RIFF) and data[8:12] == b"WEBP":
         return "image/webp"
+    if _is_heif_brand(data):
+        return "image/heic"
     return "application/octet-stream"
 
 
@@ -113,9 +141,21 @@ def _tesseract_available() -> bool:
 
 
 def _ocr_image_bytes(data: bytes) -> str:
-    image = Image.open(io.BytesIO(data))
+    _register_heif_opener()
+    try:
+        image = Image.open(io.BytesIO(data))
+    except OSError as exc:
+        raise FileIngredientsError(
+            "Could not open image bytes. For HEIC/HEIF, install pillow-heif (included in app deps)."
+        ) from exc
     if image.mode not in ("RGB", "L"):
         image = image.convert("RGB")
+    fmt = (image.format or "").upper()
+    if fmt in {"HEIF", "HEIC", "AVIF"} or "Heif" in type(image).__name__:
+        png_buf = io.BytesIO()
+        image.save(png_buf, format="PNG")
+        png_buf.seek(0)
+        image = Image.open(png_buf)
     return pytesseract.image_to_string(image)
 
 
@@ -138,13 +178,6 @@ def _normalize_ocr_fraction_glitch(line: str) -> str:
         return f"{whole} {num}/{denom}"
 
     return _GLUED_MIXED_FRACTION.sub(repl, line)
-
-
-def _apply_ocr_line_fixes(line: str) -> str:
-    for pattern, replacement in _OCR_LINE_FIXES:
-        if pattern.match(line.strip()):
-            return replacement
-    return line
 
 
 def _is_ocr_magazine_junk(line: str) -> bool:
@@ -203,7 +236,7 @@ def _ingredient_block_from_lines(lines: list[str]) -> list[str]:
         out: list[str] = []
         in_block = block_start > 0
         for raw_line in source[block_start:] if in_block else source:
-            line = _normalize_ocr_fraction_glitch(_apply_ocr_line_fixes(raw_line.strip()))
+            line = _normalize_ocr_fraction_glitch(apply_ocr_line_fixes(raw_line.strip()))
             if (
                 in_block
                 and _SECTION_HEADING.match(line)
@@ -267,11 +300,19 @@ def extract_ingredients_from_file_bytes(data: bytes, *, mime_type: str | None = 
 
     if resolved == "application/pdf":
         ingredients = _extract_from_pdf(data)
-    elif resolved in {"image/jpeg", "image/png", "image/webp", "image/jpg"}:
+    elif resolved in {
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/webp",
+        "image/heic",
+        "image/heif",
+    }:
         ingredients = _extract_from_image(data)
     else:
         raise FileIngredientsError(
-            f"Unsupported file type ({resolved or 'unknown'}). Use PDF, JPEG, PNG, or WebP."
+            f"Unsupported file type ({resolved or 'unknown'}). "
+            "Use PDF, JPEG, PNG, WebP, or HEIC/HEIF."
         )
 
     if not ingredients:

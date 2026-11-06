@@ -1,0 +1,7 @@
+[
+  {
+    "match": "(?i)^10\\s+oram\\s+bune\\.?$",
+    "replace": "1 cup packed brown sugar",
+    "note": "Bon Appétit card OCR glitch; quantity inferred from photo layout — adjust if wrong."
+  }
+]
