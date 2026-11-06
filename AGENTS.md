@@ -2,6 +2,8 @@
 
 ## Issues (slash commands = primary UX)
 
+**Cursor Cloud Agents:** the `/` menu may not list repo workflows. The agent still loads **`.cursor/rules/repo-slash-workflows.mdc`** (`alwaysApply: true`) — it maps each **`/<name>`** to the prompt file under **`.cursor/commands/`**; say the workflow name or `@` that rule and the agent follows the same steps as desktop.
+
 | You type | Purpose |
 | --- | --- |
 | **`/create-issues`** | One or more notes → auto **bug vs backlog**, merge by **code area**, create GitHub issue(s) via **`gh`** |
@@ -94,7 +96,7 @@ Skills (committed): `.cursor/skills/tidy-first/SKILL.md` (mirrored under `.agent
 3. **Agent** chat (not Ask-only): type **`/`** → **`tidy-project`** (alongside `/create-issues`, `/work-on-issue`, …).
 4. **Customize → Skills** shows **`tidy-first`** only; **`/tidy-project`** is under **commands**, not skills.
 5. **Diagnostic:** If other repo commands appear but not **`/tidy-project`**, you likely still have a local **`tidy-project` skill** or ran **`/migrate-to-skills`** (remove `.cursor/skills/tidy-project/` and reload). If **no** repo commands appear, wrong workspace root or chat surface.
-6. **Cursor Cloud / web Agents:** repo commands may not populate `/`; use **desktop Cursor** or paste the command path under `.cursor/commands/shared/`.
+6. **Cursor Cloud / web Agents:** **`/`** may stay empty — use **`.cursor/rules/repo-slash-workflows.mdc`** (always on) or name the workflow (e.g. “run **`/app-smoke`**”); the agent reads the mapped **`.cursor/commands/...`** file. **Desktop** still has the **`/`** picker when **`.cursor/commands/<name>.md`** exists.
 7. Do **not** run **`/migrate-to-skills`** on this repo if you want to keep **`/tidy-project`** as a command — migration duplicates commands as skills and breaks the menu entry.
 
 **Requires `gh`** authenticated for this repo. **Create issues on This Mac** when possible. Cloud agents should ask the user to switch before running **`/create-issues`**.
