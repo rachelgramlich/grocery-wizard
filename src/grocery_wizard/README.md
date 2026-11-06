@@ -196,25 +196,24 @@ Current walk order (matches the store; `products` overrides are checked first):
 2. Fruit
 3. Vegetables
 4. Refrigerated (cheese/tofu)
-5. Crackers chips & snacks
+5. Crackers chips & snacks (includes pet treats — after chips keywords, before drinks)
 6. Drinks
 7. Dairy & eggs
-8. Dog treats (`dog treats`, `dog treat` only — not dog food)
-9. Household and personal care
-10. Meat & fish
-11. Bakery
-12. Nuts dessert & dried fruit
-13. Candy
-14. Oils & vinegars
-15. Cereal & granola
-16. Spices & seasonings
-17. Pasta grains & rice
-18. Baking
-19. Sauces & condiments
-20. Canned goods soups & broths
-21. Coffee & tea
-22. Frozen
-23. Other
+8. Household and personal care
+9. Meat & fish
+10. Bakery
+11. Nuts dessert & dried fruit
+12. Candy
+13. Oils & vinegars
+14. Cereal & granola
+15. Spices & seasonings
+16. Pasta grains & rice
+17. Baking
+18. Sauces & condiments
+19. Canned goods soups & broths
+20. Coffee & tea
+21. Frozen
+22. Other
 
 **Peppers:** fresh peppers (`jalapeño pepper`, `red pepper`, `banana pepper`, …) are product overrides that route to vegetables, because the spices keyword `pepper` would otherwise win. Spice forms (`red pepper flakes`, `crushed red pepper`, `black pepper`) stay in spices. Jarred peppers (`roasted red pepper`, `pepperoncini`) are not handled yet.
 

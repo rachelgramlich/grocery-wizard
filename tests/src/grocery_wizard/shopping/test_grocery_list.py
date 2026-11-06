@@ -68,8 +68,8 @@ def test_format_meals_and_grocery_list_includes_both_sections() -> None:
         "- Chicken Tikka (https://example.com/tikka)\n"
         "- Salad\n\n"
         "Grocery List\n"
-        "- lettuce\n"
         "- onions\n"
+        "- lettuce\n"
         "- chicken breast"
     )
 
@@ -142,8 +142,25 @@ def test_build_grocery_list_keeps_sliced_on_products_sold_sliced(pantry_file: Pa
 
     assert "sliced cheese" in items
     assert "sliced almonds" in items
-    assert "2 scallions" in items
+    assert "scallions" in items
     assert "mozzarella" in items
+
+
+def test_build_grocery_list_hides_count_for_bunch_scallions(pantry_file: Path) -> None:
+    db = MagicMock()
+    db.query_recipes.return_value = [
+        _recipe("Udon", "2 scallions bunch\n4 carrots"),
+    ]
+
+    items, _excluded, _sync, _missing, _, _ = build_grocery_list(
+        db,
+        recipe_names=["Udon"],
+        pantry_path=pantry_file,
+    )
+
+    assert "scallions" in items
+    assert "4 carrots" in items
+    assert not any("bunch" in item for item in items)
 
 
 def test_build_grocery_list_include_pantry(pantry_file: Path) -> None:

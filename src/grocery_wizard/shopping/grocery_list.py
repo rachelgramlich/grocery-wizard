@@ -67,6 +67,9 @@ _ONION_OR_ALTERNATIVE_DISPLAY = "red or yellow onions"
 # Bare ``milk`` merges away only when one of these normalized keys is on the list (#461).
 _MILK_MERGE_TARGETS = frozenset({"almond milk", "oat milk", "soy milk"})
 
+# Sold by the bunch: a recipe count is usually stalks from one bunch, not separate bags.
+_GROCERY_HIDE_COUNT_NAMES = frozenset({"scallions", "green onions", "spring onions"})
+
 
 def _grocery_collection_key(display_name: str) -> str:
     """Canonical dedupe key; merges color onion variants with OR-alternative lines."""
@@ -503,6 +506,8 @@ def _collect_ingredient_line(
             trace.record_line(recipe_name, stripped_line, outcome="skipped_unparsed")
         return
     display_name = display_name.lower()
+    if display_name in _GROCERY_HIDE_COUNT_NAMES:
+        amount = None
     keeps_amount = amount and not amount.startswith(("head:", "clove:", "zest:"))
     if keeps_amount and not should_show_amount(amount, part):
         amount = None

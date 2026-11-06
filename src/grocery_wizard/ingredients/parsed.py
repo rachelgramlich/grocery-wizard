@@ -1480,6 +1480,22 @@ def _parse_stored_rest(qty_str: str, rest: str) -> tuple[str, str | None]:
         name = _prefer_plural_form(_strip_size_descriptors(_simplify_parsed_name(name)))
         return name, f"{qty_str} {unit}"
 
+    rest_words = rest.split()
+    # ``2 scallions bunch`` → count applies to the bunch unit, not multiple bunches.
+    # Keep ``1 kale bunch`` / ``1 broccolini bunch`` storage shapes unchanged.
+    if (
+        qty_str
+        and len(rest_words) == 2
+        and rest_words[-1].lower() in {"bunch", "bunches"}
+        and rest_words[0].lower() in _BUNCH_TAIL_COUNT_ROOTS
+    ):
+        base = " ".join(rest_words[:-1])
+        name = _prefer_plural_form(_strip_size_descriptors(_simplify_parsed_name(base)))
+        name = _canonicalize_grocery_name(name)
+        if _is_boxed_dried_fruit_name(name):
+            return name, None
+        return name, qty_str
+
     name = _prefer_plural_form(_strip_size_descriptors(_simplify_parsed_name(rest)))
     if len(rest.split()) >= 2 and rest.split()[-1].lower() in {
         "stalks",
@@ -1499,6 +1515,10 @@ def _parse_stored_rest(qty_str: str, rest: str) -> tuple[str, str | None]:
     if _is_boxed_dried_fruit_name(name):
         return name, None
     return name, qty_str
+
+
+# ``2 scallions bunch``: count is stalks in one bunch, not multiple bunches.
+_BUNCH_TAIL_COUNT_ROOTS = frozenset({"scallion", "scallions"})
 
 
 _ZEST_CITRUS_RE = re.compile(
