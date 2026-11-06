@@ -1,7 +1,7 @@
 [
   {
-    "match": "(?i)^10\\s+oram\\s+bune\\.?$",
+    "match": "(?i)^10\\s+oram\\s+bu(n?e|ne|en){0,2}\\.?$",
     "replace": "1 cup packed brown sugar",
-    "note": "Bon Appétit card OCR glitch; quantity inferred from photo layout — adjust if wrong."
+    "note": "Bon Appétit card: OCR mangles 'brown sugar' (e.g. Oram Bune/Bue); quantity is a guess — edit if wrong."
   }
 ]

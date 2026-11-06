@@ -112,6 +112,9 @@ _OCR_LEADING_STEP = re.compile(
     re.IGNORECASE,
 )
 
+# Two-token OCR junk (e.g. ``11 oe`` next to a real quantity line).
+_OCR_JUNK_TWO_TOKEN = re.compile(r"^\d{1,2}\s+[a-z]{2}\s*$", re.IGNORECASE)
+
 
 class FileIngredientsError(Exception):
     """Uploaded file could not be read or yielded no ingredient-like lines."""
@@ -196,6 +199,14 @@ def _is_lowercase_comma_instruction(line: str) -> bool:
     return bool(re.search(r",\s+vegetable\s+oil\b", stripped, re.IGNORECASE))
 
 
+def _is_ocr_two_token_garbage(line: str) -> bool:
+    stripped = line.strip()
+    if not _OCR_JUNK_TWO_TOKEN.match(stripped):
+        return False
+    second = stripped.split()[-1].lower()
+    return second not in {"oz", "lb", "ml", "g", "kg"}
+
+
 def _keep_line_for_file_extraction(line: str) -> bool:
     """Stricter than URL scrape: drop OCR'd method sentences that still look like amounts."""
     if not looks_like_ingredient_line(line, max_length=130):
@@ -212,6 +223,8 @@ def _keep_line_for_file_extraction(line: str) -> bool:
     if _OCR_INSTRUCTION_HINT.search(stripped):
         return False
     if _is_lowercase_comma_instruction(stripped):
+        return False
+    if _is_ocr_two_token_garbage(stripped):
         return False
     if len(stripped) > 110:
         return False

@@ -35,6 +35,7 @@ def test_guess_mime_type_sniffs_signatures() -> None:
 
 def test_ocr_line_fixes_json_replaces_garbled_brown_sugar() -> None:
     assert apply_ocr_line_fixes("10 Oram Bune") == "1 cup packed brown sugar"
+    assert apply_ocr_line_fixes("10 Oram Bue") == "1 cup packed brown sugar"
 
 
 def test_extract_from_pdf_text_layer() -> None:
