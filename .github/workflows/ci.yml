@@ -38,5 +38,9 @@ jobs:
       - name: Install just
         uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3 # v4.0.0
 
+      # OCR for JPEG ingredient extraction tests (pytesseract).
+      - name: Install Tesseract OCR
+        run: sudo apt-get update && sudo apt-get install -y tesseract-ocr
+
       - name: just ci (workflow lint, ruff check, ruff format --check, pytest)
         run: just ci

@@ -10,6 +10,7 @@ __all__ = [
     "has_merge_artifacts",
     "ingredients_to_text",
     "looks_fragmented",
+    "looks_like_ingredient_line",
     "scrape_recipe",
 ]
 
@@ -341,7 +342,7 @@ def _instagram_title(caption: str, soup: BeautifulSoup) -> str:
 
 def _caption_ingredients(caption: str) -> list[str]:
     lines = [line.strip() for line in re.split(r"[\n\r]+", caption) if line.strip()]
-    ingredients = [line for line in lines if _looks_like_ingredient_line(line)]
+    ingredients = [line for line in lines if looks_like_ingredient_line(line)]
     return _dedupe_preserve_order(ingredients)
 
 
@@ -430,15 +431,15 @@ def _tiktok_ingredients(item: dict) -> list[str]:
         if desc:
             lines = [line.strip() for line in re.split(r"[\n\r]+", desc) if line.strip()]
 
-    ingredients = [line for line in lines if _looks_like_ingredient_line(line)]
+    ingredients = [line for line in lines if looks_like_ingredient_line(line)]
     return _dedupe_preserve_order(ingredients)
 
 
-def _looks_like_ingredient_line(line: str) -> bool:
+def looks_like_ingredient_line(line: str, *, max_length: int = 120) -> bool:
     stripped = line.strip()
     if not stripped or stripped.startswith("#"):
         return False
-    if len(stripped) > 120:
+    if len(stripped) > max_length:
         return False
     if _INSTRUCTION_START.match(stripped):
         return False
