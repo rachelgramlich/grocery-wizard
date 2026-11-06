@@ -435,11 +435,11 @@ def _tiktok_ingredients(item: dict) -> list[str]:
     return _dedupe_preserve_order(ingredients)
 
 
-def looks_like_ingredient_line(line: str) -> bool:
+def looks_like_ingredient_line(line: str, *, max_length: int = 120) -> bool:
     stripped = line.strip()
     if not stripped or stripped.startswith("#"):
         return False
-    if len(stripped) > 120:
+    if len(stripped) > max_length:
         return False
     if _INSTRUCTION_START.match(stripped):
         return False

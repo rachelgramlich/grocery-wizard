@@ -491,7 +491,11 @@ _INSTRUCTION_VERB_RE = re.compile(
     re.IGNORECASE,
 )
 _METADATA_LINE_RE = re.compile(
-    r"^(?:recipe\s+)?serves?\s+\d+|^serves?\s+\d+|yield:?\s+\d+|makes?\s+\d+",
+    r"^(?:recipe\s+)?serves?\s+\d+|"
+    r"^serves?\s+\d+|"
+    r"yield:?\s*\d+|"
+    r"yield:?\s*makes?\s+\d+|"
+    r"makes?\s+\d+(?:\s+servings?)?\s*$",
     re.IGNORECASE,
 )
 # Split merged scrape artifacts: ``Russets2 Tablespoons`` or ``pepper1/4 cup``.

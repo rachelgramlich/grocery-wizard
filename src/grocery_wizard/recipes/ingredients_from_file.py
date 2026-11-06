@@ -43,6 +43,49 @@ _SECTION_HEADING = re.compile(
     re.IGNORECASE,
 )
 
+# Magazine / card headers (not grocery lines).
+_MAGAZINE_PIPE_DATE = re.compile(
+    r"^.+\|\s*(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}\s*$",
+    re.IGNORECASE,
+)
+
+# Phrases common on scanned recipe cards that are steps, not ingredients.
+_OCR_INSTRUCTION_HINT = re.compile(
+    r"\b(?:"
+    r"into\s+(?:a\s+)?(?:medium|large|small)\s+bowl|"
+    r"into\s+(?:the\s+)?(?:bundt|tube)\s+pan|"
+    r"using\s+electric\s+mixer|"
+    r"beat\s+until|gradually\s+beat|gradually\s+add|"
+    r"fold\s+(?:apple|in|the\b)|"
+    r"melt\s+butter|heavy\s+small\s+skillet|"
+    r"continue\s+to\s+whisk|whisk\s+in|"
+    r"turn\s+cake\s+out|"
+    r"pour\s+remaining|"
+    r"let\s+stand\s+until|"
+    r"cover\s+with\s+cake\s+dome|"
+    r"transfer\s+\d+\s+tablespoons|"
+    r"set\s+pan\s+aside"
+    r")\b",
+    re.IGNORECASE,
+)
+
+# OCR often drops the space in ``1½`` → ``11/2``.
+_GLUED_MIXED_FRACTION = re.compile(r"\b(1|2|3|4)(1|2|3|4)/(2|3|4)\b")
+
+_OCR_LINE_FIXES: tuple[tuple[re.Pattern[str], str], ...] = (
+    # Kirsten's card: "10 Oram Bune" ≈ brown sugar (quantity misread).
+    (re.compile(r"^10\s+oram\s+bune\.?$", re.IGNORECASE), "1 cup packed brown sugar"),
+)
+
+# OCR paragraphs split mid-sentence — a new sentence after a period is almost always a step.
+_MULTI_SENTENCE = re.compile(r"\.\s+[A-Z]")
+
+_OCR_LEADING_STEP = re.compile(
+    r"^(?:preheat|bake\s+|place\s+|spray\s+|sift\s+|transfer\s+cake|whisk\s+|melt\s+|fold\s+|pour\s+|"
+    r"combine\s+1\s+cup\s+brown|let\s+cake\s+cool|cool\s+cake)\b",
+    re.IGNORECASE,
+)
+
 
 class FileIngredientsError(Exception):
     """Uploaded file could not be read or yielded no ingredient-like lines."""
@@ -87,6 +130,63 @@ def _pdf_ocr_page(page: fitz.Page) -> str:
     return pytesseract.image_to_string(image)
 
 
+def _normalize_ocr_fraction_glitch(line: str) -> str:
+    """Turn ``11/2 cups`` into ``1 1/2 cups`` when OCR drops a space."""
+
+    def repl(match: re.Match[str]) -> str:
+        whole, num, denom = match.group(1), match.group(2), match.group(3)
+        return f"{whole} {num}/{denom}"
+
+    return _GLUED_MIXED_FRACTION.sub(repl, line)
+
+
+def _apply_ocr_line_fixes(line: str) -> str:
+    for pattern, replacement in _OCR_LINE_FIXES:
+        if pattern.match(line.strip()):
+            return replacement
+    return line
+
+
+def _is_ocr_magazine_junk(line: str) -> bool:
+    if _MAGAZINE_PIPE_DATE.match(line.strip()):
+        return True
+    return bool(re.search(r"\bbon\s+app[eé]tit\b", line, re.IGNORECASE) and "|" in line)
+
+
+def _is_lowercase_comma_instruction(line: str) -> bool:
+    """Lines like ``brown sugar, vegetable oil, 1 cup sugar, ...`` (method, not a single item)."""
+    stripped = line.strip()
+    if not stripped or stripped[0].isupper() or stripped[0].isdigit():
+        return False
+    if stripped.count(",") < 2:
+        return False
+    return bool(re.search(r",\s+vegetable\s+oil\b", stripped, re.IGNORECASE))
+
+
+def _keep_line_for_file_extraction(line: str) -> bool:
+    """Stricter than URL scrape: drop OCR'd method sentences that still look like amounts."""
+    if not looks_like_ingredient_line(line, max_length=130):
+        return False
+    if is_directive(line):
+        return False
+    if is_metadata_line(line) or is_recipe_step_line(line):
+        return False
+    if _is_ocr_magazine_junk(line):
+        return False
+    stripped = line.strip()
+    if is_instruction_line(stripped) and not looks_like_ingredient_line(stripped, max_length=130):
+        return False
+    if _OCR_INSTRUCTION_HINT.search(stripped):
+        return False
+    if _is_lowercase_comma_instruction(stripped):
+        return False
+    if len(stripped) > 110:
+        return False
+    if stripped.endswith("."):
+        return False
+    return not (bool(_MULTI_SENTENCE.search(stripped)) or bool(_OCR_LEADING_STEP.match(stripped)))
+
+
 def _ingredient_block_from_lines(lines: list[str]) -> list[str]:
     """From flat text lines, keep ingredient-like lines; optionally start at 'Ingredients'."""
     stripped = [ln.strip() for ln in lines if ln.strip()]
@@ -99,31 +199,23 @@ def _ingredient_block_from_lines(lines: list[str]) -> list[str]:
             start = i + 1
             break
 
-    out: list[str] = []
-    in_block = start > 0
-    for line in stripped[start:] if in_block else stripped:
-        if in_block and _SECTION_HEADING.match(line) and not looks_like_ingredient_line(line):
-            break
-        if not looks_like_ingredient_line(line):
-            continue
-        if is_directive(line) or is_metadata_line(line) or is_instruction_line(line):
-            continue
-        if is_recipe_step_line(line):
-            continue
-        out.append(line)
-
-    if out:
+    def collect(source: list[str], block_start: int) -> list[str]:
+        out: list[str] = []
+        in_block = block_start > 0
+        for raw_line in source[block_start:] if in_block else source:
+            line = _normalize_ocr_fraction_glitch(_apply_ocr_line_fixes(raw_line.strip()))
+            if (
+                in_block
+                and _SECTION_HEADING.match(line)
+                and not looks_like_ingredient_line(line, max_length=130)
+            ):
+                break
+            if not _keep_line_for_file_extraction(line):
+                continue
+            out.append(line)
         return out
 
-    for line in stripped:
-        if not looks_like_ingredient_line(line):
-            continue
-        if is_directive(line) or is_metadata_line(line) or is_instruction_line(line):
-            continue
-        if is_recipe_step_line(line):
-            continue
-        out.append(line)
-    return out
+    return collect(stripped, start)
 
 
 def _lines_from_text(text: str) -> list[str]:

@@ -33,6 +33,8 @@ def test_guess_mime_type_sniffs_signatures() -> None:
 def test_extract_from_pdf_text_layer() -> None:
     body = """Chocolate Cake
 
+Yield: Makes 12 servings
+
 Ingredients
 1 cup flour
 2 tbsp cocoa
@@ -44,6 +46,13 @@ Bake at 350°F."""
     assert "1 cup flour" in lines
     assert "2 tbsp cocoa" in lines
     assert "1 tsp vanilla" in lines
+    assert all("Yield" not in ln for ln in lines)
+
+
+def test_ocr_glued_fraction_from_pdf() -> None:
+    pdf_bytes = _build_simple_pdf_with_text("11/2 cups vegetable oil")
+    lines = extract_ingredients_from_file_bytes(pdf_bytes, mime_type="application/pdf")
+    assert any("1 1/2 cups vegetable oil" in ln for ln in lines)
 
 
 def test_extract_requires_ingredient_like_lines() -> None:
