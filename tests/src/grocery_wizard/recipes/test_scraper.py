@@ -7,9 +7,9 @@ from src.grocery_wizard.recipes.scraper import (
     _extract_ingredients,
     _extract_instagram_caption,
     _extract_json_ld_ingredients,
-    _looks_like_ingredient_line,
     _scrape_instagram,
     _scrape_tiktok,
+    looks_like_ingredient_line,
     scrape_recipe,
 )
 
@@ -393,9 +393,9 @@ TIKTOK_HTML = """
 
 
 def test_tiktok_ingredient_line_detection() -> None:
-    assert _looks_like_ingredient_line("1/2 cup evoo")
-    assert not _looks_like_ingredient_line("Tomato pasta salad")
-    assert not _looks_like_ingredient_line("Combine vinegar and oil in a bowl.")
+    assert looks_like_ingredient_line("1/2 cup evoo")
+    assert not looks_like_ingredient_line("Tomato pasta salad")
+    assert not looks_like_ingredient_line("Combine vinegar and oil in a bowl.")
 
 
 def test_scrape_tiktok_extracts_caption_ingredients(monkeypatch) -> None:
