@@ -1,0 +1,28 @@
+---
+description: Map /workflow names to prompt files for Cloud Agents (when the / picker is empty)
+alwaysApply: true
+---
+
+# Repo slash workflows (Cloud + desktop)
+
+When the user names a **`/<kebab-case>`** workflow from **AGENTS.md** or asks to run a slash command, **read the matching file** below and follow it. On **Cursor Cloud / web**, the `/` menu may not list repo commands — this rule still applies.
+
+| Invoke | Prompt file (read this) |
+| --- | --- |
+| `/create-issues` | `.cursor/commands/shared/create-issues.md` |
+| `/triage-feedback-inbox` | `.cursor/commands/grocery-wizard/triage-feedback-inbox.md` |
+| `/create-issues-from-backlog` | `.cursor/commands/grocery-wizard/create-issues-from-backlog.md` |
+| `/app-review` | `.cursor/commands/grocery-wizard/app-review.md` |
+| `/app-smoke` | `.cursor/commands/grocery-wizard/app-smoke.md` |
+| `/grocery-quality-review` | `.cursor/commands/grocery-wizard/grocery-quality-review.md` |
+| `/architecture-review` | `.cursor/commands/shared/architecture-review.md` |
+| `/list-enhancements` | `.cursor/commands/grocery-wizard/list-enhancements.md` |
+| `/work-on-issue` | `.cursor/commands/shared/work-on-issue.md` |
+| `/tidy-project` | `.cursor/commands/shared/tidy-project.md` |
+| `/create-command` | `.cursor/commands/shared/create-command.md` |
+| `/performance-audit` | `.cursor/commands/grocery-wizard/performance-audit.md` |
+| `/sync-store-aisles` | `.cursor/commands/grocery-wizard/sync-store-aisles.md` |
+
+**Not a command file:** **`tidy-first`** is the **`.cursor/skills/tidy-first/SKILL.md`** skill (auto or manual), not a duplicate of **`/tidy-project`**.
+
+**Source layout:** canonical copies live under **`.cursor/commands/shared/`** (rg-ai) and **`.cursor/commands/grocery-wizard/`**; **desktop** Cursor may also show **`.cursor/commands/<name>.md`** (symlinks) in the `/` picker.

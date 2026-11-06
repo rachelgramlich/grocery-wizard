@@ -2,6 +2,8 @@
 
 ## Issues (slash commands = primary UX)
 
+**Cursor Cloud Agents:** the `/` menu may not list repo workflows. The agent still loads **`.cursor/rules/repo-slash-workflows.mdc`** (`alwaysApply: true`) — it maps each **`/<name>`** to the prompt file under **`.cursor/commands/`**; say the workflow name or `@` that rule and the agent follows the same steps as desktop.
+
 | You type | Purpose |
 | --- | --- |
 | **`/create-issues`** | One or more notes → auto **bug vs backlog**, merge by **code area**, create GitHub issue(s) via **`gh`** |
@@ -19,7 +21,7 @@
 | **`/sync-store-aisles`** | Notion → `store_aisles.txt` keyword sync (`.cursor/commands/grocery-wizard/sync-store-aisles.md`) |
 | *(automatic)* **`tidy-first` skill** | While implementing work: tidy inline, **S** vs **B** in separate commits; may file follow-up issues for **B** spotted during tidy (not in **S** commits) |
 
-**Layout:** [rg-ai](https://github.com/rachelgramlich/rg-ai) **git submodule** at **`.cursor/rg-ai`**. Shared slash files via **`.cursor/commands/shared/`** → `.cursor/rg-ai/.cursor/commands`. Grocery-only commands in **`.cursor/commands/grocery-wizard/`**. After clone or new worktree: **`git submodule update --init --recursive`** once if `/` doesn’t list shared commands. **Command-only workflows** must not duplicate the same name under `.cursor/skills/` (see **`/create-command`**).
+**Layout:** [rg-ai](https://github.com/rachelgramlich/rg-ai) **git submodule** at **`.cursor/rg-ai`**. Shared slash files via **`.cursor/commands/shared/`** → `.cursor/rg-ai/.cursor/commands`. Grocery-only commands live in **`.cursor/commands/grocery-wizard/`**. **Discovery:** Cursor also lists each workflow when there is a **`.cursor/commands/<name>.md`** at the repo root of that folder — this repo adds **symlinks** there (same filenames as **`/<name>`**) so the `/` menu finds them reliably; the real files stay under **`shared/`** and **`grocery-wizard/`**. After clone or new worktree: **`git submodule update --init --recursive`** once if shared content is missing. **Command-only workflows** must not duplicate the same name under `.cursor/skills/` (see **`/create-command`**).
 
 ### Labels and areas (for `/create-issues`, `/work-on-issue`)
 
@@ -87,14 +89,14 @@ Skills (committed): `.cursor/skills/tidy-first/SKILL.md` (mirrored under `.agent
 
 ### Finding `/tidy-project` (command) and `tidy-first` (skill)
 
-**`/tidy-project`** is a **slash command** from `.cursor/commands/shared/tidy-project.md`. Menu label: **`/tidy-project`** (filename). Commands load from **workspace root** `.cursor/commands/` (including subfolders).
+**`/tidy-project`** is a **slash command** from `.cursor/commands/shared/tidy-project.md` (also **`.cursor/commands/tidy-project.md`** — symlink for Cursor). Menu label: **`/tidy-project`** (filename). Commands load from **workspace root** `.cursor/commands/`; each command is linked at **`.cursor/commands/<name>.md`** so **`/`** can list it.
 
 1. Open this **repo root** as the workspace (folder that contains `.cursor/commands/`).
 2. Confirm **only** the shared tidy-project command exists (no `.cursor/skills/tidy-project/`).
 3. **Agent** chat (not Ask-only): type **`/`** → **`tidy-project`** (alongside `/create-issues`, `/work-on-issue`, …).
 4. **Customize → Skills** shows **`tidy-first`** only; **`/tidy-project`** is under **commands**, not skills.
 5. **Diagnostic:** If other repo commands appear but not **`/tidy-project`**, you likely still have a local **`tidy-project` skill** or ran **`/migrate-to-skills`** (remove `.cursor/skills/tidy-project/` and reload). If **no** repo commands appear, wrong workspace root or chat surface.
-6. **Cursor Cloud / web Agents:** repo commands may not populate `/`; use **desktop Cursor** or paste the command path under `.cursor/commands/shared/`.
+6. **Cursor Cloud / web Agents:** **`/`** may stay empty — use **`.cursor/rules/repo-slash-workflows.mdc`** (always on) or name the workflow (e.g. “run **`/app-smoke`**”); the agent reads the mapped **`.cursor/commands/...`** file. **Desktop** still has the **`/`** picker when **`.cursor/commands/<name>.md`** exists.
 7. Do **not** run **`/migrate-to-skills`** on this repo if you want to keep **`/tidy-project`** as a command — migration duplicates commands as skills and breaks the menu entry.
 
 **Requires `gh`** authenticated for this repo. **Create issues on This Mac** when possible. Cloud agents should ask the user to switch before running **`/create-issues`**.
