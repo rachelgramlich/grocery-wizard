@@ -1,0 +1,1 @@
+grocery-wizard/app-smoke.md

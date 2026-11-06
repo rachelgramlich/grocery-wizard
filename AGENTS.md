@@ -19,7 +19,7 @@
 | **`/sync-store-aisles`** | Notion → `store_aisles.txt` keyword sync (`.cursor/commands/grocery-wizard/sync-store-aisles.md`) |
 | *(automatic)* **`tidy-first` skill** | While implementing work: tidy inline, **S** vs **B** in separate commits; may file follow-up issues for **B** spotted during tidy (not in **S** commits) |
 
-**Layout:** [rg-ai](https://github.com/rachelgramlich/rg-ai) **git submodule** at **`.cursor/rg-ai`**. Shared slash files via **`.cursor/commands/shared/`** → `.cursor/rg-ai/.cursor/commands`. Grocery-only commands in **`.cursor/commands/grocery-wizard/`**. After clone or new worktree: **`git submodule update --init --recursive`** once if `/` doesn’t list shared commands. **Command-only workflows** must not duplicate the same name under `.cursor/skills/` (see **`/create-command`**).
+**Layout:** [rg-ai](https://github.com/rachelgramlich/rg-ai) **git submodule** at **`.cursor/rg-ai`**. Shared slash files via **`.cursor/commands/shared/`** → `.cursor/rg-ai/.cursor/commands`. Grocery-only commands live in **`.cursor/commands/grocery-wizard/`**. **Discovery:** Cursor also lists each workflow when there is a **`.cursor/commands/<name>.md`** at the repo root of that folder — this repo adds **symlinks** there (same filenames as **`/<name>`**) so the `/` menu finds them reliably; the real files stay under **`shared/`** and **`grocery-wizard/`**. After clone or new worktree: **`git submodule update --init --recursive`** once if shared content is missing. **Command-only workflows** must not duplicate the same name under `.cursor/skills/` (see **`/create-command`**).
 
 ### Labels and areas (for `/create-issues`, `/work-on-issue`)
 
@@ -87,7 +87,7 @@ Skills (committed): `.cursor/skills/tidy-first/SKILL.md` (mirrored under `.agent
 
 ### Finding `/tidy-project` (command) and `tidy-first` (skill)
 
-**`/tidy-project`** is a **slash command** from `.cursor/commands/shared/tidy-project.md`. Menu label: **`/tidy-project`** (filename). Commands load from **workspace root** `.cursor/commands/` (including subfolders).
+**`/tidy-project`** is a **slash command** from `.cursor/commands/shared/tidy-project.md` (also **`.cursor/commands/tidy-project.md`** — symlink for Cursor). Menu label: **`/tidy-project`** (filename). Commands load from **workspace root** `.cursor/commands/`; each command is linked at **`.cursor/commands/<name>.md`** so **`/`** can list it.
 
 1. Open this **repo root** as the workspace (folder that contains `.cursor/commands/`).
 2. Confirm **only** the shared tidy-project command exists (no `.cursor/skills/tidy-project/`).
