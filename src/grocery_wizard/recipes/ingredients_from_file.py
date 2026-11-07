@@ -114,6 +114,8 @@ _OCR_LEADING_STEP = re.compile(
 
 # Two-token OCR junk (e.g. ``11 oe`` next to a real quantity line).
 _OCR_JUNK_TWO_TOKEN = re.compile(r"^\d{1,2}\s+[a-z]{2}\s*$", re.IGNORECASE)
+# Magazine-footer noise misread as an ingredient (e.g. ``10 Oram Bue`` below pecans).
+_OCR_FOOTER_ORAM_JUNK = re.compile(r"^\d{1,2}\s+oram\b", re.IGNORECASE)
 
 
 class FileIngredientsError(Exception):
@@ -177,10 +179,11 @@ _OCR_LEADING_PIPE_AT_CUP = re.compile(r"^\|\s*@cups\b", re.IGNORECASE)
 
 
 def _normalize_ocr_leader_typos(line: str) -> str:
-    """Repair leading OCR junk before quantity (e.g. ``| @cups`` → ``1 cup``)."""
+    """Repair leading OCR junk before quantity (e.g. ``| @cups`` → ``1 cup`` or ``2 cups``)."""
     stripped = line.strip()
     if _OCR_LEADING_PIPE_AT_CUP.match(stripped):
-        return _OCR_LEADING_PIPE_AT_CUP.sub("1 cup", stripped, count=1)
+        qty = "2 cups" if re.search(r"golden\s+brown\s+sugar", stripped, re.IGNORECASE) else "1 cup"
+        return _OCR_LEADING_PIPE_AT_CUP.sub(qty, stripped, count=1)
     return stripped
 
 
@@ -236,6 +239,8 @@ def _keep_line_for_file_extraction(line: str) -> bool:
     if _is_lowercase_comma_instruction(stripped):
         return False
     if _is_ocr_two_token_garbage(stripped):
+        return False
+    if _OCR_FOOTER_ORAM_JUNK.match(stripped):
         return False
     if len(stripped) > 110:
         return False

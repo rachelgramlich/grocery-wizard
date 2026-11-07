@@ -394,6 +394,7 @@ TIKTOK_HTML = """
 
 def test_tiktok_ingredient_line_detection() -> None:
     assert looks_like_ingredient_line("1/2 cup evoo")
+    assert looks_like_ingredient_line("Nonstick vegetable oil spray")
     assert not looks_like_ingredient_line("Tomato pasta salad")
     assert not looks_like_ingredient_line("Combine vinegar and oil in a bowl.")
 
