@@ -53,7 +53,8 @@ _INSTRUCTION_START = re.compile(
     re.IGNORECASE,
 )
 _INGREDIENT_LINE = re.compile(
-    r"(?:\b\d+\b|\b\d+/\d+\b|\bcup\b|\btbsp\b|\btsp\b|\boz\b|\blb\b|\bclove\b|\bpinch\b)",
+    r"(?:\b\d+\b|\b\d+/\d+\b|\bcup\b|\btbsp\b|\btsp\b|\boz\b|\blb\b|\bclove\b|\bpinch\b|"
+    r"\bspray\b|\bnonstick\b)",
     re.IGNORECASE,
 )
 _QUANTITY_START = re.compile(

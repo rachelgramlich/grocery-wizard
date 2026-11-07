@@ -114,6 +114,8 @@ _OCR_LEADING_STEP = re.compile(
 
 # Two-token OCR junk (e.g. ``11 oe`` next to a real quantity line).
 _OCR_JUNK_TWO_TOKEN = re.compile(r"^\d{1,2}\s+[a-z]{2}\s*$", re.IGNORECASE)
+# Magazine-footer noise misread as an ingredient (e.g. ``10 Oram Bue`` below pecans).
+_OCR_FOOTER_ORAM_JUNK = re.compile(r"^\d{1,2}\s+oram\b", re.IGNORECASE)
 
 
 class FileIngredientsError(Exception):
@@ -173,6 +175,18 @@ def _pdf_ocr_page(page: fitz.Page) -> str:
     return pytesseract.image_to_string(image)
 
 
+_OCR_LEADING_PIPE_AT_CUP = re.compile(r"^\|\s*@cups\b", re.IGNORECASE)
+
+
+def _normalize_ocr_leader_typos(line: str) -> str:
+    """Repair leading OCR junk before quantity (e.g. ``| @cups`` → ``1 cup`` or ``2 cups``)."""
+    stripped = line.strip()
+    if _OCR_LEADING_PIPE_AT_CUP.match(stripped):
+        qty = "2 cups" if re.search(r"golden\s+brown\s+sugar", stripped, re.IGNORECASE) else "1 cup"
+        return _OCR_LEADING_PIPE_AT_CUP.sub(qty, stripped, count=1)
+    return stripped
+
+
 def _normalize_ocr_fraction_glitch(line: str) -> str:
     """Turn ``11/2 cups`` into ``1 1/2 cups`` when OCR drops a space."""
 
@@ -226,6 +240,8 @@ def _keep_line_for_file_extraction(line: str) -> bool:
         return False
     if _is_ocr_two_token_garbage(stripped):
         return False
+    if _OCR_FOOTER_ORAM_JUNK.match(stripped):
+        return False
     if len(stripped) > 110:
         return False
     if stripped.endswith("."):
@@ -249,7 +265,9 @@ def _ingredient_block_from_lines(lines: list[str]) -> list[str]:
         out: list[str] = []
         in_block = block_start > 0
         for raw_line in source[block_start:] if in_block else source:
-            line = _normalize_ocr_fraction_glitch(apply_ocr_line_fixes(raw_line.strip()))
+            line = _normalize_ocr_fraction_glitch(
+                apply_ocr_line_fixes(_normalize_ocr_leader_typos(raw_line))
+            )
             if (
                 in_block
                 and _SECTION_HEADING.match(line)
