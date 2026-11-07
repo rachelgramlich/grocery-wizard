@@ -63,6 +63,23 @@ def test_ocr_glued_fraction_from_pdf() -> None:
     assert any("1 1/2 cups vegetable oil" in ln for ln in lines)
 
 
+def test_ocr_pipe_at_cups_and_oram_give_two_brown_sugar_lines() -> None:
+    from src.grocery_wizard.recipes.ingredients_from_file import _ingredient_block_from_lines
+
+    lines = _ingredient_block_from_lines(
+        [
+            "Ingredients",
+            "| @cups (packed) golden brown sugar",
+            "10 Oram Bue",
+            "1 cup sugar",
+        ]
+    )
+    brown = [ln for ln in lines if "brown sugar" in ln.lower()]
+    assert len(brown) == 2
+    assert any("golden" in ln.lower() for ln in brown)
+    assert "1 cup sugar" in lines
+
+
 def test_extract_requires_ingredient_like_lines() -> None:
     pdf_bytes = _build_simple_pdf_with_text("Hello world\nNo recipe here.")
     with pytest.raises(FileIngredientsError, match="No ingredient lines"):

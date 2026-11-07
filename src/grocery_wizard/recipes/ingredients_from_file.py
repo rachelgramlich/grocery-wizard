@@ -173,6 +173,17 @@ def _pdf_ocr_page(page: fitz.Page) -> str:
     return pytesseract.image_to_string(image)
 
 
+_OCR_LEADING_PIPE_AT_CUP = re.compile(r"^\|\s*@cups\b", re.IGNORECASE)
+
+
+def _normalize_ocr_leader_typos(line: str) -> str:
+    """Repair leading OCR junk before quantity (e.g. ``| @cups`` → ``1 cup``)."""
+    stripped = line.strip()
+    if _OCR_LEADING_PIPE_AT_CUP.match(stripped):
+        return _OCR_LEADING_PIPE_AT_CUP.sub("1 cup", stripped, count=1)
+    return stripped
+
+
 def _normalize_ocr_fraction_glitch(line: str) -> str:
     """Turn ``11/2 cups`` into ``1 1/2 cups`` when OCR drops a space."""
 
@@ -249,7 +260,9 @@ def _ingredient_block_from_lines(lines: list[str]) -> list[str]:
         out: list[str] = []
         in_block = block_start > 0
         for raw_line in source[block_start:] if in_block else source:
-            line = _normalize_ocr_fraction_glitch(apply_ocr_line_fixes(raw_line.strip()))
+            line = _normalize_ocr_fraction_glitch(
+                apply_ocr_line_fixes(_normalize_ocr_leader_typos(raw_line))
+            )
             if (
                 in_block
                 and _SECTION_HEADING.match(line)
