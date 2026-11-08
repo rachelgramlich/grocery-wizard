@@ -9,6 +9,7 @@ __all__ = [
     "NotionFieldValues",
     "NotionRecipesDB",
     "Recipe",
+    "normalize_recipe_link",
     "normalize_recipe_name",
     "notion_page_url",
     "recipe_export_link",
@@ -18,6 +19,7 @@ __all__ = [
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
+from urllib.parse import urlparse, urlunparse
 
 from notion_client import Client
 
@@ -68,6 +70,18 @@ def normalize_recipe_name(name: str) -> str:
     return name.strip()
 
 
+def normalize_recipe_link(url: str) -> str:
+    """Canonical recipe URL for duplicate detection and Notion storage."""
+    stripped = url.strip()
+    if not stripped:
+        return ""
+    parsed = urlparse(stripped)
+    netloc = parsed.netloc.lower()
+    netloc = netloc.removeprefix("www.")
+    path = parsed.path.rstrip("/") or parsed.path
+    return urlunparse((parsed.scheme.lower(), netloc, path, "", "", ""))
+
+
 def recipe_lookup_key(name: str) -> str:
     """Case-insensitive match key — same normalization as meal pickers and Notion reads."""
     return normalize_recipe_name(name).lower()
@@ -93,18 +107,29 @@ def _normalize_recipe_field_values(
     schema: DatabaseSchema,
     field_values: NotionFieldValues,
 ) -> NotionFieldValues:
+    updated: NotionFieldValues | None = None
+
     name_column = schema.name_column
-    if name_column not in field_values:
-        return field_values
-    raw = field_values[name_column]
-    if not isinstance(raw, str):
-        return field_values
-    normalized = normalize_recipe_name(raw)
-    if normalized == raw:
-        return field_values
-    updated = dict(field_values)
-    updated[name_column] = normalized
-    return updated
+    if name_column in field_values:
+        raw = field_values[name_column]
+        if isinstance(raw, str):
+            normalized = normalize_recipe_name(raw)
+            if normalized != raw:
+                updated = dict(field_values)
+                updated[name_column] = normalized
+
+    link_column = schema.link_column
+    base = updated if updated is not None else field_values
+    if link_column in base:
+        raw_link = base[link_column]
+        if isinstance(raw_link, str):
+            normalized_link = normalize_recipe_link(raw_link)
+            if normalized_link != raw_link:
+                if updated is None:
+                    updated = dict(field_values)
+                updated[link_column] = normalized_link
+
+    return updated if updated is not None else field_values
 
 
 DEFAULT_NYT_SYNCED_COLUMN = "Synced from NYT recipe box"
@@ -309,12 +334,16 @@ class NotionRecipesDB:
         stripped = url.strip()
         if not stripped:
             return None
-        normalized = stripped.rstrip("/")
-        for candidate in (normalized, stripped):
+        canonical = normalize_recipe_link(stripped)
+        candidates: list[str] = []
+        for candidate in (canonical, stripped, stripped.rstrip("/")):
+            if candidate and candidate not in candidates:
+                candidates.append(candidate)
+        for candidate in candidates:
             recipe = self._find_recipe_by_link_equals(candidate)
             if recipe is not None:
                 return recipe
-        return None
+        return self._find_by_link_scan(stripped)
 
     def _find_recipe_by_link_equals(self, url: str) -> Recipe | None:
         link_column = self.schema.link_column
@@ -328,14 +357,19 @@ class NotionRecipesDB:
         )
         for page in response.get("results", []):
             recipe = self._page_to_recipe(page)
-            if recipe.link and recipe.link.rstrip("/") == url.rstrip("/"):
+            if recipe.link and self._recipe_links_match(recipe.link, url):
                 return recipe
         return None
 
+    def _recipe_links_match(self, stored: str, candidate: str) -> bool:
+        return normalize_recipe_link(stored) == normalize_recipe_link(candidate)
+
     def _find_by_link_scan(self, url: str) -> Recipe | None:
-        target = url.rstrip("/")
+        target = normalize_recipe_link(url)
+        if not target:
+            return None
         for recipe in self.query_recipes():
-            if recipe.link and recipe.link.rstrip("/") == target:
+            if recipe.link and normalize_recipe_link(recipe.link) == target:
                 return recipe
         return None
 
