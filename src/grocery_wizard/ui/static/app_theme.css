@@ -1197,7 +1197,38 @@
         }
 
         @media (max-width: 768px) {
-            /* Browse grid (#491): two compact columns on phone (option A mock). */
+            /*
+             * Browse cards use st.columns(4) + .gw-browse-card-box (tap-to-add), not
+             * .gw-browse-grid. Force two cards per row and square photos (option A).
+             */
+            [data-testid="stHorizontalBlock"]:has(.gw-browse-card-host) {
+                flex-wrap: wrap !important;
+                gap: 0.5rem !important;
+                align-items: stretch !important;
+            }
+
+            [data-testid="stHorizontalBlock"]:has(.gw-browse-card-host) > [data-testid="stColumn"] {
+                flex: 0 0 calc(50% - 0.25rem) !important;
+                width: calc(50% - 0.25rem) !important;
+                min-width: 0 !important;
+            }
+
+            .gw-browse-card-box {
+                aspect-ratio: 1 / 1;
+            }
+
+            .gw-browse-card-title {
+                font-size: 0.72rem;
+                padding: 0.35rem 0.4rem 0.4rem;
+            }
+
+            [data-testid="stColumn"]:has(.gw-browse-card-host)
+                [data-testid="stElementContainer"]:has([data-testid="stButton"])
+                button {
+                min-height: 0 !important;
+            }
+
+            /* Static HTML grid in tests / render_browse_grid_html. */
             .gw-browse-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
                 gap: 0.5rem;

@@ -27,6 +27,8 @@ _REQUIRED_MOBILE_CSS_FRAGMENTS = (
     '[data-testid="stMarkdownContainer"]:has(> p.gw-meal-slot-label)',
     ".gw-browse-grid",
     "grid-template-columns: repeat(2, minmax(0, 1fr))",
+    ".gw-browse-card-host",
+    "calc(50% - 0.25rem)",
 )
 
 
