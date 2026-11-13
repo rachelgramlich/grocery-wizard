@@ -1,5 +1,8 @@
 # Local runtime data (week plan cache, etc.)
 .local/
+
+# POC run output (committed docs live under docs/poc/recipe-images-and-browse/)
+docs/poc/recipe-images-and-browse/out/
 settings.toml
 /secrets.toml
 .streamlit/secrets.toml
