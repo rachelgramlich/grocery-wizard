@@ -8,10 +8,20 @@ from typing import Any
 
 from streamlit.testing.v1 import AppTest
 
-from src.grocery_wizard.ui.ids import CONTROL_GLOBAL_PAGE_PICKER, control_streamlit_key
-from src.grocery_wizard.ui.views import page_label_for_slug
+from src.grocery_wizard.ui.ids import (
+    CONTROL_GLOBAL_APP_SHELL,
+    CONTROL_GLOBAL_PAGE_PICKER,
+    PAGE_SLUG_BROWSE,
+    control_streamlit_key,
+)
+from src.grocery_wizard.ui.views import (
+    APP_SHELL_LABEL_PLANNING,
+    PAGE_LABEL_BROWSE,
+    page_label_for_slug,
+)
 
 APP_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "ui", "app.py")
+_APP_SHELL_KEY = control_streamlit_key(CONTROL_GLOBAL_APP_SHELL)
 _PAGE_PICKER_KEY = control_streamlit_key(CONTROL_GLOBAL_PAGE_PICKER)
 _RENDER_SLUG_KEY = "gw_render_page_slug"
 
@@ -43,7 +53,11 @@ def go_to_page(ctx: AuditContext, at: AppTest, slug: str) -> AppTest:
     label = page_label_for_slug(slug)
     if label is None:
         raise ScenarioSkipError(f"Unknown page slug {slug}")
-    at.session_state[_PAGE_PICKER_KEY] = label
+    if slug == PAGE_SLUG_BROWSE:
+        at.session_state[_APP_SHELL_KEY] = PAGE_LABEL_BROWSE
+    else:
+        at.session_state[_APP_SHELL_KEY] = APP_SHELL_LABEL_PLANNING
+        at.session_state[_PAGE_PICKER_KEY] = label
     at.session_state[_RENDER_SLUG_KEY] = slug
     return at.run(timeout=ctx.timeout)
 

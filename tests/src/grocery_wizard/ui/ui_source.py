@@ -67,10 +67,30 @@ def apptest_start_app(*, timeout: int = 60) -> AppTest:
     return at
 
 
+def apptest_page_picker(at):
+    """Planning-only segmented control (not the app shell)."""
+    from src.grocery_wizard.ui.ids import CONTROL_GLOBAL_PAGE_PICKER, control_streamlit_key
+
+    key = control_streamlit_key(CONTROL_GLOBAL_PAGE_PICKER)
+    return next(sc for sc in at.segmented_control if sc.key == key)
+
+
 def apptest_open_page(at, page_label: str, *, timeout: int = 60) -> None:
-    """Switch primary pages via the global segmented control."""
+    """Switch pages via app shell (Browse) or the planning page picker."""
+    from src.grocery_wizard.ui.ids import CONTROL_GLOBAL_APP_SHELL, CONTROL_GLOBAL_PAGE_PICKER
+    from src.grocery_wizard.ui.views import APP_SHELL_LABEL_PLANNING, PAGE_LABEL_BROWSE
+
     assert at.segmented_control, "Page segmented control missing"
-    at.segmented_control[0].set_value(page_label).run(timeout=timeout)
+    shell_key = CONTROL_GLOBAL_APP_SHELL.replace(".", "_")
+    if page_label == PAGE_LABEL_BROWSE:
+        shell = next(sc for sc in at.segmented_control if sc.key == shell_key)
+        shell.set_value(page_label).run(timeout=timeout)
+        return
+
+    shell = next((sc for sc in at.segmented_control if sc.key == shell_key), None)
+    if shell is not None and shell.value != APP_SHELL_LABEL_PLANNING:
+        shell.set_value(APP_SHELL_LABEL_PLANNING).run(timeout=timeout)
+    apptest_page_picker(at).set_value(page_label).run(timeout=timeout)
 
 
 def apptest_assert_no_exception(at, *, context: str = "AppTest run") -> None:

@@ -16,6 +16,7 @@ from ui_source import (
 
 from src.grocery_wizard.ui.ids import control_streamlit_key
 from src.grocery_wizard.ui.views import (
+    APP_SHELL_LABELS,
     PAGE_LABEL_ADD,
     PAGE_LABEL_BROWSE,
     PAGE_LABEL_MAINTENANCE,
@@ -31,11 +32,24 @@ REFRESH_LABEL = "Refresh from Notion"
 def test_picker_lists_every_page_this_suite_covers() -> None:
     assert set(PAGE_PICKER_LABELS) == {
         PAGE_LABEL_WEEKLY,
-        PAGE_LABEL_BROWSE,
         PAGE_LABEL_ADD,
         PAGE_LABEL_PANTRY,
         PAGE_LABEL_MAINTENANCE,
     }
+    assert PAGE_LABEL_BROWSE in APP_SHELL_LABELS
+
+
+@pytest.mark.parametrize("label", [PAGE_LABEL_BROWSE])
+def test_browse_app_shell_tab_renders(label: str) -> None:
+    from src.grocery_wizard.ui.ids import CONTROL_GLOBAL_APP_SHELL, control_streamlit_key
+
+    at = apptest_start_app()
+    shell_key = control_streamlit_key(CONTROL_GLOBAL_APP_SHELL)
+    assert len(at.segmented_control) >= 2
+    target = next(sc for sc in at.segmented_control if sc.key == shell_key)
+    target.set_value(label).run(timeout=60)
+    apptest_assert_no_exception(at, context=f"app shell {label!r}")
+    assert at.session_state["gw_render_page_slug"] == page_slug_for_label(label)
 
 
 @pytest.mark.parametrize("label", PAGE_PICKER_LABELS)

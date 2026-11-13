@@ -30,6 +30,7 @@ from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.dropdown_dismiss import install_dropdown_dismiss
 from src.grocery_wizard.ui.feedback import render_feedback_controls
 from src.grocery_wizard.ui.ids import (
+    CONTROL_GLOBAL_APP_SHELL,
     CONTROL_GLOBAL_FEEDBACK,
     CONTROL_GLOBAL_PAGE_PICKER,
     CONTROL_GLOBAL_REFRESH,
@@ -44,6 +45,9 @@ from src.grocery_wizard.ui.loading import loading_indicator, mount_global_loadin
 from src.grocery_wizard.ui.notion_cache import invalidate_notion_cache
 from src.grocery_wizard.ui.styles import inject_app_styles
 from src.grocery_wizard.ui.views import (
+    APP_SHELL_LABEL_PLANNING,
+    APP_SHELL_LABELS,
+    PAGE_LABEL_BROWSE,
     PAGE_LABEL_WEEKLY,
     PAGE_PICKER_LABELS,
     page_label_for_slug,
@@ -57,6 +61,7 @@ from src.grocery_wizard.ui.views.weekly_plan import render_create_weekly_plan
 
 _GW_RENDER_PAGE_SLUG = "gw_render_page_slug"
 _SKIP_PICKER_RENDER_SYNC = "gw_skip_picker_render_sync"
+_APP_SHELL_SESSION_KEY = control_streamlit_key(CONTROL_GLOBAL_APP_SHELL)
 _PAGE_PICKER_SESSION_KEY = control_streamlit_key(CONTROL_GLOBAL_PAGE_PICKER)
 
 # Re-export for tests and AppTest entry points that import from app.
@@ -70,13 +75,26 @@ __all__ = [
 ]
 
 
+def _shell_is_browse() -> bool:
+    return st.session_state.get(_APP_SHELL_SESSION_KEY) == PAGE_LABEL_BROWSE
+
+
 def _init_page_navigation_state() -> None:
+    if _APP_SHELL_SESSION_KEY not in st.session_state:
+        st.session_state[_APP_SHELL_SESSION_KEY] = APP_SHELL_LABEL_PLANNING
     if _PAGE_PICKER_SESSION_KEY not in st.session_state:
         st.session_state[_PAGE_PICKER_SESSION_KEY] = PAGE_LABEL_WEEKLY
     if _GW_RENDER_PAGE_SLUG not in st.session_state:
-        st.session_state[_GW_RENDER_PAGE_SLUG] = page_slug_for_label(
-            st.session_state[_PAGE_PICKER_SESSION_KEY]
-        )
+        st.session_state[_GW_RENDER_PAGE_SLUG] = PAGE_SLUG_WEEKLY
+
+
+def _on_app_shell_change() -> None:
+    shell = st.session_state[_APP_SHELL_SESSION_KEY]
+    if shell == PAGE_LABEL_BROWSE:
+        st.session_state[_GW_RENDER_PAGE_SLUG] = PAGE_SLUG_BROWSE
+        return
+    label = st.session_state.get(_PAGE_PICKER_SESSION_KEY) or PAGE_LABEL_WEEKLY
+    st.session_state[_GW_RENDER_PAGE_SLUG] = page_slug_for_label(label)
 
 
 def _on_active_page_change() -> None:
@@ -86,6 +104,9 @@ def _on_active_page_change() -> None:
 
 def _sync_render_page_from_picker() -> None:
     """Keep body page aligned when the picker changes without on_change."""
+    if _shell_is_browse():
+        st.session_state[_GW_RENDER_PAGE_SLUG] = PAGE_SLUG_BROWSE
+        return
     if st.session_state.get(_SKIP_PICKER_RENDER_SYNC):
         st.session_state[_SKIP_PICKER_RENDER_SYNC] = False
         return
@@ -109,6 +130,10 @@ def _refresh_notion_cache_from_ui() -> None:
         clear_notion_view_url_cache()
         clear_notion_database_metadata_cache()
     slug = st.session_state[_GW_RENDER_PAGE_SLUG]
+    if slug == PAGE_SLUG_BROWSE:
+        st.session_state[_APP_SHELL_SESSION_KEY] = PAGE_LABEL_BROWSE
+        return
+    st.session_state[_APP_SHELL_SESSION_KEY] = APP_SHELL_LABEL_PLANNING
     label = page_label_for_slug(slug)
     if label is not None:
         st.session_state[_PAGE_PICKER_SESSION_KEY] = label
@@ -135,23 +160,7 @@ def _render_global_header_controls(*, surface: str | None) -> None:
             render_feedback_controls(surface=surface, control_id=CONTROL_GLOBAL_FEEDBACK)
 
 
-def main() -> None:
-    ensure_streamlit_secrets_symlink()
-    warn_if_missing_github_feedback_token_when_deployed()
-    st.set_page_config(
-        page_title="Grocery Wizard",
-        page_icon="🛒",
-        layout="centered",
-    )
-    inject_app_styles()
-    enforce_access_gate()
-    render_app_title()
-    mount_global_loading_banner()
-
-    _init_page_navigation_state()
-
-    _render_global_header_controls(surface=st.session_state.get(_GW_RENDER_PAGE_SLUG))
-
+def _render_planning_page_picker() -> None:
     st.markdown(
         '<p class="gw-global-page-picker-anchor" aria-hidden="true"></p>',
         unsafe_allow_html=True,
@@ -167,8 +176,8 @@ def main() -> None:
     )
     _sync_render_page_from_picker()
 
-    active_slug = st.session_state[_GW_RENDER_PAGE_SLUG]
 
+def _render_planning_body(active_slug: str) -> None:
     with st.container(key=f"gw_page_{active_slug}"):
         if active_slug == PAGE_SLUG_WEEKLY:
             render_create_weekly_plan()
@@ -176,10 +185,50 @@ def main() -> None:
             render_add_recipe()
         elif active_slug == PAGE_SLUG_PANTRY:
             render_pantry_and_recurring()
-        elif active_slug == PAGE_SLUG_BROWSE:
-            render_browse_recipes()
         elif active_slug == PAGE_SLUG_MAINTENANCE:
             render_recipe_maintenance()
+
+
+def main() -> None:
+    ensure_streamlit_secrets_symlink()
+    warn_if_missing_github_feedback_token_when_deployed()
+    st.set_page_config(
+        page_title="Grocery Wizard",
+        page_icon="🛒",
+        layout="centered",
+    )
+    inject_app_styles()
+    enforce_access_gate()
+    render_app_title()
+    mount_global_loading_banner()
+
+    _init_page_navigation_state()
+
+    active_slug = st.session_state.get(_GW_RENDER_PAGE_SLUG, PAGE_SLUG_WEEKLY)
+    _render_global_header_controls(surface=active_slug)
+
+    st.markdown(
+        '<p class="gw-global-app-shell-anchor" aria-hidden="true"></p>',
+        unsafe_allow_html=True,
+    )
+    st.segmented_control(
+        "Section",
+        APP_SHELL_LABELS,
+        key=_APP_SHELL_SESSION_KEY,
+        label_visibility="collapsed",
+        width="stretch",
+        persist_state="session",
+        on_change=_on_app_shell_change,
+    )
+
+    if _shell_is_browse():
+        st.session_state[_GW_RENDER_PAGE_SLUG] = PAGE_SLUG_BROWSE
+        with st.container(key="gw_page_browse"):
+            render_browse_recipes()
+    else:
+        _render_planning_page_picker()
+        active_slug = st.session_state[_GW_RENDER_PAGE_SLUG]
+        _render_planning_body(active_slug)
 
     install_dropdown_dismiss()
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from ui_source import APP_PATH
+from ui_source import APP_PATH, apptest_page_picker
 
 
 def test_nyt_sync_controls_only_on_add_recipe_tab() -> None:
@@ -23,8 +23,7 @@ def test_nyt_sync_visible_on_add_recipe_when_credentials_missing() -> None:
     ):
         at = AppTest.from_file(str(APP_PATH), default_timeout=60)
         at.run()
-        tab_picker = at.segmented_control[0]
-        tab_picker.set_value("Add Recipe").run()
+        apptest_page_picker(at).set_value("Add Recipe").run()
 
     assert not at.exception
     markdown_text = " ".join(m.value for m in at.markdown if m.value)
