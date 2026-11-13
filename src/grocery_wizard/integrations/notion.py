@@ -400,7 +400,8 @@ class NotionRecipesDB:
             upload_id,
             file=(filename, data, content_type),
         )
-        self._client.file_uploads.complete(upload_id)
+        # single_part: send leaves the upload in `uploaded` status — attach via
+        # page update (no separate complete call; see Notion file_uploads API).
 
         properties = {
             column_name: {

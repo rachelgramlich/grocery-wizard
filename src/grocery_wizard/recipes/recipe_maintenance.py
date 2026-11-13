@@ -482,7 +482,13 @@ def run_image_backfill(
                 )
             continue
 
-        result = attach_recipe_cover_image(db, recipe.page_id, url, dry_run=False)
+        try:
+            result = attach_recipe_cover_image(db, recipe.page_id, url, dry_run=False)
+        except Exception as exc:
+            summary.failed += 1
+            if on_progress:
+                on_progress(f"Failed: {recipe.name} — {exc}")
+            continue
         if result.ok:
             summary.succeeded += 1
             if on_progress:
