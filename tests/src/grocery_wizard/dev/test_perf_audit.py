@@ -168,7 +168,14 @@ def test_scenario_catalogue_ids_are_unique_and_cover_every_page() -> None:
     scenarios = build_scenarios()
     ids = [s.id for s in scenarios]
     assert len(ids) == len(set(ids))
-    assert {s.page for s in scenarios} == {"global", "weekly", "add", "pantry", "maintenance"}
+    assert {s.page for s in scenarios} == {
+        "global",
+        "weekly",
+        "add",
+        "browse",
+        "pantry",
+        "maintenance",
+    }
 
 
 def test_select_scenarios_filters_by_glob_and_substring() -> None:

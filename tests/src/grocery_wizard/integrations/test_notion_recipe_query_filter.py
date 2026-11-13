@@ -27,6 +27,7 @@ def _db(*, filter_columns: list[ColumnInfo] | None = None) -> NotionRecipesDB:
             "Meal plan status": filter_columns[1],
             "Weeknight": ColumnInfo(name="Weeknight", type="checkbox"),
             "Selection count": ColumnInfo(name="Selection count", type="number"),
+            "Image": ColumnInfo(name="Image", type="files"),
         },
     )
     config = Config.model_construct(
@@ -35,6 +36,7 @@ def _db(*, filter_columns: list[ColumnInfo] | None = None) -> NotionRecipesDB:
         notion_pantry_database_id="pantry-id",
         notion_recurring_weekly_database_id="recurring-id",
         notion_weekly_meal_plans_database_id="plans-id",
+        recipe_image_files_column="Image",
     )
     db = NotionRecipesDB.__new__(NotionRecipesDB)
     db._client = MagicMock()
@@ -62,6 +64,7 @@ def test_query_recipes_passes_filter_properties() -> None:
             "Meal plan status",
             "Weeknight",
             "Selection count",
+            "Image",
         }
     )
 

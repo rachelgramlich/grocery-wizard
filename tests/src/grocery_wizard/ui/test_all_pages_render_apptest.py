@@ -17,6 +17,7 @@ from ui_source import (
 from src.grocery_wizard.ui.ids import control_streamlit_key
 from src.grocery_wizard.ui.views import (
     PAGE_LABEL_ADD,
+    PAGE_LABEL_BROWSE,
     PAGE_LABEL_MAINTENANCE,
     PAGE_LABEL_PANTRY,
     PAGE_LABEL_WEEKLY,
@@ -30,6 +31,7 @@ REFRESH_LABEL = "Refresh from Notion"
 def test_picker_lists_every_page_this_suite_covers() -> None:
     assert set(PAGE_PICKER_LABELS) == {
         PAGE_LABEL_WEEKLY,
+        PAGE_LABEL_BROWSE,
         PAGE_LABEL_ADD,
         PAGE_LABEL_PANTRY,
         PAGE_LABEL_MAINTENANCE,

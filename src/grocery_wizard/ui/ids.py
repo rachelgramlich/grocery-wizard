@@ -11,6 +11,7 @@ PAGE_SLUG_WEEKLY: Final = "weekly"
 PAGE_SLUG_ADD: Final = "add"
 PAGE_SLUG_PANTRY: Final = "pantry"
 PAGE_SLUG_MAINTENANCE: Final = "maintenance"
+PAGE_SLUG_BROWSE: Final = "browse"
 
 # --- Global controls (page `global`, block `global`) ---
 
@@ -46,6 +47,15 @@ BLOCK_ADD_NYT: Final = "add.nyt"
 
 BLOCK_PANTRY_RECURRING: Final = "pantry.recurring"
 BLOCK_PANTRY_STAPLES: Final = "pantry.staples"
+
+# --- Browse blocks ---
+
+BLOCK_BROWSE_FILTERS: Final = "browse.filters"
+BLOCK_BROWSE_GRID: Final = "browse.grid"
+CONTROL_BROWSE_APPLY: Final = "browse.apply"
+CONTROL_BROWSE_RESET: Final = "browse.reset"
+CONTROL_BROWSE_LOAD_MORE: Final = "browse.load_more"
+CONTROL_BROWSE_FILTERS_HAS_IMAGE: Final = "browse.filters.has_image"
 
 # --- Maintenance blocks ---
 

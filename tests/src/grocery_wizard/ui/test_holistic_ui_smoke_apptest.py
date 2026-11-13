@@ -21,6 +21,7 @@ from src.grocery_wizard.planning.saved_weekly_plans import SavedWeeklyPlan
 from src.grocery_wizard.ui import notion_cache
 from src.grocery_wizard.ui.views import (
     PAGE_LABEL_ADD,
+    PAGE_LABEL_BROWSE,
     PAGE_LABEL_MAINTENANCE,
     PAGE_LABEL_PANTRY,
     PAGE_LABEL_WEEKLY,
@@ -61,6 +62,7 @@ def test_holistic_first_run_renders_global_shell() -> None:
     ("page_label", "body_needle"),
     [
         (PAGE_LABEL_PANTRY, "### Pantry"),
+        (PAGE_LABEL_BROWSE, "### Browse recipes"),
         (PAGE_LABEL_ADD, "Recipe URL"),
         (PAGE_LABEL_MAINTENANCE, "### Meal plan status"),
     ],

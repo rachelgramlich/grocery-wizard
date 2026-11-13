@@ -34,6 +34,7 @@ from src.grocery_wizard.ui.ids import (
     CONTROL_GLOBAL_PAGE_PICKER,
     CONTROL_GLOBAL_REFRESH,
     PAGE_SLUG_ADD,
+    PAGE_SLUG_BROWSE,
     PAGE_SLUG_MAINTENANCE,
     PAGE_SLUG_PANTRY,
     PAGE_SLUG_WEEKLY,
@@ -49,6 +50,7 @@ from src.grocery_wizard.ui.views import (
     page_slug_for_label,
 )
 from src.grocery_wizard.ui.views.add_recipe import render_add_recipe
+from src.grocery_wizard.ui.views.browse_recipes import render_browse_recipes
 from src.grocery_wizard.ui.views.pantry_recurring import render_pantry_and_recurring
 from src.grocery_wizard.ui.views.recipe_maintenance import render_recipe_maintenance
 from src.grocery_wizard.ui.views.weekly_plan import render_create_weekly_plan
@@ -174,6 +176,8 @@ def main() -> None:
             render_add_recipe()
         elif active_slug == PAGE_SLUG_PANTRY:
             render_pantry_and_recurring()
+        elif active_slug == PAGE_SLUG_BROWSE:
+            render_browse_recipes()
         elif active_slug == PAGE_SLUG_MAINTENANCE:
             render_recipe_maintenance()
 

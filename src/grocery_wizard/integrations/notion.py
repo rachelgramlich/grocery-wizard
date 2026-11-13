@@ -24,6 +24,10 @@ from notion_client import Client
 from src.grocery_wizard.config import Config
 from src.grocery_wizard.integrations.notion_data_source import resolve_notion_data_source_id
 from src.grocery_wizard.integrations.notion_table import build_notion_rich_text
+from src.grocery_wizard.recipes.recipe_images import (
+    read_files_property_url,
+    recipe_image_files_column_name,
+)
 
 # Values accepted by ``create_recipe`` / ``update_recipe`` keyed by Notion column name.
 # Strings map to title/url/text/select/status; lists to multi_select; bool to checkbox;
@@ -61,6 +65,8 @@ class Recipe:
     link: str | None
     ingredients: str | None
     properties: dict[str, Any]
+    last_edited_time: datetime | None = None
+    image_file_url: str | None = None
 
 
 def normalize_recipe_name(name: str) -> str:
@@ -279,7 +285,13 @@ class NotionRecipesDB:
         nyt_column = self.nyt_synced_column_name()
         if nyt_column:
             names.add(nyt_column)
+        image_column = recipe_image_files_column_name(self)
+        if image_column:
+            names.add(image_column)
         return sorted(names)
+
+    def recipe_image_files_column_name(self) -> str | None:
+        return recipe_image_files_column_name(self)
 
     def _query_recipe_pages(
         self,
@@ -432,6 +444,8 @@ class NotionRecipesDB:
 
         raw_name = _read_property(props.get(schema.name_column))
         name = normalize_recipe_name(str(raw_name)) if raw_name else ""
+        image_column = recipe_image_files_column_name(self)
+        image_url = read_files_property_url(props.get(image_column)) if image_column else None
         return Recipe(
             page_id=page["id"],
             name=name,
@@ -442,6 +456,8 @@ class NotionRecipesDB:
                 else None
             ),
             properties={name: _read_property(prop) for name, prop in props.items()},
+            last_edited_time=_parse_notion_timestamp(page.get("last_edited_time")),
+            image_file_url=image_url,
         )
 
     def _to_notion_property(self, column_name: str, value: Any) -> dict[str, Any]:
@@ -483,6 +499,15 @@ def _extract_options(prop: dict[str, Any], prop_type: str) -> list[str]:
     return []
 
 
+def _parse_notion_timestamp(value: str | None) -> datetime | None:
+    if not value or not isinstance(value, str):
+        return None
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError:
+        return None
+
+
 def _read_property(prop: dict[str, Any] | None) -> Any:
     if not prop:
         return None
@@ -508,4 +533,6 @@ def _read_property(prop: dict[str, Any] | None) -> Any:
         return prop.get("checkbox")
     if prop_type == "number":
         return prop.get("number")
+    if prop_type == "files":
+        return read_files_property_url(prop)
     return None

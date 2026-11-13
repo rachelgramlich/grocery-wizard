@@ -22,6 +22,7 @@ Vocabulary for issues, feedback, tests, and agents.
 | `weekly` | Create weekly plan |
 | `add` | Add Recipe |
 | `pantry` | Pantry & recurring |
+| `browse` | Browse recipes |
 | `maintenance` | Recipe maintenance |
 
 Constants: `src/grocery_wizard/ui/ids.py`, labels: `src/grocery_wizard/ui/views/__init__.py`.
@@ -70,6 +71,17 @@ Rail steps (user-facing, not numbered): **Get started** → **Plan meals** → *
 |----------|-----|
 | `pantry.recurring` | Recurring weekly items |
 | `pantry.staples` | Pantry |
+
+### `browse`
+
+| Block / control ID | UI |
+|--------------------|-----|
+| `browse.filters` | Meal-plan filter controls on page |
+| `browse.filters.has_image` | Has image (Files column populated) |
+| `browse.apply` | Apply filters |
+| `browse.reset` | Reset (clears all filters) |
+| `browse.grid` | Recipe image grid |
+| `browse.load_more` | Load more (+24) |
 
 ### `maintenance`
 

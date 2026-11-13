@@ -36,6 +36,7 @@ def test_create_recipe_strips_name_before_write(monkeypatch) -> None:
     db.schema = _schema()
     db._database_id = "db"
     db._data_source_id = "ds-id"
+    db._config = MagicMock(recipe_image_files_column=None)
     captured: dict = {}
 
     def fake_create(*, parent, properties):

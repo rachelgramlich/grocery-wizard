@@ -25,6 +25,8 @@ _UI_MODULE_PATHS = (
     "views/add_recipe.py",
     "views/pantry_recurring.py",
     "views/recipe_maintenance.py",
+    "views/browse_recipes.py",
+    "browse_logic.py",
     "grocery_helpers.py",
     "grocery_flow.py",
     "meal_plan_filters.py",
