@@ -15,7 +15,6 @@ PAGE_SLUG_BROWSE: Final = "browse"
 
 # --- Global controls (page `global`, block `global`) ---
 
-CONTROL_GLOBAL_APP_SHELL: Final = "global.global.app_shell"
 CONTROL_GLOBAL_PAGE_PICKER: Final = "global.global.page_picker"
 CONTROL_GLOBAL_REFRESH: Final = "global.global.refresh"
 CONTROL_GLOBAL_FEEDBACK: Final = "global.global.feedback"

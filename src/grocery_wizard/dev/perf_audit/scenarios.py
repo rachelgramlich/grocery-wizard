@@ -59,7 +59,7 @@ def _page_open(slug: str) -> Scenario:
         label=f"Switch to the {slug} page",
         prepare=flows.open_app if slug != "weekly" else _open_other_page_then_back,
         act=act,
-        covers=("page_picker", "app_shell"),
+        covers=("page_picker",),
     )
 
 
