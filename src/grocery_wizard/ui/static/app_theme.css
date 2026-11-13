@@ -1086,9 +1086,9 @@
             overflow: hidden;
             display: flex;
             align-items: stretch;
+            position: relative;
         }
 
-        .gw-browse-card-photo .gw-browse-tile-img,
         .gw-browse-card-photo .gw-browse-tile-placeholder {
             width: 100%;
             height: 100%;
@@ -1155,9 +1155,12 @@
         }
 
         .gw-browse-tile-img {
+            position: absolute;
+            inset: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
+            object-position: center;
         }
 
         .gw-browse-tile-not-loaded {

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
+from types import ModuleType
 from typing import Any
 
 from src.grocery_wizard.config import load_config
@@ -25,7 +26,7 @@ class WeeklyPlanAddResult:
     toast: bool = True
 
 
-def _weekly_state():
+def _weekly_state() -> ModuleType:
     """Lazy import avoids cycle with plan_entry."""
     from src.grocery_wizard.ui.views.weekly_plan import state as weekly_state
 

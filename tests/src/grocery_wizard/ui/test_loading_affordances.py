@@ -57,3 +57,16 @@ def test_meal_plan_regenerate_and_fill_use_loading_indicator() -> None:
     assert "Re-generating your meal plan" in source
     assert "Filling remaining meal slots" in source
     assert "Updating your meals" in source
+
+
+def test_browse_recipes_shows_spinner_on_cold_notion_load() -> None:
+    browse = (UI_ROOT / "views" / "browse_recipes.py").read_text(encoding="utf-8")
+    load_fn = browse.split("def _load_browse_recipe_library", 1)[1].split("\ndef ", 1)[0]
+    assert "cached_query_recipes" in load_fn
+    render_fn = browse.split("def render_browse_recipes", 1)[1].split("\ndef ", 1)[0]
+    assert "_BROWSE_LOADING_MESSAGE" in render_fn
+    cold_block = render_fn.split("if _recipes_warm_for_session():", 1)[1].split(
+        "applied = applied_from_dict", 1
+    )[0]
+    assert "loading_indicator" in cold_block
+    assert "_load_browse_recipe_library" in cold_block

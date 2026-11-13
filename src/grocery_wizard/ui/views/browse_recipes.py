@@ -6,6 +6,7 @@ import hashlib
 
 import streamlit as st
 
+from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 from src.grocery_wizard.planning.meal_planner import build_ingredient_index
 from src.grocery_wizard.recipes.recipe_meal_plan_stats import meal_plan_status_column_name
 from src.grocery_wizard.ui.browse_logic import (
@@ -42,17 +43,42 @@ from src.grocery_wizard.ui.ingredient_index_warm import (
     schedule_ingredient_index_warm,
     warmed_ingredient_index_if_ready,
 )
+from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.meal_plan_filters import render_meal_plan_filters
-from src.grocery_wizard.ui.notion_cache import cached_query_recipes
+from src.grocery_wizard.ui.notion_cache import cached_query_recipes, notion_cache_generation
 from src.grocery_wizard.ui.weekly_plan_add import (
     WeeklyPlanAddOutcome,
     add_recipe_to_week_from_browse,
 )
 
 _BROWSE_GRID_COLUMNS = 4
+_BROWSE_RECIPES_WARM_KEY = "_browse_recipes_warm_generation"
+_WEEKLY_RECIPES_WARM_KEY = "_weekly_plan_recipes_warm_generation"
+_BROWSE_LOADING_MESSAGE = "Loading recipes from Notion…"
 
 
-def _ingredient_index(recipes: list) -> dict[str, set[str]] | None:
+def _recipes_warm_for_session() -> bool:
+    """True after recipes were loaded this session (weekly or browse tab)."""
+    generation = notion_cache_generation()
+    return (
+        st.session_state.get(_BROWSE_RECIPES_WARM_KEY) == generation
+        or st.session_state.get(_WEEKLY_RECIPES_WARM_KEY) == generation
+    )
+
+
+def _mark_browse_recipes_warm() -> None:
+    st.session_state[_BROWSE_RECIPES_WARM_KEY] = notion_cache_generation()
+
+
+def _load_browse_recipe_library(
+    db: NotionRecipesDB,
+) -> tuple[list[Recipe], dict[str, set[str]] | None]:
+    all_recipes = cached_query_recipes(db)
+    _mark_browse_recipes_warm()
+    return all_recipes, _ingredient_index(all_recipes)
+
+
+def _ingredient_index(recipes: list[Recipe]) -> dict[str, set[str]] | None:
     cache_key = recipes_ingredient_cache_key(recipes)
     warmed = warmed_ingredient_index_if_ready(cache_key)
     if warmed is not None:
@@ -134,8 +160,11 @@ def render_browse_recipes() -> None:
 
     db = get_db()
     _ensure_first_visit_applied(db.schema.all_columns)
-    all_recipes = cached_query_recipes(db)
-    ingredient_index = _ingredient_index(all_recipes)
+    if _recipes_warm_for_session():
+        all_recipes, ingredient_index = _load_browse_recipe_library(db)
+    else:
+        with loading_indicator(_BROWSE_LOADING_MESSAGE):
+            all_recipes, ingredient_index = _load_browse_recipe_library(db)
 
     applied = applied_from_dict(st.session_state.get(browse_session_applied_key()))
     assert applied is not None
