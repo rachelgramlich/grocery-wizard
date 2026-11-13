@@ -16,6 +16,7 @@ from src.grocery_wizard.recipes.add_recipe import (
     ordered_recipe_field_names,
     preview_recipe_urls,
 )
+from src.grocery_wizard.recipes.recipe_image_attach import attach_recipe_cover_image
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.ids import BLOCK_ADD_MANUAL, BLOCK_ADD_NYT, BLOCK_ADD_URL
 from src.grocery_wizard.ui.loading import loading_indicator
@@ -188,9 +189,13 @@ def _render_recipe_review(
 
             with loading_indicator("Saving recipe to Notion…"):
                 recipe = db.create_recipe(cleaned)
+                link_for_image = str(cleaned.get(schema.link_column) or preview.get("url") or "")
+                image_result = attach_recipe_cover_image(db, recipe.page_id, link_for_image)
                 invalidate_recipes_after_write(schema_may_change=True)
             preview["status"] = "saved"
             preview["saved_name"] = recipe.name
+            if image_result.user_message:
+                st.info(image_result.user_message)
             st.rerun()
 
 
