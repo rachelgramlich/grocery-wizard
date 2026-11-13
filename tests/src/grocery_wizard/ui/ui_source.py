@@ -77,7 +77,7 @@ def apptest_page_picker(at):
 
 def apptest_open_page(at, page_label: str, *, timeout: int = 60) -> None:
     """Switch pages via app shell (Browse) or the planning page picker."""
-    from src.grocery_wizard.ui.ids import CONTROL_GLOBAL_APP_SHELL, CONTROL_GLOBAL_PAGE_PICKER
+    from src.grocery_wizard.ui.ids import CONTROL_GLOBAL_APP_SHELL
     from src.grocery_wizard.ui.views import APP_SHELL_LABEL_PLANNING, PAGE_LABEL_BROWSE
 
     assert at.segmented_control, "Page segmented control missing"
