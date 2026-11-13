@@ -20,9 +20,9 @@ Vocabulary for issues, feedback, tests, and agents.
 |------|-------------------------|
 | `global` | *(not in picker)* |
 | `weekly` | Create weekly plan |
+| `browse` | Browse recipes |
 | `add` | Add Recipe |
 | `pantry` | Pantry & recurring |
-| `browse` | Browse recipes |
 | `maintenance` | Recipe maintenance |
 
 Constants: `src/grocery_wizard/ui/ids.py`, labels: `src/grocery_wizard/ui/views/__init__.py`.
