@@ -56,6 +56,9 @@ CONTROL_BROWSE_APPLY: Final = "browse.apply"
 CONTROL_BROWSE_RESET: Final = "browse.reset"
 CONTROL_BROWSE_LOAD_MORE: Final = "browse.load_more"
 CONTROL_BROWSE_FILTERS_HAS_IMAGE: Final = "browse.filters.has_image"
+CONTROL_BROWSE_FILTERS_INCLUDE_PAUSED: Final = "browse.filters.include_paused"
+CONTROL_BROWSE_FILTERS_INCLUDE_DEPRECATED: Final = "browse.filters.include_deprecated"
+CONTROL_BROWSE_CARD_ADD: Final = "browse.card.add"
 
 # --- Maintenance blocks ---
 

@@ -86,6 +86,11 @@ from src.grocery_wizard.ui.views.weekly_plan.step_ui import (
     queue_weekly_scroll,
     set_expanded_step,
 )
+from src.grocery_wizard.ui.weekly_plan_add import (
+    WeeklyPlanAddOutcome,
+    clamp_prebuild_pinned_recipes,
+    try_pin_recipe,
+)
 
 
 def _meal_plan_picker_columns(db: NotionRecipesDB) -> tuple[str | None, str | None]:
@@ -143,27 +148,15 @@ def _on_plan_meal_count_widget_change() -> None:
 
 def _clamp_prebuild_pinned_recipes(*, max_pins: int) -> None:
     """Keep pre-build pins within meal count (e.g. after lowering meal count)."""
-    key = "plan_prebuild_pinned_recipes"
-    pinned = list(st.session_state.get(key) or [])
-    if not pinned:
-        return
-    limit = max(1, int(max_pins))
-    if len(pinned) <= limit:
-        return
-    st.session_state[key] = pinned[:limit]
+    clamp_prebuild_pinned_recipes(st.session_state, max_pins=max_pins)
 
 
 def _append_prebuild_pin(recipe_name: str, *, max_pins: int) -> None:
-    pinned = list(st.session_state.get("plan_prebuild_pinned_recipes") or [])
-    if recipe_name in pinned:
-        st.warning("That recipe is already pinned.")
+    result = try_pin_recipe(st.session_state, recipe_name, max_pins=max_pins)
+    if result.outcome == WeeklyPlanAddOutcome.PINNED:
+        st.rerun()
         return
-    if len(pinned) >= max(1, int(max_pins)):
-        st.warning(f"You can pin at most {max_pins} meals for this week.")
-        return
-    pinned.append(recipe_name)
-    st.session_state.plan_prebuild_pinned_recipes = pinned
-    st.rerun()
+    st.warning(result.message)
 
 
 def _remove_prebuild_pin(recipe_name: str) -> None:

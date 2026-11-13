@@ -1060,12 +1060,15 @@
         }
 
         .gw-browse-tile {
-            pointer-events: none;
-            user-select: none;
             display: flex;
             flex-direction: column;
             gap: 0.35rem;
             min-width: 0;
+        }
+
+        .gw-browse-tile-static {
+            pointer-events: none;
+            user-select: none;
         }
 
         .gw-browse-tile-media {
@@ -1075,6 +1078,8 @@
             overflow: hidden;
             border: 1px solid #e8b8d0;
             background: #f3d4e6;
+            pointer-events: none;
+            user-select: none;
         }
 
         .gw-browse-tile-img {

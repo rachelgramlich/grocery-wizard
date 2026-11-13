@@ -78,9 +78,12 @@ Rail steps (user-facing, not numbered): **Get started** → **Plan meals** → *
 |--------------------|-----|
 | `browse.filters` | Meal-plan filter controls on page |
 | `browse.filters.has_image` | Has image (grid can show a photo URL) |
+| `browse.filters.include_paused` | Include Paused meal-plan status |
+| `browse.filters.include_deprecated` | Include Deprecated meal-plan status |
 | `browse.apply` | Apply filters |
 | `browse.reset` | Reset (clears all filters) |
 | `browse.grid` | Recipe image grid |
+| `browse.card.add` | Add recipe to this week (per card) |
 | `browse.load_more` | Load more (+24) |
 
 ### `maintenance`
