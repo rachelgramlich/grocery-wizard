@@ -148,6 +148,7 @@ def _render_browse_grid(
                     ):
                         st.session_state[confirm_key] = result.message
                         st.toast(result.message, icon="🍽️")
+                        st.rerun()
                     else:
                         st.session_state.pop(confirm_key, None)
                         if result.message:
@@ -253,13 +254,13 @@ def render_browse_recipes() -> None:
     showing = min(visible_limit, total)
     st.caption(f"Showing {showing} of {total} recipes")
 
-    status_column = meal_plan_status_column_name(db)
-    with st.container(key="browse_grid"):
-        _render_browse_grid(display_recipes, limit=visible_limit, status_column=status_column)
-
     confirm_message = st.session_state.get(browse_session_add_confirmation_key())
     if confirm_message:
         st.success(confirm_message)
+
+    status_column = meal_plan_status_column_name(db)
+    with st.container(key="browse_grid"):
+        _render_browse_grid(display_recipes, limit=visible_limit, status_column=status_column)
 
     if visible_limit < total and st.button(
         "Load more",
