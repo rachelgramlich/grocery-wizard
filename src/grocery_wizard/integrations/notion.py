@@ -24,10 +24,7 @@ from notion_client import Client
 from src.grocery_wizard.config import Config
 from src.grocery_wizard.integrations.notion_data_source import resolve_notion_data_source_id
 from src.grocery_wizard.integrations.notion_table import build_notion_rich_text
-from src.grocery_wizard.recipes.recipe_images import (
-    read_files_property_url,
-    recipe_image_files_column_name,
-)
+from src.grocery_wizard.recipes.recipe_images import read_files_property_url
 
 # Values accepted by ``create_recipe`` / ``update_recipe`` keyed by Notion column name.
 # Strings map to title/url/text/select/status; lists to multi_select; bool to checkbox;
@@ -51,6 +48,7 @@ class DatabaseSchema:
     checkbox_columns: list[ColumnInfo]
     all_columns: dict[str, ColumnInfo]
     instructions_column: str | None = None
+    image_column: str | None = None
 
     @property
     def review_columns(self) -> list[ColumnInfo]:
@@ -185,11 +183,13 @@ class NotionRecipesDB:
             all_columns,
             ingredients_column,
         )
+        image_column = self._resolve_image_column(all_columns)
 
         return DatabaseSchema(
             name_column=name_column,
             link_column=link_column,
             ingredients_column=ingredients_column,
+            image_column=image_column,
             instructions_column=instructions_column,
             filter_columns=filter_columns,
             checkbox_columns=checkbox_columns,
@@ -242,6 +242,22 @@ class NotionRecipesDB:
             return None
         return resolved
 
+    def _resolve_image_column(self, all_columns: dict[str, ColumnInfo]) -> str | None:
+        if self._config.recipe_image_column:
+            name = self._config.recipe_image_column
+            column = all_columns.get(name)
+            if column and column.type == "files":
+                return name
+            return None
+        for candidate in ("Cover image", "Cover Image", "Image", "Cover", "Photo"):
+            column = all_columns.get(candidate)
+            if column and column.type == "files":
+                return candidate
+        files_columns = [name for name, col in all_columns.items() if col.type == "files"]
+        if len(files_columns) == 1:
+            return files_columns[0]
+        return None
+
     def nyt_synced_column_name(self) -> str | None:
         """Return the NYT sync checkbox column if it exists in the database."""
         name = self._config.nyt_synced_column or DEFAULT_NYT_SYNCED_COLUMN
@@ -268,6 +284,8 @@ class NotionRecipesDB:
         names: set[str] = {schema.name_column, schema.link_column}
         if schema.ingredients_column:
             names.add(schema.ingredients_column)
+        if schema.image_column:
+            names.add(schema.image_column)
         for col in schema.filter_columns:
             names.add(col.name)
         for col in schema.checkbox_columns:
@@ -285,13 +303,11 @@ class NotionRecipesDB:
         nyt_column = self.nyt_synced_column_name()
         if nyt_column:
             names.add(nyt_column)
-        image_column = recipe_image_files_column_name(self)
-        if image_column:
-            names.add(image_column)
         return sorted(names)
 
     def recipe_image_files_column_name(self) -> str | None:
-        return recipe_image_files_column_name(self)
+        """Browse and legacy callers; same column as ``schema.image_column``."""
+        return self.schema.image_column
 
     def _query_recipe_pages(
         self,
@@ -365,6 +381,47 @@ class NotionRecipesDB:
             },
             properties=properties,
         )
+        return self._page_to_recipe(page)
+
+    def upload_recipe_image_file(
+        self,
+        page_id: str,
+        column_name: str,
+        *,
+        filename: str,
+        data: bytes,
+        content_type: str,
+    ) -> Recipe:
+        """Upload bytes to Notion and set a Files property (single cover image)."""
+        column = self.schema.all_columns.get(column_name)
+        if column is None or column.type != "files":
+            raise ValueError(f"Not a Files column: {column_name}")
+
+        upload = self._client.file_uploads.create(
+            mode="single_part",
+            filename=filename,
+            content_type=content_type,
+        )
+        upload_id = upload["id"]
+        self._client.file_uploads.send(
+            upload_id,
+            file=(filename, data, content_type),
+        )
+        # single_part: send leaves the upload in `uploaded` status — attach via
+        # page update (no separate complete call; see Notion file_uploads API).
+
+        properties = {
+            column_name: {
+                "files": [
+                    {
+                        "type": "file_upload",
+                        "name": filename,
+                        "file_upload": {"id": upload_id},
+                    }
+                ]
+            }
+        }
+        page = self._client.pages.update(page_id=page_id, properties=properties)
         return self._page_to_recipe(page)
 
     def update_recipe(self, page_id: str, field_values: NotionFieldValues) -> Recipe:
@@ -444,7 +501,7 @@ class NotionRecipesDB:
 
         raw_name = _read_property(props.get(schema.name_column))
         name = normalize_recipe_name(str(raw_name)) if raw_name else ""
-        image_column = recipe_image_files_column_name(self)
+        image_column = schema.image_column
         image_url = read_files_property_url(props.get(image_column)) if image_column else None
         return Recipe(
             page_id=page["id"],
@@ -534,5 +591,20 @@ def _read_property(prop: dict[str, Any] | None) -> Any:
     if prop_type == "number":
         return prop.get("number")
     if prop_type == "files":
-        return read_files_property_url(prop)
+        items = prop.get("files") or []
+        names: list[str] = []
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            name = str(item.get("name") or "").strip()
+            if name:
+                names.append(name)
+                continue
+            if item.get("type") == "file":
+                file_meta = item.get("file") or {}
+                if isinstance(file_meta, dict) and file_meta.get("url"):
+                    names.append("file")
+            if item.get("type") == "file_upload":
+                names.append(name or "file")
+        return names or None
     return None

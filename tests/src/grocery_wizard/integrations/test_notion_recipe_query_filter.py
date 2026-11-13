@@ -29,6 +29,7 @@ def _db(*, filter_columns: list[ColumnInfo] | None = None) -> NotionRecipesDB:
             "Selection count": ColumnInfo(name="Selection count", type="number"),
             "Image": ColumnInfo(name="Image", type="files"),
         },
+        image_column="Image",
     )
     config = Config.model_construct(
         notion_api_key="secret",
@@ -36,7 +37,7 @@ def _db(*, filter_columns: list[ColumnInfo] | None = None) -> NotionRecipesDB:
         notion_pantry_database_id="pantry-id",
         notion_recurring_weekly_database_id="recurring-id",
         notion_weekly_meal_plans_database_id="plans-id",
-        recipe_image_files_column="Image",
+        recipe_image_column="Image",
     )
     db = NotionRecipesDB.__new__(NotionRecipesDB)
     db._client = MagicMock()

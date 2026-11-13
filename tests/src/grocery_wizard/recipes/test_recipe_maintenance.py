@@ -9,12 +9,15 @@ from src.grocery_wizard.recipes.recipe_maintenance import (
     _resolve_total_minutes,
     infer_metadata_field_values,
     is_blank_metadata_value,
+    recipe_has_cover_image,
     recipe_manual_ingredients_in_notion,
+    recipe_missing_cover_image,
     recipe_missing_ingredients,
     recipe_missing_metadata,
     recipe_possibly_missing_all_checkboxes,
     recipes_missing_ingredients,
     recipes_missing_metadata,
+    run_image_backfill,
     run_ingredients_backfill,
     run_metadata_backfill,
 )
@@ -231,6 +234,57 @@ def test_resolve_total_minutes_continues_when_scrape_blocked() -> None:
         minutes = _resolve_total_minutes("https://example.com/r", nyt_client=None)
 
     assert minutes is None
+
+
+def test_recipe_missing_cover_image() -> None:
+    schema = _full_schema(filter_columns_only_meal=True)
+    schema = DatabaseSchema(
+        name_column=schema.name_column,
+        link_column=schema.link_column,
+        ingredients_column=schema.ingredients_column,
+        image_column="Cover image",
+        filter_columns=schema.filter_columns,
+        checkbox_columns=schema.checkbox_columns,
+        all_columns={
+            **schema.all_columns,
+            "Cover image": ColumnInfo(name="Cover image", type="files"),
+        },
+    )
+    empty = _recipe(link="https://example.com")
+    with_image = _recipe(link="https://example.com")
+    with_image.properties["Cover image"] = ["recipe-cover.jpg"]
+    assert recipe_missing_cover_image(empty, schema)
+    assert not recipe_missing_cover_image(with_image, schema)
+    assert not recipe_missing_cover_image(_recipe(link=""), schema)
+    assert recipe_has_cover_image(with_image, schema)
+
+
+def test_run_image_backfill_dry_run_counts_success() -> None:
+    schema = DatabaseSchema(
+        name_column="Name",
+        link_column="Link",
+        ingredients_column="Ingredients",
+        image_column="Cover image",
+        filter_columns=[],
+        checkbox_columns=[],
+        all_columns={
+            "Name": ColumnInfo(name="Name", type="title"),
+            "Link": ColumnInfo(name="Link", type="url"),
+            "Ingredients": ColumnInfo(name="Ingredients", type="rich_text"),
+            "Cover image": ColumnInfo(name="Cover image", type="files"),
+        },
+    )
+    db = MagicMock()
+    db.schema = schema
+    candidate = _recipe(link="https://example.com/r")
+    resolved = MagicMock(host="other_web", method="html_meta", image_url="https://cdn/x.jpg")
+    with patch(
+        "src.grocery_wizard.recipes.recipe_maintenance.resolve_recipe_image_url",
+        return_value=resolved,
+    ):
+        summary = run_image_backfill(db, [candidate], dry_run=True)
+    assert summary.succeeded == 1
+    db.upload_recipe_image_file.assert_not_called()
 
 
 def test_run_metadata_backfill_continues_after_scrape_failure() -> None:

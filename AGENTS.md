@@ -121,5 +121,16 @@ After `just setup`, `.cursor/skills/developing-with-streamlit` (UI, symlink into
 - **S vs B:** Follow the **`tidy-first`** skill — structure (**S**) and behavior (**B**) in **separate commits**. Repo-wide structure passes → **`/tidy-project`** (shared command).
 - **Verify before push:** `just check` runs `ruff check`, `ruff format --check`, and `pytest` on `src/` and `tests/`. Equivalent: `uv run ruff check && uv run ruff format --check && uv run pytest`.
 - **CI:** GitHub Actions runs the same checks via `just ci` on every PR.
+
+### Cloud Agents: GitHub CI on PR branches
+
+When this chat **pushes** a branch that has (or will have) a PR:
+
+1. **Before push (when practical):** run **`just ci`** or **`just check`** locally so obvious failures are caught early.
+2. **After push:** use the **subscribe** skill (`~/.cursor/skills-cursor/subscribe/SKILL.md`) — **`cursor-subscriptions-subscribe_github_ci`** on the branch — then end the turn and wait for the result instead of polling in a loop.
+3. **On failure notification:** read failed logs (`gh run view --log-failed`, or **`ci-investigator`** / **`ManagePullRequest` `get_ci_status`**), fix, commit, push, and **re-subscribe** until checks are green or you are blocked and must ask the user.
+4. **On success:** unsubscribe CI waiters you no longer need (see subscribe skill); say CI is green in chat/PR when signing off.
+
+Optional: also subscribe to the PR (`subscribe_github_pr`) when you expect review comments. This is **per chat / per PR**, not a global GitHub setting.
 - **UI regression tests:** Import `APP_PATH`, `UI_ROOT`, `ui_source`, `pantry_page_source` from `tests/src/grocery_wizard/ui/ui_source.py` — do not copy Streamlit path literals into individual tests.
 - **Dedupe constants:** One owning module for repeated paths or regex (e.g. `APP_THEME_STATIC_CSS` in `theme.py`, unicode/qty patterns in `ingredients/_patterns.py`, shared CLI deprecation strings in `cli/` shims).

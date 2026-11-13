@@ -17,6 +17,11 @@ from src.grocery_wizard.integrations.notion import (
 )
 from src.grocery_wizard.recipes.add_recipe import _weeknight_column_name
 from src.grocery_wizard.recipes.classify import classify_recipe
+from src.grocery_wizard.recipes.recipe_image_attach import attach_recipe_cover_image
+from src.grocery_wizard.recipes.recipe_image_resolver import (
+    ImageResolveError,
+    resolve_recipe_image_url,
+)
 from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
     filter_columns_for_recipe_classify,
     is_meal_plan_tracking_column,
@@ -43,6 +48,26 @@ class BackfillSummary:
 
 def recipe_has_link(recipe: Recipe) -> bool:
     return bool((recipe.link or "").strip())
+
+
+def recipe_has_cover_image(recipe: Recipe, schema: DatabaseSchema) -> bool:
+    column = schema.image_column
+    if not column:
+        return False
+    value = recipe.properties.get(column)
+    return bool(isinstance(value, list) and value)
+
+
+def recipe_missing_cover_image(recipe: Recipe, schema: DatabaseSchema) -> bool:
+    if not schema.image_column:
+        return False
+    if not recipe_has_link(recipe):
+        return False
+    return not recipe_has_cover_image(recipe, schema)
+
+
+def recipes_missing_cover_images(recipes: list[Recipe], schema: DatabaseSchema) -> list[Recipe]:
+    return [recipe for recipe in recipes if recipe_missing_cover_image(recipe, schema)]
 
 
 def ingredients_text(recipe: Recipe) -> str:
@@ -397,6 +422,81 @@ def run_metadata_backfill(
         detail = ", ".join(f"{key}={value!r}" for key, value in updates.items())
         if on_progress:
             on_progress(f"Updated metadata: {recipe.name} ({detail})")
+
+    if on_fraction:
+        on_fraction(1.0)
+    return summary
+
+
+def run_image_backfill(
+    db: NotionRecipesDB,
+    candidates: list[Recipe],
+    *,
+    dry_run: bool = False,
+    on_progress: ProgressCallback | None = None,
+    on_fraction: FractionCallback | None = None,
+) -> BackfillSummary:
+    schema = db.schema
+    summary = BackfillSummary(scanned=len(candidates))
+    if not schema.image_column:
+        summary.skipped = len(candidates)
+        if on_progress:
+            on_progress("Skipped: no Files image column configured in Notion.")
+        return summary
+
+    total = len(candidates)
+    for index, recipe in enumerate(candidates, start=1):
+        if on_fraction and total:
+            on_fraction(index / total)
+
+        url = (recipe.link or "").strip()
+        if not url:
+            summary.skipped += 1
+            if on_progress:
+                on_progress(f"Skipped (no link): {recipe.name}")
+            continue
+
+        if recipe_has_cover_image(recipe, schema):
+            summary.skipped += 1
+            if on_progress:
+                on_progress(f"Skipped (already has image): {recipe.name}")
+            continue
+
+        if on_progress:
+            on_progress(f"Resolving cover image: {recipe.name}")
+
+        try:
+            resolved = resolve_recipe_image_url(url)
+        except ImageResolveError as exc:
+            summary.failed += 1
+            if on_progress:
+                on_progress(f"Failed: {recipe.name} — {exc}")
+            continue
+
+        if dry_run:
+            summary.succeeded += 1
+            if on_progress:
+                on_progress(
+                    f"Would upload: {recipe.name} [{resolved.host}/{resolved.method}] "
+                    f"→ {resolved.image_url}"
+                )
+            continue
+
+        try:
+            result = attach_recipe_cover_image(db, recipe.page_id, url, dry_run=False)
+        except Exception as exc:
+            summary.failed += 1
+            if on_progress:
+                on_progress(f"Failed: {recipe.name} — {exc}")
+            continue
+        if result.ok:
+            summary.succeeded += 1
+            if on_progress:
+                on_progress(f"Updated image: {recipe.name} ({resolved.host})")
+        else:
+            summary.failed += 1
+            if on_progress:
+                on_progress(f"Failed: {recipe.name} — {result.error or 'upload failed'}")
 
     if on_fraction:
         on_fraction(1.0)

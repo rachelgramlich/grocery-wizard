@@ -18,9 +18,11 @@ from src.grocery_wizard.recipes.recipe_maintenance import (
     ProgressCallback,
     format_backfill_summary,
     recipes_manual_ingredients_in_notion,
+    recipes_missing_cover_images,
     recipes_missing_ingredients,
     recipes_missing_metadata,
     recipes_possibly_missing_all_checkboxes,
+    run_image_backfill,
     run_ingredients_backfill,
     run_metadata_backfill,
 )
@@ -122,6 +124,7 @@ def render_recipe_maintenance() -> None:
 
     missing_ingredients = recipes_missing_ingredients(recipes, schema)
     missing_metadata = recipes_missing_metadata(recipes, schema)
+    missing_images = recipes_missing_cover_images(recipes, schema)
     manual_ingredients = recipes_manual_ingredients_in_notion(recipes, schema)
     possibly_missing_checkboxes = recipes_possibly_missing_all_checkboxes(recipes, schema)
     checkbox_names = [col.name for col in schema.checkbox_columns]
@@ -191,6 +194,49 @@ def render_recipe_maintenance() -> None:
                 )
 
             _run_backfill_with_progress(label="Metadata backfill", runner=_metadata_runner)
+
+    with st.container(border=True):
+        st.markdown("**Backfill missing cover images**")
+        image_column = schema.image_column
+        if not image_column:
+            st.info(
+                "Add a Notion **Files** column (for example **Cover image**) and optionally set "
+                "**GROCERY_WIZARD_RECIPE_IMAGE_COLUMN** in `.env`."
+            )
+        else:
+            st.caption(
+                f"Recipes with a **Link** but nothing in **{image_column}**. "
+                "Images are downloaded once and stored in Notion (not hotlinked)."
+            )
+            st.write(f"**{len(missing_images)}** recipe(s) missing cover images.")
+            dry_run = st.checkbox(
+                "Dry run (resolve URLs only — no Notion upload)",
+                key="recipe_maint_image_dry_run",
+            )
+            if st.button(
+                "Start cover image backfill",
+                type="primary",
+                key="recipe_maint_images",
+                disabled=not missing_images,
+            ):
+
+                def _image_runner(
+                    *,
+                    on_progress: ProgressCallback | None = None,
+                    on_fraction: FractionCallback | None = None,
+                ) -> BackfillSummary:
+                    return run_image_backfill(
+                        db,
+                        missing_images,
+                        dry_run=dry_run,
+                        on_progress=on_progress,
+                        on_fraction=on_fraction,
+                    )
+
+                _run_backfill_with_progress(
+                    label="Cover image backfill (dry run)" if dry_run else "Cover image backfill",
+                    runner=_image_runner,
+                )
 
     st.markdown("### Manual backfill in Notion")
     st.caption("Open a filtered database view to edit rows yourself.")

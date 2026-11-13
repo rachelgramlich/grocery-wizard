@@ -1,0 +1,93 @@
+[
+  {
+    "case_id": "nyt_dead",
+    "source_type": "NYT (404 recipe)",
+    "page_url": "https://cooking.nytimes.com/recipes/1019049-simple-pasta",
+    "ok": false,
+    "stage": "resolve_image:none",
+    "image_url": null,
+    "local_path": null,
+    "bytes_size": null,
+    "content_type": null,
+    "http_status": 404,
+    "error": "No image URL in HTML"
+  },
+  {
+    "case_id": "nyt_ok",
+    "source_type": "NYT Cooking",
+    "page_url": "https://cooking.nytimes.com/recipes/1026918-crispy-potato-quesadillas",
+    "ok": true,
+    "stage": "download via og/meta",
+    "image_url": "https://static01.nyt.com/images/2025/05/28/multimedia/KF-crispy-potato-quesadillas-vtgj/KF-crispy-potato-quesadillas-vtgj-facebookJumbo.jpg",
+    "local_path": "/agent/repos/grocery-wizard/docs/poc/recipe-images-and-browse/out/nyt_ok.jpg",
+    "bytes_size": 200014,
+    "content_type": "image/jpeg",
+    "http_status": 200,
+    "error": null
+  },
+  {
+    "case_id": "nyt_ok2",
+    "source_type": "NYT Cooking",
+    "page_url": "https://cooking.nytimes.com/recipes/1022255-sesame-salmon-bowls",
+    "ok": true,
+    "stage": "download via og/meta",
+    "image_url": "https://static01.nyt.com/images/2021/06/14/dining/kc-steamed-salmon-bowls/kc-steamed-salmon-bowls-facebookJumbo.jpg",
+    "local_path": "/agent/repos/grocery-wizard/docs/poc/recipe-images-and-browse/out/nyt_ok2.jpg",
+    "bytes_size": 140054,
+    "content_type": "image/jpeg",
+    "http_status": 200,
+    "error": null
+  },
+  {
+    "case_id": "general_bbc",
+    "source_type": "General (BBC Good Food)",
+    "page_url": "https://www.bbcgoodfood.com/recipes/easy-pancakes",
+    "ok": true,
+    "stage": "download via og/meta",
+    "image_url": "https://images.immediate.co.uk/production/volatile/sites/30/2020/08/recipe-image-legacy-id-1273477_8-ad36e3b.jpg?resize=440%2C230",
+    "local_path": "/agent/repos/grocery-wizard/docs/poc/recipe-images-and-browse/out/general_bbc.jpg",
+    "bytes_size": 21269,
+    "content_type": "image/jpeg",
+    "http_status": 200,
+    "error": null
+  },
+  {
+    "case_id": "general_allrecipes",
+    "source_type": "General (Allrecipes, bot block)",
+    "page_url": "https://www.allrecipes.com/recipe/23600/worlds-best-lasagna/",
+    "ok": false,
+    "stage": "resolve_image:none",
+    "image_url": null,
+    "local_path": null,
+    "bytes_size": null,
+    "content_type": null,
+    "http_status": 403,
+    "error": "No image URL in HTML"
+  },
+  {
+    "case_id": "tiktok",
+    "source_type": "TikTok",
+    "page_url": "https://www.tiktok.com/t/ZThyD2XYv/",
+    "ok": true,
+    "stage": "download via tiktok:rehydration",
+    "image_url": "https://p16-common-sign.tiktokcdn-us.com/tos-useast8-p-0068-tx2/o0IBOVQAq3ALeIhFaejC8teoAcGuICvQzHySg2~tplv-tiktokx-origin.image?dr=9636&x-expires=1794762000&x-signature=4ADzKXGfHYuPcPnjAdQgaTjc1%2Fo%3D&t=4d5b0474&ps=13740610&shp=81f88b70&shcp=43f4a2f9&idc=useast8",
+    "local_path": "/agent/repos/grocery-wizard/docs/poc/recipe-images-and-browse/out/tiktok.jpg",
+    "bytes_size": 253443,
+    "content_type": "image/jpeg",
+    "http_status": 200,
+    "error": null
+  },
+  {
+    "case_id": "instagram",
+    "source_type": "Instagram reel",
+    "page_url": "https://www.instagram.com/reel/DZz61Yhx2DC/",
+    "ok": false,
+    "stage": "resolve_image:none",
+    "image_url": null,
+    "local_path": null,
+    "bytes_size": null,
+    "content_type": null,
+    "http_status": 200,
+    "error": "No image URL in HTML (no og:image; TikTok may need rehydration JSON)"
+  }
+]

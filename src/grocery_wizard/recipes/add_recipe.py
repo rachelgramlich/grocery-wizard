@@ -15,6 +15,7 @@ from src.grocery_wizard.integrations.notion import (
 )
 from src.grocery_wizard.lib.prompts import confirm_no_default
 from src.grocery_wizard.recipes.classify import classify_recipe
+from src.grocery_wizard.recipes.recipe_image_attach import attach_recipe_cover_image
 from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
     filter_columns_for_recipe_classify,
     is_meal_plan_tracking_column,
@@ -256,6 +257,9 @@ def add_prefetched_recipes(
             )
 
         recipe = db.create_recipe(reviewed)
+        image_result = attach_recipe_cover_image(db, recipe.page_id, url)
+        if image_result.user_message:
+            print(image_result.user_message)
         created.append(
             PrefetchedCreateResult(
                 page_id=recipe.page_id,
@@ -325,6 +329,9 @@ def add_recipes_from_urls(
             )
 
         recipe = db.create_recipe(reviewed)
+        image_result = attach_recipe_cover_image(db, recipe.page_id, url)
+        if image_result.user_message:
+            print(image_result.user_message)
         created_ids.append(recipe.page_id)
         print(f"Created: {recipe.name}")
 

@@ -1,0 +1,24 @@
+[
+  {
+    "method": "instagram_oembed",
+    "ok": true,
+    "bytes": 75355,
+    "source_url": "https://www.instagram.com/reel/DZz61Yhx2DC/"
+  },
+  {
+    "method": "tiktok_oembed",
+    "ok": false,
+    "status": 400,
+    "body": "{\"message\":\"Something went wrong\",\"code\":400}"
+  },
+  {
+    "method": "seriouseats_og",
+    "ok": false,
+    "status": 403
+  },
+  {
+    "method": "allrecipes_headless_chrome",
+    "ok": false,
+    "error": "chrome timeout 25s"
+  }
+]

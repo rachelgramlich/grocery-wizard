@@ -22,7 +22,7 @@ def test_notion_refresh_controls_render_above_page_picker() -> None:
     """Match established layout: refresh row under title, page picker below it."""
     app = APP_PATH.read_text(encoding="utf-8")
     main_body = app.split("def main() -> None:")[1].split('if __name__ == "__main__"')[0]
-    picker_idx = main_body.index("st.segmented_control(")
+    picker_idx = main_body.index("_render_page_picker(")
     refresh_idx = main_body.index("_render_global_header_controls(")
     assert refresh_idx < picker_idx
 
