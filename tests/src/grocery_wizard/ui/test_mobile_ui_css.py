@@ -25,6 +25,8 @@ _REQUIRED_MOBILE_CSS_FRAGMENTS = (
     "st-key-weekly_step_rail",
     "st-key-plan_week_action_row",
     '[data-testid="stMarkdownContainer"]:has(> p.gw-meal-slot-label)',
+    ".gw-browse-grid",
+    "grid-template-columns: repeat(2, minmax(0, 1fr))",
 )
 
 

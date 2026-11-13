@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Browse recipe tiles — design options</title>
+  <style>
+    :root {
+      --gw-bg: #ffe4f0;
+      --gw-text: #5c1040;
+      --gw-text-muted: #7a2858;
+      --gw-accent: #8b1a5c;
+      --gw-media-bg: #f3d4e6;
+      --gw-border: #e8b8d0;
+      --phone-w: 390px;
+      --desktop-w: 880px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Source Sans Pro", system-ui, sans-serif;
+      background: #f5f0f3;
+      color: var(--gw-text);
+      padding: 24px 16px 48px;
+    }
+    .page-title {
+      text-align: center;
+      max-width: 720px;
+      margin: 0 auto 8px;
+      font-size: 1.5rem;
+    }
+  .lede {
+      text-align: center;
+      max-width: 640px;
+      margin: 0 auto 28px;
+      font-size: 0.95rem;
+      color: var(--gw-text-muted);
+      line-height: 1.45;
+    }
+    .options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 28px 32px;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    .option {
+      flex: 0 1 auto;
+    }
+    .option-head {
+      max-width: var(--phone-w);
+      margin-bottom: 10px;
+    }
+    .option-head h2 {
+      margin: 0 0 4px;
+      font-size: 1.05rem;
+      color: var(--gw-accent);
+    }
+    .option-head .tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--gw-text-muted);
+      margin-bottom: 6px;
+    }
+    .option-head p {
+      margin: 0;
+      font-size: 0.82rem;
+      line-height: 1.35;
+      color: var(--gw-text-muted);
+    }
+    .phone {
+      width: var(--phone-w);
+      border: 2px solid #ccc;
+      border-radius: 28px;
+      background: var(--gw-bg);
+      padding: 12px 10px 16px;
+      position: relative;
+    }
+    .phone-notch {
+      height: 6px;
+      width: 80px;
+      background: #ddd;
+      border-radius: 99px;
+      margin: 0 auto 10px;
+    }
+    .phone-caption {
+      font-size: 0.72rem;
+      color: var(--gw-text-muted);
+      text-align: center;
+      margin: 0 0 8px;
+    }
+    .screen-scroll {
+      max-height: 520px;
+      overflow: hidden;
+    }
+
+    /* --- shared tile atoms --- */
+    .grid { width: 100%; }
+    .tile {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .tile-media {
+      width: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--gw-border);
+      background: var(--gw-media-bg);
+      position: relative;
+    }
+    .tile-media img {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .tile-title {
+      margin: 0;
+      text-align: center;
+      font-size: 0.72rem;
+      line-height: 1.2;
+      font-weight: 600;
+      color: var(--gw-text);
+    }
+    .tile-title.clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .tile-title.clamp-1 {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Option 0: broken / today (matches screenshot symptoms) */
+    .grid--broken {
+      display: block;
+    }
+    .grid--broken .tile {
+      margin-bottom: 14px;
+      background: #fff9fc;
+      border: 1px solid var(--gw-border);
+      border-radius: 14px;
+      overflow: hidden;
+      gap: 0;
+    }
+    .grid--broken .tile-title-top {
+      margin: 0;
+      padding: 10px 8px;
+      text-align: center;
+      font-size: 0.78rem;
+      font-weight: 600;
+      line-height: 1.25;
+      background: #fff;
+      border-bottom: 1px solid var(--gw-border);
+    }
+    .grid--broken .tile-media {
+      aspect-ratio: 1;
+      border: none;
+      border-radius: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .grid--broken .tile-media img {
+      width: 88%;
+      height: auto;
+      object-fit: contain;
+    }
+    .grid--broken .tile-title-bottom {
+      margin: 0;
+      padding: 8px;
+      text-align: center;
+      font-size: 0.75rem;
+      background: #fff9fc;
+      border-top: 1px solid var(--gw-border);
+    }
+
+    /* Option A: 2-col + square cover (recommended) */
+    .grid--a {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .grid--a .tile-media {
+      aspect-ratio: 1 / 1;
+    }
+    .grid--a .tile-media img {
+      object-fit: cover;
+    }
+
+    /* Option B: 2-col + 4:5 (shorter feel) */
+    .grid--b {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .grid--b .tile-media {
+      aspect-ratio: 4 / 5;
+    }
+    .grid--b .tile-media img {
+      object-fit: cover;
+    }
+
+    /* Option C: 2-col + 3:2 landscape */
+    .grid--c {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .grid--c .tile-media {
+      aspect-ratio: 3 / 2;
+    }
+    .grid--c .tile-media img {
+      object-fit: cover;
+    }
+
+    /* Option D: overlay title, no duplicate */
+    .grid--d {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .grid--d .tile-media {
+      aspect-ratio: 1 / 1;
+    }
+    .grid--d .tile-media img {
+      object-fit: cover;
+    }
+    .grid--d .tile-overlay {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 6px 6px 7px;
+      background: rgba(92, 16, 64, 0.78);
+      color: #fff9fc;
+      font-size: 0.65rem;
+      line-height: 1.2;
+      font-weight: 600;
+      text-align: center;
+    }
+    .grid--d .tile-title { display: none; }
+
+    .css-hint {
+      max-width: var(--phone-w);
+      margin-top: 8px;
+      font-size: 0.68rem;
+      font-family: ui-monospace, monospace;
+      color: #666;
+      line-height: 1.35;
+      background: #fff;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+    }
+    .compare-note {
+      max-width: 900px;
+      margin: 32px auto 0;
+      padding: 16px 18px;
+      background: #fff;
+      border: 1px solid var(--gw-border);
+      border-radius: 12px;
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+    .compare-note h3 { margin: 0 0 8px; font-size: 1rem; }
+    .compare-note ul { margin: 8px 0 0; padding-left: 1.2rem; }
+    .compare-note li { margin: 4px 0; }
+
+    .section-label {
+      max-width: 960px;
+      margin: 40px auto 20px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--gw-border);
+      font-size: 1.25rem;
+      color: var(--gw-accent);
+    }
+    .option-head--wide { max-width: var(--desktop-w); }
+    .css-hint--wide { max-width: var(--desktop-w); }
+
+    .desktop-browser {
+      width: var(--desktop-w);
+      border: 1px solid #bbb;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fafafa;
+    }
+    .desktop-browser-bar {
+      height: 36px;
+      background: #e8e8e8;
+      border-bottom: 1px solid #ccc;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 12px;
+    }
+    .desktop-browser-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ccc;
+    }
+    .desktop-browser-url {
+      flex: 1;
+      margin-left: 8px;
+      font-size: 0.72rem;
+      color: #666;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 4px 10px;
+    }
+    .desktop-browser-body {
+      background: var(--gw-bg);
+      padding: 16px 20px 20px;
+    }
+    .desktop-browser-body h3 {
+      margin: 0 0 4px;
+      font-size: 1.1rem;
+    }
+    .desktop-browser-body .fake-caption {
+      margin: 0 0 12px;
+      font-size: 0.8rem;
+      color: var(--gw-text-muted);
+    }
+    .desktop-options {
+      display: flex;
+      flex-direction: column;
+      gap: 36px;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    /* Desktop: current shipped CSS (auto-fill) */
+    .grid--desktop-auto {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+    }
+    .grid--desktop-auto .tile-title {
+      font-size: 0.78rem;
+    }
+
+    /* Desktop broken: same bug as phone but full content width */
+    .grid--broken-desktop {
+      display: block;
+    }
+    .grid--broken-desktop .tile {
+      margin-bottom: 16px;
+      max-width: 100%;
+    }
+
+    .grid--desktop-a .tile-media { aspect-ratio: 1 / 1; }
+    .grid--desktop-b .tile-media { aspect-ratio: 4 / 5; }
+    .grid--desktop-c .tile-media { aspect-ratio: 3 / 2; }
+    .grid--desktop-a .tile-media img,
+    .grid--desktop-b .tile-media img,
+    .grid--desktop-c .tile-media img,
+    .grid--desktop-d .tile-media img { object-fit: cover; }
+    .grid--desktop-d .tile-media { aspect-ratio: 1 / 1; }
+    .grid--desktop-d .tile-title { display: none; }
+  </style>
+</head>
+<body>
+  <h1 class="page-title">Browse recipe tiles — layout options</h1>
+  <p class="lede">
+    Your screenshot looks like <strong>one full-width column</strong> plus a <strong>tall 1:1 box</strong>
+    with the photo <strong>letterboxed</strong> (pink bars). The fixes are mostly CSS on
+    <code>.gw-browse-grid</code> and <code>.gw-browse-tile-media</code> in <code>app_theme.css</code>.
+    On <strong>desktop</strong>, the app already targets a multi-column grid (
+    <code>repeat(auto-fill, minmax(140px, 1fr))</code>) — usually 5–6 tiles per row at ~880px content width.
+  </p>
+
+  <h2 class="section-label">Mobile (~390px)</h2>
+  <div class="options">
+    <section class="option">
+      <p style="margin: 0; font-weight: bold; color: #a00; font-size: 0.85rem; text-align:center; margin-bottom: 4px;">Today (problem)</p>
+      <div class="option-head">
+        <span class="tag">Baseline</span>
+        <h2>1 column, tall square, letterbox</h2>
+        <p>One tile per row. Image uses contain-style spacing. Title may repeat top and bottom depending on how Streamlit wraps the HTML.</p>
+      </div>
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <p class="phone-caption">~390px wide (iPhone)</p>
+        <div class="screen-scroll">
+          <div class="grid grid--broken">
+            <article class="tile">
+              <p class="tile-title-top">Spicy Shrimp With Blistered Cucumbers, Corn and Tomato</p>
+              <div class="tile-media">
+                <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&amp;h=260&amp;fit=crop" alt=""/>
+              </div>
+              <p class="tile-title-bottom">Dumpling Noodle Soup</p>
+            </article>
+            <article class="tile">
+              <p class="tile-title-top">Dumpling Noodle Soup</p>
+              <div class="tile-media">
+                <img src="https://images.unsplash.com/photo-1617093727343-374698b0d646?w=400&amp;h=260&amp;fit=crop" alt=""/>
+              </div>
+              <p class="tile-title-bottom">Dumpling Noodle Soup</p>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="option">
+      <div class="option-head">
+        <span class="tag">Option A — recommended</span>
+        <h2>2 columns + 1:1 + cover</h2>
+        <p>Matches the original Instagram-style spec. Force two columns on phones. One title under the image. Image fills the frame (no pink bars).</p>
+      </div>
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="screen-scroll">
+          <div class="grid grid--a">
+            <article class="tile">
+              <div class="tile-media"><img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=200&amp;h=200&amp;fit=crop" alt=""/></div>
+              <p class="tile-title clamp-2">Spicy Shrimp With Blistered Cucumbers</p>
+            </article>
+            <article class="tile">
+              <div class="tile-media"><img src="https://images.unsplash.com/photo-1617093727343-374698b0d646?w=200&amp;h=200&amp;fit=crop" alt=""/></div>
+              <p class="tile-title clamp-2">Dumpling Noodle Soup</p>
+            </article>
+            <article class="tile">
+              <div class="tile-media"><img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&amp;h=200&amp;fit=crop" alt=""/></div>
+              <p class="tile-title clamp-2">Sesame Salmon Bowls</p>
+            </article>
+            <article class="tile">
+              <div class="tile-media"><img src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=200&amp;h=200&amp;fit=crop" alt=""/></div>
+              <p class="tile-title clamp-2">Chickpea Salad</p>
+            </article>
+          </div>
+        </div>
+      </div>
+      <pre class="css-hint">@media (max-width: 768px) {
+  .gw-browse-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+}
+.gw-browse-tile-img { object-fit: cover; }</pre>
+    </section>
+
+    <section class="option">
+      <div class="option-head">
+        <span class="tag">Option B</span>
+        <h2>2 columns + 4:5 ratio</h2>
+        <p>Slightly shorter tiles than squares. Still crops with cover. Good if square feels too tall in 2-col.</p>
+      </div>
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="screen-scroll">
+          <div class="grid grid--b">
+            <article class="tile">
+              <div class="tile-media"><img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=200&amp;h=250&amp;fit=crop" alt=""/></div>
+              <p class="tile-title clamp-1">Spicy Shrimp…</p>
+            </article>
+            <article class="tile">
+              <div class="tile-media"><img src="https://images.unsplash.com/photo-1617093727343-374698b0d646?w=200&amp;h=250&amp;fit=crop" alt=""/></div>
+              <p class="tile-title clamp-1">Dumpling Noodle Soup</p>
+            </article>
+            <article class="tile">
+              <div class="tile-media"><img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&amp;h=250&amp;fit=crop" alt=""/></div>
+              <p class="tile-title clamp-1">Sesame Salmon</p>
+            </article>
+            <article class="tile">
+              <div class="tile-media"><img src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=200&amp;h=250&amp;fit=crop" alt=""/></div>
+              <p class="tile-title clamp-1">Chickpea Salad</p>
+            </article>
+          </div>
+        </div>
+      </div>
+      <pre class="css-hint">.gw-browse-tile-media { aspect-ratio: 4 / 5; }</pre>
+    </section>
+
+    <section class="option">
+      <div class="option-head">
+        <span class="tag">Option C</span>
+        <h2>2 columns + 3:2 landscape</h2>
+        <p>Shortest row height. Fits wide recipe photos with less crop. More “thumbnail strip” than Instagram square.</p>
+      </div>
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="screen-scroll">
+          <div class="grid grid--c">
+            <article class="tile">
+              <div class="tile-media"><img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=300&amp;h=200&amp;fit=crop" alt=""/></div>
+              <p class="tile-title clamp-2">Spicy Shrimp</p>
+            </article>
+            <article class="tile">
+              <div class="tile-media"><img src="https://images.unsplash.com/photo-1617093727343-374698b0d646?w=300&amp;h=200&amp;fit=crop" alt=""/></div>
+              <p class="tile-title clamp-2">Dumpling Soup</p>
+            </article>
+            <article class="tile">
+              <div class="tile-media"><img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&amp;h=200&amp;fit=crop" alt=""/></div>
+              <p class="tile-title clamp-2">Sesame Salmon</p>
+            </article>
+            <article class="tile">
+              <div class="tile-media"><img src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=300&amp;h=200&amp;fit=crop" alt=""/></div>
+              <p class="tile-title clamp-2">Chickpea Salad</p>
+            </article>
+          </div>
+        </div>
+      </div>
+      <pre class="css-hint">.gw-browse-tile-media { aspect-ratio: 3 / 2; }</pre>
+    </section>
+
+    <section class="option">
+      <div class="option-head">
+        <span class="tag">Option D</span>
+        <h2>2 columns + title on image</h2>
+        <p>No subtitle under the tile — saves vertical space. One line on a solid bar at the bottom of the photo.</p>
+      </div>
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="screen-scroll">
+          <div class="grid grid--d">
+            <article class="tile">
+              <div class="tile-media">
+                <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=200&amp;h=200&amp;fit=crop" alt=""/>
+                <span class="tile-overlay">Spicy Shrimp…</span>
+              </div>
+              <p class="tile-title">hidden</p>
+            </article>
+            <article class="tile">
+              <div class="tile-media">
+                <img src="https://images.unsplash.com/photo-1617093727343-374698b0d646?w=200&amp;h=200&amp;fit=crop" alt=""/>
+                <span class="tile-overlay">Dumpling Noodle Soup</span>
+              </div>
+            </article>
+            <article class="tile">
+              <div class="tile-media">
+                <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&amp;h=200&amp;fit=crop" alt=""/>
+                <span class="tile-overlay">Sesame Salmon</span>
+              </div>
+            </article>
+            <article class="tile">
+              <div class="tile-media">
+                <img src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=200&amp;h=200&amp;fit=crop" alt=""/>
+                <span class="tile-overlay">Chickpea Salad</span>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+      <pre class="css-hint">HTML: move title into .tile-media overlay; drop &lt;p class="gw-browse-tile-title"&gt;</pre>
+    </section>
+  </div>
+
+  <h2 class="section-label">Desktop (~880px content — laptop browser)</h2>
+  <div class="desktop-options">
+
+    <section class="option">
+      <div class="option-head option-head--wide">
+        <span class="tag">Baseline — bug on wide screen</span>
+        <h2>1 column, giant tiles (same CSS failure)</h2>
+        <p>If the grid collapses to one column, each square is as wide as the page — very tall and wasteful on desktop too.</p>
+      </div>
+      <div class="desktop-browser">
+        <div class="desktop-browser-bar" aria-hidden="true">
+          <span class="desktop-browser-dot"></span>
+          <span class="desktop-browser-dot"></span>
+          <span class="desktop-browser-dot"></span>
+          <span class="desktop-browser-url">grocery wizard — Browse recipes</span>
+        </div>
+        <div class="desktop-browser-body">
+          <h3>Browse recipes</h3>
+          <p class="fake-caption">Showing 24 of 86 recipes</p>
+          <div class="grid grid--broken grid--broken-desktop">
+            <article class="tile">
+              <p class="tile-title-top">Spicy Shrimp With Blistered Cucumbers, Corn and Tomato</p>
+              <div class="tile-media">
+                <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&amp;h=400&amp;fit=crop" alt=""/>
+              </div>
+              <p class="tile-title-bottom">Dumpling Noodle Soup</p>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="option">
+      <div class="option-head option-head--wide">
+        <span class="tag">Baseline — CSS working today</span>
+        <h2>auto-fill · minmax(140px) · 1:1 · cover</h2>
+        <p>What <code>app_theme.css</code> already specifies for desktop. Many small squares; tile height stays modest because each cell is only ~140–160px wide.</p>
+      </div>
+      <div class="desktop-browser">
+        <div class="desktop-browser-bar" aria-hidden="true">
+          <span class="desktop-browser-dot"></span>
+          <span class="desktop-browser-dot"></span>
+          <span class="desktop-browser-dot"></span>
+          <span class="desktop-browser-url">grocery wizard — Browse recipes</span>
+        </div>
+        <div class="desktop-browser-body">
+          <h3>Browse recipes</h3>
+          <p class="fake-caption">Showing 24 of 86 recipes</p>
+          <div class="grid grid--desktop-auto grid--desktop-a">
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=160&amp;h=160&amp;fit=crop" alt=""/></div><p class="tile-title clamp-2">Spicy Shrimp</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1617093727343-374698b0d646?w=160&amp;h=160&amp;fit=crop" alt=""/></div><p class="tile-title clamp-2">Dumpling Soup</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=160&amp;h=160&amp;fit=crop" alt=""/></div><p class="tile-title clamp-2">Sesame Salmon</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=160&amp;h=160&amp;fit=crop" alt=""/></div><p class="tile-title clamp-2">Chickpea Salad</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=160&amp;h=160&amp;fit=crop" alt=""/></div><p class="tile-title clamp-2">One-Pot Pasta</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1565299585323-38e4c4d5f5a1?w=160&amp;h=160&amp;fit=crop" alt=""/></div><p class="tile-title clamp-2">Fish Tacos</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1547592166-23ac45744acd?w=160&amp;h=160&amp;fit=crop" alt=""/></div><p class="tile-title clamp-2">Tomato Soup</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1600891964092-4316c288032e?w=160&amp;h=160&amp;fit=crop" alt=""/></div><p class="tile-title clamp-2">Skillet Steak</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1603133872878-684f208fb84a?w=160&amp;h=160&amp;fit=crop" alt=""/></div><p class="tile-title clamp-2">Fried Rice</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=160&amp;h=160&amp;fit=crop" alt=""/></div><p class="tile-title clamp-2">Brunch Plate</p></article>
+          </div>
+        </div>
+      </div>
+      <pre class="css-hint css-hint--wide">/* unchanged on desktop */ grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));</pre>
+    </section>
+
+    <section class="option">
+      <div class="option-head option-head--wide">
+        <span class="tag">Option A — desktop</span>
+        <h2>Same as today + mobile fix (2 col below 768px)</h2>
+        <p>Desktop layout stays auto-fill. Mobile-only override for two columns.</p>
+      </div>
+      <div class="desktop-browser">
+        <div class="desktop-browser-bar" aria-hidden="true">
+          <span class="desktop-browser-dot"></span>
+          <span class="desktop-browser-dot"></span>
+          <span class="desktop-browser-dot"></span>
+          <span class="desktop-browser-url">Browse recipes</span>
+        </div>
+        <div class="desktop-browser-body">
+          <p class="fake-caption">Option A — 1:1 squares</p>
+          <div class="grid grid--desktop-auto grid--desktop-a">
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=160&amp;h=160&amp;fit=crop" alt=""/></div><p class="tile-title clamp-2">Spicy Shrimp</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1617093727343-374698b0d646?w=160&amp;h=160&amp;fit=crop" alt=""/></div><p class="tile-title clamp-2">Dumpling Soup</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=160&amp;h=160&amp;fit=crop" alt=""/></div><p class="tile-title clamp-2">Sesame Salmon</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=160&amp;h=160&amp;fit=crop" alt=""/></div><p class="tile-title clamp-2">Chickpea Salad</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=160&amp;h=160&amp;fit=crop" alt=""/></div><p class="tile-title clamp-2">One-Pot Pasta</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1547592166-23ac45744acd?w=160&amp;h=160&amp;fit=crop" alt=""/></div><p class="tile-title clamp-2">Tomato Soup</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1600891964092-4316c288032e?w=160&amp;h=160&amp;fit=crop" alt=""/></div><p class="tile-title clamp-2">Skillet Steak</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=160&amp;h=160&amp;fit=crop" alt=""/></div><p class="tile-title clamp-2">Brunch Plate</p></article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="option">
+      <div class="option-head option-head--wide">
+        <span class="tag">Option B — desktop</span>
+        <h2>4:5 tiles in auto-fill grid</h2>
+        <p>Slightly taller cells than squares at the same column width — about 6 columns still fit at 880px.</p>
+      </div>
+      <div class="desktop-browser">
+        <div class="desktop-browser-bar" aria-hidden="true">
+          <span class="desktop-browser-dot"></span>
+          <span class="desktop-browser-dot"></span>
+          <span class="desktop-browser-dot"></span>
+          <span class="desktop-browser-url">Browse recipes</span>
+        </div>
+        <div class="desktop-browser-body">
+          <p class="fake-caption">Option B — 4:5</p>
+          <div class="grid grid--desktop-auto grid--desktop-b">
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=160&amp;h=200&amp;fit=crop" alt=""/></div><p class="tile-title clamp-1">Spicy Shrimp</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1617093727343-374698b0d646?w=160&amp;h=200&amp;fit=crop" alt=""/></div><p class="tile-title clamp-1">Dumpling Soup</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=160&amp;h=200&amp;fit=crop" alt=""/></div><p class="tile-title clamp-1">Sesame Salmon</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=160&amp;h=200&amp;fit=crop" alt=""/></div><p class="tile-title clamp-1">Chickpea Salad</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=160&amp;h=200&amp;fit=crop" alt=""/></div><p class="tile-title clamp-1">One-Pot Pasta</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1547592166-23ac45744acd?w=160&amp;h=200&amp;fit=crop" alt=""/></div><p class="tile-title clamp-1">Tomato Soup</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1600891964092-4316c288032e?w=160&amp;h=200&amp;fit=crop" alt=""/></div><p class="tile-title clamp-1">Skillet Steak</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=160&amp;h=200&amp;fit=crop" alt=""/></div><p class="tile-title clamp-1">Brunch Plate</p></article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="option">
+      <div class="option-head option-head--wide">
+        <span class="tag">Option C — desktop</span>
+        <h2>3:2 landscape tiles</h2>
+        <p>Shorter rows — fits more recipe names above the fold; ~6–7 columns.</p>
+      </div>
+      <div class="desktop-browser">
+        <div class="desktop-browser-bar" aria-hidden="true">
+          <span class="desktop-browser-dot"></span>
+          <span class="desktop-browser-dot"></span>
+          <span class="desktop-browser-dot"></span>
+          <span class="desktop-browser-url">Browse recipes</span>
+        </div>
+        <div class="desktop-browser-body">
+          <p class="fake-caption">Option C — 3:2</p>
+          <div class="grid grid--desktop-auto grid--desktop-c">
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=240&amp;h=160&amp;fit=crop" alt=""/></div><p class="tile-title clamp-2">Spicy Shrimp</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1617093727343-374698b0d646?w=240&amp;h=160&amp;fit=crop" alt=""/></div><p class="tile-title clamp-2">Dumpling Soup</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=240&amp;h=160&amp;fit=crop" alt=""/></div><p class="tile-title clamp-2">Sesame Salmon</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=240&amp;h=160&amp;fit=crop" alt=""/></div><p class="tile-title clamp-2">Chickpea Salad</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=240&amp;h=160&amp;fit=crop" alt=""/></div><p class="tile-title clamp-2">One-Pot Pasta</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1547592166-23ac45744acd?w=240&amp;h=160&amp;fit=crop" alt=""/></div><p class="tile-title clamp-2">Tomato Soup</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1600891964092-4316c288032e?w=240&amp;h=160&amp;fit=crop" alt=""/></div><p class="tile-title clamp-2">Skillet Steak</p></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=240&amp;h=160&amp;fit=crop" alt=""/></div><p class="tile-title clamp-2">Brunch Plate</p></article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="option">
+      <div class="option-head option-head--wide">
+        <span class="tag">Option D — desktop</span>
+        <h2>Title overlay — denser grid</h2>
+        <p>No caption row under each thumb; names sit on the image. Same column count as A.</p>
+      </div>
+      <div class="desktop-browser">
+        <div class="desktop-browser-bar" aria-hidden="true">
+          <span class="desktop-browser-dot"></span>
+          <span class="desktop-browser-dot"></span>
+          <span class="desktop-browser-dot"></span>
+          <span class="desktop-browser-url">Browse recipes</span>
+        </div>
+        <div class="desktop-browser-body">
+          <p class="fake-caption">Option D — overlay</p>
+          <div class="grid grid--desktop-auto grid--desktop-d">
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=160&amp;h=160&amp;fit=crop" alt=""/><span class="tile-overlay">Spicy Shrimp</span></div></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1617093727343-374698b0d646?w=160&amp;h=160&amp;fit=crop" alt=""/><span class="tile-overlay">Dumpling Soup</span></div></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=160&amp;h=160&amp;fit=crop" alt=""/><span class="tile-overlay">Sesame Salmon</span></div></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=160&amp;h=160&amp;fit=crop" alt=""/><span class="tile-overlay">Chickpea Salad</span></div></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=160&amp;h=160&amp;fit=crop" alt=""/><span class="tile-overlay">One-Pot Pasta</span></div></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1547592166-23ac45744acd?w=160&amp;h=160&amp;fit=crop" alt=""/><span class="tile-overlay">Tomato Soup</span></div></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1600891964092-4316c288032e?w=160&amp;h=160&amp;fit=crop" alt=""/><span class="tile-overlay">Skillet Steak</span></div></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=160&amp;h=160&amp;fit=crop" alt=""/><span class="tile-overlay">Brunch Plate</span></div></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1603133872878-684f208fb84a?w=160&amp;h=160&amp;fit=crop" alt=""/><span class="tile-overlay">Fried Rice</span></div></article>
+            <article class="tile"><div class="tile-media"><img src="https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=160&amp;h=160&amp;fit=crop" alt=""/><span class="tile-overlay">Berry Pancakes</span></div></article>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="compare-note">
+    <h3>Quick pick guide</h3>
+    <ul>
+      <li><strong>Want the spec in docs/issues/browse-recipes.md?</strong> Use <strong>Option A</strong> (2×2 grid + square + cover).</li>
+      <li><strong>Still too tall on phone?</strong> Try <strong>B</strong> (4:5) or <strong>C</strong> (3:2).</li>
+      <li><strong>Want max recipes above the fold?</strong> <strong>D</strong> drops the caption row.</li>
+      <li><strong>Letterboxing</strong> usually means <code>object-fit</code> is not <code>cover</code> or the image is not given <code>height: 100%</code> inside the aspect-ratio box — fix that even if you keep 1 column.</li>
+      <li><strong>Desktop:</strong> Option A keeps today’s <code>auto-fill</code> grid; only add a <code>@media (max-width: 768px)</code> rule for 2 columns. Options B/C/D change tile height on all screen sizes.</li>
+    </ul>
+  </div>
+</body>
+</html>

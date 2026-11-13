@@ -1195,3 +1195,15 @@
             color: var(--gw-text-muted);
             font-size: 0.9rem;
         }
+
+        @media (max-width: 768px) {
+            /* Browse grid (#491): two compact columns on phone (option A mock). */
+            .gw-browse-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 0.5rem;
+            }
+
+            .gw-browse-tile-title {
+                font-size: 0.75rem;
+            }
+        }
