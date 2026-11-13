@@ -305,10 +305,6 @@ class NotionRecipesDB:
             names.add(nyt_column)
         return sorted(names)
 
-    def recipe_image_files_column_name(self) -> str | None:
-        """Browse and legacy callers; same column as ``schema.image_column``."""
-        return self.schema.image_column
-
     def _query_recipe_pages(
         self,
         *,
