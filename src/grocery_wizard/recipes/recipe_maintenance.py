@@ -22,6 +22,7 @@ from src.grocery_wizard.recipes.recipe_image_resolver import (
     ImageResolveError,
     resolve_recipe_image_url,
 )
+from src.grocery_wizard.recipes.recipe_images import recipe_has_cover_image
 from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
     filter_columns_for_recipe_classify,
     is_meal_plan_tracking_column,
@@ -48,14 +49,6 @@ class BackfillSummary:
 
 def recipe_has_link(recipe: Recipe) -> bool:
     return bool((recipe.link or "").strip())
-
-
-def recipe_has_cover_image(recipe: Recipe, schema: DatabaseSchema) -> bool:
-    column = schema.image_column
-    if not column:
-        return False
-    value = recipe.properties.get(column)
-    return bool(isinstance(value, list) and value)
 
 
 def recipe_missing_cover_image(recipe: Recipe, schema: DatabaseSchema) -> bool:

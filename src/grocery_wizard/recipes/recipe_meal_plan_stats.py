@@ -108,6 +108,12 @@ def meal_plan_status(recipe: Recipe, *, status_column: str | None) -> str:
     return str(raw)
 
 
+def plan_selection_count(recipe: Recipe, *, selection_column: str | None) -> int:
+    if not selection_column:
+        return 0
+    return _selection_count_value(recipe, selection_column)
+
+
 def suggestion_rejection_count(recipe: Recipe, *, rejections_column: str | None) -> int:
     if not rejections_column:
         return 0

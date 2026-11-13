@@ -25,6 +25,8 @@ _UI_MODULE_PATHS = (
     "views/add_recipe.py",
     "views/pantry_recurring.py",
     "views/recipe_maintenance.py",
+    "views/browse_recipes.py",
+    "browse_logic.py",
     "grocery_helpers.py",
     "grocery_flow.py",
     "meal_plan_filters.py",
@@ -65,10 +67,16 @@ def apptest_start_app(*, timeout: int = 60) -> AppTest:
     return at
 
 
+def apptest_page_picker(at):
+    from src.grocery_wizard.ui.ids import CONTROL_GLOBAL_PAGE_PICKER, control_streamlit_key
+
+    key = control_streamlit_key(CONTROL_GLOBAL_PAGE_PICKER)
+    return next(sc for sc in at.segmented_control if sc.key == key)
+
+
 def apptest_open_page(at, page_label: str, *, timeout: int = 60) -> None:
-    """Switch primary pages via the global segmented control."""
-    assert at.segmented_control, "Page segmented control missing"
-    at.segmented_control[0].set_value(page_label).run(timeout=timeout)
+    """Switch pages via the top segmented page picker."""
+    apptest_page_picker(at).set_value(page_label).run(timeout=timeout)
 
 
 def apptest_assert_no_exception(at, *, context: str = "AppTest run") -> None:

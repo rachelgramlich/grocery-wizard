@@ -87,7 +87,7 @@ def test_feedback_control_placed_before_page_picker() -> None:
     app = APP_PATH.read_text(encoding="utf-8")
     main_body = app.split("def main() -> None:")[1].split('if __name__ == "__main__"')[0]
     header_idx = main_body.index("_render_global_header_controls")
-    picker_idx = main_body.index("st.segmented_control(")
+    picker_idx = main_body.index("_render_page_picker(")
     assert header_idx < picker_idx
 
     feedback_source = (UI_ROOT / "feedback.py").read_text(encoding="utf-8")

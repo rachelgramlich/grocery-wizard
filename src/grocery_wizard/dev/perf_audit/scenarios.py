@@ -14,7 +14,11 @@ from streamlit.testing.v1 import AppTest
 
 from src.grocery_wizard.dev.perf_audit import flows
 from src.grocery_wizard.dev.perf_audit.flows import AuditContext, ScenarioSkipError
-from src.grocery_wizard.ui.ids import CONTROL_GLOBAL_REFRESH, control_streamlit_key
+from src.grocery_wizard.ui.ids import (
+    CONTROL_BROWSE_APPLY,
+    CONTROL_GLOBAL_REFRESH,
+    control_streamlit_key,
+)
 from src.grocery_wizard.ui.views.weekly_plan.state import PLAN_PREBUILD_MANUAL_POPOVER_KEY
 
 Prepare = Callable[[AuditContext], AppTest]
@@ -263,6 +267,17 @@ def _recurring_remove_act(ctx: AuditContext, at: AppTest) -> AppTest:
     return flows.click(ctx, at, label="Remove selected")
 
 
+# --- browse --------------------------------------------------------------------------
+
+
+def _browse_prepare(ctx: AuditContext) -> AppTest:
+    return flows.open_page(ctx, "browse")
+
+
+def _browse_apply_act(ctx: AuditContext, at: AppTest) -> AppTest:
+    return flows.click(ctx, at, key=control_streamlit_key(CONTROL_BROWSE_APPLY))
+
+
 # --- maintenance ---------------------------------------------------------------------
 
 
@@ -322,7 +337,16 @@ def build_scenarios() -> list[Scenario]:
         _page_open("weekly"),
         _page_open("add"),
         _page_open("pantry"),
+        _page_open("browse"),
         _page_open("maintenance"),
+        Scenario(
+            "browse.filters.apply",
+            "browse",
+            "Apply browse filters",
+            _browse_prepare,
+            _browse_apply_act,
+            covers=(control_streamlit_key(CONTROL_BROWSE_APPLY),),
+        ),
         Scenario(
             "global.feedback.submit",
             "global",

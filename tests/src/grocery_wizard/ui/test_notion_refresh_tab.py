@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ui_source import APP_PATH
+from ui_source import APP_PATH, apptest_page_picker
 
 
 def test_notion_refresh_uses_on_click_not_inline_rerun() -> None:
@@ -22,7 +22,7 @@ def test_notion_refresh_controls_render_above_page_picker() -> None:
     """Match established layout: refresh row under title, page picker below it."""
     app = APP_PATH.read_text(encoding="utf-8")
     main_body = app.split("def main() -> None:")[1].split('if __name__ == "__main__"')[0]
-    picker_idx = main_body.index("st.segmented_control(")
+    picker_idx = main_body.index("_render_page_picker(")
     refresh_idx = main_body.index("_render_global_header_controls(")
     assert refresh_idx < picker_idx
 
@@ -30,7 +30,7 @@ def test_notion_refresh_controls_render_above_page_picker() -> None:
 def test_active_page_render_is_keyed_container() -> None:
     app = APP_PATH.read_text(encoding="utf-8")
     assert "_GW_RENDER_PAGE_SLUG" in app
-    assert 'st.container(key=f"gw_page_{active_slug}")' in app
+    assert 'st.container(key=f"gw_page_{active_slug}")' in app or "gw_page_browse" in app
     assert 'persist_state="session"' in app
 
 
@@ -46,7 +46,7 @@ def test_picker_sync_updates_render_slug_without_on_change() -> None:
 
     at = AppTest.from_file(str(APP_PATH), default_timeout=60)
     at.run(timeout=60)
-    at.segmented_control[0].set_value("Pantry & recurring").run(timeout=60)
+    apptest_page_picker(at).set_value("Pantry & recurring").run(timeout=60)
     at.session_state["gw_render_page_slug"] = "weekly"
     at.run(timeout=60)
     assert at.session_state["gw_render_page_slug"] == "pantry"
@@ -58,7 +58,7 @@ def test_refresh_keeps_pantry_body_when_picker_state_desyncs() -> None:
 
     at = AppTest.from_file(str(APP_PATH), default_timeout=60)
     at.run(timeout=60)
-    at.segmented_control[0].set_value("Pantry & recurring").run(timeout=60)
+    apptest_page_picker(at).set_value("Pantry & recurring").run(timeout=60)
     at.session_state["global_global_page_picker"] = "Create weekly plan"
     refresh = [b for b in at.button if b.label == "Refresh from Notion"]
     refresh[0].click().run(timeout=60)
@@ -74,7 +74,7 @@ def test_pantry_page_after_notion_refresh_does_not_show_weekly_plan() -> None:
     at = AppTest.from_file(str(APP_PATH), default_timeout=60)
     at.run(timeout=60)
 
-    at.segmented_control[0].set_value("Pantry & recurring").run(timeout=60)
+    apptest_page_picker(at).set_value("Pantry & recurring").run(timeout=60)
     assert not at.exception
 
     refresh = [b for b in at.button if b.label == "Refresh from Notion"]

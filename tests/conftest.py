@@ -44,7 +44,8 @@ def _notion_test_doubles(monkeypatch: pytest.MonkeyPatch) -> None:
     _recipe_store.clear()
     import src.grocery_wizard.shopping.pantry as pantry_mod
     import src.grocery_wizard.shopping.recurring_weekly_items as recurring_mod
-    from src.grocery_wizard.integrations.notion import Recipe
+    from src.grocery_wizard.integrations.notion import ColumnInfo, Recipe
+    from src.grocery_wizard.recipes.weeknight import DEFAULT_WEEKNIGHT_COLUMN
 
     def load_pantry(path: Path | None = None) -> set[str]:
         if path is not None:
@@ -66,14 +67,23 @@ def _notion_test_doubles(monkeypatch: pytest.MonkeyPatch) -> None:
     )
 
     fake_db = MagicMock()
-    fake_db.schema.all_columns = {}
+    fake_db.schema.all_columns = {
+        "Meal": ColumnInfo(name="Meal", type="select", options=["Dinner", "Lunch"]),
+        DEFAULT_WEEKNIGHT_COLUMN: ColumnInfo(
+            name=DEFAULT_WEEKNIGHT_COLUMN,
+            type="checkbox",
+            options=[],
+        ),
+    }
+    fake_db.schema.filter_columns = [fake_db.schema.all_columns["Meal"]]
+    fake_db.schema.checkbox_columns = [fake_db.schema.all_columns[DEFAULT_WEEKNIGHT_COLUMN]]
     fake_db.query_recipes.return_value = [
         Recipe(
             page_id="pytest-recipe-1",
             name="Test Soup",
             link=None,
             ingredients="1 cup flour",
-            properties={},
+            properties={"Meal": "Dinner", DEFAULT_WEEKNIGHT_COLUMN: True},
         ),
     ]
 
@@ -89,6 +99,7 @@ def _notion_test_doubles(monkeypatch: pytest.MonkeyPatch) -> None:
         "src.grocery_wizard.ui.views.weekly_plan.plan_entry",
         "src.grocery_wizard.ui.views.weekly_plan.grocery_list_ui",
         "src.grocery_wizard.ui.views.weekly_plan.state",
+        "src.grocery_wizard.ui.views.browse_recipes",
     )
     for module_path in get_db_targets:
         monkeypatch.setattr(f"{module_path}.get_db", _fake_get_db, raising=False)

@@ -20,6 +20,7 @@ Vocabulary for issues, feedback, tests, and agents.
 |------|-------------------------|
 | `global` | *(not in picker)* |
 | `weekly` | Create weekly plan |
+| `browse` | Browse recipes |
 | `add` | Add Recipe |
 | `pantry` | Pantry & recurring |
 | `maintenance` | Recipe maintenance |
@@ -30,7 +31,7 @@ Constants: `src/grocery_wizard/ui/ids.py`, labels: `src/grocery_wizard/ui/views/
 
 | ID | UI |
 |----|-----|
-| `global.global.page_picker` | Page segmented control |
+| `global.global.page_picker` | Top pages segmented control (includes **Browse recipes**) |
 | `global.global.refresh` | Refresh from Notion (centered under title, above page picker) |
 | `global.global.feedback` | Send feedback popover (centered under title, peer to refresh) |
 | `global.global.loading` | Global loading banner |
@@ -70,6 +71,17 @@ Rail steps (user-facing, not numbered): **Get started** → **Plan meals** → *
 |----------|-----|
 | `pantry.recurring` | Recurring weekly items |
 | `pantry.staples` | Pantry |
+
+### `browse`
+
+| Block / control ID | UI |
+|--------------------|-----|
+| `browse.filters` | Meal-plan filter controls on page |
+| `browse.filters.has_image` | Has image (grid can show a photo URL) |
+| `browse.apply` | Apply filters |
+| `browse.reset` | Reset (clears all filters) |
+| `browse.grid` | Recipe image grid |
+| `browse.load_more` | Load more (+24) |
 
 ### `maintenance`
 

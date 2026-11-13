@@ -12,7 +12,7 @@ Add a new top-level Streamlit page so users can visually browse the recipe libra
 - **User-facing tab label:** **Browse recipes**
 - **Layout:** Responsive, Instagram-like **square** grid; recipe **name** as subtitle; **`object-fit: cover`** (no squashed tiles).
 - **Filters:** Same filter set as meal planning (`render_meal_plan_filters` / `MealPlanFilters` / Notion schema filter + checkbox columns + ingredient include/exclude). Filters are **on the page** (not in a popover or dropdown-only pattern). Include an **Apply** button; changing widgets does not refresh the grid until Apply.
-- **Has image (browse-only):** Checkbox — **checked** = only recipes with the Notion **Files** image column populated; **unchecked** = also include recipes without an image (placeholder tiles). **Default checked** on first session visit.
+- **Has image (browse-only):** Checkbox — **checked** = only recipes the grid can show a photo for (displayable URL); **unchecked** = also include placeholder tiles and Notion-only attachments. **Default checked** on first session visit.
 - **Defaults (first visit in a session):** `Meal = Dinner`, `Dinner: Weeknight Friendly = true`, and **Has image checked** (same meal defaults as `default_filters()` plus this browse filter).
 - **Reset:** Clears **all** filters including defaults (empty filter state — not the dinner/weeknight defaults).
 - **Session persistence:** Draft filter widget state and last-**applied** filter state live in `st.session_state` for the current session only (no cross-session persistence).

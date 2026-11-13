@@ -34,6 +34,7 @@ from src.grocery_wizard.ui.ids import (
     CONTROL_GLOBAL_PAGE_PICKER,
     CONTROL_GLOBAL_REFRESH,
     PAGE_SLUG_ADD,
+    PAGE_SLUG_BROWSE,
     PAGE_SLUG_MAINTENANCE,
     PAGE_SLUG_PANTRY,
     PAGE_SLUG_WEEKLY,
@@ -49,6 +50,7 @@ from src.grocery_wizard.ui.views import (
     page_slug_for_label,
 )
 from src.grocery_wizard.ui.views.add_recipe import render_add_recipe
+from src.grocery_wizard.ui.views.browse_recipes import render_browse_recipes
 from src.grocery_wizard.ui.views.pantry_recurring import render_pantry_and_recurring
 from src.grocery_wizard.ui.views.recipe_maintenance import render_recipe_maintenance
 from src.grocery_wizard.ui.views.weekly_plan import render_create_weekly_plan
@@ -72,9 +74,7 @@ def _init_page_navigation_state() -> None:
     if _PAGE_PICKER_SESSION_KEY not in st.session_state:
         st.session_state[_PAGE_PICKER_SESSION_KEY] = PAGE_LABEL_WEEKLY
     if _GW_RENDER_PAGE_SLUG not in st.session_state:
-        st.session_state[_GW_RENDER_PAGE_SLUG] = page_slug_for_label(
-            st.session_state[_PAGE_PICKER_SESSION_KEY]
-        )
+        st.session_state[_GW_RENDER_PAGE_SLUG] = PAGE_SLUG_WEEKLY
 
 
 def _on_active_page_change() -> None:
@@ -133,23 +133,7 @@ def _render_global_header_controls(*, surface: str | None) -> None:
             render_feedback_controls(surface=surface, control_id=CONTROL_GLOBAL_FEEDBACK)
 
 
-def main() -> None:
-    ensure_streamlit_secrets_symlink()
-    warn_if_missing_github_feedback_token_when_deployed()
-    st.set_page_config(
-        page_title="Grocery Wizard",
-        page_icon="🛒",
-        layout="centered",
-    )
-    inject_app_styles()
-    enforce_access_gate()
-    render_app_title()
-    mount_global_loading_banner()
-
-    _init_page_navigation_state()
-
-    _render_global_header_controls(surface=st.session_state.get(_GW_RENDER_PAGE_SLUG))
-
+def _render_page_picker() -> None:
     st.markdown(
         '<p class="gw-global-page-picker-anchor" aria-hidden="true"></p>',
         unsafe_allow_html=True,
@@ -165,8 +149,8 @@ def main() -> None:
     )
     _sync_render_page_from_picker()
 
-    active_slug = st.session_state[_GW_RENDER_PAGE_SLUG]
 
+def _render_page_body(active_slug: str) -> None:
     with st.container(key=f"gw_page_{active_slug}"):
         if active_slug == PAGE_SLUG_WEEKLY:
             render_create_weekly_plan()
@@ -174,8 +158,32 @@ def main() -> None:
             render_add_recipe()
         elif active_slug == PAGE_SLUG_PANTRY:
             render_pantry_and_recurring()
+        elif active_slug == PAGE_SLUG_BROWSE:
+            render_browse_recipes()
         elif active_slug == PAGE_SLUG_MAINTENANCE:
             render_recipe_maintenance()
+
+
+def main() -> None:
+    ensure_streamlit_secrets_symlink()
+    warn_if_missing_github_feedback_token_when_deployed()
+    st.set_page_config(
+        page_title="Grocery Wizard",
+        page_icon="🛒",
+        layout="centered",
+    )
+    inject_app_styles()
+    enforce_access_gate()
+    render_app_title()
+    mount_global_loading_banner()
+
+    _init_page_navigation_state()
+
+    active_slug = st.session_state.get(_GW_RENDER_PAGE_SLUG, PAGE_SLUG_WEEKLY)
+    _render_global_header_controls(surface=active_slug)
+    _render_page_picker()
+    active_slug = st.session_state[_GW_RENDER_PAGE_SLUG]
+    _render_page_body(active_slug)
 
     install_dropdown_dismiss()
 

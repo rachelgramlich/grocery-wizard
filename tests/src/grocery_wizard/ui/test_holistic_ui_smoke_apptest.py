@@ -14,6 +14,7 @@ from ui_source import (
     apptest_assert_no_exception,
     apptest_enter_dev_mode,
     apptest_open_page,
+    apptest_page_picker,
     apptest_start_app,
 )
 
@@ -21,6 +22,7 @@ from src.grocery_wizard.planning.saved_weekly_plans import SavedWeeklyPlan
 from src.grocery_wizard.ui import notion_cache
 from src.grocery_wizard.ui.views import (
     PAGE_LABEL_ADD,
+    PAGE_LABEL_BROWSE,
     PAGE_LABEL_MAINTENANCE,
     PAGE_LABEL_PANTRY,
     PAGE_LABEL_WEEKLY,
@@ -49,7 +51,7 @@ def test_holistic_first_run_renders_global_shell() -> None:
     labels = {button.label for button in at.button}
     assert "Refresh from Notion" in labels
     assert "Submit feedback" in labels
-    assert at.segmented_control[0].value == PAGE_LABEL_WEEKLY
+    assert apptest_page_picker(at).value == PAGE_LABEL_WEEKLY
 
     continue_buttons = [b for b in at.button if b.label == "Continue"]
     assert continue_buttons, "Weekly plan entry Continue button missing"
@@ -61,6 +63,7 @@ def test_holistic_first_run_renders_global_shell() -> None:
     ("page_label", "body_needle"),
     [
         (PAGE_LABEL_PANTRY, "### Pantry"),
+        (PAGE_LABEL_BROWSE, "### Browse recipes"),
         (PAGE_LABEL_ADD, "Recipe URL"),
         (PAGE_LABEL_MAINTENANCE, "### Meal plan status"),
     ],
