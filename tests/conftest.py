@@ -86,6 +86,7 @@ def _notion_test_doubles(monkeypatch: pytest.MonkeyPatch) -> None:
             properties={"Meal": "Dinner", DEFAULT_WEEKNIGHT_COLUMN: True},
         ),
     ]
+
     def _fake_get_db() -> MagicMock:
         return fake_db
 

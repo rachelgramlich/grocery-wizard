@@ -37,6 +37,8 @@ def recipe_displayable_image_url(recipe: Recipe) -> str | None:
     if isinstance(url, str) and url.startswith(("http://", "https://")):
         return url.strip()
     return None
+
+
 BROWSE_FILTER_KEY_PREFIX = "browse"
 
 _SESSION_APPLIED = "browse_applied_filters"
