@@ -114,6 +114,10 @@ class Config(BaseSettings):
         default=None,
         validation_alias="GROCERY_WIZARD_MEAL_PLAN_STATUS_COLUMN",
     )
+    recipe_image_column: str | None = Field(
+        default=None,
+        validation_alias="GROCERY_WIZARD_RECIPE_IMAGE_COLUMN",
+    )
     github_feedback_token: str | None = Field(
         default=None,
         validation_alias="GITHUB_FEEDBACK_TOKEN",
@@ -149,6 +153,7 @@ class Config(BaseSettings):
         "suggestion_rejections_column",
         "plan_selections_column",
         "meal_plan_status_column",
+        "recipe_image_column",
         "github_feedback_token",
         "github_feedback_repository",
         "auth_email_allowlist",

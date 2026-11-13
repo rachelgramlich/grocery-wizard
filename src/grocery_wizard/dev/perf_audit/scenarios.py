@@ -622,4 +622,14 @@ def build_scenarios() -> list[Scenario]:
             writes=True,
             external=True,
         ),
+        Scenario(
+            "maintenance.backfill_images",
+            "maintenance",
+            "Start cover image backfill",
+            _maintenance_prepare,
+            _external_unsupported_act,
+            covers=("recipe_maint_images",),
+            writes=True,
+            external=True,
+        ),
     ]
