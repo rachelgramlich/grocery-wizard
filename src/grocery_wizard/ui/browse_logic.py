@@ -247,15 +247,16 @@ def render_browse_card_box_html(
     *,
     schema: DatabaseSchema | None = None,
 ) -> str:
-    """Taller card box with recipe name inside the frame (paired with a full-bleed Add button)."""
+    """Square photo frame + caption below (option A); invisible Add button covers the photo only."""
     name = html.escape(recipe.name or "Untitled")
     media = render_browse_tile_media_html(recipe, schema=schema)
     return (
         '<div class="gw-browse-card-host" aria-hidden="true">'
         f'<div class="gw-browse-card-box">'
         f'<div class="gw-browse-card-photo">{media}</div>'
-        f'<p class="gw-browse-card-title">{name}</p>'
-        f"</div></div>"
+        f"</div>"
+        f'<p class="gw-browse-tile-title gw-browse-card-caption">{name}</p>'
+        f"</div>"
     )
 
 
