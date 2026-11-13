@@ -16,6 +16,7 @@ from src.grocery_wizard.ui.browse_logic import (
     applied_to_dict,
     browse_recipe_can_add,
     browse_recipes_for_applied,
+    browse_session_add_confirmation_key,
     browse_session_applied_key,
     browse_session_sort_seed_key,
     browse_session_visible_count_key,
@@ -114,13 +115,17 @@ def _render_browse_grid(
                     use_container_width=True,
                 ):
                     result = add_recipe_to_week_from_browse(st.session_state, name)
-                    if result.toast and result.outcome in (
+                    confirm_key = browse_session_add_confirmation_key()
+                    if result.outcome in (
                         WeeklyPlanAddOutcome.PINNED,
                         WeeklyPlanAddOutcome.ADDED,
                     ):
+                        st.session_state[confirm_key] = result.message
                         st.toast(result.message, icon="🍽️")
-                    elif result.message:
-                        st.warning(result.message)
+                    else:
+                        st.session_state.pop(confirm_key, None)
+                        if result.message:
+                            st.warning(result.message)
 
 
 def render_browse_recipes() -> None:
@@ -222,6 +227,10 @@ def render_browse_recipes() -> None:
     status_column = meal_plan_status_column_name(db)
     with st.container(key="browse_grid"):
         _render_browse_grid(display_recipes, limit=visible_limit, status_column=status_column)
+
+    confirm_message = st.session_state.get(browse_session_add_confirmation_key())
+    if confirm_message:
+        st.success(confirm_message)
 
     if visible_limit < total and st.button(
         "Load more",

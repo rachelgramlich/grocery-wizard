@@ -49,8 +49,9 @@ BROWSE_FILTER_KEY_PREFIX = "browse"
 _SESSION_APPLIED = "browse_applied_filters"
 _SESSION_SORT_SEED = "browse_sort_seed"
 _SESSION_VISIBLE_COUNT = "browse_visible_count"
+_SESSION_ADD_CONFIRMATION = "browse_last_add_confirmation"
 _SESSION_RESERVED_KEYS = frozenset(
-    {_SESSION_APPLIED, _SESSION_SORT_SEED, _SESSION_VISIBLE_COUNT},
+    {_SESSION_APPLIED, _SESSION_SORT_SEED, _SESSION_VISIBLE_COUNT, _SESSION_ADD_CONFIRMATION},
 )
 
 
@@ -139,6 +140,10 @@ def browse_session_sort_seed_key() -> str:
 
 def browse_session_visible_count_key() -> str:
     return _SESSION_VISIBLE_COUNT
+
+
+def browse_session_add_confirmation_key() -> str:
+    return _SESSION_ADD_CONFIRMATION
 
 
 def browse_recipe_passes_status_filter(
