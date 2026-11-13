@@ -278,6 +278,31 @@ def _browse_apply_act(ctx: AuditContext, at: AppTest) -> AppTest:
     return flows.click(ctx, at, key=control_streamlit_key(CONTROL_BROWSE_APPLY))
 
 
+def _browse_add_prepare(ctx: AuditContext) -> AppTest:
+    at = flows.open_page(ctx, "browse")
+    add_buttons = [
+        button
+        for button in at.button
+        if str(button.key).startswith(control_streamlit_key("browse.card.add"))
+    ]
+    if not add_buttons:
+        raise ScenarioSkipError("No browse add buttons (empty grid?)")
+    return at
+
+
+def _browse_add_act(ctx: AuditContext, at: AppTest) -> AppTest:
+    add_buttons = [
+        button
+        for button in at.button
+        if str(button.key).startswith(control_streamlit_key("browse.card.add"))
+        and not button.disabled
+    ]
+    if not add_buttons:
+        raise ScenarioSkipError("No enabled browse add buttons")
+    target = add_buttons[0]
+    return flows.click(ctx, at, key=target.key)
+
+
 # --- maintenance ---------------------------------------------------------------------
 
 
@@ -346,6 +371,14 @@ def build_scenarios() -> list[Scenario]:
             _browse_prepare,
             _browse_apply_act,
             covers=(control_streamlit_key(CONTROL_BROWSE_APPLY),),
+        ),
+        Scenario(
+            "browse.card.add",
+            "browse",
+            "Add recipe to this week from grid",
+            _browse_add_prepare,
+            _browse_add_act,
+            covers=(control_streamlit_key("browse.card.add"),),
         ),
         Scenario(
             "global.feedback.submit",

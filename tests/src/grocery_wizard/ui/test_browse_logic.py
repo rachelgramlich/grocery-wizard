@@ -6,8 +6,10 @@ from datetime import UTC, datetime
 
 from src.grocery_wizard.integrations.notion import Recipe
 from src.grocery_wizard.planning.meal_planner import MealPlanFilters
+from src.grocery_wizard.recipes.recipe_meal_plan_stats import STATUS_DEPRECATED, STATUS_PAUSED
 from src.grocery_wizard.ui.browse_logic import (
     BrowseAppliedFilters,
+    browse_recipe_passes_status_filter,
     browse_recipes_for_applied,
     render_browse_grid_html,
     sort_browse_recipes,
@@ -101,6 +103,26 @@ def test_has_image_filter_excludes_placeholders() -> None:
     assert {r.name for r in result_off} == {"With photo", "No photo", "Notion only"}
 
 
+def test_status_filter_hides_paused_and_deprecated_by_default() -> None:
+    paused = _recipe("Pause me", page_id="p1")
+    paused.properties["Meal plan status"] = STATUS_PAUSED
+    deprecated = _recipe("Old", page_id="p2")
+    deprecated.properties["Meal plan status"] = STATUS_DEPRECATED
+    applied = BrowseAppliedFilters(meal_filters=MealPlanFilters(), has_image=False)
+    assert not browse_recipe_passes_status_filter(
+        paused, applied=applied, status_column="Meal plan status"
+    )
+    applied_both = BrowseAppliedFilters(
+        meal_filters=MealPlanFilters(),
+        has_image=False,
+        include_paused=True,
+        include_deprecated=True,
+    )
+    assert browse_recipe_passes_status_filter(
+        deprecated, applied=applied_both, status_column="Meal plan status"
+    )
+
+
 def test_render_browse_grid_html_includes_placeholder_and_title() -> None:
     html = render_browse_grid_html(
         [_recipe("Soup", page_id="x", image=None)],
@@ -109,6 +131,7 @@ def test_render_browse_grid_html_includes_placeholder_and_title() -> None:
     assert "gw-browse-grid" in html
     assert "No photo" in html
     assert "Soup" in html
+    assert "gw-browse-card-title" in html
     assert "pointer-events" not in html
 
 

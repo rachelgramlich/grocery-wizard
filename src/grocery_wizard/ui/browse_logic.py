@@ -22,7 +22,12 @@ from src.grocery_wizard.planning.meal_planner import (
 )
 from src.grocery_wizard.recipes.recipe_images import recipe_has_cover_image
 from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
+    STATUS_DEPRECATED,
+    STATUS_PAUSED,
+    meal_plan_status,
+    meal_plan_status_column_name,
     plan_selection_count,
+    recipe_eligible_for_manual_pick,
     rejection_count_column_name,
     selection_count_column_name,
     suggestion_rejection_count,
@@ -44,8 +49,9 @@ BROWSE_FILTER_KEY_PREFIX = "browse"
 _SESSION_APPLIED = "browse_applied_filters"
 _SESSION_SORT_SEED = "browse_sort_seed"
 _SESSION_VISIBLE_COUNT = "browse_visible_count"
+_SESSION_ADD_CONFIRMATION = "browse_last_add_confirmation"
 _SESSION_RESERVED_KEYS = frozenset(
-    {_SESSION_APPLIED, _SESSION_SORT_SEED, _SESSION_VISIBLE_COUNT},
+    {_SESSION_APPLIED, _SESSION_SORT_SEED, _SESSION_VISIBLE_COUNT, _SESSION_ADD_CONFIRMATION},
 )
 
 
@@ -55,6 +61,8 @@ class BrowseAppliedFilters:
 
     meal_filters: MealPlanFilters
     has_image: bool = True
+    include_paused: bool = False
+    include_deprecated: bool = False
 
 
 def default_browse_applied(schema_columns: dict[str, ColumnInfo]) -> BrowseAppliedFilters:
@@ -71,6 +79,8 @@ def applied_to_dict(state: BrowseAppliedFilters) -> dict[str, Any]:
         "ingredient_names": list(state.meal_filters.ingredient_names),
         "ingredient_mode": state.meal_filters.ingredient_mode,
         "has_image": state.has_image,
+        "include_paused": state.include_paused,
+        "include_deprecated": state.include_deprecated,
     }
 
 
@@ -89,6 +99,12 @@ def applied_from_dict(raw: dict[str, Any] | None) -> BrowseAppliedFilters | None
     has_image = raw.get("has_image")
     if not isinstance(has_image, bool):
         has_image = True
+    include_paused = raw.get("include_paused")
+    if not isinstance(include_paused, bool):
+        include_paused = False
+    include_deprecated = raw.get("include_deprecated")
+    if not isinstance(include_deprecated, bool):
+        include_deprecated = False
     return BrowseAppliedFilters(
         meal_filters=MealPlanFilters(
             values=values,
@@ -96,6 +112,8 @@ def applied_from_dict(raw: dict[str, Any] | None) -> BrowseAppliedFilters | None
             ingredient_mode=str(ingredient_mode),
         ),
         has_image=has_image,
+        include_paused=include_paused,
+        include_deprecated=include_deprecated,
     )
 
 
@@ -124,6 +142,28 @@ def browse_session_visible_count_key() -> str:
     return _SESSION_VISIBLE_COUNT
 
 
+def browse_session_add_confirmation_key() -> str:
+    return _SESSION_ADD_CONFIRMATION
+
+
+def browse_recipe_passes_status_filter(
+    recipe: Recipe,
+    *,
+    applied: BrowseAppliedFilters,
+    status_column: str | None,
+) -> bool:
+    status = meal_plan_status(recipe, status_column=status_column)
+    if status == STATUS_PAUSED and not applied.include_paused:
+        return False
+    return not (status == STATUS_DEPRECATED and not applied.include_deprecated)
+
+
+def browse_recipe_can_add(recipe: Recipe, *, status_column: str | None) -> tuple[bool, str]:
+    if recipe_eligible_for_manual_pick(recipe, status_column=status_column):
+        return True, ""
+    return False, "Deprecated recipes cannot be added to your week."
+
+
 def browse_recipes_for_applied(
     recipes: list[Recipe],
     db: NotionRecipesDB,
@@ -140,6 +180,12 @@ def browse_recipes_for_applied(
         schema_columns,
         ingredient_index=ingredient_index,
     )
+    status_column = meal_plan_status_column_name(db)
+    filtered = [
+        recipe
+        for recipe in filtered
+        if browse_recipe_passes_status_filter(recipe, applied=applied, status_column=status_column)
+    ]
     if applied.has_image:
         filtered = [recipe for recipe in filtered if recipe_displayable_image_url(recipe)]
     selection_column = selection_count_column_name(db)
@@ -178,34 +224,55 @@ def sort_browse_recipes(
     return sorted(recipes, key=sort_key)
 
 
+def render_browse_tile_media_html(
+    recipe: Recipe,
+    *,
+    schema: DatabaseSchema | None = None,
+) -> str:
+    """Image / placeholder markup for the photo area of a browse card."""
+    url = recipe_displayable_image_url(recipe)
+    if url:
+        safe_url = html.escape(url, quote=True)
+        return f'<img class="gw-browse-tile-img" src="{safe_url}" alt="" loading="lazy" />'
+    if schema and recipe_has_cover_image(recipe, schema):
+        return (
+            '<div class="gw-browse-tile-placeholder gw-browse-tile-not-loaded">'
+            "<span>Photo in Notion</span></div>"
+        )
+    return '<div class="gw-browse-tile-placeholder"><span>No photo</span></div>'
+
+
+def render_browse_card_box_html(
+    recipe: Recipe,
+    *,
+    schema: DatabaseSchema | None = None,
+) -> str:
+    """Taller card box with recipe name inside the frame (paired with a full-bleed Add button)."""
+    name = html.escape(recipe.name or "Untitled")
+    media = render_browse_tile_media_html(recipe, schema=schema)
+    return (
+        '<div class="gw-browse-card-host" aria-hidden="true">'
+        f'<div class="gw-browse-card-box">'
+        f'<div class="gw-browse-card-photo">{media}</div>'
+        f'<p class="gw-browse-card-title">{name}</p>'
+        f"</div></div>"
+    )
+
+
 def render_browse_grid_html(
     recipes: list[Recipe],
     *,
     limit: int,
     schema: DatabaseSchema | None = None,
 ) -> str:
-    """Build the Instagram-like card grid (V1: not clickable)."""
+    """Build a static HTML grid (tests / legacy); interactive Browse uses Streamlit buttons."""
     visible = recipes[:limit]
     tiles: list[str] = []
     for recipe in visible:
         name = html.escape(recipe.name or "Untitled")
-        url = recipe_displayable_image_url(recipe)
-        if url:
-            safe_url = html.escape(url, quote=True)
-            image_block = (
-                f'<img class="gw-browse-tile-img" src="{safe_url}" alt="" loading="lazy" />'
-            )
-        elif schema and recipe_has_cover_image(recipe, schema):
-            image_block = (
-                '<div class="gw-browse-tile-placeholder gw-browse-tile-not-loaded">'
-                "<span>Photo in Notion</span></div>"
-            )
-        else:
-            image_block = '<div class="gw-browse-tile-placeholder"><span>No photo</span></div>'
         tiles.append(
-            f'<article class="gw-browse-tile" aria-label="{name}">'
-            f'<div class="gw-browse-tile-media">{image_block}</div>'
-            f'<p class="gw-browse-tile-title">{name}</p>'
+            f'<article class="gw-browse-tile gw-browse-tile-static" aria-label="{name}">'
+            f"{render_browse_card_box_html(recipe, schema=schema)}"
             f"</article>"
         )
     if not tiles:
