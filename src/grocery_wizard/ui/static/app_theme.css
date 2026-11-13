@@ -1071,6 +1071,7 @@
         .gw-browse-tile-media {
             aspect-ratio: 1 / 1;
             width: 100%;
+            position: relative;
             border-radius: 12px;
             overflow: hidden;
             border: 1px solid #e8b8d0;
@@ -1078,9 +1079,12 @@
         }
 
         .gw-browse-tile-img {
+            position: absolute;
+            inset: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
+            object-position: center;
         }
 
         .gw-browse-tile-not-loaded {
