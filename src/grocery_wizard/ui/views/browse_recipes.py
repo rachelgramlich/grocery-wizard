@@ -87,7 +87,7 @@ def render_browse_recipes() -> None:
             "Has image",
             value=applied.has_image,
             key=control_streamlit_key(CONTROL_BROWSE_FILTERS_HAS_IMAGE),
-            help="When checked, only recipes with a photo in the Notion Files column appear.",
+            help="When checked, only recipes whose photo can display in the grid appear.",
         )
 
         apply_col, reset_col = st.columns(2)

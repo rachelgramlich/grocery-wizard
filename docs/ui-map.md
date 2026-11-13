@@ -77,7 +77,7 @@ Rail steps (user-facing, not numbered): **Get started** → **Plan meals** → *
 | Block / control ID | UI |
 |--------------------|-----|
 | `browse.filters` | Meal-plan filter controls on page |
-| `browse.filters.has_image` | Has image (Files column populated) |
+| `browse.filters.has_image` | Has image (grid can show a photo URL) |
 | `browse.apply` | Apply filters |
 | `browse.reset` | Reset (clears all filters) |
 | `browse.grid` | Recipe image grid |

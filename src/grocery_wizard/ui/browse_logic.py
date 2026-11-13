@@ -29,6 +29,14 @@ from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
 )
 
 BROWSE_PAGE_SIZE = 24
+
+
+def recipe_displayable_image_url(recipe: Recipe) -> str | None:
+    """HTTPS URL the browse grid can render, if any."""
+    url = recipe.image_file_url
+    if isinstance(url, str) and url.startswith(("http://", "https://")):
+        return url.strip()
+    return None
 BROWSE_FILTER_KEY_PREFIX = "browse"
 
 _SESSION_APPLIED = "browse_applied_filters"
@@ -131,8 +139,7 @@ def browse_recipes_for_applied(
         ingredient_index=ingredient_index,
     )
     if applied.has_image:
-        schema = db.schema
-        filtered = [recipe for recipe in filtered if recipe_has_cover_image(recipe, schema)]
+        filtered = [recipe for recipe in filtered if recipe_displayable_image_url(recipe)]
     selection_column = selection_count_column_name(db)
     rejections_column = rejection_count_column_name(db)
     return sort_browse_recipes(
@@ -180,8 +187,8 @@ def render_browse_grid_html(
     tiles: list[str] = []
     for recipe in visible:
         name = html.escape(recipe.name or "Untitled")
-        url = recipe.image_file_url
-        if url and url.startswith(("http://", "https://")):
+        url = recipe_displayable_image_url(recipe)
+        if url:
             safe_url = html.escape(url, quote=True)
             image_block = (
                 f'<img class="gw-browse-tile-img" src="{safe_url}" alt="" loading="lazy" />'

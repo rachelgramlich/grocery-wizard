@@ -74,12 +74,13 @@ def test_has_image_filter_excludes_placeholders() -> None:
         all_columns={},
         image_column="Cover image",
     )
-    with_photo = _recipe("With photo", page_id="1", image="https://notion.so/file.jpg")
-    with_photo.properties["Cover image"] = ["cover.jpg"]
     recipes = [
-        with_photo,
+        _recipe("With photo", page_id="1", image="https://notion.so/file.jpg"),
         _recipe("No photo", page_id="2", image=None),
     ]
+    notion_only = _recipe("Notion only", page_id="3", image=None)
+    notion_only.properties["Cover image"] = ["cover.jpg"]
+    recipes.append(notion_only)
     applied = BrowseAppliedFilters(meal_filters=MealPlanFilters(), has_image=True)
     result = browse_recipes_for_applied(
         recipes,
@@ -89,6 +90,15 @@ def test_has_image_filter_excludes_placeholders() -> None:
         sort_seed=1,
     )
     assert [r.name for r in result] == ["With photo"]
+    applied_off = BrowseAppliedFilters(meal_filters=MealPlanFilters(), has_image=False)
+    result_off = browse_recipes_for_applied(
+        recipes,
+        db,
+        applied_off,
+        ingredient_index=None,
+        sort_seed=1,
+    )
+    assert {r.name for r in result_off} == {"With photo", "No photo", "Notion only"}
 
 
 def test_render_browse_grid_html_includes_placeholder_and_title() -> None:
