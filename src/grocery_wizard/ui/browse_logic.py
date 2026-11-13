@@ -9,13 +9,18 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
-from src.grocery_wizard.integrations.notion import ColumnInfo, NotionRecipesDB, Recipe
+from src.grocery_wizard.integrations.notion import (
+    ColumnInfo,
+    DatabaseSchema,
+    NotionRecipesDB,
+    Recipe,
+)
 from src.grocery_wizard.planning.meal_planner import (
     MealPlanFilters,
     default_filters,
     filter_recipes,
 )
-from src.grocery_wizard.recipes.recipe_maintenance import recipe_has_cover_image
+from src.grocery_wizard.recipes.recipe_images import recipe_has_cover_image
 from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
     plan_selection_count,
     rejection_count_column_name,
@@ -164,21 +169,28 @@ def sort_browse_recipes(
     return sorted(recipes, key=sort_key)
 
 
-def render_browse_grid_html(recipes: list[Recipe], *, limit: int) -> str:
+def render_browse_grid_html(
+    recipes: list[Recipe],
+    *,
+    limit: int,
+    schema: DatabaseSchema | None = None,
+) -> str:
     """Build the Instagram-like card grid (V1: not clickable)."""
     visible = recipes[:limit]
     tiles: list[str] = []
     for recipe in visible:
         name = html.escape(recipe.name or "Untitled")
-        if recipe.image_file_url:
-            url = recipe.image_file_url
-            if url.startswith(("http://", "https://")):
-                safe_url = html.escape(url, quote=True)
-                image_block = (
-                    f'<img class="gw-browse-tile-img" src="{safe_url}" alt="" loading="lazy" />'
-                )
-            else:
-                image_block = '<div class="gw-browse-tile-placeholder"><span>No photo</span></div>'
+        url = recipe.image_file_url
+        if url and url.startswith(("http://", "https://")):
+            safe_url = html.escape(url, quote=True)
+            image_block = (
+                f'<img class="gw-browse-tile-img" src="{safe_url}" alt="" loading="lazy" />'
+            )
+        elif schema and recipe_has_cover_image(recipe, schema):
+            image_block = (
+                '<div class="gw-browse-tile-placeholder gw-browse-tile-not-loaded">'
+                "<span>Photo in Notion</span></div>"
+            )
         else:
             image_block = '<div class="gw-browse-tile-placeholder"><span>No photo</span></div>'
         tiles.append(

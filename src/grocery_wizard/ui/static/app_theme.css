@@ -1083,6 +1083,10 @@
             object-fit: cover;
         }
 
+        .gw-browse-tile-not-loaded {
+            border-style: dashed;
+        }
+
         .gw-browse-tile-placeholder {
             width: 100%;
             height: 100%;

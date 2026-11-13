@@ -100,3 +100,23 @@ def test_render_browse_grid_html_includes_placeholder_and_title() -> None:
     assert "No photo" in html
     assert "Soup" in html
     assert "pointer-events" not in html
+
+
+def test_render_browse_grid_html_shows_notion_only_when_no_url() -> None:
+    from src.grocery_wizard.integrations.notion import DatabaseSchema
+
+    schema = DatabaseSchema(
+        name_column="Name",
+        link_column="Link",
+        ingredients_column=None,
+        filter_columns=[],
+        checkbox_columns=[],
+        all_columns={},
+        image_column="Cover image",
+    )
+    recipe = _recipe("Stew", page_id="y", image=None)
+    recipe.properties["Cover image"] = ["on-notion.jpg"]
+    html = render_browse_grid_html([recipe], limit=24, schema=schema)
+    assert "Photo in Notion" in html
+    assert "gw-browse-tile-not-loaded" in html
+    assert "No photo" not in html

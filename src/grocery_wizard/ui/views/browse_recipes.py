@@ -136,7 +136,7 @@ def render_browse_recipes() -> None:
     st.caption(f"Showing {showing} of {total} recipes")
 
     st.markdown(
-        render_browse_grid_html(display_recipes, limit=visible_limit),
+        render_browse_grid_html(display_recipes, limit=visible_limit, schema=db.schema),
         unsafe_allow_html=True,
     )
 
