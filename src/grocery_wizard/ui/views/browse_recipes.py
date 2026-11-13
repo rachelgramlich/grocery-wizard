@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import hashlib
-import html
 
 import streamlit as st
 
@@ -24,7 +23,7 @@ from src.grocery_wizard.ui.browse_logic import (
     default_browse_applied,
     empty_browse_applied,
     new_browse_sort_seed,
-    render_browse_tile_media_html,
+    render_browse_card_box_html,
 )
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.ids import (
@@ -99,16 +98,9 @@ def _render_browse_grid(
                 break
             recipe = visible[recipe_index]
             name = recipe.name or "Untitled"
-            safe_name = html.escape(name)
             with column:
-                media = render_browse_tile_media_html(recipe, schema=schema)
                 st.markdown(
-                    (
-                        '<div class="gw-browse-tile">'
-                        f'<div class="gw-browse-tile-media">{media}</div>'
-                        f'<p class="gw-browse-tile-title">{safe_name}</p>'
-                        "</div>"
-                    ),
+                    render_browse_card_box_html(recipe, schema=schema),
                     unsafe_allow_html=True,
                 )
                 can_add, disabled_help = browse_recipe_can_add(recipe, status_column=status_column)

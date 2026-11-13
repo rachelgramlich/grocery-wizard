@@ -224,7 +224,7 @@ def render_browse_tile_media_html(
     *,
     schema: DatabaseSchema | None = None,
 ) -> str:
-    """Square tile image / placeholder markup (non-interactive)."""
+    """Image / placeholder markup for the photo area of a browse card."""
     url = recipe_displayable_image_url(recipe)
     if url:
         safe_url = html.escape(url, quote=True)
@@ -235,6 +235,23 @@ def render_browse_tile_media_html(
             "<span>Photo in Notion</span></div>"
         )
     return '<div class="gw-browse-tile-placeholder"><span>No photo</span></div>'
+
+
+def render_browse_card_box_html(
+    recipe: Recipe,
+    *,
+    schema: DatabaseSchema | None = None,
+) -> str:
+    """Taller card box with recipe name inside the frame (paired with a full-bleed Add button)."""
+    name = html.escape(recipe.name or "Untitled")
+    media = render_browse_tile_media_html(recipe, schema=schema)
+    return (
+        '<div class="gw-browse-card-host" aria-hidden="true">'
+        f'<div class="gw-browse-card-box">'
+        f'<div class="gw-browse-card-photo">{media}</div>'
+        f'<p class="gw-browse-card-title">{name}</p>'
+        f"</div></div>"
+    )
 
 
 def render_browse_grid_html(
@@ -248,11 +265,9 @@ def render_browse_grid_html(
     tiles: list[str] = []
     for recipe in visible:
         name = html.escape(recipe.name or "Untitled")
-        image_block = render_browse_tile_media_html(recipe, schema=schema)
         tiles.append(
             f'<article class="gw-browse-tile gw-browse-tile-static" aria-label="{name}">'
-            f'<div class="gw-browse-tile-media">{image_block}</div>'
-            f'<p class="gw-browse-tile-title">{name}</p>'
+            f"{render_browse_card_box_html(recipe, schema=schema)}"
             f"</article>"
         )
     if not tiles:

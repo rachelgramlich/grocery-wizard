@@ -131,6 +131,7 @@ def test_render_browse_grid_html_includes_placeholder_and_title() -> None:
     assert "gw-browse-grid" in html
     assert "No photo" in html
     assert "Soup" in html
+    assert "gw-browse-card-title" in html
     assert "pointer-events" not in html
 
 

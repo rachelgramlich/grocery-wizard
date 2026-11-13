@@ -8,17 +8,6 @@ from typing import Any
 
 from src.grocery_wizard.config import load_config
 from src.grocery_wizard.ui.grocery_helpers import parse_line_items_text
-from src.grocery_wizard.ui.views.weekly_plan.state import (
-    PLAN_MEAL_COUNT_CONFIRMED_KEY,
-    PLAN_MEAL_COUNT_WIDGET_KEY,
-    _clear_grocery_result,
-    _clear_grocery_session_overrides,
-    _invalidate_weekly_plan_save_state,
-    _reset_weekly_plan_workflow,
-    _set_plan_slot_origins,
-    _weekly_plan_mode,
-    _write_plan_names,
-)
 
 
 class WeeklyPlanAddOutcome(StrEnum):
@@ -36,8 +25,16 @@ class WeeklyPlanAddResult:
     toast: bool = True
 
 
+def _weekly_state():
+    """Lazy import avoids cycle with plan_entry."""
+    from src.grocery_wizard.ui.views.weekly_plan import state as weekly_state
+
+    return weekly_state
+
+
 def _meal_count(session_state: Any) -> int:
-    default = 1 if _weekly_plan_mode() == "dev" else load_config().default_meals
+    weekly_state = _weekly_state()
+    default = 1 if weekly_state._weekly_plan_mode() == "dev" else load_config().default_meals
     return max(1, int(session_state.get("plan_meal_count", default)))
 
 
@@ -51,14 +48,15 @@ def _plan_slot_origins(session_state: Any) -> list[str]:
 
 def ensure_weekly_plan_session_for_browse(session_state: Any) -> None:
     """Start a new weekly plan in session when the user has not clicked Continue yet."""
-    if _weekly_plan_mode() is not None:
+    weekly_state = _weekly_state()
+    if weekly_state._weekly_plan_mode() is not None:
         return
     session_state.weekly_plan_mode = "new"
-    _reset_weekly_plan_workflow(clear_mode=False)
+    weekly_state._reset_weekly_plan_workflow(clear_mode=False)
     session_state.plan_meals_text = ""
     session_state.plan_meal_count = load_config().default_meals
-    session_state.pop(PLAN_MEAL_COUNT_WIDGET_KEY, None)
-    session_state.pop(PLAN_MEAL_COUNT_CONFIRMED_KEY, None)
+    session_state.pop(weekly_state.PLAN_MEAL_COUNT_WIDGET_KEY, None)
+    session_state.pop(weekly_state.PLAN_MEAL_COUNT_CONFIRMED_KEY, None)
 
 
 def clamp_prebuild_pinned_recipes(session_state: Any, *, max_pins: int) -> None:
@@ -124,11 +122,12 @@ def try_append_to_built_plan(
     while len(origins) < len(updated):
         origins.append("suggested")
     origins[len(current)] = "manual"
-    _write_plan_names(updated)
-    _set_plan_slot_origins(origins[: len(updated)])
-    _invalidate_weekly_plan_save_state()
-    _clear_grocery_session_overrides()
-    _clear_grocery_result()
+    weekly_state = _weekly_state()
+    weekly_state._write_plan_names(updated)
+    weekly_state._set_plan_slot_origins(origins[: len(updated)])
+    weekly_state._invalidate_weekly_plan_save_state()
+    weekly_state._clear_grocery_session_overrides()
+    weekly_state._clear_grocery_result()
     return WeeklyPlanAddResult(
         WeeklyPlanAddOutcome.ADDED,
         f"Added {recipe_name} to this week.",
