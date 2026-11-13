@@ -116,10 +116,7 @@ class Config(BaseSettings):
     )
     recipe_image_column: str | None = Field(
         default=None,
-        validation_alias=AliasChoices(
-            "GROCERY_WIZARD_RECIPE_IMAGE_COLUMN",
-            "GROCERY_WIZARD_RECIPE_IMAGE_FILES_COLUMN",
-        ),
+        validation_alias="GROCERY_WIZARD_RECIPE_IMAGE_COLUMN",
     )
     github_feedback_token: str | None = Field(
         default=None,
