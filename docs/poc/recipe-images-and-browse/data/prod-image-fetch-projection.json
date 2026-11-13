@@ -1,0 +1,46 @@
+{
+  "prod_total_recipes": 307,
+  "with_link": 280,
+  "no_link": 27,
+  "population_by_bucket": {
+    "other_web": 24,
+    "nyt": 239,
+    "tiktok": 14,
+    "instagram": 2,
+    "foodnetwork": 1
+  },
+  "sample_tested": 121,
+  "sample_success_rate_by_bucket": {
+    "other_web": 0.792,
+    "nyt": 1.0,
+    "tiktok": 1.0,
+    "instagram": 1.0,
+    "foodnetwork": 0.0
+  },
+  "projected_success_among_with_link_pct": 97.9,
+  "projected_fail_among_with_link_pct": 2.1,
+  "projected_success_count_rounded": 274,
+  "other_web_hosts_in_sample": {
+    "obsessedcakes.com": 1,
+    "indianhealthyrecipes.com": 1,
+    "preppykitchen.com": 1,
+    "americastestkitchen.com": 1,
+    "averagebetty.com": 1,
+    "vidhyashomecooking.com": 1,
+    "ryannordheimer.com": 1,
+    "bromabakery.com": 1,
+    "courtneyskitchen.substack.com": 1,
+    "hostthetoast.com": 1,
+    "eatwithclarity.com": 1,
+    "youtube.com": 1,
+    "justinesnacks.com": 3,
+    "theheartylife.org": 1,
+    "wishbonekitchen.com": 1,
+    "foodieholly.com": 1,
+    "dishingouthealth.com": 1,
+    "kathleenashmore.com": 1,
+    "thepyperskitchen.com": 1,
+    "plantbasedrdblog.com": 2,
+    "southernbite.com": 1
+  }
+}

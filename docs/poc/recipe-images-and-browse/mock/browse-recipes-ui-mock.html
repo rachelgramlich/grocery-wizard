@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Browse recipes — UI proposal (not POC)</title>
+  <style>
+    :root {
+      --gw-bg: #ffe4f0;
+      --gw-text: #5c1040;
+      --gw-text-muted: #7a2858;
+      --gw-input-bg: #fff9fc;
+      --gw-accent: #8b1a5c;
+      --gw-blue-strong: #6baee0;
+      --gw-card-radius: 14px;
+    }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Source Sans Pro", system-ui, sans-serif;
+    background: var(--gw-bg);
+    color: var(--gw-text);
+    padding: 12px 16px 32px;
+    max-width: 1100px;
+    margin-inline: auto;
+  }
+  .mock-banner {
+    font-size: 12px;
+    text-align: center;
+    color: var(--gw-text-muted);
+    margin-bottom: 12px;
+    padding: 6px;
+    border: 1px dashed var(--gw-accent);
+    border-radius: 8px;
+    background: #fff9fc;
+  }
+  h1 { text-align: center; font-size: 1.35rem; margin: 0 0 4px; }
+  .sub { text-align: center; font-size: 0.9rem; color: var(--gw-text-muted); margin-bottom: 18px; }
+  .filters {
+    background: var(--gw-input-bg);
+    border: 1px solid #e8b8d0;
+    border-radius: var(--gw-card-radius);
+    padding: 14px 16px 12px;
+    margin-bottom: 16px;
+  }
+  .filters h2 { font-size: 0.95rem; margin: 0 0 10px; color: var(--gw-text-muted); font-weight: 600; }
+  .filter-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px 12px;
+  }
+  .field label { display: block; font-size: 0.72rem; color: var(--gw-text-muted); margin-bottom: 4px; }
+  .field select, .field input {
+    width: 100%;
+    border: 1px solid #d8a0bc;
+    border-radius: 8px;
+    padding: 6px 8px;
+    font-size: 0.8rem;
+    background: #fff;
+    color: var(--gw-text);
+  }
+  .field.span2 { grid-column: span 2; }
+  .ingredient-row { margin-top: 10px; }
+  .actions { display: flex; gap: 10px; margin-top: 14px; align-items: center; flex-wrap: wrap; }
+  .btn-primary {
+    background: var(--gw-accent);
+    color: #fff9fc;
+    border: none;
+    border-radius: 999px;
+    padding: 8px 22px;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  .btn-secondary {
+    background: transparent;
+    color: var(--gw-accent);
+    border: 1px solid var(--gw-accent);
+    border-radius: 999px;
+    padding: 8px 18px;
+    font-size: 0.85rem;
+  }
+  .result-line { font-size: 0.82rem; color: var(--gw-text-muted); margin-left: auto; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 14px;
+  }
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .thumb {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: var(--gw-card-radius);
+    object-fit: cover;
+    background: #f3d4e6;
+    border: 1px solid #e8b8d0;
+  }
+  .thumb.placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: #c9a0b8;
+  }
+  .name {
+    font-size: 0.78rem;
+    line-height: 1.25;
+    text-align: center;
+    font-weight: 600;
+    color: var(--gw-text);
+    padding: 0 2px;
+  }
+  .load-more-wrap { text-align: center; margin-top: 22px; }
+  .load-more {
+    background: var(--gw-blue-strong);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 28px;
+    font-weight: 600;
+  }
+  .ids { font-size: 10px; color: #999; text-align: center; margin-top: 20px; }
+  @media (max-width: 700px) {
+    .filter-grid { grid-template-columns: repeat(2, 1fr); }
+    .field.span2 { grid-column: span 2; }
+  }
+  </style>
+</head>
+<body>
+  <div class="mock-banner">Design mock — final Streamlit page will use theme tokens + real widgets (#491). POC HTML report is not this layout.</div>
+  <h1>Browse recipes</h1>
+  <p class="sub">Weeknight dinners by default. Change filters, then Apply.</p>
+
+  <section class="filters" aria-label="Filters">
+    <h2>Filters <span style="font-weight:400">(browse.filters)</span></h2>
+    <div class="filter-grid">
+      <div class="field"><label>Meal</label><select><option>Dinner</option></select></div>
+      <div class="field"><label>Dinner: Weeknight Friendly</label><select><option>Yes</option></select></div>
+      <div class="field"><label>Cuisine</label><select><option>Any</option></select></div>
+      <div class="field"><label>Protein</label><select><option>Any</option></select></div>
+      <div class="field span2"><label>Ingredients</label><input placeholder="Search or pick ingredients…" value=""/></div>
+      <div class="field"><label>Dinner Category</label><select><option>Any</option></select></div>
+      <div class="field"><label>Filter mode</label><select><option>Include any</option></select></div>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn-primary">Apply filters</button>
+      <button type="button" class="btn-secondary">Reset</button>
+      <span class="result-line">Showing 24 of 86 recipes (applied)</span>
+    </div>
+  </section>
+
+  <section class="grid" aria-label="Recipe grid browse.grid">
+    <article class="card"><div class="thumb placeholder" style="font-size:0.75rem;color:#7a2858;">photo</div><p class="name">Crispy Potato Quesadillas</p></article>
+    <article class="card"><div class="thumb placeholder" style="font-size:0.75rem;color:#7a2858;">photo</div><p class="name">Sesame Salmon Bowls</p></article>
+    <article class="card"><div class="thumb placeholder" style="font-size:0.75rem;color:#7a2858;">photo</div><p class="name">Easy Pancakes</p></article>
+    <article class="card"><div class="thumb placeholder" style="font-size:0.75rem;color:#7a2858;">photo</div><p class="name">Chermoula Shrimp (TikTok)</p></article>
+    <article class="card"><div class="thumb placeholder" style="font-size:0.75rem;color:#7a2858;">photo</div><p class="name">Chickpea Salad Sandwich</p></article>
+    <article class="card"><div class="thumb placeholder" aria-hidden="true">🍽</div><p class="name">Beef Bourguignon</p></article>
+    <article class="card"><div class="thumb placeholder">🍽</div><p class="name">Slow Roast Chicken</p></article>
+    <article class="card"><div class="thumb placeholder" style="font-size:0.75rem;color:#7a2858;">photo</div><p class="name">One-Pot Orzo</p></article>
+  </section>
+
+  <div class="load-more-wrap">
+    <button type="button" class="load-more">Load more</button>
+  </div>
+  <p class="ids">Controls: browse.apply · browse.reset · browse.load_more · V1 cards not clickable (#492 V2)</p>
+</body>
+</html>
