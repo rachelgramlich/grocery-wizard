@@ -72,9 +72,12 @@ def test_has_image_filter_excludes_placeholders() -> None:
         filter_columns=[],
         checkbox_columns=[],
         all_columns={},
+        image_column="Cover image",
     )
+    with_photo = _recipe("With photo", page_id="1", image="https://notion.so/file.jpg")
+    with_photo.properties["Cover image"] = ["cover.jpg"]
     recipes = [
-        _recipe("With photo", page_id="1", image="https://notion.so/file.jpg"),
+        with_photo,
         _recipe("No photo", page_id="2", image=None),
     ]
     applied = BrowseAppliedFilters(meal_filters=MealPlanFilters(), has_image=True)

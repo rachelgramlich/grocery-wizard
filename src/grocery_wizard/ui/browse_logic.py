@@ -15,6 +15,7 @@ from src.grocery_wizard.planning.meal_planner import (
     default_filters,
     filter_recipes,
 )
+from src.grocery_wizard.recipes.recipe_maintenance import recipe_has_cover_image
 from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
     plan_selection_count,
     rejection_count_column_name,
@@ -125,7 +126,8 @@ def browse_recipes_for_applied(
         ingredient_index=ingredient_index,
     )
     if applied.has_image:
-        filtered = [recipe for recipe in filtered if recipe.image_file_url]
+        schema = db.schema
+        filtered = [recipe for recipe in filtered if recipe_has_cover_image(recipe, schema)]
     selection_column = selection_count_column_name(db)
     rejections_column = rejection_count_column_name(db)
     return sort_browse_recipes(
