@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from src.grocery_wizard.config import Config
-from src.grocery_wizard.lib.feedback_submit import submit_feedback
+from src.grocery_wizard.integrations.feedback_submit import submit_feedback
 
 
 def _config(**overrides: object) -> Config:
@@ -27,7 +27,7 @@ def test_submit_feedback_github_requires_token() -> None:
 
 def test_submit_feedback_github_delegates(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "src.grocery_wizard.lib.feedback_submit.create_feedback_issue",
+        "src.grocery_wizard.integrations.feedback_submit.create_feedback_issue",
         lambda *args, **kwargs: {"number": 12},
     )
     outcome = submit_feedback(

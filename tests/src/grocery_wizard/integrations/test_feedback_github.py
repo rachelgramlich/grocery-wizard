@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.grocery_wizard.lib.feedback_github import (
+from src.grocery_wizard.integrations.feedback_github import (
     FEEDBACK_GITHUB_INBOX_LABEL,
     create_feedback_issue,
 )
@@ -28,7 +28,7 @@ def test_create_feedback_issue_posts_inbox_label(monkeypatch: pytest.MonkeyPatch
         response.json.return_value = {"number": 99}
         return response
 
-    monkeypatch.setattr("src.grocery_wizard.lib.feedback_github.requests.post", fake_post)
+    monkeypatch.setattr("src.grocery_wizard.integrations.feedback_github.requests.post", fake_post)
 
     result = create_feedback_issue(
         "Pantry page is slow",

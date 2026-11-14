@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from src.grocery_wizard.lib.feedback_github import (
+from src.grocery_wizard.integrations.feedback_github import (
     MAX_FEEDBACK_BODY_CHARS,
     _issue_body_for_text,
     fit_feedback_text_to_issue_body,
 )
-from src.grocery_wizard.lib.feedback_list_log import enrich_feedback_with_list_debug_log
+from src.grocery_wizard.integrations.feedback_list_log import enrich_feedback_with_list_debug_log
 from src.grocery_wizard.shopping.list_log import ListTrace, build_list_log
 
 
