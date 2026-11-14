@@ -110,23 +110,23 @@ Skills (committed): `.cursor/skills/tidy-first/SKILL.md` (mirrored under `.agent
 
 Do not close backlog issues by hand — merge with `Closes #N` in the **PR description** (not comments).
 
-#### Close issues via PR body (GitHub + Cloud agents)
+### `/work-on-issue` (ship summary)
 
-GitHub auto-closes an issue only when the **merged pull request description** contains a keyword line such as **`Closes #490`**, **`Fixes #490`**, or **`Resolves #490`**. The **PR title** (e.g. `#490: …`), commit messages, and issue comments do **not** close the issue.
+Full steps: **`.cursor/commands/shared/work-on-issue.md`** (or say **`/work-on-issue N`** on Cloud). **`AGENTS.md` is canonical** for labels, verify, UAT, and PR body rules below.
 
-**What went wrong on #490:** PR #495 shipped the feature and used a `#490:` title, but the PR body was later replaced with a short prod backfill status note and never included `Closes #490`, so the issue stayed open after merge.
+1. **`gh issue view N`** → branch `cursor/<slug>-<suffix>` off `main` (slug from title; suffix per your Cloud/desktop rules).
+2. Implement; run **`just check`** (and issue-specific checks) **before** opening the PR.
+3. Review branch diff vs `main`; fix and re-run checks.
+4. **Ship:** PR title `#N: <issue title>`; body = **`.github/pull_request_template.md`** filled out + **`## Issue`** / **`Closes #N`** when the PR finishes that issue (`fix: …` title OK for bugs).
+5. **UAT:** non-UI vs UI rules in **Manual verification** above; always **`Holistic smoke:`** / **`Browser smoke:`** in chat and PR.
+6. Ready for review (not draft) unless the user asks otherwise.
 
-**Agents (all surfaces)**
+#### `Closes #N` (GitHub + Cloud)
 
-- On **`/work-on-issue N`**, **`Closes #N`** in the PR body is **required** when the PR completes that issue. Use **`Part of #N`** or omit only when the PR is a deliberate slice and the issue stays open.
-- File **follow-up** issues for known gaps (manual backfill rows, etc.); do not leave the parent issue open just because follow-ups exist — close the parent when the acceptance criteria in the issue are met.
-- Before merge (or before asking the user to merge), confirm the PR shows the issue under **Development** / linked issues, e.g. `gh pr view --json closingIssuesReferences`.
-
-**Cursor Cloud Agents (`ManagePullRequest`)**
-
-- **`create_pr`:** Pass a `body` that includes the repo PR template **and** `## Issue` / `Closes #N` (same text GitHub needs). Do not rely on the title alone.
-- **`update_pr`:** Do not replace the body with status-only text (prod runs, smoke notes, etc.). **Append** updates under **Summary** or **Manual verification** and **keep** the `## Issue` / `Closes #N` block unchanged.
-- If a PR already merged without `Closes #N`: say so in chat; the owner may close the issue as **completed** manually, or a tiny follow-up PR may add `Closes #N` only if GitHub still accepts it on an open issue (usually unnecessary once merged — manual close is fine).
+- GitHub closes an issue only when the **merged PR description** contains **`Closes #N`** / **`Fixes #N`** / **`Resolves #N`**. **Title, commits, and comments do not count** (e.g. #490 stayed open after #495 because the body had no `Closes` line).
+- **`/work-on-issue`:** require **`Closes #N`** when acceptance criteria are met; use **`Part of #N`** or omit only for a deliberate slice. File follow-ups for gaps; close the parent when the issue itself is done.
+- **`ManagePullRequest`:** `create_pr` body must include template + **`Closes #N`**; **`update_pr`** must **append** status notes and **not** remove the **`## Issue`** block. Pre-merge: `gh pr view --json closingIssuesReferences`.
+- Already merged without `Closes #N`: tell the user; owner may close **completed** manually.
 
 ## User workflow
 
