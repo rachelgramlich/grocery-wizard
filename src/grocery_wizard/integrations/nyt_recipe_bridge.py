@@ -23,7 +23,10 @@ def filter_columns_for_recipe_classify(filter_columns: list[Any]) -> list[Any]:
 
 
 def classify_recipe(
-    title: str, ingredients: list[str], filter_columns: list[Any], **kwargs: Any,
+    title: str,
+    ingredients: list[str],
+    filter_columns: list[Any],
+    **kwargs: Any,
 ) -> Any:
     from src.grocery_wizard.recipes.classify import classify_recipe as _impl
 
