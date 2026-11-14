@@ -19,7 +19,7 @@ __all__ = [
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from notion_client import Client
 
@@ -77,6 +77,9 @@ def normalize_recipe_name(name: str) -> str:
     return name.strip()
 
 
+_YOUTUBE_WATCH_HOSTS = frozenset({"youtube.com", "m.youtube.com"})
+
+
 def normalize_recipe_link(url: str) -> str:
     """Canonical recipe URL for duplicate detection and Notion storage."""
     stripped = url.strip()
@@ -86,7 +89,12 @@ def normalize_recipe_link(url: str) -> str:
     netloc = parsed.netloc.lower()
     netloc = netloc.removeprefix("www.")
     path = parsed.path.rstrip("/") or parsed.path
-    return urlunparse((parsed.scheme.lower(), netloc, path, "", "", ""))
+    query = ""
+    if netloc in _YOUTUBE_WATCH_HOSTS and path == "/watch":
+        video_ids = parse_qs(parsed.query).get("v", [])
+        if video_ids:
+            query = urlencode({"v": video_ids[0]})
+    return urlunparse((parsed.scheme.lower(), netloc, path, "", query, ""))
 
 
 def recipe_lookup_key(name: str) -> str:
@@ -526,6 +534,44 @@ class NotionRecipesDB:
 
         for page_id, _before, after in changes:
             self.update_recipe(page_id, {name_column: after})
+        return changes, skips
+
+    def canonicalize_all_recipe_links(
+        self,
+        *,
+        dry_run: bool = True,
+    ) -> tuple[list[tuple[str, str, str, str]], list[str]]:
+        """Rewrite stored recipe links with :func:`normalize_recipe_link`.
+
+        Returns ``(updates, skips)`` where each update is
+        ``(page_id, recipe_name, before, after)``.
+        """
+        link_column = self.schema.link_column
+        key_owner: dict[str, str] = {}
+        changes: list[tuple[str, str, str, str]] = []
+        skips: list[str] = []
+
+        for recipe in self.query_recipes():
+            link = (recipe.link or "").strip()
+            if not link:
+                continue
+            after = normalize_recipe_link(link)
+            if link == after:
+                continue
+            owner = key_owner.get(after)
+            if owner is not None and owner != recipe.page_id:
+                skips.append(
+                    f"Skipped {recipe.name!r}: canonical link {after!r} already on another recipe."
+                )
+                continue
+            key_owner.setdefault(after, recipe.page_id)
+            changes.append((recipe.page_id, recipe.name, link, after))
+
+        if dry_run or not changes:
+            return changes, skips
+
+        for page_id, _name, _before, after in changes:
+            self.update_recipe(page_id, {link_column: after})
         return changes, skips
 
     def _page_to_recipe(self, page: dict[str, Any]) -> Recipe:

@@ -37,6 +37,11 @@ def test_normalize_recipe_link_strips_tracking_params_and_www() -> None:
     assert normalize_recipe_link(url) == "https://example.com/recipes/1-soup"
 
 
+def test_normalize_recipe_link_keeps_youtube_video_id() -> None:
+    url = "https://www.youtube.com/watch?v=VeZ0UzJ44eM&feature=share"
+    assert normalize_recipe_link(url) == "https://youtube.com/watch?v=VeZ0UzJ44eM"
+
+
 def test_create_recipe_strips_name_before_write(monkeypatch) -> None:
     db = NotionRecipesDB.__new__(NotionRecipesDB)
     db.schema = _schema()
