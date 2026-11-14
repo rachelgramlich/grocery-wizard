@@ -27,7 +27,7 @@ def test_golden_week_export_matches_snapshot(golden_week_file) -> None:
     actual = export_grocery_lines_for_week(week)
     assert actual == expected, (
         f"Golden week {week['id']!r} export changed.\n"
-        "If intentional, refresh expect_grocery_lines (see docs/grocery-quality.md)."
+        "If intentional, refresh expect_grocery_lines (see docs/quality/grocery-quality.md)."
     )
 
 

@@ -21,7 +21,7 @@ Same tests also run under **`just check`** / **`just ci`** (marker `holistic_ui_
 - AppTest first run (global refresh, feedback, weekly plan entry)
 - Weekly plan entry → **`cached_saved_plans`** / saved plan list (#417 path)
 - Continue saved plan → meals step (session only, no Notion writes)
-- **Dev mode → Dev: Final list** on the golden weekly fixture (real build/merge/sort; see `docs/grocery-quality.md`)
+- **Dev mode → Dev: Final list** on the golden weekly fixture (real build/merge/sort; see `docs/quality/grocery-quality.md`)
 - **Pantry & recurring**, **Add Recipe**, **Recipe maintenance** pages open
 
 Implementation: `tests/src/grocery_wizard/ui/test_holistic_ui_smoke_apptest.py`, helpers in `tests/src/grocery_wizard/ui/ui_source.py`.
@@ -50,7 +50,7 @@ test -n "${NOTION_API_KEY:-}" && PYTHONPATH=src uv run python -c "from grocery_w
 PYTHONPATH=src uv run python -c "from tests.notion_test_env import apply_notion_ci_env_for_live_tests; apply_notion_ci_env_for_live_tests(); from grocery_wizard.config import load_config; load_config(); print('notion ok')"
 ```
 
-Optional: `export GROCERY_WIZARD_NOTION_CI_LIVE=1` when a prod key exists in `.env` but smoke should hit CI data. See **`docs/notion-ci-setup.md`** and **`AGENTS.md`**.
+Optional: `export GROCERY_WIZARD_NOTION_CI_LIVE=1` when a prod key exists in `.env` but smoke should hit CI data. See **`docs/operations/notion-ci-setup.md`** and **`AGENTS.md`**.
 
 When preflight prints `notion ok`:
 

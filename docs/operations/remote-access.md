@@ -5,7 +5,7 @@ Grocery Wizard runs as a **Streamlit** app (`just grocery-ui`) with **Notion** a
 | Where the app runs | Who can use it |
 | --- | --- |
 | **Local** (`just grocery-ui`, default localhost) | Anyone who can reach the URL — **no in-app login** (typical: only you on the Mac). |
-| **Household deploy** (Streamlit Community Cloud, [#354](https://github.com/rachelgramlich/grocery-wizard/issues/354)) | **Google sign-in** + email allowlist (`GROCERY_WIZARD_REQUIRE_AUTH`, `GROCERY_WIZARD_AUTH_EMAIL_ALLOWLIST`) — see [household-deploy.md](../../../docs/household-deploy.md) and `access_gate.py`. |
+| **Household deploy** (Streamlit Community Cloud, [#354](https://github.com/rachelgramlich/grocery-wizard/issues/354)) | **Google sign-in** + email allowlist (`GROCERY_WIZARD_REQUIRE_AUTH`, `GROCERY_WIZARD_AUTH_EMAIL_ALLOWLIST`) — see [household-deploy.md](household-deploy.md) and `access_gate.py`. |
 
 This document compares ways to use the UI on a phone **outside home Wi‑Fi**, records a **household decision**, and points at remaining backlog work.
 
@@ -14,7 +14,7 @@ This document compares ways to use the UI on a phone **outside home Wi‑Fi**, r
 | Use case | Approach |
 | --- | --- |
 | **Default** | Run `just grocery-ui` on the Mac when it is on; use the **CLI** when the UI is not running. Optional: phone on **same Wi‑Fi** while the Mac is up (`just grocery-ui -- --server.address=0.0.0.0` if needed). |
-| **Phone on cellular / anytime** | **Household deploy** on Streamlit Community Cloud ([#354](https://github.com/rachelgramlich/grocery-wizard/issues/354)) — see [household-deploy.md](../../../docs/household-deploy.md). Not tunnel-to-Mac—the laptop is often off. |
+| **Phone on cellular / anytime** | **Household deploy** on Streamlit Community Cloud ([#354](https://github.com/rachelgramlich/grocery-wizard/issues/354)) — see [household-deploy.md](household-deploy.md). Not tunnel-to-Mac—the laptop is often off. |
 
 No committed Just recipes or config exist for tunnels or LAN bind; pass Streamlit flags yourself if you ever experiment locally.
 
@@ -65,7 +65,7 @@ Deploy the same app to a PaaS (Railway, Fly.io, Render, a small VPS, etc.) or **
 
 **Local:** use **local Streamlit + CLI** when the Mac is on; do **not** invest in tunnel-to-Mac automation in this repo.
 
-**Remote / phone on cellular:** use the **household deploy runbook** ([#354](https://github.com/rachelgramlich/grocery-wizard/issues/354), [docs/household-deploy.md](../../../docs/household-deploy.md)). Treat Cloudflare Tunnel-to-Mac as a personal ops note only, not a product path.
+**Remote / phone on cellular:** use the **household deploy runbook** ([#354](https://github.com/rachelgramlich/grocery-wizard/issues/354), [docs/operations/household-deploy.md](household-deploy.md)). Treat Cloudflare Tunnel-to-Mac as a personal ops note only, not a product path.
 
 **Defer:** Native app; Mac tunnel runbook (#137 — closed as not planned).
 
@@ -91,4 +91,4 @@ Deploy the same app to a PaaS (Railway, Fly.io, Render, a small VPS, etc.) or **
 1. With `.env` set and Mac on: `just grocery-ui` → `http://localhost:8501` → Notion-backed tabs load.
 2. If you need same-Wi‑Fi phone once: `just grocery-ui -- --server.address=0.0.0.0` and open the Mac’s LAN IP (no repo recipe required).
 
-For hosted auth smoke tests, see [household-deploy.md](../../../docs/household-deploy.md).
+For hosted auth smoke tests, see [household-deploy.md](household-deploy.md).

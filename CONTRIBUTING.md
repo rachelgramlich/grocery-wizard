@@ -2,7 +2,7 @@
 
 This document codifies the coding standards enforced in this repository. All changes should pass the automated checks described here before review.
 
-**Who uses this:** contributors and agents running **`/architecture-review`** (Phase A checklist). It is **not** loaded automatically by Cursor — agents are pointed here via that command and this file. **Enforcement** comes from Ruff/pre-commit/CI (`pyproject.toml`, `just check`), which should stay aligned with the rules described below.
+**Who uses this:** contributors and agents running **`/architecture-review`** (Phase A checklist). It is **not** loaded automatically by Cursor — agents are pointed here via that command and this file. **Enforcement** comes from Ruff/pre-commit/CI (`pyproject.toml`, `just check`), which should stay aligned with the rules described below. **Where files live:** [`docs/architecture/repo-layout.md`](docs/architecture/repo-layout.md) and [`docs/README.md`](docs/README.md).
 
 ---
 
@@ -312,11 +312,11 @@ with pytest.raises(MyError, match="message"):
 
 ### UI source paths
 
-Streamlit UI regression tests read concatenated sources via `tests/src/grocery_wizard/ui/ui_source.py`. Import `APP_PATH`, `UI_ROOT`, `ui_source()`, and `pantry_page_source()` from that module (or `from ui_source import …` inside `tests/src/grocery_wizard/ui/`). UI page/block/control IDs live in `docs/ui-map.md` and `src/grocery_wizard/ui/ids.py`. Do not duplicate `Path(...)/app.py` literals across test files.
+Streamlit UI regression tests read concatenated sources via `tests/src/grocery_wizard/ui/ui_source.py`. Import `APP_PATH`, `UI_ROOT`, `ui_source()`, and `pantry_page_source()` from that module (or `from ui_source import …` inside `tests/src/grocery_wizard/ui/`). UI page/block/control IDs live in `docs/ui/ui-map.md` and `src/grocery_wizard/ui/ids.py`. Do not duplicate `Path(...)/app.py` literals across test files.
 
 ### Grocery list quality
 
-Weekly export regressions use **golden weeks** in `tests/fixtures/golden_grocery_weeks/` — run `just golden-grocery`. List-bug fixes should add or extend a fixture, not only a one-line normalize test. Sign-off flow: **`docs/grocery-quality.md`** and the **`/grocery-quality-review`** slash command. CI runs golden weeks and `just smoke-ui` with mocked Notion; live read-only Notion integration runs on PRs to `main` when **`NOTION_CI_API_KEY`** and the four **`NOTION_CI_*_DATABASE_ID`** GitHub Actions secrets exist (skips cleanly otherwise) — see [#426](https://github.com/rachelgramlich/grocery-wizard/issues/426).
+Weekly export regressions use **golden weeks** in `tests/fixtures/golden_grocery_weeks/` — run `just golden-grocery`. List-bug fixes should add or extend a fixture, not only a one-line normalize test. Sign-off flow: **`docs/quality/grocery-quality.md`** and the **`/grocery-quality-review`** slash command. CI runs golden weeks and `just smoke-ui` with mocked Notion; live read-only Notion integration runs on PRs to `main` when **`NOTION_CI_API_KEY`** and the four **`NOTION_CI_*_DATABASE_ID`** GitHub Actions secrets exist (skips cleanly otherwise) — see [#426](https://github.com/rachelgramlich/grocery-wizard/issues/426).
 
 ### String literals in tests
 

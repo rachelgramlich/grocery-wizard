@@ -1,9 +1,9 @@
 # Load-time performance report
 
 **Scope:** Streamlit UI + Notion I/O (October 2026 load-time optimization pass).  
-**Related:** early research in [`docs/ui-performance-research.md`](ui-performance-research.md) ([#128](https://github.com/rachelgramlich/grocery-wizard/issues/128)); repeatable measurement in [`docs/performance-audit.md`](performance-audit.md) and `/performance-audit`.
+**Related:** early research in [`docs/ui/ui-performance-research.md`](../ui/ui-performance-research.md) ([#128](https://github.com/rachelgramlich/grocery-wizard/issues/128)); repeatable measurement in [`docs/quality/performance-audit.md`](performance-audit.md) and `/performance-audit`.
 
-This page is the **architecture-facing summary**: what was slow, what we changed, the **post-fix baseline**, and how to re-measure. It does not duplicate the harness playbook (flags, tap, adding scenarios) — that stays in [`docs/performance-audit.md`](performance-audit.md).
+This page is the **architecture-facing summary**: what was slow, what we changed, the **post-fix baseline**, and how to re-measure. It does not duplicate the harness playbook (flags, tap, adding scenarios) — that stays in [`docs/quality/performance-audit.md`](performance-audit.md).
 
 ---
 
@@ -15,9 +15,9 @@ Streamlit reruns the active page script on every interaction. Cost comes from:
 2. **Python CPU** — ingredient parsing (CRF), index builds, widget serialization.
 3. **DOM weight** — large `selectbox` option lists sent every rerun (including closed popovers unless gated).
 
-The app keeps hot data in `ui/notion_cache.py` (`st.cache_data` / `st.cache_resource`), runs **one** nav section per rerun (`st.segmented_control`), and splits weekly flow under `ui/views/weekly_plan/`. See the diagram and call-site table in [`docs/ui-performance-research.md`](ui-performance-research.md).
+The app keeps hot data in `ui/notion_cache.py` (`st.cache_data` / `st.cache_resource`), runs **one** nav section per rerun (`st.segmented_control`), and splits weekly flow under `ui/views/weekly_plan/`. See the diagram and call-site table in [`docs/ui/ui-performance-research.md`](../ui/ui-performance-research.md).
 
-Control IDs and pages follow [`docs/ui-map.md`](ui-map.md).
+Control IDs and pages follow [`docs/ui/ui-map.md`](../ui/ui-map.md).
 
 ---
 
@@ -37,7 +37,7 @@ Headless **AppTest** against live Notion: reads are real; writes are stubbed and
 
 ## Budgets (“fast enough”)
 
-Warm interaction budgets and the full flag glossary live in [`docs/performance-audit.md`](performance-audit.md#budgets-what-fast-enough-means). **Severity flags (warm wall time):** P0 ≥ 5s, P1 ≥ 2s, P2 ≥ 1s (estimated write cost included in **Warm est** when writes are stubbed).
+Warm interaction budgets and the full flag glossary live in [`docs/quality/performance-audit.md`](performance-audit.md#budgets-what-fast-enough-means). **Severity flags (warm wall time):** P0 ≥ 5s, P1 ≥ 2s, P2 ≥ 1s (estimated write cost included in **Warm est** when writes are stubbed).
 
 ---
 
@@ -56,7 +56,7 @@ Audit-driven fixes merged on `main` in October 2026. Before numbers come from th
 | — | Saved-plan picker re-queried recipes | extra recipe query on continue | reuses loaded recipe cache | [#417](https://github.com/rachelgramlich/grocery-wizard/pull/417) |
 | — | Refresh payload size | ~3.35s warm refresh (4fbc95b) | `filter_properties` on recipe queries; ~1.75s warm ([#420](https://github.com/rachelgramlich/grocery-wizard/pull/420)) | [#420](https://github.com/rachelgramlich/grocery-wizard/pull/420) |
 
-Harness and docs: [#405](https://github.com/rachelgramlich/grocery-wizard/pull/405) introduced `src/grocery_wizard/dev/perf_audit/`; [#416](https://github.com/rachelgramlich/grocery-wizard/pull/416) logs Notion caller stacks; [#418](https://github.com/rachelgramlich/grocery-wizard/pull/418) added this report and renamed user-facing **`performance-audit`** (see [`docs/performance-audit.md`](performance-audit.md)).
+Harness and docs: [#405](https://github.com/rachelgramlich/grocery-wizard/pull/405) introduced `src/grocery_wizard/dev/perf_audit/`; [#416](https://github.com/rachelgramlich/grocery-wizard/pull/416) logs Notion caller stacks; [#418](https://github.com/rachelgramlich/grocery-wizard/pull/418) added this report and renamed user-facing **`performance-audit`** (see [`docs/quality/performance-audit.md`](performance-audit.md)).
 
 ---
 
@@ -108,13 +108,13 @@ Update this section when a new full audit becomes the team baseline (paste the t
 | View ensure on every render | Memoize ensured URLs per process (`notion_views.py`) |
 | CPU on meal open | Background warm during meal-count step; memoized parse ([#406](https://github.com/rachelgramlich/grocery-wizard/issues/406) / [#420](https://github.com/rachelgramlich/grocery-wizard/pull/420)) |
 
-Full flag → playbook table: [`docs/performance-audit.md`](performance-audit.md#fix-playbook-flag---cause---pattern).
+Full flag → playbook table: [`docs/quality/performance-audit.md`](performance-audit.md#fix-playbook-flag---cause---pattern).
 
 ---
 
 ## See also
 
-- [`docs/performance-audit.md`](performance-audit.md) — harness, flags, scenarios, limitations  
-- [`docs/ui-performance-research.md`](ui-performance-research.md) — pre-audit research and phased roadmap  
-- [`docs/weekly-flow-ui.md`](weekly-flow-ui.md) — weekly UX and when Notion saves run  
+- [`docs/quality/performance-audit.md`](performance-audit.md) — harness, flags, scenarios, limitations  
+- [`docs/ui/ui-performance-research.md`](../ui/ui-performance-research.md) — pre-audit research and phased roadmap  
+- [`docs/ui/weekly-flow-ui.md`](../ui/weekly-flow-ui.md) — weekly UX and when Notion saves run  
 - [`AGENTS.md`](../AGENTS.md) — `/performance-audit` agent workflow  

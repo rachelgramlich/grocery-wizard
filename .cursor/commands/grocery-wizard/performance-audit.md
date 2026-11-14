@@ -5,7 +5,7 @@ description: Time every Streamlit control against live Notion, rank slowest-firs
 
 # Performance audit (measure → rank → research → issues → fix → re-measure)
 
-**Scope:** Find where Grocery Wizard is slow, with numbers, for **every** page and control. Rank slowest-first, explain root causes, research the best fix patterns, file grouped GitHub issues, and (when the user asks) fix them and prove the improvement with the same harness. This command is the repeatable loop; **`docs/performance-audit.md`** holds the how-to, flag glossary, budgets, and fix playbook.
+**Scope:** Find where Grocery Wizard is slow, with numbers, for **every** page and control. Rank slowest-first, explain root causes, research the best fix patterns, file grouped GitHub issues, and (when the user asks) fix them and prove the improvement with the same harness. This command is the repeatable loop; **`docs/quality/performance-audit.md`** holds the how-to, flag glossary, budgets, and fix playbook.
 
 **Chained workflow:** Issue filing follows **`.cursor/commands/shared/create-issues.md`** (bug/backlog rules, labels, `AGENTS.md` templates). Fixes follow **`.cursor/commands/shared/work-on-issue.md`**.
 
@@ -33,13 +33,13 @@ just performance-audit --profile --compare latest
    - First time ever: omit `--compare`. The run writes `.local/grocery_wizard/perf/perf-<stamp>.md|.json` and refreshes `latest.json` (the **baseline** for the next run).
    - Targeted re-run while fixing: `just performance-audit --only 'weekly.meals.*' --reps 3`.
    - See what exists: `just performance-audit --list` (`W` writes stubbed, `X` external/skipped).
-3. Read the **Ranked** table first, then **Findings by flag**, **Notion requests per interaction**, and **Hot spots**. Definitions of every flag are in `docs/performance-audit.md`.
+3. Read the **Ranked** table first, then **Findings by flag**, **Notion requests per interaction**, and **Hot spots**. Definitions of every flag are in `docs/quality/performance-audit.md`.
 
 ## Phase 2: Triage
 
 For each scenario at or above **P2** (>= 1s warm), and every scenario with a **CACHE_MISS_WARM**, **POST_WRITE_REFETCH**, **READ_FANOUT**, **PYTHON_HEAVY** or **HEAVY_DOM** flag:
 
-1. Name the **root cause** from the profile or Notion request list (file + function), not a guess. Use the playbook table in `docs/performance-audit.md` to map flag → likely cause → fix pattern.
+1. Name the **root cause** from the profile or Notion request list (file + function), not a guess. Use the playbook table in `docs/quality/performance-audit.md` to map flag → likely cause → fix pattern.
 2. Confirm with a one-off measurement when the cause is not obvious (time the function in isolation, count requests with `--only <id>`).
 3. Check **Coverage gaps**. Any button the audit saw but no scenario covers: add a scenario in `src/grocery_wizard/dev/perf_audit/scenarios.py` (see Phase 6).
 4. Group findings by **shared root cause + area** (one PR could fix them): e.g. "uncached household reads" covers pantry open, pantry search, recurring add.
@@ -73,7 +73,7 @@ Spend a few minutes improving the loop itself, then commit it:
 
 - New or changed controls → add/adjust scenarios (`covers=` must list the widget keys/labels).
 - A finding you could not explain with the report → add the missing signal to the harness (new flag, new counter).
-- A fix pattern you researched → add a row to the playbook in `docs/performance-audit.md`.
+- A fix pattern you researched → add a row to the playbook in `docs/quality/performance-audit.md`.
 - A threshold that produced noise or missed a real problem → adjust it in `report.py` and note why in the doc.
 
 ## Your task

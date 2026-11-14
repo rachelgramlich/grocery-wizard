@@ -73,7 +73,7 @@ Grocery Wizard is a package under `src/grocery_wizard/`. Folders group code by *
 | Folder | Key files | Responsibility |
 |--------|-----------|----------------|
 | `cli/` | `main.py`, `deprecated.py` | Removed-command hints only (product is Streamlit) |
-| `ui/` | `app.py`, `pages/`, `ids.py`, `notion_cache.py` | Streamlit app: segmented pages (see `docs/ui-map.md`) |
+| `ui/` | `app.py`, `views/`, `ids.py`, `notion_cache.py` | Streamlit app: segmented pages (see `docs/ui/ui-map.md`) |
 | `config/` | `__init__.py`, `store_aisles.txt` | Env settings and committed store walk order |
 | `integrations/` | `notion.py`, `notion_household.py`, `nyt_cooking.py` | Notion API; pantry/recurring/plans DBs; NYT sync |
 | `recipes/` | `scraper.py`, `classify.py`, `add_recipe.py` | Scrape URLs, classify metadata, save new recipes |
@@ -105,8 +105,11 @@ just grocery-ui
 grocery-wizard/
 ├── src/grocery_wizard/          # package (table above)
 ├── tests/src/grocery_wizard/    # tests (mirrors package folders)
+├── docs/                        # guides (see docs/README.md)
 └── .local/grocery_wizard/       # your week plan (not committed)
 ```
+
+Full tree: [`docs/architecture/repo-layout.md`](../../docs/architecture/repo-layout.md).
 
 ## Architecture notes
 
@@ -227,9 +230,9 @@ just grocery-ui
 
 Sections (segmented control): **Create weekly plan** (meal planning, ingredient review, grocery list), **Add recipe**, **Pantry & recurring**.
 
-**Phone / remote access:** see [docs/remote-access.md](docs/remote-access.md) (local Wi‑Fi by default; always-on host only if we implement #138).
+**Phone / remote access:** see [`docs/operations/remote-access.md`](../../docs/operations/remote-access.md) (local Wi‑Fi by default; always-on host only if we implement #138).
 
-UI performance research (Streamlit rerun model, Notion caching, phased roadmap): [`docs/ui-performance-research.md`](../../docs/ui-performance-research.md).
+UI performance research (Streamlit rerun model, Notion caching, phased roadmap): [`docs/ui/ui-performance-research.md`](../../docs/ui/ui-performance-research.md).
 
 ## Supported recipe sources
 

@@ -23,14 +23,14 @@ Add a new top-level Streamlit page so users can visually browse the recipe libra
   4. Within ties, **random** order (seeded per Apply so grid is stable until next Apply)
 - **Pagination:** Load-more pattern; **24** recipes per page by default.
 - **Missing images:** Placeholder tiles only when **Has image** is **unchecked** and Apply includes rows with an empty Files column.
-- **Images:** Read from a Notion **Files** property on the recipe database (configurable column name; document in `docs/ui-map.md`). Do not hotlink external URLs in the grid — display Notion-hosted file URLs from that column.
+- **Images:** Read from a Notion **Files** property on the recipe database (configurable column name; document in `docs/ui/ui-map.md`). Do not hotlink external URLs in the grid — display Notion-hosted file URLs from that column.
 - **V1 interaction:** Cards are **not** clickable (no navigation, no plan actions).
 - **V2 (out of scope for V1):** Tap/click adds recipe to **this week’s plan** — file a follow-up or section in this issue only as future work.
 
 **Engineering hygiene (per `AGENTS.md`):**
 
 - Register `PAGE_SLUG_BROWSE` (or equivalent) and page label in `src/grocery_wizard/ui/ids.py` and `src/grocery_wizard/ui/views/__init__.py`.
-- Update `docs/ui-map.md` with page, blocks (e.g. `browse.filters`, `browse.apply`, `browse.grid`, `browse.load_more`), and control IDs.
+- Update `docs/ui/ui-map.md` with page, blocks (e.g. `browse.filters`, `browse.apply`, `browse.grid`, `browse.load_more`), and control IDs.
 - Extend holistic UI smoke (`just smoke-ui`) to import/render the browse page.
 - Add perf-audit scenario in `src/grocery_wizard/dev/perf_audit/scenarios.py` covering Apply + load more.
 - Browser smoke optional when Notion CI preflight succeeds.

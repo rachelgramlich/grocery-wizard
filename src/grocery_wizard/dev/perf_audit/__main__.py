@@ -1,4 +1,4 @@
-"""CLI: ``just performance-audit`` (see ``docs/performance-audit.md``)."""
+"""CLI: ``just performance-audit`` (see ``docs/quality/performance-audit.md``)."""
 
 from __future__ import annotations
 
