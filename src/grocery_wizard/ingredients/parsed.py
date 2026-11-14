@@ -1779,10 +1779,7 @@ def _aggregate_garlic_amounts(amounts: list[str | None]) -> str | None:
         except (ValueError, ZeroDivisionError):
             has_bare_garlic = True
 
-    if clove_total > _GARLIC_CLOVE_HEAD_THRESHOLD:
-        clove_heads = 2.0
-    else:
-        clove_heads = 0.0
+    clove_heads = 2.0 if clove_total > _GARLIC_CLOVE_HEAD_THRESHOLD else 0.0
 
     total_heads = max(head_total, clove_heads)
     if total_heads > 0:

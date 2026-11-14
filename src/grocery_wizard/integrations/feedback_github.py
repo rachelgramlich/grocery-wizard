@@ -69,6 +69,16 @@ def _truncate_debug_log_json_in_text(
     return f"{prefix}…{_DEBUG_LOG_TRUNCATION_NOTE}{suffix}"
 
 
+def _feedback_issue_body_len(text: str, *, surface: str | None, timestamp: str) -> int:
+    return len(_issue_body_for_text(text=text, surface=surface, timestamp=timestamp))
+
+
+def _feedback_fits_github_body(text: str, *, surface: str | None, timestamp: str) -> bool:
+    return _feedback_issue_body_len(text, surface=surface, timestamp=timestamp) <= (
+        MAX_FEEDBACK_BODY_CHARS
+    )
+
+
 def fit_feedback_text_to_issue_body(
     text: str,
     *,
@@ -77,25 +87,20 @@ def fit_feedback_text_to_issue_body(
 ) -> str:
     """Shrink embedded debug JSON so the GitHub issue body stays under the cap."""
     trimmed = text.rstrip()
-    if len(_issue_body_for_text(text=trimmed, surface=surface, timestamp=timestamp)) <= (
-        MAX_FEEDBACK_BODY_CHARS
-    ):
+    if _feedback_fits_github_body(trimmed, surface=surface, timestamp=timestamp):
         return trimmed
 
     truncated = _truncate_debug_log_json_in_text(trimmed, surface=surface, timestamp=timestamp)
     if truncated is not None:
         trimmed = truncated
-        if len(_issue_body_for_text(text=trimmed, surface=surface, timestamp=timestamp)) <= (
-            MAX_FEEDBACK_BODY_CHARS
-        ):
+        if _feedback_fits_github_body(trimmed, surface=surface, timestamp=timestamp):
             return trimmed
 
     note_cap = MAX_FEEDBACK_BODY_CHARS - 200
     if len(trimmed) > note_cap:
         trimmed = trimmed[: note_cap - 1].rstrip() + "…"
     while (
-        len(_issue_body_for_text(text=trimmed, surface=surface, timestamp=timestamp))
-        > MAX_FEEDBACK_BODY_CHARS
+        not _feedback_fits_github_body(trimmed, surface=surface, timestamp=timestamp)
         and len(trimmed) > 1
     ):
         trimmed = trimmed[: max(1, len(trimmed) * 9 // 10)].rstrip() + "…"

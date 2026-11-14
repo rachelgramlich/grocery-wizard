@@ -1,5 +1,7 @@
 # Ingredients module architecture
 
+Repo path anchors (NLTK bundle, tests): [`docs/architecture/path-anchors.md`](../../docs/architecture/path-anchors.md).
+
 Grocery Wizard treats recipe ingredients in two separate pipelines. They share helpers under `_cleaning.py` and `_patterns.py`, but **call different entry points** depending on whether you are writing to Notion or building a shopping list.
 
 ## Storage pipeline (Notion `Ingredients` column) — **the only full parser**

@@ -60,6 +60,10 @@ select = [
     "EM",   # flake8-errmsg
     "FURB", # refurb (modernise patterns)
     "ANN",  # flake8-annotations
+    "PTH",  # use pathlib over os.path (repo is pathlib-native)
+    "LOG",  # logging: no redundant exc_info / implicit root
+    "ICN",  # unconventional import aliases (import pandas as pd)
+    "TID",  # tidy import restrictions (relative vs absolute)
 ]
 ignore = [
     "EM101",

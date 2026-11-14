@@ -65,14 +65,14 @@ def deprecated_exit_code(argv: list[str]) -> int | None:
         print_deprecated(argv[0], DEPRECATED_COMMANDS[argv[0]])
         return 1
 
-    if argv[0] == "dev":
-        if len(argv) >= 2 and argv[1] in DEPRECATED_DEV_COMMANDS:
-            print_deprecated(f"dev {argv[1]}", DEPRECATED_DEV_COMMANDS[argv[1]])
-        else:
-            print_deprecated("dev", _DEV_HINT)
-        return 1
+    if argv[0] != "dev":
+        return None
 
-    return None
+    if len(argv) >= 2 and argv[1] in DEPRECATED_DEV_COMMANDS:
+        print_deprecated(f"dev {argv[1]}", DEPRECATED_DEV_COMMANDS[argv[1]])
+    else:
+        print_deprecated("dev", _DEV_HINT)
+    return 1
 
 
 def print_deprecated(name: str, message: str) -> None:

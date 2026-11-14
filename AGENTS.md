@@ -151,4 +151,5 @@ When this chat **pushes** a branch that has (or will have) a PR:
 
 Optional: also subscribe to the PR (`subscribe_github_pr`) when you expect review comments. This is **per chat / per PR**, not a global GitHub setting.
 - **UI regression tests:** Import `APP_PATH`, `UI_ROOT`, `ui_source`, `pantry_page_source` from `tests/src/grocery_wizard/ui/ui_source.py` — do not copy Streamlit path literals into individual tests.
-- **Dedupe constants:** One owning module for repeated paths or regex (e.g. `APP_THEME_STATIC_CSS` in `theme.py`, unicode/qty patterns in `ingredients/_patterns.py`, shared CLI deprecation strings in `cli/` shims).
+- **Dedupe constants:** One owning module for repeated paths or regex — `src/grocery_wizard/paths.py` and `tests/repo_paths.py` for tree anchors; `APP_THEME_STATIC_CSS` in `theme.py`; unicode/qty patterns in `ingredients/_patterns.py`; shared CLI deprecation strings in `cli/` shims. Full map: `docs/architecture/path-anchors.md`.
+- **UI / AppTest helpers:** `tests/src/grocery_wizard/ui/ui_source.py` (`app_source`, `weekly_plan_source`, `apptest_from_app`, …).

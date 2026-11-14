@@ -7,16 +7,18 @@ import sys
 from pathlib import Path
 
 # Streamlit executes this file as a script; add repo root so `src.*` imports work.
-_REPO_ROOT = Path(__file__).resolve().parents[3]
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
+_BOOTSTRAP_REPO_ROOT = Path(__file__).resolve().parents[3]
+if str(_BOOTSTRAP_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_BOOTSTRAP_REPO_ROOT))
+
+from src.grocery_wizard.paths import REPO_ROOT
 
 # Streamlit only reloads modules under the script folder (`ui/`) or on PYTHONPATH. Without this,
 # a hot deploy reloads `ui/` but keeps stale `shopping/`, `integrations/`, ... in memory, which
 # causes errors like "unexpected keyword argument".
 _PYTHONPATH_ENTRIES = [p for p in os.environ.get("PYTHONPATH", "").split(os.pathsep) if p]
-if str(_REPO_ROOT) not in _PYTHONPATH_ENTRIES:
-    os.environ["PYTHONPATH"] = os.pathsep.join([*_PYTHONPATH_ENTRIES, str(_REPO_ROOT)])
+if str(REPO_ROOT) not in _PYTHONPATH_ENTRIES:
+    os.environ["PYTHONPATH"] = os.pathsep.join([*_PYTHONPATH_ENTRIES, str(REPO_ROOT)])
 
 import streamlit as st
 

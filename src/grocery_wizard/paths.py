@@ -4,6 +4,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
+__all__ = [
+    "BUNDLED_NLTK_DATA_DIR",
+    "GOLDEN_GROCERY_WEEKS_DIR",
+    "PACKAGE_ROOT",
+    "REPO_ROOT",
+    "UI_APP_PATH",
+]
+
 PACKAGE_ROOT = Path(__file__).resolve().parent
 REPO_ROOT = PACKAGE_ROOT.parent.parent
 UI_APP_PATH = PACKAGE_ROOT / "ui" / "app.py"

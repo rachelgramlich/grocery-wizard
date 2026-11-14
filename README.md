@@ -33,7 +33,7 @@ Full command reference, NYT credentials, meal-planning defaults, aisle config, a
 
 ### Documentation
 
-**Map:** [`docs/README.md`](docs/README.md) · **Repo tree:** [`docs/architecture/repo-layout.md`](docs/architecture/repo-layout.md)
+**Map:** [`docs/README.md`](docs/README.md) · **Repo tree:** [`docs/architecture/repo-layout.md`](docs/architecture/repo-layout.md) · **Path anchors:** [`docs/architecture/path-anchors.md`](docs/architecture/path-anchors.md)
 
 | Doc | Contents |
 |-----|----------|

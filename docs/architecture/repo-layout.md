@@ -37,6 +37,7 @@ Folders are grouped by **job**, not by layer. Dependency flow is mostly: `ui` �
 | `shopping/` | Grocery list build, weekly orchestration, pantry match/exclude |
 | `cli/` | Deprecated CLI shims (Streamlit is the product) |
 | `dev/` | Performance audit harness and other dev-only tooling |
+| `paths.py` | Repo/package/UI path anchors (no I/O) — see [`path-anchors.md`](path-anchors.md) |
 
 ```
 src/grocery_wizard/
@@ -68,7 +69,7 @@ tests/
     └── golden_grocery_weeks/  # exported list regressions (`just golden-grocery`)
 ```
 
-UI tests import paths from `tests/src/grocery_wizard/ui/ui_source.py` — do not hard-code `app.py` paths in individual tests.
+UI tests import paths from `tests/src/grocery_wizard/ui/ui_source.py` and `tests/repo_paths.py` — do not hard-code `app.py` or `parents[N]` paths. See [`path-anchors.md`](path-anchors.md) and [`tests/README.md`](../../tests/README.md).
 
 ## Documentation (`docs/`)
 

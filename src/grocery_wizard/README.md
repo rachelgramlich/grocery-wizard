@@ -103,8 +103,8 @@ just grocery-ui
 
 ```
 grocery-wizard/
-├── src/grocery_wizard/          # package (table above)
-├── tests/src/grocery_wizard/    # tests (mirrors package folders)
+├── src/grocery_wizard/          # package (table above); paths.py = repo anchors
+├── tests/src/grocery_wizard/    # tests (mirrors package folders; see tests/README.md)
 ├── docs/                        # guides (see docs/README.md)
 └── .local/grocery_wizard/       # your week plan (not committed)
 ```

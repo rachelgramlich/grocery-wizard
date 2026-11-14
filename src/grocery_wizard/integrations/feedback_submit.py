@@ -25,6 +25,6 @@ def submit_feedback(
         )
     issue = create_feedback_issue(text, repository=repo, token=token, surface=surface)
     number = issue.get("number")
-    if number is not None:
-        return f"github #{number}"
-    return "github"
+    if number is None:
+        return "github"
+    return f"github #{number}"
