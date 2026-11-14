@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from datetime import UTC, datetime
 
 from src.grocery_wizard.integrations.notion import Recipe
@@ -39,7 +40,12 @@ def _recipe(
     )
 
 
-def test_sort_browse_recipes_orders_by_counts_then_edited() -> None:
+def _browse_shuffle_rank(page_id: str, sort_seed: int) -> int:
+    digest = hashlib.md5(f"{page_id}:{sort_seed}".encode(), usedforsecurity=False)
+    return int.from_bytes(digest.digest()[:4], "big")
+
+
+def test_sort_browse_recipes_uses_session_seed_shuffle() -> None:
     recipes = [
         _recipe(
             "B", page_id="b", selection=2, rejection=1, edited=datetime(2025, 1, 2, tzinfo=UTC)
@@ -51,14 +57,27 @@ def test_sort_browse_recipes_orders_by_counts_then_edited() -> None:
             "C", page_id="c", selection=2, rejection=1, edited=datetime(2025, 1, 1, tzinfo=UTC)
         ),
     ]
+    sort_seed = 42
     ordered = sort_browse_recipes(
         recipes,
-        sort_seed=42,
+        sort_seed=sort_seed,
         selection_column="Selection count",
         rejections_column="Rejection count",
     )
     names = [recipe.name for recipe in ordered]
-    assert names == ["A", "C", "B"]
+    expected = sorted(
+        recipes,
+        key=lambda recipe: _browse_shuffle_rank(recipe.page_id, sort_seed),
+    )
+    assert names == [recipe.name for recipe in expected]
+
+    other_seed_order = sort_browse_recipes(
+        recipes,
+        sort_seed=sort_seed + 1,
+        selection_column="Selection count",
+        rejections_column="Rejection count",
+    )
+    assert [recipe.name for recipe in other_seed_order] != names
 
 
 def test_has_image_filter_excludes_placeholders() -> None:

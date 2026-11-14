@@ -198,6 +198,14 @@ def browse_recipes_for_applied(
     )
 
 
+def ensure_browse_sort_seed(session_state: dict[str, Any]) -> int:
+    """One random browse order per session (new seed when the session starts)."""
+    key = browse_session_sort_seed_key()
+    if key not in session_state:
+        session_state[key] = new_browse_sort_seed()
+    return int(session_state[key])
+
+
 def sort_browse_recipes(
     recipes: list[Recipe],
     *,
@@ -205,13 +213,13 @@ def sort_browse_recipes(
     selection_column: str | None,
     rejections_column: str | None,
 ) -> list[Recipe]:
-    """Selection ↑, rejection ↑, last_edited_time ↑, seeded random tie-break."""
+    """Seeded shuffle per session / Apply; stable until the sort seed changes."""
 
     def tie_break(recipe: Recipe) -> int:
         digest = hashlib.md5(f"{recipe.page_id}:{sort_seed}".encode(), usedforsecurity=False)
         return int.from_bytes(digest.digest()[:4], "big")
 
-    def sort_key(recipe: Recipe) -> tuple[int, int, datetime, int]:
+    def sort_key(recipe: Recipe) -> tuple[int, int, int, datetime]:
         selection = plan_selection_count(recipe, selection_column=selection_column)
         rejection = suggestion_rejection_count(recipe, rejections_column=rejections_column)
         edited = recipe.last_edited_time
@@ -219,7 +227,7 @@ def sort_browse_recipes(
             edited = datetime.min.replace(tzinfo=UTC)
         elif edited.tzinfo is None:
             edited = edited.replace(tzinfo=UTC)
-        return (selection, rejection, edited, tie_break(recipe))
+        return (tie_break(recipe), selection, rejection, edited)
 
     return sorted(recipes, key=sort_key)
 
