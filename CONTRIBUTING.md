@@ -58,7 +58,7 @@ Ruff is the single linting tool. The enabled rule categories are documented in `
 
 The repo is clean on `PTH`/`LOG`/`ICN`/`TID`, **`BLE`**, **`COM`** (except `COM812`, handled by the formatter), and **`TC`** (type-only imports in `TYPE_CHECKING` blocks). **`INP`** expects `__init__.py` in test package dirs. **`SLF`** is on for product code; tests and `weekly_plan_add` / `notion_cache` have narrow per-file ignores where cross-module `_` helpers are intentional.
 
-Promote function-level imports to module top when import-integrity and cold-start tests stay green. Keep lazy imports only for real cycles (`ui/app.py` Notion cache clears, `weekly_plan_add` ↔ `state`, `ingredients/normalize` ↔ `parsed`, NYT sync ↔ recipes). Use `integrations/notion/lazy_household.py` for household Notion DB construction.
+Promote function-level imports to module top when import-integrity and cold-start tests stay green. Keep lazy imports only for real cycles (`ui/app.py` Notion cache clears, `weekly_plan_add` ↔ `state`, NYT sync ↔ recipes). `ingredients/parsed` and `normalize` share `junk.py`, `line_strips.py`, and `ingredient_unicode.py` instead of importing each other at load. Use `integrations/notion/lazy_household.py` for household Notion DB construction.
 
 ### Ignored rules (with rationale)
 

@@ -153,3 +153,18 @@ def test_every_module_imports_in_a_fresh_interpreter() -> None:
 @pytest.mark.parametrize("module", [f"{INTERNAL_PREFIX}.ui.app"])
 def test_streamlit_entry_module_exposes_main(module: str) -> None:
     assert callable(importlib.import_module(module).main)
+
+
+def test_parsed_does_not_import_normalize_at_module_level() -> None:
+    """``format_ingredient_for_storage`` must not force a ``parsed`` ↔ ``normalize`` load cycle."""
+    path = SRC_PACKAGE_ROOT / "ingredients" / "parsed.py"
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    forbidden = f"{INTERNAL_PREFIX}.ingredients.normalize"
+    for node in tree.body:
+        if not isinstance(node, ast.ImportFrom):
+            continue
+        module = _resolve_from_module(node, path)
+        if module == forbidden:
+            pytest.fail(
+                f"{path.relative_to(REPO_ROOT)}:{node.lineno} imports normalize at module level"
+            )
