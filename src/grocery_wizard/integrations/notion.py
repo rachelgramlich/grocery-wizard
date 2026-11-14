@@ -9,6 +9,7 @@ __all__ = [
     "NotionFieldValues",
     "NotionRecipesDB",
     "Recipe",
+    "normalize_recipe_link",
     "normalize_recipe_name",
     "notion_page_url",
     "recipe_export_link",
@@ -18,6 +19,7 @@ __all__ = [
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from notion_client import Client
 
@@ -75,6 +77,26 @@ def normalize_recipe_name(name: str) -> str:
     return name.strip()
 
 
+_YOUTUBE_WATCH_HOSTS = frozenset({"youtube.com", "m.youtube.com"})
+
+
+def normalize_recipe_link(url: str) -> str:
+    """Canonical recipe URL for duplicate detection and Notion storage."""
+    stripped = url.strip()
+    if not stripped:
+        return ""
+    parsed = urlparse(stripped)
+    netloc = parsed.netloc.lower()
+    netloc = netloc.removeprefix("www.")
+    path = parsed.path.rstrip("/") or parsed.path
+    query = ""
+    if netloc in _YOUTUBE_WATCH_HOSTS and path == "/watch":
+        video_ids = parse_qs(parsed.query).get("v", [])
+        if video_ids:
+            query = urlencode({"v": video_ids[0]})
+    return urlunparse((parsed.scheme.lower(), netloc, path, "", query, ""))
+
+
 def recipe_lookup_key(name: str) -> str:
     """Case-insensitive match key — same normalization as meal pickers and Notion reads."""
     return normalize_recipe_name(name).lower()
@@ -100,18 +122,29 @@ def _normalize_recipe_field_values(
     schema: DatabaseSchema,
     field_values: NotionFieldValues,
 ) -> NotionFieldValues:
+    updated: NotionFieldValues | None = None
+
     name_column = schema.name_column
-    if name_column not in field_values:
-        return field_values
-    raw = field_values[name_column]
-    if not isinstance(raw, str):
-        return field_values
-    normalized = normalize_recipe_name(raw)
-    if normalized == raw:
-        return field_values
-    updated = dict(field_values)
-    updated[name_column] = normalized
-    return updated
+    if name_column in field_values:
+        raw = field_values[name_column]
+        if isinstance(raw, str):
+            normalized = normalize_recipe_name(raw)
+            if normalized != raw:
+                updated = dict(field_values)
+                updated[name_column] = normalized
+
+    link_column = schema.link_column
+    base = updated if updated is not None else field_values
+    if link_column in base:
+        raw_link = base[link_column]
+        if isinstance(raw_link, str):
+            normalized_link = normalize_recipe_link(raw_link)
+            if normalized_link != raw_link:
+                if updated is None:
+                    updated = dict(field_values)
+                updated[link_column] = normalized_link
+
+    return updated if updated is not None else field_values
 
 
 DEFAULT_NYT_SYNCED_COLUMN = "Synced from NYT recipe box"
@@ -336,12 +369,16 @@ class NotionRecipesDB:
         stripped = url.strip()
         if not stripped:
             return None
-        normalized = stripped.rstrip("/")
-        for candidate in (normalized, stripped):
+        canonical = normalize_recipe_link(stripped)
+        candidates: list[str] = []
+        for candidate in (canonical, stripped, stripped.rstrip("/")):
+            if candidate and candidate not in candidates:
+                candidates.append(candidate)
+        for candidate in candidates:
             recipe = self._find_recipe_by_link_equals(candidate)
             if recipe is not None:
                 return recipe
-        return None
+        return self._find_by_link_scan(stripped)
 
     def _find_recipe_by_link_equals(self, url: str) -> Recipe | None:
         link_column = self.schema.link_column
@@ -355,14 +392,19 @@ class NotionRecipesDB:
         )
         for page in response.get("results", []):
             recipe = self._page_to_recipe(page)
-            if recipe.link and recipe.link.rstrip("/") == url.rstrip("/"):
+            if recipe.link and self._recipe_links_match(recipe.link, url):
                 return recipe
         return None
 
+    def _recipe_links_match(self, stored: str, candidate: str) -> bool:
+        return normalize_recipe_link(stored) == normalize_recipe_link(candidate)
+
     def _find_by_link_scan(self, url: str) -> Recipe | None:
-        target = url.rstrip("/")
+        target = normalize_recipe_link(url)
+        if not target:
+            return None
         for recipe in self.query_recipes():
-            if recipe.link and recipe.link.rstrip("/") == target:
+            if recipe.link and normalize_recipe_link(recipe.link) == target:
                 return recipe
         return None
 
@@ -492,6 +534,44 @@ class NotionRecipesDB:
 
         for page_id, _before, after in changes:
             self.update_recipe(page_id, {name_column: after})
+        return changes, skips
+
+    def canonicalize_all_recipe_links(
+        self,
+        *,
+        dry_run: bool = True,
+    ) -> tuple[list[tuple[str, str, str, str]], list[str]]:
+        """Rewrite stored recipe links with :func:`normalize_recipe_link`.
+
+        Returns ``(updates, skips)`` where each update is
+        ``(page_id, recipe_name, before, after)``.
+        """
+        link_column = self.schema.link_column
+        key_owner: dict[str, str] = {}
+        changes: list[tuple[str, str, str, str]] = []
+        skips: list[str] = []
+
+        for recipe in self.query_recipes():
+            link = (recipe.link or "").strip()
+            if not link:
+                continue
+            after = normalize_recipe_link(link)
+            if link == after:
+                continue
+            owner = key_owner.get(after)
+            if owner is not None and owner != recipe.page_id:
+                skips.append(
+                    f"Skipped {recipe.name!r}: canonical link {after!r} already on another recipe."
+                )
+                continue
+            key_owner.setdefault(after, recipe.page_id)
+            changes.append((recipe.page_id, recipe.name, link, after))
+
+        if dry_run or not changes:
+            return changes, skips
+
+        for page_id, _name, _before, after in changes:
+            self.update_recipe(page_id, {link_column: after})
         return changes, skips
 
     def _page_to_recipe(self, page: dict[str, Any]) -> Recipe:

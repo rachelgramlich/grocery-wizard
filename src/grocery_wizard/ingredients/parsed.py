@@ -38,11 +38,10 @@ from src.grocery_wizard.ingredients._patterns import (
     _UNICODE_DASHES,
     _UNICODE_FRACTIONS,
 )
+from src.grocery_wizard.ingredients.nltk_bootstrap import ensure_nltk_data
 
 if TYPE_CHECKING:
     from ingredient_parser.dataclasses import IngredientAmount, ParsedIngredient
-
-_nltk_ready = False
 
 _VOLUME_UNITS = frozenset(
     {
@@ -412,21 +411,6 @@ def is_nyt_cooking_url(url: str | None) -> bool:
     return host.endswith("cooking.nytimes.com") or (
         "nytimes.com" in host and "/recipes/" in parsed.path
     )
-
-
-def _ensure_nltk_data() -> None:
-    global _nltk_ready  # noqa: PLW0603
-    if _nltk_ready:
-        return
-    try:
-        import nltk
-
-        nltk.data.find("taggers/averaged_perceptron_tagger_eng")
-    except LookupError:
-        import nltk
-
-        nltk.download("averaged_perceptron_tagger_eng", quiet=True)
-    _nltk_ready = True
 
 
 def _normalize_unicode_read(text: str) -> str:
@@ -1404,7 +1388,7 @@ def _build_storage_line(
 
 
 def _parse_with_library(line: str) -> ParsedIngredient:
-    _ensure_nltk_data()
+    ensure_nltk_data()
     return parse_ingredient(line, string_units=True, separate_names=False)
 
 

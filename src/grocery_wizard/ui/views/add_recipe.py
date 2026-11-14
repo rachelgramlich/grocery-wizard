@@ -187,6 +187,13 @@ def _render_recipe_review(
                     st.warning("Add ingredients before saving (one per line).")
                     return
 
+            link = cleaned.get(schema.link_column)
+            if isinstance(link, str) and link.strip():
+                existing = db.find_by_link(link)
+                if existing:
+                    st.warning(f"Already in Notion: {existing.name} ({existing.link})")
+                    return
+
             with loading_indicator("Saving recipe to Notion…"):
                 recipe = db.create_recipe(cleaned)
                 link_for_image = str(cleaned.get(schema.link_column) or preview.get("url") or "")

@@ -7,21 +7,10 @@ from typing import Any
 
 import pytest
 
+from src.grocery_wizard.ingredients.nltk_bootstrap import ensure_nltk_data
 from tests.repo_paths import FIXTURES_DIR
 
-
-def _ensure_nltk() -> None:
-    try:
-        import nltk
-
-        nltk.data.find("taggers/averaged_perceptron_tagger_eng")
-    except LookupError:
-        import nltk
-
-        nltk.download("averaged_perceptron_tagger_eng", quiet=True)
-
-
-_ensure_nltk()
+ensure_nltk_data()
 
 _NOTION_FIXTURE_PATH = FIXTURES_DIR / "notion_ingredient_cases.json"
 _PIPELINE_FIXTURE_PATH = FIXTURES_DIR / "ingredient_pipeline_cases.json"

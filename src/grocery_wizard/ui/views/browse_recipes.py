@@ -24,6 +24,7 @@ from src.grocery_wizard.ui.browse_logic import (
     clear_browse_widget_session_state,
     default_browse_applied,
     empty_browse_applied,
+    ensure_browse_sort_seed,
     new_browse_sort_seed,
     render_browse_card_box_html,
 )
@@ -240,7 +241,7 @@ def render_browse_recipes() -> None:
     applied = applied_from_dict(st.session_state.get(browse_session_applied_key()))
     assert applied is not None
 
-    sort_seed = int(st.session_state.get(browse_session_sort_seed_key(), 0))
+    sort_seed = ensure_browse_sort_seed(st.session_state)
     visible_limit = int(st.session_state.get(browse_session_visible_count_key(), BROWSE_PAGE_SIZE))
 
     display_recipes = browse_recipes_for_applied(

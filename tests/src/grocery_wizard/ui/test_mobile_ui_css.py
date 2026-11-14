@@ -29,6 +29,8 @@ _REQUIRED_MOBILE_CSS_FRAGMENTS = (
     "grid-template-columns: repeat(2, minmax(0, 1fr))",
     ".gw-browse-card-host",
     "calc(50% - 0.25rem)",
+    "p.gw-browse-tile-title.gw-browse-card-caption",
+    "font-weight: 600",
 )
 
 
