@@ -41,5 +41,6 @@ UI string-regression tests should use helpers in `tests/src/grocery_wizard/ui/ui
 | Pantry name / staple matching | `shopping/pantry_matching.py` (grocery exclusion + Notion pantry search; no file I/O) |
 | `UI_STATIC_DIR` / `RECIPES_DATA_DIR` | `paths.py` |
 | NYT → recipe stack (lazy) | `integrations/nyt_recipe_bridge.py` |
+| Ingredient unicode / prefix strips / junk | `ingredients/ingredient_unicode.py`, `line_strips.py`, `junk.py` (break `parsed` ↔ `normalize` cycle) |
 
 See also: [`repo-layout.md`](repo-layout.md), [`CONTRIBUTING.md`](../../CONTRIBUTING.md).

@@ -32,7 +32,6 @@ import re
 from functools import lru_cache
 
 from src.grocery_wizard.ingredients._cleaning import (
-    _is_junk_only,
     _looks_like_ingredient,
     _normalize_unicode_dashes,
     _normalize_unicode_fractions,
@@ -60,6 +59,8 @@ from src.grocery_wizard.ingredients._patterns import (
     _TORTILLA_PREFIXES,
     _UNITS,
 )
+from src.grocery_wizard.ingredients.ingredient_unicode import _normalize_unicode
+from src.grocery_wizard.ingredients.junk import is_junk_ingredient
 from src.grocery_wizard.ingredients.parsed import (  # noqa: F401
     _format_qty,
     aggregate_amounts,
@@ -665,9 +666,6 @@ def _segment_contributes_filter_key(part: str) -> bool:
 
 def _filter_line_segments(line: str) -> list[str]:
     """Split stored lines into parts that each contribute filter keys."""
-    # Lazy import: ``parsed`` imports ``normalize`` for junk checks (top-level would cycle).
-    from src.grocery_wizard.ingredients.parsed import _normalize_unicode
-
     text = _strip_filter_line_prefix(line)
     text = _normalize_unicode(_normalize_unicode_dashes(text))
     if not text:
@@ -827,14 +825,6 @@ def split_compound_ingredients(text: str) -> list[str]:
     return expanded
 
 
-def is_junk_ingredient(line: str) -> bool:
-    """Return True when a line is only prep instructions, not a grocery item."""
-    # Lazy import: ``parsed.format_*`` calls ``is_junk_ingredient`` at module load otherwise.
-    from src.grocery_wizard.ingredients.parsed import _strip_optional_prefix
-
-    return _is_junk_only(_strip_optional_prefix(line.strip()))
-
-
 def drop_junk_ingredient_lines(lines: list[str]) -> list[str]:
     """Remove prep-only instruction lines from scraped ingredient lists."""
     return [line for line in lines if line.strip() and not is_junk_ingredient(line)]
@@ -902,7 +892,6 @@ def normalize_ingredient(line: str) -> str:
     """Return the canonical grocery item name from a stored or raw ingredient line."""
     from src.grocery_wizard.ingredients.parsed import (
         _needs_display_prep_strip,
-        _normalize_unicode,
         _parse_with_library,
         _prefer_plural_form,
         _should_preserve_raw_line,

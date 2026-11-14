@@ -289,8 +289,8 @@ def _is_junk_only(text: str) -> bool:
 
 
 def _prepare_line_for_parsing(line: str) -> str:
-    from src.grocery_wizard.ingredients.parsed import (
-        _normalize_unicode,
+    from src.grocery_wizard.ingredients.ingredient_unicode import _normalize_unicode
+    from src.grocery_wizard.ingredients.line_strips import (
         _strip_leading_to_prefix,
         _strip_optional_prefix,
         _strip_or_prefix,

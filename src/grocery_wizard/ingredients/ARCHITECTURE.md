@@ -2,7 +2,9 @@
 
 Repo path anchors (NLTK bundle, tests): [`docs/architecture/path-anchors.md`](../../docs/architecture/path-anchors.md).
 
-Grocery Wizard treats recipe ingredients in two separate pipelines. They share helpers under `_cleaning.py` and `_patterns.py`, but **call different entry points** depending on whether you are writing to Notion or building a shopping list.
+Grocery Wizard treats recipe ingredients in two separate pipelines. They share helpers under `_cleaning.py`, `_patterns.py`, `line_strips.py`, `ingredient_unicode.py`, and `junk.py`, but **call different entry points** depending on whether you are writing to Notion or building a shopping list.
+
+`parsed.py` and `normalize.py` must not import each other at module load (one-way: `normalize` → `parsed` only). Shared junk checks and prefix strips live in the leaf modules above so `format_ingredient_for_storage` does not lazy-import `normalize`.
 
 ## Storage pipeline (Notion `Ingredients` column) — **the only full parser**
 

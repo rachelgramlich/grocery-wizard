@@ -28,15 +28,22 @@ from ingredient_parser import parse_ingredient
 
 from src.grocery_wizard.ingredients._cleaning import (
     mask_parenthetical_groups,
-    normalize_measurement_text,
     strip_parenthetical_groups,
 )
 from src.grocery_wizard.ingredients._patterns import (
     _AMOUNT_STR_RE,
     _BOXED_DRIED_FRUIT_NAME_RE,
     _LEADING_QTY_RE,
-    _UNICODE_DASHES,
-    _UNICODE_FRACTIONS,
+)
+from src.grocery_wizard.ingredients.ingredient_unicode import (
+    _normalize_unicode,
+    _normalize_unicode_for_storage,
+)
+from src.grocery_wizard.ingredients.junk import is_junk_ingredient
+from src.grocery_wizard.ingredients.line_strips import (
+    _strip_leading_to_prefix,
+    _strip_optional_prefix,
+    _strip_or_prefix,
 )
 from src.grocery_wizard.ingredients.nltk_bootstrap import ensure_nltk_data
 
@@ -411,34 +418,6 @@ def is_nyt_cooking_url(url: str | None) -> bool:
     return host.endswith("cooking.nytimes.com") or (
         "nytimes.com" in host and "/recipes/" in parsed.path
     )
-
-
-def _normalize_unicode_read(text: str) -> str:
-    """Unicode dashes/fractions only (grocery read / parse stored lines)."""
-    for dash in _UNICODE_DASHES:
-        text = text.replace(dash, "-")
-    for char, replacement in _UNICODE_FRACTIONS.items():
-        text = text.replace(char, replacement)
-    return text
-
-
-def _normalize_unicode_for_storage(text: str) -> str:
-    """Storage pipeline: also strip dual measures (``cup/240 grams``), packed, typos, etc."""
-    return normalize_measurement_text(_normalize_unicode_read(text))
-
-
-def _normalize_unicode(text: str) -> str:
-    return _normalize_unicode_read(text)
-
-
-def _strip_optional_prefix(text: str) -> str:
-    return re.sub(r"^optional:\s*", "", text, flags=re.IGNORECASE).strip()
-
-
-def _strip_or_prefix(text: str) -> str:
-    if text.lower().startswith("or "):
-        return text[3:].strip()
-    return text
 
 
 def _fraction_to_float(value: Fraction | str | float | int | None) -> float | None:
@@ -1407,14 +1386,8 @@ _LEADING_INCH_RE = re.compile(
 )
 
 
-def _strip_leading_to_prefix(text: str) -> str:
-    return re.sub(r"^to\s+(?=\d)", "", text, flags=re.IGNORECASE).strip()
-
-
 def format_ingredient_for_storage(line: str) -> str:
     """Parse a raw ingredient line into a cleaned ``{qty} {name}`` string for Notion."""
-    from src.grocery_wizard.ingredients.normalize import is_junk_ingredient
-
     if is_junk_ingredient(line):
         return ""
     text = _strip_leading_to_prefix(
