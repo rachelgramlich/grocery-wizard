@@ -36,7 +36,6 @@ Folders are grouped by **job**, not by layer. Dependency flow is mostly: `ui` �
 | `planning/` | Weekly meal suggestion and filters |
 | `shopping/` | Grocery list build, weekly orchestration, pantry match/exclude |
 | `cli/` | Deprecated CLI shims (Streamlit is the product) |
-| `lib/` | Small shared helpers (e.g. prompts) |
 | `dev/` | Performance audit harness and other dev-only tooling |
 
 ```
@@ -56,7 +55,6 @@ src/grocery_wizard/
 ├── shopping/
 ├── config/
 ├── cli/
-├── lib/
 └── dev/
     └── perf_audit/            # `just performance-audit`
 ```
@@ -101,8 +99,11 @@ Index: [`docs/README.md`](../README.md).
 | New Streamlit page | `src/grocery_wizard/ui/views/` (+ IDs in `ids.py`, doc in `docs/ui/ui-map.md`) |
 | Shared widget (multi-page) | `src/grocery_wizard/ui/components/` |
 | New Notion or NYT integration | `src/grocery_wizard/integrations/` |
+| In-app GitHub feedback | `src/grocery_wizard/integrations/feedback_*.py` |
 | New domain logic (no UI) | Matching folder under `recipes/`, `shopping/`, etc. |
 | Regression test | Mirror path under `tests/src/grocery_wizard/` |
 | Operator runbook | `docs/operations/` |
 | UI or UX spec | `docs/ui/` or `docs/issues/` until shipped |
 | Spike / prototype | `docs/poc/<name>/` until promoted into `src/` |
+
+**No `lib/` catch-all:** keep GitHub/Notion/Streamlit code in `integrations/` or `ui/`; CLI prompts live with their caller (e.g. `recipes/prompts.py`).

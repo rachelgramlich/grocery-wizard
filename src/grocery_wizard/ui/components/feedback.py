@@ -6,8 +6,8 @@ from typing import Any
 
 import streamlit as st
 
-from src.grocery_wizard.lib.feedback_list_log import enrich_feedback_with_list_debug_log
-from src.grocery_wizard.lib.feedback_submit import submit_feedback
+from src.grocery_wizard.integrations.feedback_list_log import enrich_feedback_with_list_debug_log
+from src.grocery_wizard.integrations.feedback_submit import submit_feedback
 from src.grocery_wizard.ui.ids import control_streamlit_key
 
 _FEEDBACK_NOTE_KEY = "gw_feedback_note"

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from src.grocery_wizard.config import Config, load_config
-from src.grocery_wizard.lib.feedback_github import create_feedback_issue
+from src.grocery_wizard.integrations.feedback_github import create_feedback_issue
 
 __all__ = ["submit_feedback"]
 

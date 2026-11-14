@@ -13,7 +13,7 @@ from src.grocery_wizard.integrations.notion import (
     NotionRecipesDB,
     normalize_recipe_name,
 )
-from src.grocery_wizard.lib.prompts import confirm_no_default
+from src.grocery_wizard.recipes.prompts import confirm_no_default
 from src.grocery_wizard.recipes.classify import classify_recipe
 from src.grocery_wizard.recipes.recipe_image_attach import attach_recipe_cover_image
 from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
