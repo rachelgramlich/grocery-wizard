@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from src.grocery_wizard.config import Config
-from src.grocery_wizard.integrations import notion_table
+from src.grocery_wizard.integrations.notion import table as notion_table
 from src.grocery_wizard.integrations.notion_table import (
     NOTION_TEXT_BLOCK_MAX_LEN,
     NotionDatabase,

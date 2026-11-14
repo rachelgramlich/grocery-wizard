@@ -96,8 +96,8 @@ def test_verify_recipe_query_smoke_unparseable_pages() -> None:
     assert any("readable name" in err for err in report.errors)
 
 
-@patch("src.grocery_wizard.integrations.notion_ci_schema.NotionRecipesDB")
-@patch("src.grocery_wizard.integrations.notion_ci_schema.NotionDatabase")
+@patch("src.grocery_wizard.integrations.notion.ci_schema.NotionRecipesDB")
+@patch("src.grocery_wizard.integrations.notion.ci_schema.NotionDatabase")
 def test_run_notion_ci_checks_happy_path(
     notion_database: MagicMock,
     notion_recipes_db: MagicMock,

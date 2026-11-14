@@ -30,7 +30,7 @@ Folders are grouped by **job**, not by layer. Dependency flow is mostly: `ui` �
 | --- | --- |
 | `ui/` | Streamlit entry (`app.py`), page bodies (`views/`), shared widgets (`components/`), stable IDs (`ids.py`), Notion cache |
 | `config/` | Environment loading, `store_aisles.txt`, committed defaults |
-| `integrations/` | Notion API, NYT Cooking, household auth helpers |
+| `integrations/` | Notion (`integrations/notion/`), NYT Cooking, household helpers |
 | `recipes/` | URL scrape, metadata classify, add recipe to Notion |
 | `ingredients/` | Parse, normalize, sync ingredient lines (see `ARCHITECTURE.md`) |
 | `planning/` | Weekly meal suggestion and filters |
@@ -49,6 +49,7 @@ src/grocery_wizard/
 │   │   └── weekly_plan/       # multi-step weekly + grocery flow
 │   └── static/                # CSS assets
 ├── integrations/
+│   └── notion/              # recipes DB, household DBs, table helpers
 ├── recipes/
 ├── ingredients/
 ├── planning/

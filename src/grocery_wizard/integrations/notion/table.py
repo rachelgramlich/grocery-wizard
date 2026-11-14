@@ -1,0 +1,221 @@
+"""Generic Notion database CRUD helpers (simple title + property rows)."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any
+
+from notion_client import Client
+
+from src.grocery_wizard.config import Config
+from src.grocery_wizard.integrations.notion.data_source import resolve_notion_data_source_id
+
+__all__ = [
+    "NOTION_TEXT_BLOCK_MAX_LEN",
+    "NotionDatabase",
+    "NotionPageRow",
+    "build_notion_rich_text",
+    "build_notion_text_property",
+    "clear_notion_database_metadata_cache",
+    "read_notion_property",
+    "write_notion_property",
+]
+
+# Notion API limit per rich_text / title text.content segment.
+NOTION_TEXT_BLOCK_MAX_LEN = 2000
+
+
+@dataclass(frozen=True)
+class NotionPageRow:
+    page_id: str
+    properties: dict[str, Any]
+
+
+# Resolving the data source and reading its schema costs two GETs per handle. Handles are built on
+# every pantry/grocery/plan action, so remember the answer per process (schemas rarely change).
+_METADATA_CACHE: dict[tuple[str, str], tuple[str, dict[str, str]]] = {}
+
+
+def clear_notion_database_metadata_cache() -> None:
+    """Forget remembered data-source ids and column types (after a manual refresh or in tests)."""
+    _METADATA_CACHE.clear()
+
+
+class NotionDatabase:
+    """Minimal wrapper around a Notion database / data source."""
+
+    def __init__(self, config: Config, database_id: str) -> None:
+        self._config = config
+        self._client = Client(auth=config.notion_api_key)
+        self._database_id = database_id
+        cache_key = (config.notion_api_key, database_id)
+        cached = _METADATA_CACHE.get(cache_key)
+        if cached is None:
+            data_source_id = self._resolve_data_source_id()
+            self._data_source_id = data_source_id
+            cached = (data_source_id, self._load_column_types())
+            _METADATA_CACHE[cache_key] = cached
+        self._data_source_id = cached[0]
+        self.column_types = dict(cached[1])
+
+    @property
+    def data_source_id(self) -> str:
+        return self._data_source_id
+
+    def _resolve_data_source_id(self) -> str:
+        configured_id = self._config.notion_data_source_id
+        if configured_id and self._database_id != self._config.notion_recipe_database_id:
+            # NOTION_DATA_SOURCE_ID is recipe-DB scoped; household DBs resolve per database_id.
+            configured_id = None
+        return resolve_notion_data_source_id(
+            self._client.databases,
+            self._client.data_sources,
+            self._database_id,
+            configured_id=configured_id,
+        )
+
+    def _load_column_types(self) -> dict[str, str]:
+        ds = self._client.data_sources.retrieve(data_source_id=self._data_source_id)
+        properties = ds.get("properties", {})
+        return {name: prop.get("type", "") for name, prop in properties.items()}
+
+    def query_all_pages(self, *, filter: dict[str, Any] | None = None) -> list[NotionPageRow]:
+        pages: list[dict[str, Any]] = []
+        cursor: str | None = None
+        while True:
+            query_kwargs: dict[str, Any] = {"data_source_id": self._data_source_id}
+            if filter is not None:
+                query_kwargs["filter"] = filter
+            if cursor is not None:
+                query_kwargs["start_cursor"] = cursor
+            response = self._client.data_sources.query(**query_kwargs)
+            pages.extend(response.get("results", []))
+            if not response.get("has_more"):
+                break
+            cursor = response.get("next_cursor")
+        return [
+            NotionPageRow(page_id=page["id"], properties=page.get("properties", {}))
+            for page in pages
+        ]
+
+    def create_page(self, properties: dict[str, Any]) -> NotionPageRow:
+        page = self._client.pages.create(
+            parent={
+                "type": "data_source_id",
+                "data_source_id": self._data_source_id,
+            },
+            properties=properties,
+        )
+        return NotionPageRow(page_id=page["id"], properties=page.get("properties", {}))
+
+    def update_page(self, page_id: str, properties: dict[str, Any]) -> NotionPageRow:
+        page = self._client.pages.update(page_id=page_id, properties=properties)
+        return NotionPageRow(page_id=page["id"], properties=page.get("properties", {}))
+
+    def archive_page(self, page_id: str) -> None:
+        self._client.pages.update(page_id=page_id, archived=True)
+
+    def property_payload(self, column_name: str, value: Any) -> dict[str, Any]:
+        column_type = self.column_types.get(column_name)
+        if column_type is None:
+            raise ValueError(f"Unknown column: {column_name}")
+        return {column_name: write_notion_property(column_type, value)}
+
+    def read(self, row: NotionPageRow, column_name: str) -> Any:
+        column_type = self.column_types.get(column_name, "")
+        return read_notion_property(row.properties.get(column_name), column_type)
+
+    def retrieve_data_source(self) -> dict[str, Any]:
+        return self._client.data_sources.retrieve(data_source_id=self._data_source_id)
+
+    def update_data_source_properties(self, properties: dict[str, Any]) -> dict[str, Any]:
+        updated = self._client.data_sources.update(
+            data_source_id=self._data_source_id,
+            properties=properties,
+        )
+        self.column_types = self._load_column_types()
+        return updated
+
+
+def read_notion_property(prop: dict[str, Any] | None, prop_type: str) -> Any:
+    if not prop:
+        return None
+    if prop_type == "title":
+        texts = prop.get("title", [])
+        return "".join(item.get("plain_text", "") for item in texts) or None
+    if prop_type == "rich_text":
+        texts = prop.get("rich_text", [])
+        return "".join(item.get("plain_text", "") for item in texts) or None
+    if prop_type == "text":
+        texts = prop.get("text", []) or prop.get("rich_text", [])
+        return "".join(item.get("plain_text", "") for item in texts) or None
+    if prop_type == "url":
+        return prop.get("url")
+    if prop_type == "select":
+        selected = prop.get("select")
+        return selected.get("name") if selected else None
+    if prop_type == "multi_select":
+        return [item.get("name", "") for item in prop.get("multi_select", [])]
+    if prop_type == "status":
+        status = prop.get("status")
+        return status.get("name") if status else None
+    if prop_type == "checkbox":
+        return prop.get("checkbox")
+    if prop_type == "number":
+        return prop.get("number")
+    if prop_type == "date":
+        date_val = prop.get("date")
+        if not date_val:
+            return None
+        return date_val.get("start")
+    if prop_type == "relation":
+        return [item.get("id") for item in prop.get("relation", []) if item.get("id")]
+    return None
+
+
+def _notion_text_segments(value: Any) -> list[dict[str, Any]]:
+    if value is None or value == "":
+        return []
+    content = str(value)
+    step = NOTION_TEXT_BLOCK_MAX_LEN
+    return [{"text": {"content": content[i : i + step]}} for i in range(0, len(content), step)]
+
+
+def build_notion_rich_text(value: Any) -> dict[str, list[dict[str, Any]]]:
+    """Build a Notion rich_text property payload (chunked at API segment limit)."""
+    return {"rich_text": _notion_text_segments(value)}
+
+
+def build_notion_text_property(value: Any) -> dict[str, list[dict[str, Any]]]:
+    """Legacy/database Text columns use the ``text`` key (Notion UI: Text)."""
+    return {"text": _notion_text_segments(value)}
+
+
+def write_notion_property(prop_type: str, value: Any) -> dict[str, Any]:
+    if prop_type == "title":
+        return {"title": [{"text": {"content": str(value)}}]}
+    if prop_type == "rich_text":
+        return build_notion_rich_text(value)
+    if prop_type == "text":
+        return build_notion_text_property(value)
+    if prop_type == "url":
+        return {"url": str(value) if value else None}
+    if prop_type == "select":
+        return {"select": {"name": str(value)}}
+    if prop_type == "multi_select":
+        values = value if isinstance(value, list) else [value]
+        return {"multi_select": [{"name": str(v)} for v in values]}
+    if prop_type == "status":
+        return {"status": {"name": str(value)}}
+    if prop_type == "checkbox":
+        return {"checkbox": bool(value)}
+    if prop_type == "number":
+        return {"number": float(value) if value is not None else None}
+    if prop_type == "date":
+        if value is None:
+            return {"date": None}
+        return {"date": {"start": str(value)}}
+    if prop_type == "relation":
+        ids = value if isinstance(value, list) else []
+        return {"relation": [{"id": page_id} for page_id in ids]}
+    raise ValueError(f"Unsupported property type: {prop_type}")
