@@ -17,9 +17,9 @@ from src.grocery_wizard.recipes.add_recipe import (
     preview_recipe_urls,
 )
 from src.grocery_wizard.recipes.recipe_image_attach import attach_recipe_cover_image
+from src.grocery_wizard.ui.components.loading import loading_indicator
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.ids import BLOCK_ADD_MANUAL, BLOCK_ADD_NYT, BLOCK_ADD_URL
-from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.notion_cache import invalidate_recipes_after_write
 from src.grocery_wizard.ui.nyt_sync import render_nyt_sync_controls
 

@@ -28,7 +28,7 @@ def test_submit_feedback_appends_latest_list_debug_log(monkeypatch: pytest.Monke
         captured["surface"] = surface or ""
         return "issue #1"
 
-    monkeypatch.setattr("src.grocery_wizard.ui.feedback.submit_feedback", fake_submit)
+    monkeypatch.setattr("src.grocery_wizard.ui.components.feedback.submit_feedback", fake_submit)
 
     import streamlit as st
 
@@ -51,7 +51,7 @@ def test_submit_feedback_appends_latest_list_debug_log(monkeypatch: pytest.Monke
     }
     st.session_state["gw_feedback_note"] = "Milk showed up twice"
 
-    from src.grocery_wizard.ui.feedback import _submit_feedback
+    from src.grocery_wizard.ui.components.feedback import _submit_feedback
 
     _submit_feedback(surface="weekly")
     assert "https://www.notion.so/testlogpage" in captured["text"]
@@ -63,12 +63,12 @@ def test_feedback_submit_files_github_issue() -> None:
     from streamlit.testing.v1 import AppTest
 
     def _app() -> None:
-        from src.grocery_wizard.ui.feedback import render_feedback_controls
+        from src.grocery_wizard.ui.components.feedback import render_feedback_controls
 
         render_feedback_controls(surface="weekly")
 
     with patch(
-        "src.grocery_wizard.ui.feedback.submit_feedback",
+        "src.grocery_wizard.ui.components.feedback.submit_feedback",
         return_value="github #42",
     ):
         at = AppTest.from_function(_app, default_timeout=60)
@@ -90,5 +90,5 @@ def test_feedback_control_placed_before_page_picker() -> None:
     picker_idx = main_body.index("_render_page_picker(")
     assert header_idx < picker_idx
 
-    feedback_source = (UI_ROOT / "feedback.py").read_text(encoding="utf-8")
+    feedback_source = (UI_ROOT / "components" / "feedback.py").read_text(encoding="utf-8")
     assert 'st.popover(\n        "Send feedback"' in feedback_source

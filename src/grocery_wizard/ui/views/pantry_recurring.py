@@ -26,7 +26,7 @@ from src.grocery_wizard.shopping.store_aisles import (
     load_store_aisles,
     resolve_pantry_aisle_id,
 )
-from src.grocery_wizard.ui.loading import loading_indicator
+from src.grocery_wizard.ui.components.loading import loading_indicator
 from src.grocery_wizard.ui.notion_cache import (
     cached_pantry_entries,
     cached_recurring_items,

@@ -8,7 +8,7 @@ from typing import Final
 
 import streamlit as st
 
-_STATIC_DIR: Final[Path] = Path(__file__).resolve().parent / "static"
+_STATIC_DIR: Final[Path] = Path(__file__).resolve().parent.parent / "static"
 DROPDOWN_DISMISS_JS: Final[Path] = _STATIC_DIR / "dropdown_dismiss.js"
 
 

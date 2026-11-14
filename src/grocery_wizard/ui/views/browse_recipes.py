@@ -28,6 +28,7 @@ from src.grocery_wizard.ui.browse_logic import (
     new_browse_sort_seed,
     render_browse_card_box_html,
 )
+from src.grocery_wizard.ui.components.loading import loading_indicator
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.ids import (
     CONTROL_BROWSE_APPLY,
@@ -44,7 +45,6 @@ from src.grocery_wizard.ui.ingredient_index_warm import (
     schedule_ingredient_index_warm,
     warmed_ingredient_index_if_ready,
 )
-from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.meal_plan_filters import render_meal_plan_filters
 from src.grocery_wizard.ui.notion_cache import cached_query_recipes, notion_cache_generation
 from src.grocery_wizard.ui.weekly_plan_add import (

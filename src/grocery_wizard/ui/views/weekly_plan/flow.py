@@ -5,9 +5,9 @@ from __future__ import annotations
 import streamlit as st
 
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
+from src.grocery_wizard.ui.components.loading import clear_global_loading_banner, loading_indicator
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.ingredient_index_warm import schedule_ingredient_index_warm
-from src.grocery_wizard.ui.loading import clear_global_loading_banner, loading_indicator
 from src.grocery_wizard.ui.notion_cache import cached_query_recipes, notion_cache_generation
 from src.grocery_wizard.ui.views.weekly_plan.grocery_list_ui import render_grocery_list_section
 from src.grocery_wizard.ui.views.weekly_plan.plan_entry import (

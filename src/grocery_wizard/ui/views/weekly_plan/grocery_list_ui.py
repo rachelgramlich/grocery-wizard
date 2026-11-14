@@ -14,6 +14,7 @@ from src.grocery_wizard.shopping.grocery_list import (
     format_item_provenance,
     format_meals_copy_text,
 )
+from src.grocery_wizard.ui.components.loading import loading_indicator
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.grocery_flow import (
     default_pre_build_grocery_options,
@@ -36,7 +37,6 @@ from src.grocery_wizard.ui.ids import (
     CONTROL_WEEKLY_GROCERY_RESULT_VIEW_DEBUG_LOG_NOTION,
     control_streamlit_key,
 )
-from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.notion_cache import cached_query_recipes
 from src.grocery_wizard.ui.views.weekly_plan.recipe_review import (
     _render_per_recipe_review,

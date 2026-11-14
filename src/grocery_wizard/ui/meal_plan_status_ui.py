@@ -14,7 +14,7 @@ from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
     meal_plan_status,
     meal_plan_status_column_name,
 )
-from src.grocery_wizard.ui.loading import loading_indicator
+from src.grocery_wizard.ui.components.loading import loading_indicator
 from src.grocery_wizard.ui.notion_cache import invalidate_recipes_after_write
 
 

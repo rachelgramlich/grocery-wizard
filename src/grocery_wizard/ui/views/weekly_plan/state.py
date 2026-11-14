@@ -20,6 +20,7 @@ from src.grocery_wizard.planning.saved_weekly_plans import (
     saved_plan_week_start,
 )
 from src.grocery_wizard.recipes.recipe_meal_plan_stats import sync_plan_selection_stats
+from src.grocery_wizard.ui.components.loading import loading_indicator
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.grocery_flow import (
     GROCERY_STASH_NOTION_GENERATION_KEY,
@@ -37,7 +38,6 @@ from src.grocery_wizard.ui.grocery_flow import (
     session_pantry_extra as _session_pantry_extra_state,
 )
 from src.grocery_wizard.ui.grocery_helpers import parse_line_items_text
-from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.notion_cache import (
     cached_saved_plans,
     invalidate_recipes_after_write,
