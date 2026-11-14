@@ -4,7 +4,7 @@ Start here when you need a guide, UI reference, or quality sign-off doc. **Code*
 
 | Folder | What belongs here |
 | --- | --- |
-| [`architecture/`](architecture/repo-layout.md) | Repo layout, history notes (not package internals) |
+| [`architecture/`](architecture/repo-layout.md) | Repo layout, path anchors, history notes (not package internals) |
 | [`operations/`](operations/household-deploy.md) | Deploy, auth, Notion CI secrets, phone / remote access |
 | [`ui/`](ui/ui-map.md) | Streamlit pages, block IDs, weekly flow, UI perf research |
 | [`quality/`](quality/grocery-quality.md) | Grocery list golden weeks, performance reports and harness |
@@ -18,6 +18,7 @@ Start here when you need a guide, UI reference, or quality sign-off doc. **Code*
 | Use the app day to day | [`src/grocery_wizard/README.md`](../src/grocery_wizard/README.md) |
 | Wire Notion databases | [`src/grocery_wizard/config/README.md`](../src/grocery_wizard/config/README.md) |
 | Understand the whole repo tree | [`architecture/repo-layout.md`](architecture/repo-layout.md) |
+| Path constants (src + tests) | [`architecture/path-anchors.md`](architecture/path-anchors.md) |
 | Ship to Streamlit Cloud | [`operations/household-deploy.md`](operations/household-deploy.md) |
 | Name a UI control in an issue | [`ui/ui-map.md`](ui/ui-map.md) |
 | Sign off grocery list output | [`quality/grocery-quality.md`](quality/grocery-quality.md) |

@@ -215,7 +215,20 @@ from src.grocery_wizard.recipes.scraper import looks_fragmented
 
 ---
 
+## Path anchors
+
+- **Package and repo roots:** `src/grocery_wizard/paths.py` (`REPO_ROOT`, `PACKAGE_ROOT`, `UI_APP_PATH`, …).
+- **Tests:** `tests/repo_paths.py` re-exports those anchors and adds `package_module_source()`; UI tests use `tests/src/grocery_wizard/ui/ui_source.py`.
+
+Do not add new `Path(__file__).parents[N]` literals in product or test code unless bootstrapping `ui/app.py` before `sys.path` is ready. Document new shared constants in [`docs/architecture/path-anchors.md`](docs/architecture/path-anchors.md).
+
+---
+
 ## Control Flow
+
+### Guard clauses
+
+Prefer early returns so the happy path stays unindented. Fold `if outer: if inner:` into sequential guards when both branches return or stop.
 
 ### Return conditions directly
 

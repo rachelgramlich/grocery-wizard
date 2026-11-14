@@ -122,9 +122,9 @@ def load_credentials() -> NytCredentials | None:
     cookie = os.getenv("NYT_S_COOKIE", "").strip()
     regi_id = os.getenv("NYT_REGI_ID", "").strip() or os.getenv("NYT_USER_ID", "").strip()
 
-    if cookie and regi_id:
-        return NytCredentials(nyt_s_cookie=cookie, regi_id=regi_id)
-    return None
+    if not cookie or not regi_id:
+        return None
+    return NytCredentials(nyt_s_cookie=cookie, regi_id=regi_id)
 
 
 def credentials_status() -> dict[str, Any]:
