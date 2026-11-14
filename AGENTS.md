@@ -104,11 +104,29 @@ Skills (committed): `.cursor/skills/tidy-first/SKILL.md` (mirrored under `.agent
 ### Backlog ship checklist (enhancements)
 
 1. PR title: `#<issue-number>: <issue title>` (truncate title if needed for GitHub limits)
-2. PR template **Manual verification** + `Closes #<issue-number>`
+2. PR body: full **`.github/pull_request_template.md`** (Summary, Test plan, Manual verification) plus an **`## Issue`** section with **`Closes #<issue-number>`** — see **Close issues via PR body** below
 3. Create PRs **ready for review** (not draft) unless the user asks for a draft.
 4. Manual UAT: non-UI → agent runs checks and posts sign-off via **`gh pr comment`** (see `/work-on-issue`); UI → run **`just smoke-ui`** before PR ready, and Cloud agents **must** browser-smoke Streamlit when Notion preflight succeeds (**prod** `NOTION_*` in `.env` **or** Cloud **`NOTION_CI_*`** secrets per block above), then user confirms in chat (default) before sign-off. **Always** state **`Holistic smoke: …`** and **`Browser smoke: …`** in chat and the PR — details in `/work-on-issue` and **`/app-smoke`**
 
-Do not close backlog issues by hand — merge with `Closes #N`.
+Do not close backlog issues by hand — merge with `Closes #N` in the **PR description** (not comments).
+
+### `/work-on-issue` (ship summary)
+
+Full steps: **`.cursor/commands/shared/work-on-issue.md`** (or say **`/work-on-issue N`** on Cloud). **`AGENTS.md` is canonical** for labels, verify, UAT, and PR body rules below.
+
+1. **`gh issue view N`** → branch `cursor/<slug>-<suffix>` off `main` (slug from title; suffix per your Cloud/desktop rules).
+2. Implement; run **`just check`** (and issue-specific checks) **before** opening the PR.
+3. Review branch diff vs `main`; fix and re-run checks.
+4. **Ship:** PR title `#N: <issue title>`; body = **`.github/pull_request_template.md`** filled out + **`## Issue`** / **`Closes #N`** when the PR finishes that issue (`fix: …` title OK for bugs).
+5. **UAT:** non-UI vs UI rules in **Manual verification** above; always **`Holistic smoke:`** / **`Browser smoke:`** in chat and PR.
+6. Ready for review (not draft) unless the user asks otherwise.
+
+#### `Closes #N` (GitHub + Cloud)
+
+- GitHub closes an issue only when the **merged PR description** contains **`Closes #N`** / **`Fixes #N`** / **`Resolves #N`**. **Title, commits, and comments do not count** (e.g. #490 stayed open after #495 because the body had no `Closes` line).
+- **`/work-on-issue`:** require **`Closes #N`** when acceptance criteria are met; use **`Part of #N`** or omit only for a deliberate slice. File follow-ups for gaps; close the parent when the issue itself is done.
+- **`ManagePullRequest`:** `create_pr` body must include template + **`Closes #N`**; **`update_pr`** must **append** status notes and **not** remove the **`## Issue`** block. Pre-merge: `gh pr view --json closingIssuesReferences`.
+- Already merged without `Closes #N`: tell the user; owner may close **completed** manually.
 
 ## User workflow
 
