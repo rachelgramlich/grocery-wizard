@@ -104,11 +104,29 @@ Skills (committed): `.cursor/skills/tidy-first/SKILL.md` (mirrored under `.agent
 ### Backlog ship checklist (enhancements)
 
 1. PR title: `#<issue-number>: <issue title>` (truncate title if needed for GitHub limits)
-2. PR template **Manual verification** + `Closes #<issue-number>`
+2. PR body: full **`.github/pull_request_template.md`** (Summary, Test plan, Manual verification) plus an **`## Issue`** section with **`Closes #<issue-number>`** — see **Close issues via PR body** below
 3. Create PRs **ready for review** (not draft) unless the user asks for a draft.
 4. Manual UAT: non-UI → agent runs checks and posts sign-off via **`gh pr comment`** (see `/work-on-issue`); UI → run **`just smoke-ui`** before PR ready, and Cloud agents **must** browser-smoke Streamlit when Notion preflight succeeds (**prod** `NOTION_*` in `.env` **or** Cloud **`NOTION_CI_*`** secrets per block above), then user confirms in chat (default) before sign-off. **Always** state **`Holistic smoke: …`** and **`Browser smoke: …`** in chat and the PR — details in `/work-on-issue` and **`/app-smoke`**
 
-Do not close backlog issues by hand — merge with `Closes #N`.
+Do not close backlog issues by hand — merge with `Closes #N` in the **PR description** (not comments).
+
+#### Close issues via PR body (GitHub + Cloud agents)
+
+GitHub auto-closes an issue only when the **merged pull request description** contains a keyword line such as **`Closes #490`**, **`Fixes #490`**, or **`Resolves #490`**. The **PR title** (e.g. `#490: …`), commit messages, and issue comments do **not** close the issue.
+
+**What went wrong on #490:** PR #495 shipped the feature and used a `#490:` title, but the PR body was later replaced with a short prod backfill status note and never included `Closes #490`, so the issue stayed open after merge.
+
+**Agents (all surfaces)**
+
+- On **`/work-on-issue N`**, **`Closes #N`** in the PR body is **required** when the PR completes that issue. Use **`Part of #N`** or omit only when the PR is a deliberate slice and the issue stays open.
+- File **follow-up** issues for known gaps (manual backfill rows, etc.); do not leave the parent issue open just because follow-ups exist — close the parent when the acceptance criteria in the issue are met.
+- Before merge (or before asking the user to merge), confirm the PR shows the issue under **Development** / linked issues, e.g. `gh pr view --json closingIssuesReferences`.
+
+**Cursor Cloud Agents (`ManagePullRequest`)**
+
+- **`create_pr`:** Pass a `body` that includes the repo PR template **and** `## Issue` / `Closes #N` (same text GitHub needs). Do not rely on the title alone.
+- **`update_pr`:** Do not replace the body with status-only text (prod runs, smoke notes, etc.). **Append** updates under **Summary** or **Manual verification** and **keep** the `## Issue` / `Closes #N` block unchanged.
+- If a PR already merged without `Closes #N`: say so in chat; the owner may close the issue as **completed** manually, or a tiny follow-up PR may add `Closes #N` only if GitHub still accepts it on an open issue (usually unnecessary once merged — manual close is fine).
 
 ## User workflow
 
