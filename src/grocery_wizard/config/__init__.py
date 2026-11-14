@@ -32,7 +32,7 @@ _STREAMLIT_SECRETS_SYMLINK = _LEGACY_STREAMLIT_SECRETS_PATH
 _DEFAULT_GITHUB_FEEDBACK_REPOSITORY = "rachelgramlich/grocery-wizard"
 _DEPLOY_FEEDBACK_TOKEN_LOG = (
     "GITHUB_FEEDBACK_TOKEN is unset; Send feedback will fail until Streamlit Cloud "
-    "Secrets are updated (see docs/household-deploy.md)."
+    "Secrets are updated (see docs/operations/household-deploy.md)."
 )
 
 

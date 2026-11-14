@@ -11,13 +11,13 @@
 | **`/create-issues-from-backlog`** | Alias → **`/triage-feedback-inbox`** (`.cursor/commands/grocery-wizard/create-issues-from-backlog.md`) |
 | **`/app-review`** | Hands-on Streamlit UAT → findings → optional grouped **`gh`** issues (see `.cursor/commands/grocery-wizard/app-review.md`) |
 | **`/app-smoke`** | Holistic headless + browser sign-off before UI work is done (`.cursor/commands/grocery-wizard/app-smoke.md`) |
-| **`/grocery-quality-review`** | Weekly grocery list sign-off: golden weeks + smoke (`.cursor/commands/grocery-wizard/grocery-quality-review.md`, **`docs/grocery-quality.md`**) |
+| **`/grocery-quality-review`** | Weekly grocery list sign-off: golden weeks + smoke (`.cursor/commands/grocery-wizard/grocery-quality-review.md`, **`docs/quality/grocery-quality.md`**) |
 | **`/architecture-review`** | Standards audit + optional **`audit`** issues (shared: `.cursor/commands/shared/architecture-review.md`) |
 | **`/list-enhancements`** | Open backlog (`grocery-wizard` label) via **`gh`** (`.cursor/commands/grocery-wizard/list-enhancements.md`) |
 | **`/work-on-issue N`** | Implement one issue — area → files and UAT rules **below** + shared `.cursor/commands/shared/work-on-issue.md` |
 | **`/tidy-project`** | Repo-wide structure-only tidy PR(s) (shared: `.cursor/commands/shared/tidy-project.md`) |
 | **`/create-command`** | Add slash command or skill without name collisions (shared: `.cursor/commands/shared/create-command.md`) |
-| **`/performance-audit`** | Time every control (`just performance-audit`), rank slowest-first, research fixes, file grouped issues, fix and re-measure (`.cursor/commands/grocery-wizard/performance-audit.md`, harness: `docs/performance-audit.md`, report: `docs/performance.md`) |
+| **`/performance-audit`** | Time every control (`just performance-audit`), rank slowest-first, research fixes, file grouped issues, fix and re-measure (`.cursor/commands/grocery-wizard/performance-audit.md`, harness: `docs/quality/performance-audit.md`, report: `docs/quality/performance.md`) |
 | **`/sync-store-aisles`** | Notion → `store_aisles.txt` keyword sync (`.cursor/commands/grocery-wizard/sync-store-aisles.md`) |
 | *(automatic)* **`tidy-first` skill** | While implementing work: tidy inline, **S** vs **B** in separate commits; may file follow-up issues for **B** spotted during tidy (not in **S** commits) |
 
@@ -33,7 +33,7 @@
 | **List backlog** | **`/list-enhancements`** or `gh issue list --label grocery-wizard --state open` |
 | **Verify** | `just check` (includes holistic UI smoke tests) |
 | **Holistic UI smoke** | `just smoke-ui` (headless AppTest; mocked Notion in CI) |
-| **Grocery list quality** | `just golden-grocery` + **`docs/grocery-quality.md`** (no Notion secrets in CI) |
+| **Grocery list quality** | `just golden-grocery` + **`docs/quality/grocery-quality.md`** (no Notion secrets in CI) |
 
 **Enhancement create example:** `gh issue create … --label grocery-wizard --label gw-area-ui` with template sections **Description**, **Expected behavior & manual test hints**, **Area**.
 
@@ -41,7 +41,7 @@
 
 | Area | Files |
 | --- | --- |
-| **ui** | `src/grocery_wizard/ui/app.py`, `docs/ui-map.md`, `src/grocery_wizard/ui/ids.py`, `src/grocery_wizard/ui/views/` |
+| **ui** | `src/grocery_wizard/ui/app.py`, `docs/ui/ui-map.md`, `src/grocery_wizard/ui/ids.py`, `src/grocery_wizard/ui/views/` |
 | **parser** | `src/grocery_wizard/ingredients/normalize.py`, `src/grocery_wizard/ingredients/_patterns.py` |
 | **shopping** | `src/grocery_wizard/shopping/grocery_list.py`, `src/grocery_wizard/shopping/pantry.py` |
 | **recipes** | `src/grocery_wizard/recipes/add_recipe.py`, `src/grocery_wizard/recipes/scraper.py` |
@@ -50,7 +50,7 @@
 
 Area from label `gw-area-<name>` or `### Area` in the issue body.
 
-**UI vocabulary:** **page** / **block** / **control** and dot IDs (`weekly.grocery_pre_build`, `global.global.refresh`, …) — see **`docs/ui-map.md`**. Weekly tab rail, collapse, and happy path: **`docs/weekly-flow-ui.md`**. Say **store aisle** for aisle grouping (not “section”).
+**UI vocabulary:** **page** / **block** / **control** and dot IDs (`weekly.grocery_pre_build`, `global.global.refresh`, …) — see **`docs/ui/ui-map.md`**. Weekly tab rail, collapse, and happy path: **`docs/ui/weekly-flow-ui.md`**. Say **store aisle** for aisle grouping (not “section”).
 
 **UI tests:** import `APP_PATH`, `UI_ROOT`, `ui_source`, `pantry_page_source` from `tests/src/grocery_wizard/ui/ui_source.py` — no ad-hoc path literals.
 
@@ -60,7 +60,7 @@ Area from label `gw-area-<name>` or `### Area` in the issue body.
 
 **Credential preflight (local prod `.env`):** `test -n "${NOTION_API_KEY:-}" && PYTHONPATH=src uv run python -c "from grocery_wizard.config import load_config; load_config(); print('notion ok')"`. Missing `.env` is OK when secrets are in the environment.
 
-**Cursor Cloud Agents — Notion CI secrets (optional live testing):** Configure the same five names as GitHub Actions: **`NOTION_CI_API_KEY`** plus the four **`NOTION_CI_*_DATABASE_ID`** values (see **`docs/notion-ci-setup.md`**). They point at **`[GW CI]`** databases, not household prod. Default agent runs use mocked Notion (`just smoke-ui` / `just check`); no secrets required. **GitHub Actions** live read-only job: **`pull_request`** → **`main`** or manual **`workflow_dispatch`** only (`.github/workflows/notion-nightly-readonly.yml`, #426) — no nightly schedule.
+**Cursor Cloud Agents — Notion CI secrets (optional live testing):** Configure the same five names as GitHub Actions: **`NOTION_CI_API_KEY`** plus the four **`NOTION_CI_*_DATABASE_ID`** values (see **`docs/operations/notion-ci-setup.md`**). They point at **`[GW CI]`** databases, not household prod. Default agent runs use mocked Notion (`just smoke-ui` / `just check`); no secrets required. **GitHub Actions** live read-only job: **`pull_request`** → **`main`** or manual **`workflow_dispatch`** only (`.github/workflows/notion-nightly-readonly.yml`, #426) — no nightly schedule.
 
 When live Notion is needed (browser smoke, `-k "live and read_only"`, or Streamlit against CI data):
 

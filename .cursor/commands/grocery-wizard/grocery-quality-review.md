@@ -14,7 +14,7 @@ just golden-grocery
 just smoke-ui
 ```
 
-See **`docs/grocery-quality.md`**.
+See **`docs/quality/grocery-quality.md`**.
 
 ## Optional (when Notion preflight succeeds)
 

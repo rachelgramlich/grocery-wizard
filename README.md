@@ -33,15 +33,17 @@ Full command reference, NYT credentials, meal-planning defaults, aisle config, a
 
 ### Documentation
 
+**Map:** [`docs/README.md`](docs/README.md) · **Repo tree:** [`docs/architecture/repo-layout.md`](docs/architecture/repo-layout.md)
+
 | Doc | Contents |
 |-----|----------|
 | [`src/grocery_wizard/README.md`](src/grocery_wizard/README.md) | Day-to-day usage (Streamlit), one-time Notion setup, project layout |
 | [`src/grocery_wizard/config/README.md`](src/grocery_wizard/config/README.md) | Pantry / recurring / weekly-plan Notion databases |
-| [`docs/household-deploy.md`](docs/household-deploy.md) | Streamlit Community Cloud deploy, auth, feedback inbox |
-| [`src/grocery_wizard/docs/remote-access.md`](src/grocery_wizard/docs/remote-access.md) | Phone access (local Wi‑Fi vs hosted) |
+| [`docs/operations/household-deploy.md`](docs/operations/household-deploy.md) | Streamlit Community Cloud deploy, auth, feedback inbox |
+| [`docs/operations/remote-access.md`](docs/operations/remote-access.md) | Phone access (local Wi‑Fi vs hosted) |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Lint, tests, and code review standards |
-| [`docs/performance.md`](docs/performance.md) | Load-time optimization report and perf baseline |
-| [`docs/performance-audit.md`](docs/performance-audit.md) | Repeatable performance-audit harness (`just performance-audit`) |
+| [`docs/quality/performance.md`](docs/quality/performance.md) | Load-time optimization report and perf baseline |
+| [`docs/quality/performance-audit.md`](docs/quality/performance-audit.md) | Repeatable performance-audit harness (`just performance-audit`) |
 | [`AGENTS.md`](AGENTS.md) | Cursor agents and GitHub backlog workflow |
 
 ---
@@ -63,7 +65,7 @@ Full command reference, NYT credentials, meal-planning defaults, aisle config, a
 
 ### Local setup
 
-1. Copy `secrets.toml.example` to **`secrets.toml`** at repo root (or `.env` from `.env.example`) and configure Notion — see [`src/grocery_wizard/README.md` § One-time setup](src/grocery_wizard/README.md#one-time-setup) and [`docs/household-deploy.md`](docs/household-deploy.md).
+1. Copy `secrets.toml.example` to **`secrets.toml`** at repo root (or `.env` from `.env.example`) and configure Notion — see [`src/grocery_wizard/README.md` § One-time setup](src/grocery_wizard/README.md#one-time-setup) and [`docs/operations/household-deploy.md`](docs/operations/household-deploy.md).
 2. Update the Python environment:
    ```shell
    just setup

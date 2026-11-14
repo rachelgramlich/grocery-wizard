@@ -1,4 +1,4 @@
-"""Stable UI identifiers (page / block / control). See docs/ui-map.md."""
+"""Stable UI identifiers (page / block / control). See docs/ui/ui-map.md."""
 
 from __future__ import annotations
 

@@ -24,7 +24,7 @@ description: Hands-on Streamlit app review → findings report → grouped GitHu
 
 ## App surfaces to cover
 
-Use **`src/grocery_wizard/ui/app.py`** and page/block IDs from **`docs/ui-map.md`** (`weekly`, `add`, `pantry`, `maintenance`, `global.global.*`):
+Use **`src/grocery_wizard/ui/app.py`** and page/block IDs from **`docs/ui/ui-map.md`** (`weekly`, `add`, `pantry`, `maintenance`, `global.global.*`):
 
 | Page slug | Minimum path |
 | --- | --- |
