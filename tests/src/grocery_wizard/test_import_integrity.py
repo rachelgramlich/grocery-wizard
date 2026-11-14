@@ -96,7 +96,7 @@ def test_every_internal_from_import_names_something_that_exists() -> None:
     for item in _collect_internal_imports():
         try:
             module = importlib.import_module(item.module)
-        except Exception as exc:
+        except (ImportError, ModuleNotFoundError, OSError, SyntaxError, ValueError) as exc:
             missing.append(f"{item.describe()} (module failed to import: {exc!r})")
             continue
         if hasattr(module, item.name):
@@ -124,7 +124,7 @@ def test_every_module_imports_in_a_fresh_interpreter() -> None:
             f"for name in {_importable_modules()!r}:",
             "    try:",
             "        importlib.import_module(name)",
-            "    except Exception as exc:",
+            "    except (ImportError, ModuleNotFoundError, OSError, SyntaxError, ValueError) as exc:",
             "        failures.append(f'{name}: {exc!r}')",
             "print('\\n'.join(failures))",
             "sys.exit(1 if failures else 0)",

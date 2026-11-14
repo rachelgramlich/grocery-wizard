@@ -64,6 +64,7 @@ select = [
     "LOG",  # logging: no redundant exc_info / implicit root
     "ICN",  # unconventional import aliases (import pandas as pd)
     "TID",  # tidy import restrictions (relative vs absolute)
+    "BLE",  # no blind except Exception — use NOTION_BOUNDARY_ERRORS or explicit types
 ]
 ignore = [
     "EM101",

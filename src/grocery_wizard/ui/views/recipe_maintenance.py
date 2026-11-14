@@ -7,6 +7,7 @@ from collections.abc import Callable
 import streamlit as st
 
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe, recipe_lookup_key
+from src.grocery_wizard.integrations.notion_io_errors import NOTION_BOUNDARY_ERRORS
 from src.grocery_wizard.integrations.notion_views import (
     ensure_manual_ingredients_notion_view_url,
     ensure_possibly_missing_checkboxes_notion_view_url,
@@ -253,7 +254,7 @@ def render_recipe_maintenance() -> None:
             _preview_count_line(len(manual_ingredients))
             try:
                 ingredients_view_url = ensure_manual_ingredients_notion_view_url(db)
-            except Exception as exc:
+            except NOTION_BOUNDARY_ERRORS as exc:
                 st.error(f"Could not prepare Notion view: {exc}")
             else:
                 _render_open_notion_button(
@@ -276,7 +277,7 @@ def render_recipe_maintenance() -> None:
             _preview_count_line(len(possibly_missing_checkboxes))
             try:
                 checkboxes_view_url = ensure_possibly_missing_checkboxes_notion_view_url(db)
-            except Exception as exc:
+            except NOTION_BOUNDARY_ERRORS as exc:
                 st.error(f"Could not prepare Notion view: {exc}")
             else:
                 _render_open_notion_button(

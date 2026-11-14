@@ -26,6 +26,7 @@ from src.grocery_wizard.integrations.notion.household import (
 )
 from src.grocery_wizard.integrations.notion.recipes import DatabaseSchema, NotionRecipesDB, Recipe
 from src.grocery_wizard.integrations.notion.table import NotionDatabase
+from src.grocery_wizard.integrations.notion_io_errors import NOTION_BOUNDARY_ERRORS
 
 CI_RECIPES_LABEL = "[GW CI] Recipes"
 CI_PANTRY_LABEL = "[GW CI] Pantry Staples"
@@ -181,7 +182,7 @@ def _open_household_database(
         return None
     try:
         return NotionDatabase(config, database_id)
-    except Exception as exc:
+    except NOTION_BOUNDARY_ERRORS as exc:
         report.errors.append(f"{database_label}: cannot reach database ({database_id}): {exc}")
         return None
 
@@ -196,7 +197,7 @@ def _verify_recipes_database(
         return None
     try:
         recipes_db = NotionRecipesDB(config)
-    except Exception as exc:
+    except NOTION_BOUNDARY_ERRORS as exc:
         report.errors.append(f"{CI_RECIPES_LABEL}: cannot reach database ({db_id}): {exc}")
         return None
     report.errors.extend(collect_recipes_schema_errors(recipes_db.schema))
@@ -213,7 +214,7 @@ def verify_recipe_query_smoke(
         return
     try:
         recipes: list[Recipe] = recipes_db.query_recipes()
-    except Exception as exc:
+    except NOTION_BOUNDARY_ERRORS as exc:
         report.errors.append(f"{database_label}: query_recipes failed: {exc}")
         return
     if not recipes:

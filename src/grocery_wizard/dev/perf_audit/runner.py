@@ -22,6 +22,7 @@ from src.grocery_wizard.dev.perf_audit.report import (
 )
 from src.grocery_wizard.dev.perf_audit.scenarios import Scenario, build_scenarios
 from src.grocery_wizard.dev.perf_audit.tap import DEFAULT_WRITE_LATENCY_S, NotionTap
+from src.grocery_wizard.integrations.notion_io_errors import NOTION_BOUNDARY_ERRORS
 
 
 def select_scenarios(patterns: list[str] | None) -> list[Scenario]:
@@ -69,7 +70,7 @@ def _collect_meta(tap: NotionTap) -> dict[str, Any]:
         meta["pantry_items"] = len(NotionPantryDB().list_entries())
         meta["saved_plans"] = len(list_saved_plans(recipes_db=db))
         meta["notion_recipe_db"] = load_config().notion_recipe_database_id[-6:]
-    except Exception as exc:
+    except NOTION_BOUNDARY_ERRORS as exc:
         meta["data_size_error"] = str(exc)[:120]
     del mark
     return meta
@@ -135,7 +136,7 @@ def run_scenario(
         result.status = "skipped"
         result.reason = str(exc)
         return result
-    except Exception as exc:
+    except NOTION_BOUNDARY_ERRORS as exc:
         result.status = "error"
         result.reason = f"{type(exc).__name__}: {str(exc)[:200]}"
         return result

@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 import streamlit as st
 
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
+from src.grocery_wizard.integrations.notion_io_errors import NOTION_BOUNDARY_ERRORS
 from src.grocery_wizard.planning.saved_weekly_plans import SavedWeeklyPlan, list_saved_plans
 from src.grocery_wizard.ui.db_access import get_db
 
@@ -111,7 +112,7 @@ def _recipes_from_store(db: NotionRecipesDB) -> list[Recipe]:
             try:
                 changed = db.query_recipes_edited_since(store.synced_at - _RECIPE_DELTA_OVERLAP)
                 store.recipes.update({recipe.page_id: recipe for recipe in changed})
-            except Exception:
+            except NOTION_BOUNDARY_ERRORS:
                 store.recipes = {recipe.page_id: recipe for recipe in db.query_recipes()}
             store.synced_at = started
             store.dirty = False

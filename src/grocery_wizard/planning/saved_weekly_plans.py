@@ -27,6 +27,7 @@ from src.grocery_wizard.integrations.notion import recipe_lookup_key
 
 if TYPE_CHECKING:
     from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
+    from src.grocery_wizard.integrations.notion_household import NotionWeeklyPlansDB
 
 SaveWeekChoice = Literal["this_week", "next_week"]
 PlanSaveOutcome = Literal["created", "updated", "unchanged"]
@@ -91,6 +92,12 @@ def plan_recipe_lookup_keys(recipe_names: list[str] | tuple[str, ...]) -> frozen
     return frozenset(recipe_lookup_key(name) for name in recipe_names)
 
 
+def _weekly_plans_db(*, recipes_db: NotionRecipesDB | None = None) -> NotionWeeklyPlansDB:
+    from src.grocery_wizard.integrations.notion_household import NotionWeeklyPlansDB
+
+    return NotionWeeklyPlansDB(recipes_db=recipes_db)
+
+
 def list_saved_plans(
     *,
     recipes_db: NotionRecipesDB | None = None,
@@ -100,9 +107,7 @@ def list_saved_plans(
 
     Pass ``recipe_names_by_page_id`` (from already-loaded recipes) to skip re-querying recipes.
     """
-    from src.grocery_wizard.integrations.notion_household import NotionWeeklyPlansDB
-
-    return NotionWeeklyPlansDB(recipes_db=recipes_db).list_plans(
+    return _weekly_plans_db(recipes_db=recipes_db).list_plans(
         recipe_names_by_page_id=recipe_names_by_page_id,
     )
 
@@ -113,9 +118,7 @@ def load_plan_recipes(
     recipes_db: NotionRecipesDB | None = None,
 ) -> list[str]:
     """Return recipe names for a saved plan name, or empty if not found."""
-    from src.grocery_wizard.integrations.notion_household import NotionWeeklyPlansDB
-
-    return NotionWeeklyPlansDB(recipes_db=recipes_db).load_plan_recipes(plan_name)
+    return _weekly_plans_db(recipes_db=recipes_db).load_plan_recipes(plan_name)
 
 
 def find_plan_for_week(
@@ -124,9 +127,7 @@ def find_plan_for_week(
     recipes_db: NotionRecipesDB | None = None,
 ) -> SavedWeeklyPlan | None:
     """Return the saved plan for ``week_start``, if any."""
-    from src.grocery_wizard.integrations.notion_household import NotionWeeklyPlansDB
-
-    return NotionWeeklyPlansDB(recipes_db=recipes_db).find_plan_for_week(week_start)
+    return _weekly_plans_db(recipes_db=recipes_db).find_plan_for_week(week_start)
 
 
 def ensure_saved_weekly_plan(
@@ -138,9 +139,7 @@ def ensure_saved_weekly_plan(
     recipes_db: NotionRecipesDB | None = None,
 ) -> WeeklyPlanSaveResult:
     """Create or update the single saved plan row for the target week."""
-    from src.grocery_wizard.integrations.notion_household import NotionWeeklyPlansDB
-
-    return NotionWeeklyPlansDB(recipes_db=recipes_db).ensure_plan(
+    return _weekly_plans_db(recipes_db=recipes_db).ensure_plan(
         recipe_names,
         reference_date=reference_date,
         week_choice=week_choice,

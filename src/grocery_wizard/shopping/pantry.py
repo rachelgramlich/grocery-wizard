@@ -16,7 +16,10 @@ __all__ = [
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Final
+from typing import TYPE_CHECKING, Final
+
+if TYPE_CHECKING:
+    from src.grocery_wizard.integrations.notion_household import NotionPantryDB
 
 DEFAULT_EMPTY_PANTRY_LINES: Final[tuple[str, ...]] = (
     "# Pantry staples — one item per line.",
@@ -38,13 +41,17 @@ def _load_pantry_from_file(pantry_path: Path) -> set[str]:
     return items
 
 
+def _notion_pantry_db() -> NotionPantryDB:
+    from src.grocery_wizard.integrations.notion_household import NotionPantryDB
+
+    return NotionPantryDB()
+
+
 def load_pantry(path: Path | None = None) -> set[str]:
     """Load pantry item names (Notion by default; optional file path for tests)."""
     if path is not None:
         return _load_pantry_from_file(path)
-    from src.grocery_wizard.integrations.notion_household import NotionPantryDB
-
-    return NotionPantryDB().load_item_names()
+    return _notion_pantry_db().load_item_names()
 
 
 # Only these phrases are table pepper. A pantry/removal entry with one of them may match
@@ -293,9 +300,7 @@ def write_pantry_file(path: Path, lines: list[str]) -> None:
 def append_pantry_item(name: str, path: Path | None = None, *, section: str | None = None) -> bool:
     """Append an item to the pantry (last section). Returns False if invalid or duplicate."""
     if path is None:
-        from src.grocery_wizard.integrations.notion_household import NotionPantryDB
-
-        return NotionPantryDB().append_item(name, section=section)
+        return _notion_pantry_db().append_item(name, section=section)
 
     pantry_path = path
     cleaned = name.strip()
@@ -329,9 +334,7 @@ def append_pantry_item(name: str, path: Path | None = None, *, section: str | No
 def remove_pantry_item_by_name(search: str, path: Path | None = None) -> bool:
     """Remove the first pantry item matching *search*. Returns False if no match."""
     if path is None:
-        from src.grocery_wizard.integrations.notion_household import NotionPantryDB
-
-        return NotionPantryDB().remove_item_by_name(search)
+        return _notion_pantry_db().remove_item_by_name(search)
 
     pantry_path = path
     lines, sections = parse_pantry_file(pantry_path)
