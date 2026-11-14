@@ -52,6 +52,11 @@ Ruff is the single linting tool. The enabled rule categories are documented in `
 | `TRY` | tryceratops — move success path to `else`, not `try` body |
 | `EM` | no f-strings or literals as the first arg to `raise Exception(...)` |
 | `FURB` | modernise patterns — `path.read_text()`, `x or y` over `x if x else y` |
+| `PTH` | prefer `pathlib` over `os.path` |
+| `LOG` | logging call hygiene |
+| `ICN` / `TID` | import alias and layout conventions |
+
+The repo is already clean on the added `PTH`/`LOG`/`ICN`/`TID` rules; they guard new code. **`BLE`** (no blind `except Exception`) is tracked for a follow-up PR — 13 intentional broad catches remain in Notion/Streamlit boundaries.
 
 ### Ignored rules (with rationale)
 
