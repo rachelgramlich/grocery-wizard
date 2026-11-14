@@ -31,7 +31,7 @@ def test_list_log_notion_title_includes_meals() -> None:
     assert "2026-10-30" in title
 
 
-@patch("src.grocery_wizard.integrations.notion_list_logs.NotionDatabase")
+@patch("src.grocery_wizard.integrations.notion.list_logs.NotionDatabase")
 def test_save_log_rejects_non_rich_text_json_column(mock_db_cls: MagicMock) -> None:
     mock_db = MagicMock()
     mock_db.column_types = {
@@ -43,7 +43,7 @@ def test_save_log_rejects_non_rich_text_json_column(mock_db_cls: MagicMock) -> N
         NotionListDebugLogsDB(MagicMock(notion_debug_logs_database_id="logs-db"))
 
 
-@patch("src.grocery_wizard.integrations.notion_list_logs.NotionDatabase")
+@patch("src.grocery_wizard.integrations.notion.list_logs.NotionDatabase")
 def test_save_log_creates_page_with_text_json_column(mock_db_cls: MagicMock) -> None:
     from src.grocery_wizard.integrations.notion_table import write_notion_property
 
@@ -78,7 +78,7 @@ def test_save_log_creates_page_with_text_json_column(mock_db_cls: MagicMock) -> 
     assert props[LIST_LOG_JSON_COLUMN]["text"][0]["text"]["content"].startswith("{")
 
 
-@patch("src.grocery_wizard.integrations.notion_list_logs.NotionDatabase")
+@patch("src.grocery_wizard.integrations.notion.list_logs.NotionDatabase")
 def test_save_log_creates_page(mock_db_cls: MagicMock) -> None:
     mock_db = MagicMock()
     mock_db.column_types = {
@@ -110,7 +110,7 @@ def test_save_log_creates_page(mock_db_cls: MagicMock) -> None:
     assert create_kwargs["Type"] == LIST_LOG_TYPE_VALUE
 
 
-@patch("src.grocery_wizard.integrations.notion_list_logs.NotionListDebugLogsDB")
+@patch("src.grocery_wizard.integrations.notion.list_logs.NotionListDebugLogsDB")
 def test_persist_list_log_swallows_errors(mock_db_cls: MagicMock) -> None:
     mock_db_cls.side_effect = RuntimeError("network")
     page_id, url = persist_list_log_to_notion({"created_at": "2026-10-30T12:00:00+00:00"})
@@ -120,7 +120,7 @@ def test_persist_list_log_swallows_errors(mock_db_cls: MagicMock) -> None:
 
 def test_persist_list_log_update_path() -> None:
     with patch(
-        "src.grocery_wizard.integrations.notion_list_logs.NotionListDebugLogsDB"
+        "src.grocery_wizard.integrations.notion.list_logs.NotionListDebugLogsDB"
     ) as mock_db_cls:
         mock_db = MagicMock()
         mock_db_cls.return_value = mock_db

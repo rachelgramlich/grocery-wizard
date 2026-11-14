@@ -24,8 +24,8 @@ from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 from notion_client import Client
 
 from src.grocery_wizard.config import Config
-from src.grocery_wizard.integrations.notion_data_source import resolve_notion_data_source_id
-from src.grocery_wizard.integrations.notion_table import build_notion_rich_text
+from src.grocery_wizard.integrations.notion.data_source import resolve_notion_data_source_id
+from src.grocery_wizard.integrations.notion.table import build_notion_rich_text
 from src.grocery_wizard.recipes.recipe_images import (
     read_files_property_names,
     read_files_property_url,
