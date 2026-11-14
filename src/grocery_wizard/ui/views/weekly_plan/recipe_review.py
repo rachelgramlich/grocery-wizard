@@ -5,6 +5,7 @@ from __future__ import annotations
 import streamlit as st
 
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe, recipe_lookup_key
+from src.grocery_wizard.shopping.grocery_list_edits import parse_line_items_text
 from src.grocery_wizard.ui.components.loading import loading_indicator
 from src.grocery_wizard.ui.grocery_flow import (
     GroceryPreBuildOptions,
@@ -17,7 +18,6 @@ from src.grocery_wizard.ui.grocery_flow import (
     sync_grocery_stash_notion_generation,
     sync_recipe_review_overrides_to_session,
 )
-from src.grocery_wizard.ui.grocery_helpers import parse_line_items_text
 from src.grocery_wizard.ui.ids import (
     BLOCK_WEEKLY_GROCERY_RECIPE_REVIEW,
     BLOCK_WEEKLY_GROCERY_RESULT,

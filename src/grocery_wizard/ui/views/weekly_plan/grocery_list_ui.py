@@ -14,19 +14,19 @@ from src.grocery_wizard.shopping.grocery_list import (
     format_item_provenance,
     format_meals_copy_text,
 )
+from src.grocery_wizard.shopping.grocery_list_edits import (
+    compute_grocery_drafts,
+    parse_line_items_text,
+    removal_matches_grocery_line,
+)
+from src.grocery_wizard.shopping.meal_recipe_links import meal_entries_with_links
 from src.grocery_wizard.ui.components.loading import loading_indicator
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.grocery_flow import (
     default_pre_build_grocery_options,
     sync_list_debug_log_adjustments,
 )
-from src.grocery_wizard.ui.grocery_helpers import (
-    compute_grocery_drafts,
-    meal_entries_with_links,
-    parse_line_items_text,
-    removal_matches_grocery_line,
-    render_copy_button,
-)
+from src.grocery_wizard.ui.grocery_helpers import render_copy_button
 from src.grocery_wizard.ui.ids import (
     BLOCK_WEEKLY_GROCERY_PRE_BUILD,
     BLOCK_WEEKLY_GROCERY_RECIPE_REVIEW,

@@ -102,7 +102,8 @@ Rail steps (user-facing, not numbered): **Get started** → **Plan meals** → *
 | IDs | `ui/ids.py` |
 | Page labels / slugs | `ui/views/__init__.py` |
 | Page bodies | `ui/views/*.py`, `ui/views/weekly_plan/` |
-| Weekly grocery build logic | `ui/grocery_flow.py`, `ui/grocery_helpers.py` |
+| Weekly grocery build logic | `shopping/weekly_grocery_build.py`, `shopping/grocery_list_edits.py` |
+| Weekly grocery UI session | `ui/grocery_flow.py` (Streamlit state only) |
 | Shared widgets | `ui/components/` (`loading`, `feedback`, `dropdown_dismiss`), `ui/notion_cache.py`, … |
 
 Feedback backlog **Surface** should use a **page slug** (`weekly`, `add`, …) unless a block ID is more helpful.

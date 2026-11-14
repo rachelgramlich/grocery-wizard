@@ -34,7 +34,7 @@ Folders are grouped by **job**, not by layer. Dependency flow is mostly: `ui` â†
 | `recipes/` | URL scrape, metadata classify, add recipe to Notion |
 | `ingredients/` | Parse, normalize, sync ingredient lines (see `ARCHITECTURE.md`) |
 | `planning/` | Weekly meal suggestion and filters |
-| `shopping/` | Grocery list build, pantry match/exclude |
+| `shopping/` | Grocery list build, weekly orchestration, pantry match/exclude |
 | `cli/` | Deprecated CLI shims (Streamlit is the product) |
 | `lib/` | Small shared helpers (e.g. prompts) |
 | `dev/` | Performance audit harness and other dev-only tooling |

@@ -7,12 +7,12 @@ from unittest.mock import MagicMock
 
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe, recipe_lookup_key
 from src.grocery_wizard.shopping.grocery_list import format_grocery_items_copy_text
-from src.grocery_wizard.ui.grocery_flow import (
+from src.grocery_wizard.shopping.grocery_list_edits import compute_grocery_drafts
+from src.grocery_wizard.shopping.weekly_grocery_build import (
     build_grocery_result_payload,
     fetch_recipe_review_text,
     ingredient_overrides_from_review,
 )
-from src.grocery_wizard.ui.grocery_helpers import compute_grocery_drafts
 
 
 def recipes_from_week_dict(week: dict[str, Any]) -> list[Recipe]:
