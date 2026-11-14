@@ -4,24 +4,31 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from ui_source import APP_PATH, apptest_page_picker
+from ui_source import (
+    add_recipe_page_source,
+    app_source,
+    apptest_from_app,
+    apptest_page_picker,
+    nyt_sync_ui_source,
+)
+
+from tests.repo_paths import package_module_source
 
 
 def test_nyt_sync_controls_only_on_add_recipe_tab() -> None:
-    app = APP_PATH.read_text(encoding="utf-8")
+    app = app_source()
     assert "render_nyt_sync_controls" not in app
-    add_recipe = (APP_PATH.parent / "views" / "add_recipe.py").read_text(encoding="utf-8")
+    add_recipe = add_recipe_page_source()
     assert "render_nyt_sync_controls()" in add_recipe
 
 
 def test_nyt_sync_visible_on_add_recipe_when_credentials_missing() -> None:
-    from streamlit.testing.v1 import AppTest
 
     with patch(
         "src.grocery_wizard.ui.nyt_sync.credentials_status",
         return_value={"configured": False, "regi_id": None},
     ):
-        at = AppTest.from_file(str(APP_PATH), default_timeout=60)
+        at = apptest_from_app(timeout=60)
         at.run()
         apptest_page_picker(at).set_value("Add Recipe").run()
 
@@ -35,17 +42,15 @@ def test_nyt_sync_visible_on_add_recipe_when_credentials_missing() -> None:
 
 
 def test_list_recipe_box_folders_omits_all_saved_recipes_option() -> None:
-    nyt_sync = (APP_PATH.parent / "nyt_sync.py").read_text(encoding="utf-8")
-    nyt_cooking = (APP_PATH.parent.parent / "integrations" / "nyt_cooking.py").read_text(
-        encoding="utf-8"
-    )
+    nyt_sync = nyt_sync_ui_source()
+    nyt_cooking = package_module_source("integrations/nyt_cooking.py")
     assert "All saved recipes" not in nyt_sync
     assert '_PREFERRED_NYT_FOLDER_LABELS = ("To make", "Favorites")' in nyt_cooking
     assert 'label="All saved recipes"' not in nyt_cooking
 
 
 def test_nyt_sync_shows_progress_bar_during_run() -> None:
-    nyt_sync = (APP_PATH.parent / "nyt_sync.py").read_text(encoding="utf-8")
+    nyt_sync = nyt_sync_ui_source()
     assert 'key="nyt_sync_progress"' in nyt_sync  # container hook for AppTest
     assert "st.progress" in nyt_sync
     assert "expected_recipe_count=folder.recipe_count" in nyt_sync
@@ -53,7 +58,7 @@ def test_nyt_sync_shows_progress_bar_during_run() -> None:
 
 
 def test_nyt_dry_run_defaults_off_and_clarifies_notion_outcome() -> None:
-    nyt_sync = (APP_PATH.parent / "nyt_sync.py").read_text(encoding="utf-8")
+    nyt_sync = nyt_sync_ui_source()
     assert 'key="nyt_sync_dry_run"' in nyt_sync
     assert "value=False" in nyt_sync
     assert "Dry run finished — Notion was not updated." in nyt_sync

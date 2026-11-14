@@ -8,10 +8,11 @@ from typing import Any
 
 from streamlit.testing.v1 import AppTest
 
+from src.grocery_wizard.paths import UI_APP_PATH
 from src.grocery_wizard.ui.ids import CONTROL_GLOBAL_PAGE_PICKER, control_streamlit_key
 from src.grocery_wizard.ui.views import page_label_for_slug
 
-APP_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "ui", "app.py")
+APP_PATH = UI_APP_PATH
 _PAGE_PICKER_KEY = control_streamlit_key(CONTROL_GLOBAL_PAGE_PICKER)
 _RENDER_SLUG_KEY = "gw_render_page_slug"
 
@@ -30,7 +31,7 @@ class AuditContext:
 
 def new_app(ctx: AuditContext) -> AppTest:
     os.environ.setdefault("GROCERY_WIZARD_DEV_UI", "1")
-    return AppTest.from_file(os.path.abspath(APP_PATH), default_timeout=ctx.timeout)
+    return AppTest.from_file(str(APP_PATH), default_timeout=ctx.timeout)
 
 
 def open_app(ctx: AuditContext) -> AppTest:

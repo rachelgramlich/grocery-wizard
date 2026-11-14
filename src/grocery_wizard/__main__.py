@@ -1,3 +1,5 @@
+"""``python -m grocery_wizard`` delegates to the CLI."""
+
 from __future__ import annotations
 
 from src.grocery_wizard.cli.main import main

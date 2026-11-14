@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from src.grocery_wizard.paths import UI_APP_PATH
 from tests.repo_paths import UI_SRC_ROOT
 
 if TYPE_CHECKING:
     from streamlit.testing.v1 import AppTest
 
 UI_ROOT = UI_SRC_ROOT
-APP_PATH = UI_ROOT / "app.py"
+APP_PATH = UI_APP_PATH
 
 _UI_MODULE_PATHS = (
     "app.py",
@@ -35,12 +36,59 @@ _UI_MODULE_PATHS = (
 
 
 def ui_source() -> str:
-    chunks = [(UI_ROOT / rel).read_text(encoding="utf-8") for rel in _UI_MODULE_PATHS]
-    return "\n\n".join(chunks)
+    return "\n\n".join(ui_module_source(rel) for rel in _UI_MODULE_PATHS)
+
+
+def ui_module_source(rel: str) -> str:
+    return (UI_ROOT / rel).read_text(encoding="utf-8")
+
+
+def app_source() -> str:
+    return ui_module_source("app.py")
+
+
+def weekly_plan_source(filename: str) -> str:
+    return ui_module_source(f"views/weekly_plan/{filename}")
+
+
+def meal_plan_filters_source() -> str:
+    return ui_module_source("meal_plan_filters.py")
 
 
 def pantry_page_source() -> str:
-    return (UI_ROOT / "views" / "pantry_recurring.py").read_text(encoding="utf-8")
+    return ui_module_source("views/pantry_recurring.py")
+
+
+def add_recipe_page_source() -> str:
+    return ui_module_source("views/add_recipe.py")
+
+
+def browse_recipes_page_source() -> str:
+    return ui_module_source("views/browse_recipes.py")
+
+
+def grocery_helpers_source() -> str:
+    return ui_module_source("grocery_helpers.py")
+
+
+def loading_component_source() -> str:
+    return ui_module_source("components/loading.py")
+
+
+def feedback_component_source() -> str:
+    return ui_module_source("components/feedback.py")
+
+
+def nyt_sync_ui_source() -> str:
+    return ui_module_source("nyt_sync.py")
+
+
+def views_nav_source() -> str:
+    return ui_module_source("views/__init__.py")
+
+
+def notion_cache_source() -> str:
+    return ui_module_source("notion_cache.py")
 
 
 def apptest_continue_to_meal_builder(at, *, timeout: int = 60) -> None:
@@ -57,11 +105,16 @@ def apptest_rail_get_started(at, *, timeout: int = 60) -> None:
     rail[0].click().run(timeout=timeout)
 
 
-def apptest_start_app(*, timeout: int = 60) -> AppTest:
-    """Load ``app.py`` headless, run it once, and fail on any exception."""
+def apptest_from_app(*, timeout: int = 60) -> AppTest:
+    """Headless ``AppTest`` bound to ``app.py`` (no run yet)."""
     from streamlit.testing.v1 import AppTest
 
-    at = AppTest.from_file(str(APP_PATH), default_timeout=timeout)
+    return AppTest.from_file(str(APP_PATH), default_timeout=timeout)
+
+
+def apptest_start_app(*, timeout: int = 60) -> AppTest:
+    """Load ``app.py`` headless, run it once, and fail on any exception."""
+    at = apptest_from_app(timeout=timeout)
     at.run(timeout=timeout)
     apptest_assert_no_exception(at, context="first run")
     return at

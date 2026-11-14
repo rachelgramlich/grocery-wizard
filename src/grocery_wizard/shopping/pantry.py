@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 __all__ = [
+    "DEFAULT_EMPTY_PANTRY_LINES",
     "PantrySection",
     "append_pantry_item",
     "format_pantry_display",
@@ -15,6 +16,14 @@ __all__ = [
 
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Final
+
+DEFAULT_EMPTY_PANTRY_LINES: Final[tuple[str, ...]] = (
+    "# Pantry staples — one item per line.",
+    "# Lines starting with # are section headers or comments.",
+    "",
+    "# --- Uncategorized ---",
+)
 
 
 def _load_pantry_from_file(pantry_path: Path) -> set[str]:
@@ -250,12 +259,7 @@ def parse_pantry_file(path: Path) -> tuple[list[str], list[PantrySection]]:
     if path.exists():
         lines = path.read_text(encoding="utf-8").splitlines()
     else:
-        lines = [
-            "# Pantry staples — one item per line.",
-            "# Lines starting with # are section headers or comments.",
-            "",
-            "# --- Uncategorized ---",
-        ]
+        lines = list(DEFAULT_EMPTY_PANTRY_LINES)
 
     sections: list[PantrySection] = []
     current = PantrySection(header=None)

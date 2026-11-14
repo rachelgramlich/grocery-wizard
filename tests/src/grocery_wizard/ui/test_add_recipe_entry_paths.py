@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from ui_source import UI_ROOT, ui_source
-
-_ADD_RECIPE_SOURCE = (UI_ROOT / "views" / "add_recipe.py").read_text(encoding="utf-8")
+from ui_source import add_recipe_page_source, ui_source
 
 
 def test_add_recipe_surfaces_three_entry_paths_without_collapsed_expanders() -> None:
@@ -19,7 +17,7 @@ def test_add_recipe_surfaces_three_entry_paths_without_collapsed_expanders() -> 
 
 
 def test_add_recipe_review_expanders_render_inside_entry_sections() -> None:
-    source = _ADD_RECIPE_SOURCE
+    source = add_recipe_page_source()
     assert source.count("_render_previews_for_entry(db, schema, previews,") == 3
 
     url_block = source.split("**Recipe URL**", maxsplit=1)[1].split(

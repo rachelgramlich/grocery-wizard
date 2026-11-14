@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
-from ui_source import APP_PATH, pantry_page_source
+from ui_source import (
+    app_source,
+    pantry_page_source,
+    views_nav_source,
+)
 
 
 def test_weekly_page_is_first_and_default() -> None:
-    nav = (APP_PATH.parent / "views" / "__init__.py").read_text(encoding="utf-8")
+    nav = views_nav_source()
     assert 'PAGE_LABEL_WEEKLY: Final = "Create weekly plan"' in nav
     assert "PAGE_PICKER_LABELS" in nav
-    app = APP_PATH.read_text(encoding="utf-8")
+    app = app_source()
     assert "st.segmented_control(" in app
     assert "_init_page_navigation_state()" in app
     assert "if active_slug == PAGE_SLUG_WEEKLY:" in app
@@ -17,7 +21,7 @@ def test_weekly_page_is_first_and_default() -> None:
 
 
 def test_pantry_and_recurring_share_one_page() -> None:
-    app = APP_PATH.read_text(encoding="utf-8")
+    app = app_source()
     pantry_fn = pantry_page_source()
     assert "def render_pantry_and_recurring()" in pantry_fn
     assert "elif active_slug == PAGE_SLUG_ADD:" in app

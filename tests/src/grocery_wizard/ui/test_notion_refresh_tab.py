@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
-from ui_source import APP_PATH, apptest_page_picker
+from ui_source import (
+    app_source,
+    apptest_from_app,
+    apptest_page_picker,
+)
 
 
 def test_notion_refresh_uses_on_click_not_inline_rerun() -> None:
-    app = APP_PATH.read_text(encoding="utf-8")
+    app = app_source()
     assert "def _refresh_notion_cache_from_ui()" in app
     assert "on_click=_refresh_notion_cache_from_ui" in app
     refresh_block = app.split("def _render_global_header_controls(")[1].split("def main")[0]
@@ -20,7 +24,7 @@ def test_notion_refresh_uses_on_click_not_inline_rerun() -> None:
 
 def test_notion_refresh_controls_render_above_page_picker() -> None:
     """Match established layout: refresh row under title, page picker below it."""
-    app = APP_PATH.read_text(encoding="utf-8")
+    app = app_source()
     main_body = app.split("def main() -> None:")[1].split('if __name__ == "__main__"')[0]
     picker_idx = main_body.index("_render_page_picker(")
     refresh_idx = main_body.index("_render_global_header_controls(")
@@ -28,23 +32,22 @@ def test_notion_refresh_controls_render_above_page_picker() -> None:
 
 
 def test_active_page_render_is_keyed_container() -> None:
-    app = APP_PATH.read_text(encoding="utf-8")
+    app = app_source()
     assert "_GW_RENDER_PAGE_SLUG" in app
     assert 'st.container(key=f"gw_page_{active_slug}")' in app or "gw_page_browse" in app
     assert 'persist_state="session"' in app
 
 
 def test_page_body_branches_on_render_slug_not_picker_return() -> None:
-    app = APP_PATH.read_text(encoding="utf-8")
+    app = app_source()
     assert "active_slug = st.session_state[_GW_RENDER_PAGE_SLUG]" in app
     assert "_sync_render_page_from_picker()" in app
     assert "_SKIP_PICKER_RENDER_SYNC" in app
 
 
 def test_picker_sync_updates_render_slug_without_on_change() -> None:
-    from streamlit.testing.v1 import AppTest
 
-    at = AppTest.from_file(str(APP_PATH), default_timeout=60)
+    at = apptest_from_app(timeout=60)
     at.run(timeout=60)
     apptest_page_picker(at).set_value("Pantry & recurring").run(timeout=60)
     at.session_state["gw_render_page_slug"] = "weekly"
@@ -54,9 +57,8 @@ def test_picker_sync_updates_render_slug_without_on_change() -> None:
 
 
 def test_refresh_keeps_pantry_body_when_picker_state_desyncs() -> None:
-    from streamlit.testing.v1 import AppTest
 
-    at = AppTest.from_file(str(APP_PATH), default_timeout=60)
+    at = apptest_from_app(timeout=60)
     at.run(timeout=60)
     apptest_page_picker(at).set_value("Pantry & recurring").run(timeout=60)
     at.session_state["global_global_page_picker"] = "Create weekly plan"
@@ -69,9 +71,8 @@ def test_refresh_keeps_pantry_body_when_picker_state_desyncs() -> None:
 
 
 def test_pantry_page_after_notion_refresh_does_not_show_weekly_plan() -> None:
-    from streamlit.testing.v1 import AppTest
 
-    at = AppTest.from_file(str(APP_PATH), default_timeout=60)
+    at = apptest_from_app(timeout=60)
     at.run(timeout=60)
 
     apptest_page_picker(at).set_value("Pantry & recurring").run(timeout=60)

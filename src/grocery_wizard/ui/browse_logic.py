@@ -7,7 +7,7 @@ import html
 import random
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Final
 
 from src.grocery_wizard.integrations.notion import (
     ColumnInfo,
@@ -34,6 +34,9 @@ from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
 )
 
 BROWSE_PAGE_SIZE = 24
+BROWSE_EMPTY_FILTER_HTML: Final[str] = (
+    '<p class="gw-browse-empty">No recipes match these filters.</p>'
+)
 
 
 def recipe_displayable_image_url(recipe: Recipe) -> str | None:
@@ -285,7 +288,7 @@ def render_browse_grid_html(
             f"</article>"
         )
     if not tiles:
-        return '<p class="gw-browse-empty">No recipes match these filters.</p>'
+        return BROWSE_EMPTY_FILTER_HTML
     return f'<div class="gw-browse-grid">{"".join(tiles)}</div>'
 
 

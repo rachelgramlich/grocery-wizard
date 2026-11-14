@@ -10,6 +10,7 @@ from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 from src.grocery_wizard.planning.meal_planner import build_ingredient_index
 from src.grocery_wizard.recipes.recipe_meal_plan_stats import meal_plan_status_column_name
 from src.grocery_wizard.ui.browse_logic import (
+    BROWSE_EMPTY_FILTER_HTML,
     BROWSE_FILTER_KEY_PREFIX,
     BROWSE_PAGE_SIZE,
     BrowseAppliedFilters,
@@ -111,10 +112,7 @@ def _render_browse_grid(
 ) -> None:
     visible = display_recipes[:limit]
     if not visible:
-        st.markdown(
-            '<p class="gw-browse-empty">No recipes match these filters.</p>',
-            unsafe_allow_html=True,
-        )
+        st.markdown(BROWSE_EMPTY_FILTER_HTML, unsafe_allow_html=True)
         return
 
     schema = get_db().schema

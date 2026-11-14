@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from ui_source import UI_ROOT, ui_source
+from ui_source import ui_source, weekly_plan_source
+
+from tests.repo_paths import package_module_source
 
 
 def test_start_recipe_review_formats_notion_storage_lines() -> None:
-    build_source = (UI_ROOT.parent / "shopping" / "weekly_grocery_build.py").read_text(
-        encoding="utf-8"
-    )
+    build_source = package_module_source("shopping/weekly_grocery_build.py")
     assert "format_ingredients_for_review" in build_source
     app_source = ui_source()
     start_block = app_source.split("def _start_recipe_review", 1)[1].split(
@@ -41,7 +41,7 @@ def test_per_recipe_review_initializes_widget_keys_without_value_param() -> None
 
 
 def test_save_recipe_review_to_notion_syncs_stash_after_cache_invalidation() -> None:
-    source = (UI_ROOT / "views" / "weekly_plan" / "recipe_review.py").read_text(encoding="utf-8")
+    source = weekly_plan_source("recipe_review.py")
     save_block = source.split("def _save_recipe_review_to_notion", 1)[1].split(
         "def _render_per_recipe_review", 1
     )[0]

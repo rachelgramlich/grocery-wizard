@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
-from ui_source import APP_PATH, UI_ROOT
+from ui_source import (
+    add_recipe_page_source,
+    app_source,
+)
 
 
 def test_add_recipe_ingredients_text_area_uses_session_state_not_value_kwarg() -> None:
     """Keyed text_area must not pass value= so reruns keep edited lines (e.g. after Refresh)."""
-    source = (UI_ROOT / "views" / "add_recipe.py").read_text(encoding="utf-8")
+    source = add_recipe_page_source()
     ingredients_block = source.split("schema.ingredients_column:", 1)[1].split(
         "schema.instructions_column:", 1
     )[0]
@@ -18,5 +21,5 @@ def test_add_recipe_ingredients_text_area_uses_session_state_not_value_kwarg() -
 
 def test_add_recipe_source_imports_add_recipe_section_from_app() -> None:
     """Sanity: Add Recipe section is wired from app entry (AppTest smoke anchor)."""
-    app = APP_PATH.read_text(encoding="utf-8")
+    app = app_source()
     assert "render_add_recipe" in app

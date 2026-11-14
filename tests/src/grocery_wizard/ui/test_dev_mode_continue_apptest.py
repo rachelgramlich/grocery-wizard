@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 import pytest
-from ui_source import APP_PATH, apptest_continue_to_meal_builder, apptest_rail_get_started
+from ui_source import (
+    apptest_continue_to_meal_builder,
+    apptest_from_app,
+    apptest_rail_get_started,
+)
 
 from src.grocery_wizard.ui.dev_jumps import DEV_JUMP_BUTTON_LABEL_MEALS_FILLED_AUTO
 from tests.notion_test_env import live_notion_smoke_enabled
@@ -35,9 +39,8 @@ def test_dev_mode_continue_to_grocery_unlocks_grocery_step(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("GROCERY_WIZARD_DEV_UI", "1")
-    from streamlit.testing.v1 import AppTest
 
-    at = AppTest.from_file(str(APP_PATH), default_timeout=120)
+    at = apptest_from_app(timeout=120)
     at.run(timeout=120)
     _enter_dev_mode(at)
 

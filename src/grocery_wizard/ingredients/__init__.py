@@ -2,4 +2,5 @@
 
 from __future__ import annotations
 
-__all__ = ["public"]
+# Submodules (e.g. ``nltk_bootstrap``) are imported explicitly; no barrel re-exports.
+__all__: list[str] = []

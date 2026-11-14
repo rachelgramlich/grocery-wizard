@@ -6,7 +6,11 @@ from datetime import date
 from unittest.mock import MagicMock
 
 import pytest
-from ui_source import UI_ROOT
+from ui_source import (
+    notion_cache_source,
+    pantry_page_source,
+    weekly_plan_source,
+)
 
 from src.grocery_wizard.integrations.notion import Recipe
 from src.grocery_wizard.planning.saved_weekly_plans import SavedWeeklyPlan
@@ -19,7 +23,6 @@ from src.grocery_wizard.ui.notion_cache import (
     saved_plan_recipe_names,
 )
 
-_NOTION_CACHE_PATH = UI_ROOT / "notion_cache.py"
 _LOAD_SAVED_PLANS_UNCACHED = notion_cache._load_saved_plans_cached.__wrapped__
 
 
@@ -73,7 +76,7 @@ def test_list_saved_plans_for_ui_falls_back_on_kwarg_typeerror(
 
 
 def test_invalidate_notion_cache_clears_cached_db_resource() -> None:
-    source = _NOTION_CACHE_PATH.read_text(encoding="utf-8")
+    source = notion_cache_source()
     invalidate_block = source.split("def invalidate_notion_cache()", 1)[1].split("\ndef ", 1)[0]
     assert "get_db.clear()" in invalidate_block
     assert "clear_ingredient_index_warm()" in invalidate_block
@@ -97,7 +100,7 @@ def test_saved_plan_recipe_names_returns_none_when_plan_missing() -> None:
 
 def test_meals_step_render_path_does_not_query_notion_directly() -> None:
     """Perf guard (#407): the save-replace check and plan load use the cached plan list."""
-    state_source = (UI_ROOT / "views" / "weekly_plan" / "state.py").read_text(encoding="utf-8")
+    state_source = weekly_plan_source("state.py")
     would_replace = state_source.split("def _weekly_plan_save_would_replace", 1)[1].split(
         "\ndef ", 1
     )[0]
@@ -107,7 +110,7 @@ def test_meals_step_render_path_does_not_query_notion_directly() -> None:
 
 def test_manual_pick_popovers_only_render_body_when_open() -> None:
     """Perf guard (#408): closed popovers must not build 300-option selectboxes."""
-    source = (UI_ROOT / "views" / "weekly_plan" / "plan_entry.py").read_text(encoding="utf-8")
+    source = weekly_plan_source("plan_entry.py")
     for fn in ("_render_slot_manual_popover", "_render_plan_builder_popover"):
         body = source.split(f"def {fn}", 1)[1].split("\ndef ", 1)[0]
         assert 'on_change="rerun"' in body
@@ -116,10 +119,10 @@ def test_manual_pick_popovers_only_render_body_when_open() -> None:
 
 def test_pantry_write_helpers_do_not_clear_recipe_caches() -> None:
     """Perf guard (#409): pantry and recurring writes only invalidate household reads."""
-    source = (UI_ROOT / "views" / "pantry_recurring.py").read_text(encoding="utf-8")
+    source = pantry_page_source()
     assert "invalidate_notion_cache" not in source
     assert "invalidate_household_cache()" in source
-    cache_source = _NOTION_CACHE_PATH.read_text(encoding="utf-8")
+    cache_source = notion_cache_source()
     block = cache_source.split("def invalidate_household_cache()", 1)[1].split("\n\n\n", 1)[0]
     assert "get_db.clear()" not in block
     assert "st.cache_data.clear()" not in block
@@ -181,7 +184,7 @@ def test_refresh_reloads_recipes_in_full() -> None:
 
 
 def test_recipe_write_keeps_schema_unless_it_may_change() -> None:
-    source = _NOTION_CACHE_PATH.read_text(encoding="utf-8")
+    source = notion_cache_source()
     block = source.split("def invalidate_recipes_after_write", 1)[1].split("\n\n\n", 1)[0]
     assert "st.cache_data.clear()" not in block
     assert "if schema_may_change:" in block

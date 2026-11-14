@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from typing import Final
 
 import streamlit as st
 
-_STATIC_DIR: Final[Path] = Path(__file__).resolve().parent.parent / "static"
-DROPDOWN_DISMISS_JS: Final[Path] = _STATIC_DIR / "dropdown_dismiss.js"
+from src.grocery_wizard.ui.theme import UI_STATIC_DIR
+
+DROPDOWN_DISMISS_JS: Final = UI_STATIC_DIR / "dropdown_dismiss.js"
 
 
 def dropdown_dismiss_iframe_html() -> str:
