@@ -9,6 +9,7 @@ from typing import Any
 from streamlit.testing.v1 import AppTest
 
 from src.grocery_wizard.paths import UI_APP_PATH
+from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.ids import CONTROL_GLOBAL_PAGE_PICKER, control_streamlit_key
 from src.grocery_wizard.ui.views import page_label_for_slug
 
@@ -134,8 +135,6 @@ def dev_meals_ready_for_grocery(ctx: AuditContext) -> AppTest:
 def first_recipe_link(ctx: AuditContext) -> str:
     """A recipe URL already in Notion, so the Add-recipe duplicate path is read-only."""
     if "recipe_link" not in ctx.facts:
-        from src.grocery_wizard.ui.db_access import get_db
-
         recipes = get_db().query_recipes()
         link = next((r.link for r in recipes if r.link), None)
         ctx.facts["recipe_link"] = link

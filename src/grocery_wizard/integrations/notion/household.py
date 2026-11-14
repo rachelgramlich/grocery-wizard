@@ -35,6 +35,7 @@ from src.grocery_wizard.shopping.pantry import (
     PantrySection,
     parse_pantry_file_from_lines,
 )
+from src.grocery_wizard.shopping.pantry_matching import _matches_pantry_search
 from src.grocery_wizard.shopping.store_aisles import (
     aisle_label,
     canonical_pantry_section_label,
@@ -243,8 +244,6 @@ class NotionPantryDB:
         return True
 
     def remove_item_by_name(self, search: str) -> bool:
-        from src.grocery_wizard.shopping.pantry import _matches_pantry_search
-
         lowered = search.strip()
         if not lowered:
             return False

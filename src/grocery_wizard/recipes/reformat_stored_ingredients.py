@@ -19,6 +19,7 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
 
+from src.grocery_wizard.config import load_config
 from src.grocery_wizard.ingredients.parsed import (
     _is_citrus_zest_or_juice_only_line,
     format_ingredient_for_storage,
@@ -529,8 +530,6 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    from src.grocery_wizard.config import load_config
-
     args = _parse_args(argv)
     cfg = load_config()
     db = NotionRecipesDB(cfg)
