@@ -22,7 +22,7 @@ just test         # pytest
 just pre-commit   # all pre-commit hooks (ruff --fix + ruff-format on commit)
 ```
 
-**GitHub Actions** runs `just ci` on push to `main` and on pull requests (`actionlint`, `ruff check`, `ruff format --check`, `pytest`). CI fails if `uv.lock` is out of date, so run `uv lock` after editing dependencies. Workflow actions are pinned to commit SHAs; Dependabot (`.github/dependabot.yml`) opens weekly PRs to bump them and Python dependencies. Pre-commit still auto-fixes lint/format on each commit locally (or via [pre-commit.ci](https://pre-commit.ci) if enabled).
+**GitHub Actions** runs `just ci` on push to `main` and on pull requests (`actionlint`, `ruff check`, `ruff format --check`, `pytest`). CI fails if `uv.lock` is out of date, so run `uv lock` after editing dependencies. Workflow actions are pinned to commit SHAs; Dependabot (`.github/dependabot.yml`) opens weekly PRs to bump them and Python dependencies. **Dependabot auto-merge** (`.github/workflows/dependabot-automerge.yml`) enables squash auto-merge only for `dependabot[bot]` minor/patch and GitHub Actions bumps after required checks (e.g. job **`test`**) pass — feature PRs are unaffected. Repo setting **Allow auto-merge** must be on. Pre-commit still auto-fixes lint/format on each commit locally (or via [pre-commit.ci](https://pre-commit.ci) if enabled).
 
 ---
 
