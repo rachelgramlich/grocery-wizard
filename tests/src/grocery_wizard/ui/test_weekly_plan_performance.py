@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from ui_source import UI_ROOT, ui_source
 
+from src.grocery_wizard.ui.theme import APP_THEME_STATIC_CSS
+
 
 def test_weekly_plan_uses_fragment_for_grocery_only() -> None:
     """Meals render in the main run (no stale fragment); grocery stays fragmented."""
@@ -33,7 +35,7 @@ def test_meals_list_batch_render_after_plan_build() -> None:
     assert 'loading_indicator("Loading your meals…")' in built_fn
     assert "gw-meals-batch-pending" in built_fn
     assert "gw-meals-batch-complete" in built_fn
-    css = (UI_ROOT / "static" / "app_theme.css").read_text(encoding="utf-8")
+    css = APP_THEME_STATIC_CSS.read_text(encoding="utf-8")
     assert "gw-meals-batch-pending" in css
     assert "gw-meals-batch-complete" in css
     build_fn = plan_entry.split('key="build_plan"', 1)[1].split("def _render_built_plan_meals", 1)[

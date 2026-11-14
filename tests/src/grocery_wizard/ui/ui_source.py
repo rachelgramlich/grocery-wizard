@@ -39,8 +39,28 @@ def ui_source() -> str:
     return "\n\n".join(chunks)
 
 
+def ui_module_source(rel: str) -> str:
+    return (UI_ROOT / rel).read_text(encoding="utf-8")
+
+
 def pantry_page_source() -> str:
-    return (UI_ROOT / "views" / "pantry_recurring.py").read_text(encoding="utf-8")
+    return ui_module_source("views/pantry_recurring.py")
+
+
+def add_recipe_page_source() -> str:
+    return ui_module_source("views/add_recipe.py")
+
+
+def nyt_sync_ui_source() -> str:
+    return ui_module_source("nyt_sync.py")
+
+
+def views_nav_source() -> str:
+    return ui_module_source("views/__init__.py")
+
+
+def notion_cache_source() -> str:
+    return ui_module_source("notion_cache.py")
 
 
 def apptest_continue_to_meal_builder(at, *, timeout: int = 60) -> None:

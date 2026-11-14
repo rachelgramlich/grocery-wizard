@@ -5,9 +5,8 @@ from __future__ import annotations
 import pytest
 from ui_source import APP_PATH, UI_ROOT, apptest_continue_to_meal_builder, ui_source
 
+from src.grocery_wizard.ui.theme import APP_THEME_STATIC_CSS
 from tests.notion_test_env import live_notion_smoke_enabled
-
-APP_FILE = str(APP_PATH)
 
 
 def test_weekly_plan_has_per_meal_swap_buttons() -> None:
@@ -19,7 +18,7 @@ def test_weekly_plan_has_per_meal_swap_buttons() -> None:
     assert "meal_slot_action_row_" in source
     assert "gw-meal-slot-label" in source
     assert "meal_col, actions_col = st.columns([1, 1]" in source
-    assert "flex-wrap: wrap" in (UI_ROOT / "static" / "app_theme.css").read_text(encoding="utf-8")
+    assert "flex-wrap: wrap" in APP_THEME_STATIC_CSS.read_text(encoding="utf-8")
     assert (
         'width="content"'
         in source.split("def _render_slot_manual_popover", 1)[1].split(
@@ -102,7 +101,7 @@ def test_weekly_plan_build_shows_per_meal_swap() -> None:
     """AppTest smoke test: Build my plan renders per-meal ↺ buttons."""
     from streamlit.testing.v1 import AppTest
 
-    at = AppTest.from_file(APP_FILE, default_timeout=120)
+    at = AppTest.from_file(str(APP_PATH), default_timeout=120)
     at.run(timeout=120)
 
     continue_buttons = [b for b in at.button if b.label == "Continue"]

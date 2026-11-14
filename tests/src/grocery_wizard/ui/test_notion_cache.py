@@ -6,7 +6,7 @@ from datetime import date
 from unittest.mock import MagicMock
 
 import pytest
-from ui_source import UI_ROOT
+from ui_source import UI_ROOT, notion_cache_source
 
 from src.grocery_wizard.integrations.notion import Recipe
 from src.grocery_wizard.planning.saved_weekly_plans import SavedWeeklyPlan
@@ -19,7 +19,6 @@ from src.grocery_wizard.ui.notion_cache import (
     saved_plan_recipe_names,
 )
 
-_NOTION_CACHE_PATH = UI_ROOT / "notion_cache.py"
 _LOAD_SAVED_PLANS_UNCACHED = notion_cache._load_saved_plans_cached.__wrapped__
 
 
@@ -73,7 +72,7 @@ def test_list_saved_plans_for_ui_falls_back_on_kwarg_typeerror(
 
 
 def test_invalidate_notion_cache_clears_cached_db_resource() -> None:
-    source = _NOTION_CACHE_PATH.read_text(encoding="utf-8")
+    source = notion_cache_source()
     invalidate_block = source.split("def invalidate_notion_cache()", 1)[1].split("\ndef ", 1)[0]
     assert "get_db.clear()" in invalidate_block
     assert "clear_ingredient_index_warm()" in invalidate_block
@@ -119,7 +118,7 @@ def test_pantry_write_helpers_do_not_clear_recipe_caches() -> None:
     source = (UI_ROOT / "views" / "pantry_recurring.py").read_text(encoding="utf-8")
     assert "invalidate_notion_cache" not in source
     assert "invalidate_household_cache()" in source
-    cache_source = _NOTION_CACHE_PATH.read_text(encoding="utf-8")
+    cache_source = notion_cache_source()
     block = cache_source.split("def invalidate_household_cache()", 1)[1].split("\n\n\n", 1)[0]
     assert "get_db.clear()" not in block
     assert "st.cache_data.clear()" not in block
@@ -181,7 +180,7 @@ def test_refresh_reloads_recipes_in_full() -> None:
 
 
 def test_recipe_write_keeps_schema_unless_it_may_change() -> None:
-    source = _NOTION_CACHE_PATH.read_text(encoding="utf-8")
+    source = notion_cache_source()
     block = source.split("def invalidate_recipes_after_write", 1)[1].split("\n\n\n", 1)[0]
     assert "st.cache_data.clear()" not in block
     assert "if schema_may_change:" in block
