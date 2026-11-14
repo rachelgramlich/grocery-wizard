@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
-from ui_source import APP_PATH, ui_source, views_nav_source
+from ui_source import (
+    app_source,
+    ui_source,
+    views_nav_source,
+)
 
 
 def test_recipe_maintenance_page_registered() -> None:
@@ -28,6 +32,6 @@ def test_recipe_maintenance_page_registered() -> None:
     assert "Apply meal plan status" in source
     assert source.index("### Meal plan status") < source.index("### Automatic backfill")
 
-    app = APP_PATH.read_text(encoding="utf-8")
+    app = app_source()
     assert "elif active_slug == PAGE_SLUG_MAINTENANCE:" in app
     assert "render_recipe_maintenance()" in app

@@ -17,9 +17,8 @@ from pathlib import Path
 
 import pytest
 
-from tests.repo_paths import REPO_ROOT
+from tests.repo_paths import REPO_ROOT, SRC_PACKAGE_ROOT
 
-PACKAGE_ROOT = REPO_ROOT / "src" / "grocery_wizard"
 INTERNAL_PREFIX = "src.grocery_wizard"
 
 
@@ -58,7 +57,7 @@ def _resolve_from_module(node: ast.ImportFrom, source_file: Path) -> str | None:
 
 def _collect_internal_imports() -> list[InternalImport]:
     found: list[InternalImport] = []
-    for path in sorted(PACKAGE_ROOT.rglob("*.py")):
+    for path in sorted(SRC_PACKAGE_ROOT.rglob("*.py")):
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         for node in ast.walk(tree):
             if not isinstance(node, ast.ImportFrom):
@@ -75,7 +74,7 @@ def _collect_internal_imports() -> list[InternalImport]:
 
 
 def _importable_modules() -> list[str]:
-    names = {_module_name_for(path) for path in PACKAGE_ROOT.rglob("*.py")}
+    names = {_module_name_for(path) for path in SRC_PACKAGE_ROOT.rglob("*.py")}
     return sorted(name for name in names if not name.endswith("__main__"))
 
 

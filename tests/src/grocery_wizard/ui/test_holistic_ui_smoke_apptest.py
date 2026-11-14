@@ -13,6 +13,7 @@ from ui_source import (
     APP_PATH,
     apptest_assert_no_exception,
     apptest_enter_dev_mode,
+    apptest_from_app,
     apptest_open_page,
     apptest_page_picker,
     apptest_start_app,
@@ -79,7 +80,6 @@ def test_holistic_primary_page_opens(page_label: str, body_needle: str) -> None:
 
 def test_holistic_weekly_entry_loads_saved_plans_list(monkeypatch: pytest.MonkeyPatch) -> None:
     """Regression (#417): ``cached_saved_plans`` / ``list_saved_plans`` on first weekly render."""
-    from streamlit.testing.v1 import AppTest
 
     class _FakePlansDB:
         def __init__(self, *, recipes_db=None) -> None:
@@ -102,7 +102,7 @@ def test_holistic_weekly_entry_loads_saved_plans_list(monkeypatch: pytest.Monkey
     )
     monkeypatch.setattr(notion_cache, "_load_saved_plans_cached", _LOAD_SAVED_PLANS_UNCACHED)
 
-    at = AppTest.from_file(str(APP_PATH), default_timeout=120)
+    at = apptest_from_app(timeout=120)
     at.run(timeout=120)
     apptest_assert_no_exception(at, context="weekly saved plans load")
     radios = [r for r in at.radio if r.label == "Weekly plan session"]
@@ -111,7 +111,6 @@ def test_holistic_weekly_entry_loads_saved_plans_list(monkeypatch: pytest.Monkey
 
 def test_holistic_continue_saved_plan_reaches_meals_step(monkeypatch: pytest.MonkeyPatch) -> None:
     """Saved-plan mode → Continue loads recipes into session (no Notion writes)."""
-    from streamlit.testing.v1 import AppTest
 
     plan = SavedWeeklyPlan(
         week_start=date(2026, 10, 11),
@@ -134,7 +133,7 @@ def test_holistic_continue_saved_plan_reaches_meals_step(monkeypatch: pytest.Mon
     )
     monkeypatch.setattr(notion_cache, "_load_saved_plans_cached", _LOAD_SAVED_PLANS_UNCACHED)
 
-    at = AppTest.from_file(str(APP_PATH), default_timeout=120)
+    at = apptest_from_app(timeout=120)
     at.run(timeout=120)
 
     session_radio = [r for r in at.radio if r.label == "Weekly plan session"]
@@ -157,11 +156,10 @@ def test_holistic_continue_saved_plan_reaches_meals_step(monkeypatch: pytest.Mon
 )
 def test_holistic_live_saved_plan_list_read_only(monkeypatch: pytest.MonkeyPatch) -> None:
     """Live Notion: weekly entry still renders after real saved-plan fetch (read-only)."""
-    from streamlit.testing.v1 import AppTest
 
     monkeypatch.setattr(notion_cache, "_load_saved_plans_cached", _LOAD_SAVED_PLANS_UNCACHED)
 
-    at = AppTest.from_file(str(APP_PATH), default_timeout=180)
+    at = apptest_from_app(timeout=180)
     at.run(timeout=180)
     apptest_assert_no_exception(at, context="live saved plans")
     radios = [r for r in at.radio if r.label == "Weekly plan session"]
@@ -175,11 +173,10 @@ def test_holistic_live_saved_plan_list_read_only(monkeypatch: pytest.MonkeyPatch
 def test_holistic_live_continue_saved_plan_meals_step_read_only(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from streamlit.testing.v1 import AppTest
 
     monkeypatch.setattr(notion_cache, "_load_saved_plans_cached", _LOAD_SAVED_PLANS_UNCACHED)
 
-    at = AppTest.from_file(str(APP_PATH), default_timeout=180)
+    at = apptest_from_app(timeout=180)
     at.run(timeout=180)
     session_radio = [r for r in at.radio if r.label == "Weekly plan session"]
     if not session_radio:
@@ -209,8 +206,6 @@ def test_holistic_live_continue_saved_plan_meals_step_read_only(
 def test_holistic_dev_jump_builds_golden_grocery_list(monkeypatch: pytest.MonkeyPatch) -> None:
     """CI-safe: dev jump → final list runs real build/merge/sort (mock Notion golden week)."""
     from unittest.mock import MagicMock
-
-    from streamlit.testing.v1 import AppTest
 
     from src.grocery_wizard.shopping.grocery_invariants import assert_grocery_list_invariants
     from src.grocery_wizard.shopping.grocery_list import format_grocery_items_copy_text
@@ -261,7 +256,7 @@ def test_holistic_dev_jump_builds_golden_grocery_list(monkeypatch: pytest.Monkey
 
     monkeypatch.setenv("GROCERY_WIZARD_DEV_UI", "1")
 
-    at = AppTest.from_file(str(APP_PATH), default_timeout=180)
+    at = apptest_from_app(timeout=180)
     at.run(timeout=180)
     apptest_enter_dev_mode(at, timeout=180)
 

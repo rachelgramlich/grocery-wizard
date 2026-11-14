@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from ui_source import APP_PATH, apptest_continue_to_meal_builder
+from ui_source import apptest_continue_to_meal_builder, apptest_from_app
 
 from tests.notion_test_env import live_notion_smoke_enabled
 
@@ -26,9 +26,8 @@ def _visible_text(at) -> str:
 
 def test_get_started_shows_no_notion_recipe_loading() -> None:
     """Get started must not show Notion recipe loading (quiet warm happens later)."""
-    from streamlit.testing.v1 import AppTest
 
-    at = AppTest.from_file(str(APP_PATH), default_timeout=120)
+    at = apptest_from_app(timeout=120)
     at.run(timeout=120)
 
     assert not at.exception, f"App exception: {at.exception}"
@@ -41,9 +40,8 @@ def test_get_started_shows_no_notion_recipe_loading() -> None:
 
 def test_meal_count_continue_reaches_build_meals_without_notion_loading_copy() -> None:
     """After meal-count Continue, meal builder opens (Build my plan), no Notion load copy."""
-    from streamlit.testing.v1 import AppTest
 
-    at = AppTest.from_file(str(APP_PATH), default_timeout=120)
+    at = apptest_from_app(timeout=120)
     at.run(timeout=120)
 
     continue_buttons = [b for b in at.button if b.label == "Continue"]

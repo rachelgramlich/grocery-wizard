@@ -3,7 +3,13 @@
 from __future__ import annotations
 
 import pytest
-from ui_source import APP_PATH, UI_ROOT, apptest_continue_to_meal_builder, ui_source
+from ui_source import (
+    apptest_continue_to_meal_builder,
+    apptest_from_app,
+    meal_plan_filters_source,
+    ui_source,
+    weekly_plan_source,
+)
 
 from src.grocery_wizard.ui.theme import APP_THEME_STATIC_CSS
 from tests.notion_test_env import live_notion_smoke_enabled
@@ -83,7 +89,7 @@ def test_manual_picker_recipe_first_then_or_filter() -> None:
 
 def test_meal_plan_ingredient_filter_before_checkboxes() -> None:
     """Ingredients multiselect matches other filters and sits above checkbox toggles."""
-    filters_source = (UI_ROOT / "meal_plan_filters.py").read_text(encoding="utf-8")
+    filters_source = meal_plan_filters_source()
     filters_source = filters_source.split("def render_meal_plan_filters", 1)[1]
     assert "ingredients in your recipes - search to narrow the list" in filters_source
     assert "_ingredient_search" not in filters_source
@@ -99,9 +105,8 @@ def test_meal_plan_ingredient_filter_before_checkboxes() -> None:
 )
 def test_weekly_plan_build_shows_per_meal_swap() -> None:
     """AppTest smoke test: Build my plan renders per-meal ↺ buttons."""
-    from streamlit.testing.v1 import AppTest
 
-    at = AppTest.from_file(str(APP_PATH), default_timeout=120)
+    at = apptest_from_app(timeout=120)
     at.run(timeout=120)
 
     continue_buttons = [b for b in at.button if b.label == "Continue"]
@@ -204,7 +209,7 @@ def test_dev_mode_auto_continues_without_continue_button() -> None:
 
 
 def test_weekly_plan_mode_choices_always_includes_dev() -> None:
-    source = (UI_ROOT / "views" / "weekly_plan" / "state.py").read_text(encoding="utf-8")
+    source = weekly_plan_source("state.py")
     choices_fn = source.split("def _weekly_plan_mode_choices", 1)[1].split(
         "def _weekly_plan_mode", 1
     )[0]
@@ -237,28 +242,26 @@ def test_plan_meal_count_persists_separate_from_widget_key() -> None:
     )[0]
     assert "PLAN_MEAL_COUNT_WIDGET_KEY not in st.session_state" in sync_fn
     assert "st.session_state.plan_meal_count" in sync_fn
-    state_source = (UI_ROOT / "views" / "weekly_plan" / "state.py").read_text(encoding="utf-8")
+    state_source = weekly_plan_source("state.py")
     assert 'PLAN_MEAL_COUNT_WIDGET_KEY = "plan_meal_count_input"' in state_source
 
 
 def test_meal_count_widget_outside_meals_fragment() -> None:
     """Issue #284/#400: meal count in flow.py; meals render in main run, not a meals fragment."""
-    flow_source = (UI_ROOT / "views" / "weekly_plan" / "flow.py").read_text(encoding="utf-8")
+    flow_source = weekly_plan_source("flow.py")
     assert "_render_meal_count_input()" in flow_source
     assert "_sync_plan_length_to_meal_count(meal_count)" in flow_source
     assert "_render_plan_meal_count_continue" in flow_source
     assert '@st.fragment(key="weekly_plan_meals")' not in flow_source
     assert "render_meals_section" in flow_source
-    plan_entry_source = (UI_ROOT / "views" / "weekly_plan" / "plan_entry.py").read_text(
-        encoding="utf-8"
-    )
+    plan_entry_source = weekly_plan_source("plan_entry.py")
     meals_fn = plan_entry_source.split("def render_meals_section", 1)[1].split("\ndef ", 1)[0]
     assert "_render_meal_count_input" not in meals_fn
 
 
 def test_meal_count_continue_gates_meals_fragment() -> None:
     """Meal builder waits for explicit Continue after meal count (not Enter on number input)."""
-    flow_source = (UI_ROOT / "views" / "weekly_plan" / "flow.py").read_text(encoding="utf-8")
+    flow_source = weekly_plan_source("flow.py")
     plan_block = flow_source.split("WeeklyRailStep.PLAN_MEALS", 1)[1].split(
         "WeeklyRailStep.GROCERY_LIST", 1
     )[0]
@@ -266,7 +269,7 @@ def test_meal_count_continue_gates_meals_fragment() -> None:
     assert plan_block.index("_render_plan_meal_count_continue") < plan_block.index(
         "render_meals_section"
     )
-    state_source = (UI_ROOT / "views" / "weekly_plan" / "state.py").read_text(encoding="utf-8")
+    state_source = weekly_plan_source("state.py")
     assert "PLAN_MEAL_COUNT_CONFIRMED_KEY" in state_source
     assert "def _plan_meals_builder_unlocked" in state_source
     continue_fn = (
@@ -351,12 +354,8 @@ def test_grocery_list_extra_items_before_create_button() -> None:
 
 def test_grocery_stage_uses_sub_block_anchors_and_scroll() -> None:
     """Issue #330: grocery sub-stages share rail step 3 with scroll hooks."""
-    grocery_source = (UI_ROOT / "views" / "weekly_plan" / "grocery_list_ui.py").read_text(
-        encoding="utf-8"
-    )
-    review_source = (UI_ROOT / "views" / "weekly_plan" / "recipe_review.py").read_text(
-        encoding="utf-8"
-    )
+    grocery_source = weekly_plan_source("grocery_list_ui.py")
+    review_source = weekly_plan_source("recipe_review.py")
     assert "### 2. Grocery list" not in grocery_source
     assert "render_weekly_sub_block_anchor(BLOCK_WEEKLY_GROCERY_PRE_BUILD)" in grocery_source
     assert "queue_weekly_scroll(BLOCK_WEEKLY_GROCERY_RECIPE_REVIEW)" in grocery_source

@@ -10,3 +10,8 @@ TESTS_DIR = REPO_ROOT / "tests"
 FIXTURES_DIR = TESTS_DIR / "fixtures"
 UI_SRC_ROOT = SRC_PACKAGE_ROOT / "ui"
 UI_TEST_HELPERS = TESTS_DIR / "src" / "grocery_wizard" / "ui"
+
+
+def package_module_source(rel: str) -> str:
+    """Read a module under ``src/grocery_wizard`` as UTF-8 text."""
+    return (SRC_PACKAGE_ROOT / rel).read_text(encoding="utf-8")

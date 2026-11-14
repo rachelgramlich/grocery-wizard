@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
-from ui_source import UI_ROOT, ui_source
+from ui_source import (
+    UI_ROOT,
+    ui_source,
+    weekly_plan_source,
+)
 
 
 def test_start_recipe_review_formats_notion_storage_lines() -> None:
@@ -41,7 +45,7 @@ def test_per_recipe_review_initializes_widget_keys_without_value_param() -> None
 
 
 def test_save_recipe_review_to_notion_syncs_stash_after_cache_invalidation() -> None:
-    source = (UI_ROOT / "views" / "weekly_plan" / "recipe_review.py").read_text(encoding="utf-8")
+    source = weekly_plan_source("recipe_review.py")
     save_block = source.split("def _save_recipe_review_to_notion", 1)[1].split(
         "def _render_per_recipe_review", 1
     )[0]

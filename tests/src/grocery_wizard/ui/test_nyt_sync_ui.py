@@ -5,30 +5,30 @@ from __future__ import annotations
 from unittest.mock import patch
 
 from ui_source import (
-    APP_PATH,
     add_recipe_page_source,
+    app_source,
+    apptest_from_app,
     apptest_page_picker,
     nyt_sync_ui_source,
 )
 
-from tests.repo_paths import SRC_PACKAGE_ROOT
+from tests.repo_paths import package_module_source
 
 
 def test_nyt_sync_controls_only_on_add_recipe_tab() -> None:
-    app = APP_PATH.read_text(encoding="utf-8")
+    app = app_source()
     assert "render_nyt_sync_controls" not in app
     add_recipe = add_recipe_page_source()
     assert "render_nyt_sync_controls()" in add_recipe
 
 
 def test_nyt_sync_visible_on_add_recipe_when_credentials_missing() -> None:
-    from streamlit.testing.v1 import AppTest
 
     with patch(
         "src.grocery_wizard.ui.nyt_sync.credentials_status",
         return_value={"configured": False, "regi_id": None},
     ):
-        at = AppTest.from_file(str(APP_PATH), default_timeout=60)
+        at = apptest_from_app(timeout=60)
         at.run()
         apptest_page_picker(at).set_value("Add Recipe").run()
 
@@ -43,7 +43,7 @@ def test_nyt_sync_visible_on_add_recipe_when_credentials_missing() -> None:
 
 def test_list_recipe_box_folders_omits_all_saved_recipes_option() -> None:
     nyt_sync = nyt_sync_ui_source()
-    nyt_cooking = (SRC_PACKAGE_ROOT / "integrations" / "nyt_cooking.py").read_text(encoding="utf-8")
+    nyt_cooking = package_module_source("integrations/nyt_cooking.py")
     assert "All saved recipes" not in nyt_sync
     assert '_PREFERRED_NYT_FOLDER_LABELS = ("To make", "Favorites")' in nyt_cooking
     assert 'label="All saved recipes"' not in nyt_cooking

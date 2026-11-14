@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from ui_source import APP_PATH
+from ui_source import (
+    app_source,
+)
 
 from src.grocery_wizard.ui.components.dropdown_dismiss import (
     DROPDOWN_DISMISS_JS,
@@ -58,7 +60,7 @@ def test_iframe_installs_script_into_parent_document() -> None:
 
 
 def test_app_installs_dropdown_dismiss() -> None:
-    assert "install_dropdown_dismiss()" in APP_PATH.read_text(encoding="utf-8")
+    assert "install_dropdown_dismiss()" in app_source()
 
 
 def test_mobile_css_caps_dropdown_menu_height() -> None:
