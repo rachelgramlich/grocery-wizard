@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from ui_source import APP_PATH
 
-from src.grocery_wizard.ui.dropdown_dismiss import (
+from src.grocery_wizard.ui.components.dropdown_dismiss import (
     DROPDOWN_DISMISS_JS,
     dropdown_dismiss_iframe_html,
 )

@@ -18,8 +18,8 @@ from src.grocery_wizard.integrations.nyt_cooking import (
     run_recipe_box_sync,
     verify_nyt_credentials,
 )
+from src.grocery_wizard.ui.components.loading import loading_indicator
 from src.grocery_wizard.ui.db_access import get_db
-from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.notion_cache import invalidate_recipes_after_write
 
 

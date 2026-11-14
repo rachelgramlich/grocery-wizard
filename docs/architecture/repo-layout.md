@@ -28,7 +28,7 @@ Folders are grouped by **job**, not by layer. Dependency flow is mostly: `ui` �
 
 | Folder | Responsibility |
 | --- | --- |
-| `ui/` | Streamlit entry (`app.py`), page bodies (`views/`), stable IDs (`ids.py`), Notion cache |
+| `ui/` | Streamlit entry (`app.py`), page bodies (`views/`), shared widgets (`components/`), stable IDs (`ids.py`), Notion cache |
 | `config/` | Environment loading, `store_aisles.txt`, committed defaults |
 | `integrations/` | Notion API, NYT Cooking, household auth helpers |
 | `recipes/` | URL scrape, metadata classify, add recipe to Notion |
@@ -44,6 +44,7 @@ src/grocery_wizard/
 ├── ui/
 │   ├── app.py                 # thin entry: nav, theme, cache controls
 │   ├── ids.py                 # page.block.control IDs
+│   ├── components/            # shared Streamlit widgets (loading, feedback, …)
 │   ├── views/                 # one module per primary page
 │   │   └── weekly_plan/       # multi-step weekly + grocery flow
 │   └── static/                # CSS assets
@@ -96,7 +97,8 @@ Index: [`docs/README.md`](../README.md).
 
 | Kind of change | Put it here |
 | --- | --- |
-| New Streamlit page or widget | `src/grocery_wizard/ui/views/` (+ IDs in `ids.py`, doc in `docs/ui/ui-map.md`) |
+| New Streamlit page | `src/grocery_wizard/ui/views/` (+ IDs in `ids.py`, doc in `docs/ui/ui-map.md`) |
+| Shared widget (multi-page) | `src/grocery_wizard/ui/components/` |
 | New Notion or NYT integration | `src/grocery_wizard/integrations/` |
 | New domain logic (no UI) | Matching folder under `recipes/`, `shopping/`, etc. |
 | Regression test | Mirror path under `tests/src/grocery_wizard/` |

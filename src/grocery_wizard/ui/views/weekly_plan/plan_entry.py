@@ -27,6 +27,7 @@ from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
     resolve_slot_origins_for_plan,
     suggestion_rejections_column_name,
 )
+from src.grocery_wizard.ui.components.loading import loading_indicator
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.dev_jumps import (
     DEFAULT_DEV_MEAL_COUNT,
@@ -45,7 +46,6 @@ from src.grocery_wizard.ui.dev_jumps import (
     sync_dev_manual_multiselect,
 )
 from src.grocery_wizard.ui.ids import BLOCK_WEEKLY_MEALS
-from src.grocery_wizard.ui.loading import loading_indicator
 from src.grocery_wizard.ui.meal_plan_filters import (
     recipes_ingredient_cache_key,
     render_meal_plan_filters,

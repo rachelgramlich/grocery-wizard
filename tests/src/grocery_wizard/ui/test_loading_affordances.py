@@ -9,7 +9,7 @@ def test_app_mounts_global_loading_banner() -> None:
     app_text = APP_PATH.read_text(encoding="utf-8")
     assert "mount_global_loading_banner" in app_text
     assert "loading_indicator" in app_text
-    loading_source = (UI_ROOT / "loading.py").read_text(encoding="utf-8")
+    loading_source = (UI_ROOT / "components" / "loading.py").read_text(encoding="utf-8")
     mount_fn = loading_source.split("def mount_global_loading_banner", 1)[1].split("\ndef ", 1)[0]
     assert "clear_global_loading_banner()" in mount_fn
     clear_fn = loading_source.split("def clear_global_loading_banner", 1)[1].split("\ndef ", 1)[0]
@@ -35,7 +35,7 @@ def test_long_actions_use_loading_indicator() -> None:
 
 
 def test_loading_indicator_defaults_to_inline_spinner() -> None:
-    loading_source = (UI_ROOT / "loading.py").read_text(encoding="utf-8")
+    loading_source = (UI_ROOT / "components" / "loading.py").read_text(encoding="utf-8")
     assert "st.spinner" in loading_source
     assert "st.progress" not in loading_source
     assert "st.status" not in loading_source
