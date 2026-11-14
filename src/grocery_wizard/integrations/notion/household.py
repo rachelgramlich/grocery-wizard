@@ -30,7 +30,11 @@ from src.grocery_wizard.planning.saved_weekly_plans import (
     normalize_recipe_names,
     saved_plan_week_start,
 )
-from src.grocery_wizard.shopping.pantry import PantrySection, parse_pantry_file_from_lines
+from src.grocery_wizard.shopping.pantry import (
+    DEFAULT_EMPTY_PANTRY_LINES,
+    PantrySection,
+    parse_pantry_file_from_lines,
+)
 from src.grocery_wizard.shopping.store_aisles import (
     aisle_label,
     canonical_pantry_section_label,
@@ -155,12 +159,7 @@ class NotionPantryDB:
     def load_as_pantry_lines(self) -> tuple[list[str], list[PantrySection]]:
         entries = self.list_entries()
         if not entries:
-            lines = [
-                "# Pantry staples — one item per line.",
-                "# Lines starting with # are section headers or comments.",
-                "",
-                "# --- Uncategorized ---",
-            ]
+            lines = list(DEFAULT_EMPTY_PANTRY_LINES)
             return lines, [PantrySection(header="# --- Uncategorized ---")]
 
         cfg = load_store_aisles()

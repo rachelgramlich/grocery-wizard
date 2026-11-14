@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from src.grocery_wizard.paths import PACKAGE_ROOT, REPO_ROOT
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
-SRC_PACKAGE_ROOT = REPO_ROOT / "src" / "grocery_wizard"
+SRC_PACKAGE_ROOT = PACKAGE_ROOT
 TESTS_DIR = REPO_ROOT / "tests"
 FIXTURES_DIR = TESTS_DIR / "fixtures"
 UI_SRC_ROOT = SRC_PACKAGE_ROOT / "ui"

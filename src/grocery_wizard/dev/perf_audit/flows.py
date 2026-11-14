@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any
 
 from streamlit.testing.v1 import AppTest
 
+from src.grocery_wizard.paths import UI_APP_PATH
 from src.grocery_wizard.ui.ids import CONTROL_GLOBAL_PAGE_PICKER, control_streamlit_key
 from src.grocery_wizard.ui.views import page_label_for_slug
 
-APP_PATH = Path(__file__).resolve().parent.parent.parent / "ui" / "app.py"
+APP_PATH = UI_APP_PATH
 _PAGE_PICKER_KEY = control_streamlit_key(CONTROL_GLOBAL_PAGE_PICKER)
 _RENDER_SLUG_KEY = "gw_render_page_slug"
 

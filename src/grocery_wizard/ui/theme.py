@@ -14,7 +14,8 @@ from typing import Final
 # WCAG 2.x contrast ratio for normal text (AA).
 MIN_CONTRAST_RATIO_AA: Final[float] = 4.5
 
-APP_THEME_STATIC_CSS = Path(__file__).resolve().parent / "static" / "app_theme.css"
+UI_STATIC_DIR = Path(__file__).resolve().parent / "static"
+APP_THEME_STATIC_CSS = UI_STATIC_DIR / "app_theme.css"
 
 
 @dataclass(frozen=True, slots=True)

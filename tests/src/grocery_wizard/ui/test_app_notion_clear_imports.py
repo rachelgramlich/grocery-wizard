@@ -27,12 +27,13 @@ def test_app_puts_repo_root_on_pythonpath_so_streamlit_reloads_all_modules(monke
 
     from streamlit import file_util
 
-    from tests.repo_paths import UI_SRC_ROOT
+    from src.grocery_wizard.paths import REPO_ROOT
+    from tests.repo_paths import SRC_PACKAGE_ROOT
 
     monkeypatch.delenv("PYTHONPATH", raising=False)
     sys.modules.pop("src.grocery_wizard.ui.app", None)
     importlib.import_module("src.grocery_wizard.ui.app")
 
-    shopping_file = str(UI_SRC_ROOT.parent / "shopping" / "grocery_list.py")
-    assert str(UI_SRC_ROOT.parents[2]) in os.environ["PYTHONPATH"].split(os.pathsep)
+    shopping_file = str(SRC_PACKAGE_ROOT / "shopping" / "grocery_list.py")
+    assert str(REPO_ROOT) in os.environ["PYTHONPATH"].split(os.pathsep)
     assert file_util.file_in_pythonpath(shopping_file)

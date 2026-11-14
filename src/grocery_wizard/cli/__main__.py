@@ -1,3 +1,5 @@
+"""``python -m src.grocery_wizard.cli`` entry."""
+
 from __future__ import annotations
 
 from src.grocery_wizard.cli.main import main

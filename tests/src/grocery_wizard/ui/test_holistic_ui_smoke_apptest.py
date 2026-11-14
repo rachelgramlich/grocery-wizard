@@ -102,9 +102,7 @@ def test_holistic_weekly_entry_loads_saved_plans_list(monkeypatch: pytest.Monkey
     )
     monkeypatch.setattr(notion_cache, "_load_saved_plans_cached", _LOAD_SAVED_PLANS_UNCACHED)
 
-    at = apptest_from_app(timeout=120)
-    at.run(timeout=120)
-    apptest_assert_no_exception(at, context="weekly saved plans load")
+    at = apptest_start_app(timeout=120)
     radios = [r for r in at.radio if r.label == "Weekly plan session"]
     assert radios, "Weekly plan session radio missing"
 
@@ -159,9 +157,7 @@ def test_holistic_live_saved_plan_list_read_only(monkeypatch: pytest.MonkeyPatch
 
     monkeypatch.setattr(notion_cache, "_load_saved_plans_cached", _LOAD_SAVED_PLANS_UNCACHED)
 
-    at = apptest_from_app(timeout=180)
-    at.run(timeout=180)
-    apptest_assert_no_exception(at, context="live saved plans")
+    at = apptest_start_app(timeout=180)
     radios = [r for r in at.radio if r.label == "Weekly plan session"]
     assert radios
 

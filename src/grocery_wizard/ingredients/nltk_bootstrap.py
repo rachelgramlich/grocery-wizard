@@ -5,8 +5,8 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 
-_REPO_ROOT = Path(__file__).resolve().parents[3]
-_BUNDLED_NLTK_DATA = _REPO_ROOT / "resources" / "nltk_data"
+from src.grocery_wizard.paths import BUNDLED_NLTK_DATA_DIR
+
 _TAGGER_RESOURCE = "taggers/averaged_perceptron_tagger_eng"
 
 _nltk_ready = False
@@ -15,9 +15,9 @@ _nltk_ready = False
 @lru_cache(maxsize=1)
 def bundled_nltk_data_dir() -> Path | None:
     """Return repo-root ``resources/nltk_data`` when the tagger corpus is present."""
-    tagger_dir = _BUNDLED_NLTK_DATA / _TAGGER_RESOURCE
+    tagger_dir = BUNDLED_NLTK_DATA_DIR / _TAGGER_RESOURCE
     if tagger_dir.is_dir():
-        return _BUNDLED_NLTK_DATA
+        return BUNDLED_NLTK_DATA_DIR
     return None
 
 

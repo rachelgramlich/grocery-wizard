@@ -9,6 +9,7 @@ import streamlit as st
 
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 from src.grocery_wizard.shopping.grocery_list import (
+    NAME_LINK_STALE_VERIFY_MESSAGE,
     align_item_provenance_with_items,
     format_grocery_items_copy_text,
     format_item_provenance,
@@ -293,7 +294,7 @@ def _render_grocery_result() -> None:
             st.warning(
                 f"Name/link mismatch for **{mismatch.recipe_name}**: "
                 f"Link points to **{mismatch.link_title}**. "
-                "Ingredients may be stale — verify Notion Name, Link, and Ingredients match."
+                f"{NAME_LINK_STALE_VERIFY_MESSAGE}"
             )
 
     if missing_ingredients:

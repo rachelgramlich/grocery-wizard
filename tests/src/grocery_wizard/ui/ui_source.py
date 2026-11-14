@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from src.grocery_wizard.paths import UI_APP_PATH
 from tests.repo_paths import UI_SRC_ROOT
 
 if TYPE_CHECKING:
     from streamlit.testing.v1 import AppTest
 
 UI_ROOT = UI_SRC_ROOT
-APP_PATH = UI_ROOT / "app.py"
+APP_PATH = UI_APP_PATH
 
 _UI_MODULE_PATHS = (
     "app.py",

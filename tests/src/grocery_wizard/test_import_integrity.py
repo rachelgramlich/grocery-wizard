@@ -17,7 +17,8 @@ from pathlib import Path
 
 import pytest
 
-from tests.repo_paths import REPO_ROOT, SRC_PACKAGE_ROOT
+from src.grocery_wizard.paths import REPO_ROOT
+from tests.repo_paths import SRC_PACKAGE_ROOT
 
 INTERNAL_PREFIX = "src.grocery_wizard"
 

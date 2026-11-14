@@ -11,8 +11,7 @@ from pathlib import Path
 from pydantic import AliasChoices, BaseModel, Field, ValidationError, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-_PACKAGE_DIR = Path(__file__).resolve().parent.parent
-_REPO_ROOT = _PACKAGE_DIR.parent.parent
+from src.grocery_wizard.paths import REPO_ROOT as _REPO_ROOT
 
 # Committed package configuration (store aisles only).
 CONFIG_DIR = Path(__file__).resolve().parent
