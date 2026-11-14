@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from ui_source import ui_source
 
-from src.grocery_wizard.ui.grocery_helpers import apply_run_removals
+from src.grocery_wizard.shopping.grocery_list_edits import apply_run_removals
 
 
 def test_apply_run_removals_filters_matching_lines() -> None:

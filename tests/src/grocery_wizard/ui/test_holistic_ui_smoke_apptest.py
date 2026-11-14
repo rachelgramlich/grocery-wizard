@@ -214,8 +214,8 @@ def test_holistic_dev_jump_builds_golden_grocery_list(monkeypatch: pytest.Monkey
 
     from src.grocery_wizard.shopping.grocery_invariants import assert_grocery_list_invariants
     from src.grocery_wizard.shopping.grocery_list import format_grocery_items_copy_text
+    from src.grocery_wizard.shopping.grocery_list_edits import compute_grocery_drafts
     from src.grocery_wizard.ui.dev_jumps import DEV_JUMP_BUTTON_LABEL_FINAL_LIST
-    from src.grocery_wizard.ui.grocery_helpers import compute_grocery_drafts
     from tests.src.grocery_wizard.shopping.golden_week_harness import (
         GOLDEN_WEEKS_DIR,
         export_grocery_lines_for_week,

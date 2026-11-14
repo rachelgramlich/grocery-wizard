@@ -121,10 +121,6 @@ def _notion_test_doubles(monkeypatch: pytest.MonkeyPatch) -> None:
         "src.grocery_wizard.integrations.notion_list_logs.persist_list_log_to_notion",
         _fake_persist_list_log,
     )
-    monkeypatch.setattr(
-        "src.grocery_wizard.ui.grocery_flow.persist_list_log_to_notion",
-        _fake_persist_list_log,
-    )
 
 
 if str(UI_TEST_HELPERS) not in sys.path:

@@ -77,7 +77,7 @@ def test_apply_dev_jump_grocery_result_builds_result(monkeypatch: pytest.MonkeyP
 
     build_mock = MagicMock(return_value=(["flour"], [], None, [], {}, []))
     monkeypatch.setattr(
-        "src.grocery_wizard.ui.grocery_flow.build_grocery_list",
+        "src.grocery_wizard.shopping.weekly_grocery_build.build_grocery_list",
         build_mock,
     )
 

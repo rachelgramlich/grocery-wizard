@@ -8,7 +8,7 @@ from types import ModuleType
 from typing import Any
 
 from src.grocery_wizard.config import load_config
-from src.grocery_wizard.ui.grocery_helpers import parse_line_items_text
+from src.grocery_wizard.shopping.grocery_list_edits import parse_line_items_text
 
 
 class WeeklyPlanAddOutcome(StrEnum):

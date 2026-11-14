@@ -12,7 +12,8 @@ from src.grocery_wizard.shopping.grocery_list import (
     format_meals_and_grocery_list,
     format_meals_copy_text,
 )
-from src.grocery_wizard.ui.grocery_helpers import compute_grocery_drafts, meal_entries_with_links
+from src.grocery_wizard.shopping.grocery_list_edits import compute_grocery_drafts
+from src.grocery_wizard.shopping.meal_recipe_links import meal_entries_with_links
 
 
 def test_grocery_final_list_syncs_session_state_before_keyed_text_area() -> None:

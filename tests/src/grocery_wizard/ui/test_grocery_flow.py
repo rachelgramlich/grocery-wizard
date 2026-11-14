@@ -75,7 +75,7 @@ def test_stash_recipe_review_uses_formatted_text(monkeypatch: pytest.MonkeyPatch
     session: dict = {}
     recipes = [_recipe("Soup", ingredients="raw")]
     monkeypatch.setattr(
-        "src.grocery_wizard.ui.grocery_flow.format_ingredients_for_review",
+        "src.grocery_wizard.shopping.weekly_grocery_build.format_ingredients_for_review",
         lambda raw: f"formatted:{raw}",
     )
     opts = GroceryPreBuildOptions(
@@ -160,7 +160,7 @@ def test_stash_grocery_result_passes_review_overrides(monkeypatch: pytest.Monkey
     db.query_recipes.return_value = [_recipe("Soup")]
     build_mock = MagicMock(return_value=(["flour"], [], None, [], {}, []))
     monkeypatch.setattr(
-        "src.grocery_wizard.ui.grocery_flow.build_grocery_list",
+        "src.grocery_wizard.shopping.weekly_grocery_build.build_grocery_list",
         build_mock,
     )
     opts = GroceryPreBuildOptions(
