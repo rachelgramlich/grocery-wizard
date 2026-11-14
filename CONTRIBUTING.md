@@ -2,7 +2,7 @@
 
 This document codifies the coding standards enforced in this repository. All changes should pass the automated checks described here before review.
 
-**Who uses this:** contributors and agents running **`/architecture-review`** (Phase A checklist). It is **not** loaded automatically by Cursor — agents are pointed here via that command and this file. **Enforcement** comes from Ruff/pre-commit/CI (`pyproject.toml`, `just check`), which should stay aligned with the rules described below. **Where files live:** [`docs/architecture/repo-layout.md`](docs/architecture/repo-layout.md) and [`docs/README.md`](docs/README.md).
+**Who uses this:** contributors and agents running **`/architecture-review`** (Phase A checklist). It is **not** loaded automatically by Cursor — agents are pointed here via that command and this file. **Enforcement** comes from Ruff/pre-commit/CI (`pyproject.toml`, `just check`), which should stay aligned with the rules described below. **AI PR review (Bugbot + agent listen loop):** [`docs/operations/pr-ai-review.md`](docs/operations/pr-ai-review.md). **Where files live:** [`docs/architecture/repo-layout.md`](docs/architecture/repo-layout.md) and [`docs/README.md`](docs/README.md).
 
 ---
 

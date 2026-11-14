@@ -17,6 +17,7 @@ Start here when you need a guide, UI reference, or quality sign-off doc. **Code*
 | --- | --- |
 | Use the app day to day | [`src/grocery_wizard/README.md`](../src/grocery_wizard/README.md) |
 | Wire Notion databases | [`src/grocery_wizard/config/README.md`](../src/grocery_wizard/config/README.md) |
+| Set up Bugbot / PR review agents | [`operations/pr-ai-review.md`](operations/pr-ai-review.md) |
 | Understand the whole repo tree | [`architecture/repo-layout.md`](architecture/repo-layout.md) |
 | Ship to Streamlit Cloud | [`operations/household-deploy.md`](operations/household-deploy.md) |
 | Name a UI control in an issue | [`ui/ui-map.md`](ui/ui-map.md) |
