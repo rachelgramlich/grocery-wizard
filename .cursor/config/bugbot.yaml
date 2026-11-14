@@ -1,0 +1,23 @@
+# Cursor Bugbot — reviewed from the PR base branch (main), not the PR head.
+# Dashboard: enable Bugbot for this repo (Automations → Bugbot).
+# Full setup: docs/operations/pr-ai-review.md
+version: 1
+
+triggers:
+  # Skip draft PRs; first automatic run when the PR is opened ready or marked ready for review.
+  drafts: false
+  # One review per PR — no re-run on every push (agent fixes land via the PR listen loop in AGENTS.md).
+  frequency: oncePerPr
+
+review:
+  effort: default
+  # Full diff on that single run (not incremental slices across pushes).
+  incremental: false
+
+prSummary:
+  mode: comment
+  riskScore: true
+
+# Cloud agents fix review threads on the PR branch; leave Bugbot Autofix off unless you prefer bot commits.
+autofix:
+  mode: disabled

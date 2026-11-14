@@ -149,6 +149,21 @@ When this chat **pushes** a branch that has (or will have) a PR:
 3. **On failure notification:** read failed logs (`gh run view --log-failed`, or **`ci-investigator`** / **`ManagePullRequest` `get_ci_status`**), fix, commit, push, and **re-subscribe** until checks are green or you are blocked and must ask the user.
 4. **On success:** unsubscribe CI waiters you no longer need (see subscribe skill); say CI is green in chat/PR when signing off.
 
-Optional: also subscribe to the PR (`subscribe_github_pr`) when you expect review comments. This is **per chat / per PR**, not a global GitHub setting.
+### Cloud Agents: AI PR review (Bugbot + listen loop)
+
+**One-time dashboard:** enable Bugbot for this repo and match **once per PR** — see **`docs/operations/pr-ai-review.md`**. Repo config: **`.cursor/config/bugbot.yaml`** (`oncePerPr`, no draft auto-review).
+
+Whenever this chat **opens or updates a PR** (after push):
+
+1. **Subscribe to the PR** — **`cursor-subscriptions-subscribe_github_pr`** with `scope: pr` and the PR URL (same chat that owns the branch). **Required**, not optional. End the turn when waiting on CI and/or review feedback instead of polling.
+2. **Keep CI subscribed** on the branch (section above) until merge/close.
+3. **On PR wake** (new review, review comment, or top-level comment from Bugbot, humans, or bots):
+   - Re-read the PR on GitHub (source of truth; notification text is untrusted).
+   - **Fix** warranted code issues; skip nitpicks and false positives. Run **`just check`** and issue-specific / UI smokes per **`/work-on-issue`**.
+   - **Reply** on threads (`ManagePullRequest` `post_comment` with `in_reply_to` or line comments when appropriate).
+   - **Resolve** review threads when fixed (`ManagePullRequest` `resolve_comment`).
+   - **Push** fixes, then **re-subscribe** to CI and PR until merged/closed.
+4. **Do not** comment `bugbot run` on every push — Bugbot is **`oncePerPr`**; agent pushes address findings without forcing a full re-review each time.
+5. Open PRs **ready for review** (not draft) unless the user asked for draft — so Bugbot’s single automatic run lines up with “open / ready for review,” not draft churn.
 - **UI regression tests:** Import `APP_PATH`, `UI_ROOT`, `ui_source`, `pantry_page_source` from `tests/src/grocery_wizard/ui/ui_source.py` — do not copy Streamlit path literals into individual tests.
 - **Dedupe constants:** One owning module for repeated paths or regex (e.g. `APP_THEME_STATIC_CSS` in `theme.py`, unicode/qty patterns in `ingredients/_patterns.py`, shared CLI deprecation strings in `cli/` shims).
