@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
-
-import pytest
 
 from src.grocery_wizard.planning.saved_weekly_plans import (
     canonical_plan_name,
@@ -14,6 +13,9 @@ from src.grocery_wizard.planning.saved_weekly_plans import (
     saved_plan_week_start,
     week_start_sunday,
 )
+
+if TYPE_CHECKING:
+    import pytest
 
 
 def test_list_saved_plans_accepts_recipe_names_by_page_id(

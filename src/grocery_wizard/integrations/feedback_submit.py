@@ -21,7 +21,7 @@ def submit_feedback(
     if not token or not repo:
         raise RuntimeError(
             "Feedback requires GITHUB_FEEDBACK_TOKEN and GITHUB_FEEDBACK_REPOSITORY "
-            "(set in environment or repo-root secrets.toml)"
+            "(set in environment or repo-root secrets.toml)",
         )
     issue = create_feedback_issue(text, repository=repo, token=token, surface=surface)
     number = issue.get("number")

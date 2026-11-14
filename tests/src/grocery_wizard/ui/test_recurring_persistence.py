@@ -15,7 +15,8 @@ def test_build_final_list_clears_stale_removal_widget_state() -> None:
 def test_build_final_list_does_not_auto_persist_recurring_template() -> None:
     source = ui_source()
     review_block = source.split("def _render_per_recipe_review", 1)[1].split(
-        "def render_create_weekly_plan", 1
+        "def render_create_weekly_plan",
+        1,
     )[0]
     assert "_persist_recurring_if_edited" not in review_block
 

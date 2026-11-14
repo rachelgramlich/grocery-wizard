@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import hashlib
+from typing import TYPE_CHECKING
 
 import streamlit as st
 
-from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 from src.grocery_wizard.planning.meal_planner import build_ingredient_index
 from src.grocery_wizard.recipes.recipe_meal_plan_stats import meal_plan_status_column_name
 from src.grocery_wizard.ui.browse_logic import (
@@ -52,6 +52,9 @@ from src.grocery_wizard.ui.weekly_plan_add import (
     WeeklyPlanAddOutcome,
     add_recipe_to_week_from_browse,
 )
+
+if TYPE_CHECKING:
+    from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 
 _BROWSE_GRID_COLUMNS = 4
 _BROWSE_RECIPES_WARM_KEY = "_browse_recipes_warm_generation"
@@ -224,7 +227,7 @@ def render_browse_recipes() -> None:
                 has_image=has_image_draft,
                 include_paused=include_paused_draft,
                 include_deprecated=include_deprecated_draft,
-            )
+            ),
         )
         st.session_state[browse_session_sort_seed_key()] = new_browse_sort_seed()
         st.session_state[browse_session_visible_count_key()] = BROWSE_PAGE_SIZE

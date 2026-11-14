@@ -4,11 +4,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
-from types import ModuleType
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from src.grocery_wizard.config import load_config
 from src.grocery_wizard.shopping.grocery_list_edits import parse_line_items_text
+
+if TYPE_CHECKING:
+    from types import ModuleType
 
 
 class WeeklyPlanAddOutcome(StrEnum):

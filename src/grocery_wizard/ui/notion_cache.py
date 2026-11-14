@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING
 
 import streamlit as st
 
-from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 from src.grocery_wizard.integrations.notion.lazy_household import (
     notion_pantry_db,
     notion_recurring_db,
@@ -21,6 +20,7 @@ from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.ingredient_index_warm import clear_ingredient_index_warm
 
 if TYPE_CHECKING:
+    from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
     from src.grocery_wizard.integrations.notion_household import PantryEntry
 
 _GENERATION_KEY = "notion_cache_generation"

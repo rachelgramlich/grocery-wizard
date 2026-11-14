@@ -5,10 +5,12 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import asdict, dataclass, field
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from src.grocery_wizard.dev.perf_audit.measure import RunStats
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from src.grocery_wizard.dev.perf_audit.measure import RunStats
 
 SCHEMA_VERSION = 1
 
@@ -185,7 +187,7 @@ def render_markdown(report: AuditReport, *, comparison: list[dict[str, Any]] | N
             f"| {rank} | `{result.id}` {result.label} | {result.page} | "
             f"{stats.est_total_s(lat):.2f} | {_fmt_s(warm.wall_s if warm else None)} | "
             f"{_fmt_s(result.cold.wall_s if result.cold else None)} | {_rw(warm)} | "
-            f"{stats.python_s:.2f} | {stats.elements} / {stats.options} | {flag_text} |"
+            f"{stats.python_s:.2f} | {stats.elements} / {stats.options} | {flag_text} |",
         )
 
     lines += ["", "## Findings by flag", ""]
@@ -270,7 +272,7 @@ def compare_reports(baseline: dict[str, Any], current: AuditReport) -> list[dict
                 "delta_s": delta,
                 "pct": pct,
                 "verdict": verdict,
-            }
+            },
         )
     return sorted(rows, key=lambda row: row["delta_s"])
 
@@ -313,7 +315,11 @@ def unmeasured(seen: set[str], covers: set[str]) -> list[str]:
 
 
 def save_report(
-    report: AuditReport, out_dir: Path, *, comparison: list[dict[str, Any]] | None, stamp: str
+    report: AuditReport,
+    out_dir: Path,
+    *,
+    comparison: list[dict[str, Any]] | None,
+    stamp: str,
 ) -> tuple[Path, Path]:
     out_dir.mkdir(parents=True, exist_ok=True)
     json_path = out_dir / f"perf-{stamp}.json"

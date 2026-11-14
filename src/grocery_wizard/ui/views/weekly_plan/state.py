@@ -199,7 +199,7 @@ def _dev_plan_meals_acknowledged(recipe_names: list[str]) -> bool:
     if _weekly_plan_mode() != "dev" or not recipe_names:
         return False
     return st.session_state.get(_DEV_PLAN_MEALS_ACK_FP_KEY) == _dev_plan_meals_ack_fingerprint(
-        recipe_names
+        recipe_names,
     )
 
 
@@ -210,7 +210,7 @@ def _ack_dev_plan_meals_ready(recipe_names: list[str]) -> None:
 def _plan_meals_step_done(recipe_names: list[str]) -> bool:
     """Rail step 2 done: Notion save fingerprint or dev-mode continue (no Notion write)."""
     return _matching_saved_plan(recipe_names) is not None or _dev_plan_meals_acknowledged(
-        recipe_names
+        recipe_names,
     )
 
 
@@ -296,7 +296,8 @@ def _invalidate_weekly_plan_save_state() -> None:
 def _sync_weekly_plan_save_state(recipe_names: list[str], plan: SavedWeeklyPlan) -> None:
     st.session_state.weekly_plan_last_saved_name = plan.name
     st.session_state.weekly_plan_saved_fingerprint = _weekly_plan_fingerprint(
-        recipe_names, plan.week_start
+        recipe_names,
+        plan.week_start,
     )
 
 
@@ -306,7 +307,7 @@ def _overwrite_confirm_fingerprint(recipe_names: list[str]) -> tuple[str, ...]:
 
 def _weekly_plan_overwrite_confirmed(recipe_names: list[str]) -> bool:
     return st.session_state.get(_OVERWRITE_CONFIRM_FP_KEY) == _overwrite_confirm_fingerprint(
-        recipe_names
+        recipe_names,
     )
 
 
@@ -352,7 +353,7 @@ def _render_weekly_plan_overwrite_prompt(
     st.warning(
         f"This will **replace** the saved plan for the week of "
         f"**{existing.week_start.isoformat()}** in Notion "
-        f"({len(existing.recipes)} meals saved now → {len(recipe_names)} in your list)."
+        f"({len(existing.recipes)} meals saved now → {len(recipe_names)} in your list).",
     )
     if removed:
         st.markdown("**Removing:** " + ", ".join(removed))

@@ -38,7 +38,7 @@ _LEGACY_NOTION_AISLE_LABELS = frozenset(
         "rice grains & cereal",
         "pasta & noodles",
         "canned goods",
-    }
+    },
 )
 
 _SECTION_HEADER_RE = re.compile(r"^#\s*---\s*(?P<id>.+?)(?::\s*(?P<label>.+?))?\s*---\s*$")
@@ -170,7 +170,7 @@ def ingredient_name(item: str) -> str:
 _TRAILING_PUNCTUATION_RE = re.compile(r"[!?.\s]+$")
 _FOR_PHRASE_RE = re.compile(r"\s+for\s+\S.*$", re.IGNORECASE)
 _TRAILING_FORM_WORDS = frozenset(
-    {"head", "heads", "shredded", "grated", "chopped", "sliced", "diced", "minced"}
+    {"head", "heads", "shredded", "grated", "chopped", "sliced", "diced", "minced"},
 )
 _CAN_UNITS = frozenset({"can", "cans"})
 
@@ -313,7 +313,8 @@ def _best_keyword_aisle(
             if max_keyword_words is not None and keyword_len > max_keyword_words:
                 continue
             if single_word_head_only and not _single_token_keyword_matches(
-                name_words, keyword_words[0]
+                name_words,
+                keyword_words[0],
             ):
                 continue
             if not _contains_word_phrase(name_words, keyword_words):

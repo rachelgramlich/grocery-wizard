@@ -48,13 +48,25 @@ def _browse_shuffle_rank(page_id: str, sort_seed: int) -> int:
 def test_sort_browse_recipes_uses_session_seed_shuffle() -> None:
     recipes = [
         _recipe(
-            "B", page_id="b", selection=2, rejection=1, edited=datetime(2025, 1, 2, tzinfo=UTC)
+            "B",
+            page_id="b",
+            selection=2,
+            rejection=1,
+            edited=datetime(2025, 1, 2, tzinfo=UTC),
         ),
         _recipe(
-            "A", page_id="a", selection=1, rejection=0, edited=datetime(2025, 1, 3, tzinfo=UTC)
+            "A",
+            page_id="a",
+            selection=1,
+            rejection=0,
+            edited=datetime(2025, 1, 3, tzinfo=UTC),
         ),
         _recipe(
-            "C", page_id="c", selection=2, rejection=1, edited=datetime(2025, 1, 1, tzinfo=UTC)
+            "C",
+            page_id="c",
+            selection=2,
+            rejection=1,
+            edited=datetime(2025, 1, 1, tzinfo=UTC),
         ),
     ]
     sort_seed = 42
@@ -129,7 +141,9 @@ def test_status_filter_hides_paused_and_deprecated_by_default() -> None:
     deprecated.properties["Meal plan status"] = STATUS_DEPRECATED
     applied = BrowseAppliedFilters(meal_filters=MealPlanFilters(), has_image=False)
     assert not browse_recipe_passes_status_filter(
-        paused, applied=applied, status_column="Meal plan status"
+        paused,
+        applied=applied,
+        status_column="Meal plan status",
     )
     applied_both = BrowseAppliedFilters(
         meal_filters=MealPlanFilters(),
@@ -138,7 +152,9 @@ def test_status_filter_hides_paused_and_deprecated_by_default() -> None:
         include_deprecated=True,
     )
     assert browse_recipe_passes_status_filter(
-        deprecated, applied=applied_both, status_column="Meal plan status"
+        deprecated,
+        applied=applied_both,
+        status_column="Meal plan status",
     )
 
 

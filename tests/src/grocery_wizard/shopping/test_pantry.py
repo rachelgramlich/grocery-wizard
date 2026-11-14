@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -16,6 +16,9 @@ from src.grocery_wizard.shopping.pantry import (
     remove_pantry_item_by_name,
     write_pantry_file,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_load_pantry_ignores_comments_and_headers(tmp_path: Path) -> None:
@@ -86,7 +89,9 @@ def test_is_pantry_item_phrase_matching(ingredient: str, expected: bool) -> None
     ],
 )
 def test_is_pantry_item_single_token_last_word_rule(
-    ingredient: str, pantry_items: set[str], expected: bool
+    ingredient: str,
+    pantry_items: set[str],
+    expected: bool,
 ) -> None:
     assert is_pantry_item(ingredient, pantry_items) is expected
 
@@ -227,7 +232,8 @@ def test_append_and_remove_pantry_item(tmp_path: Path) -> None:
 )
 @pytest.mark.parametrize("pantry_entry", ["pepper", "black pepper", "ground black pepper"])
 def test_only_table_pepper_is_matched_by_generic_pepper_pantry(
-    ingredient: str, pantry_entry: str
+    ingredient: str,
+    pantry_entry: str,
 ) -> None:
     assert not is_pantry_item(ingredient, {pantry_entry})
 
@@ -298,6 +304,7 @@ def test_multi_word_pantry_staples_match_recipe_names(ingredient: str, pantry_en
     ],
 )
 def test_multi_word_pantry_staples_do_not_match_other_products(
-    ingredient: str, pantry_entry: str
+    ingredient: str,
+    pantry_entry: str,
 ) -> None:
     assert not is_pantry_item(ingredient, {pantry_entry})

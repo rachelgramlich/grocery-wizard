@@ -76,7 +76,11 @@ def button_with_prefix(at: AppTest, prefix: str) -> Any:
 
 
 def click(
-    ctx: AuditContext, at: AppTest, *, key: str | None = None, label: str | None = None
+    ctx: AuditContext,
+    at: AppTest,
+    *,
+    key: str | None = None,
+    label: str | None = None,
 ) -> AppTest:
     return button(at, key=key, label=label).click().run(timeout=ctx.timeout)
 

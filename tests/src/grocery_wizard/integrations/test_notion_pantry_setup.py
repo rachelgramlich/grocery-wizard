@@ -12,7 +12,7 @@ def test_merge_select_options_preserves_existing_ids() -> None:
             "options": [
                 {"id": "abc", "name": "Fruit", "color": "red"},
                 {"id": "def", "name": "Other", "color": "gray"},
-            ]
+            ],
         },
     }
     merged = _merge_select_option_payloads(existing, ["Fruit", "Vegetables", "Other"])

@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import logging
 import os
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from src.grocery_wizard.config import warn_if_missing_github_feedback_token_when_deployed
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @pytest.fixture(autouse=True)

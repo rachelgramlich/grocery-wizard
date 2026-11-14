@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import html
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import streamlit as st
 
@@ -32,6 +32,9 @@ from src.grocery_wizard.ui.notion_cache import (
     cached_recurring_items,
     invalidate_household_cache,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 _PANTRY_AISLE_CAPTION = "Grouped by store walk order—the same aisle headings as your grocery list."
 
@@ -317,7 +320,7 @@ def _render_staples_block() -> None:
 def render_pantry_and_recurring() -> None:
     st.caption(
         "Recurring items are added to every new weekly list. "
-        "Pantry items are assumed on hand when building grocery lists."
+        "Pantry items are assumed on hand when building grocery lists.",
     )
 
     _render_recurring_block()

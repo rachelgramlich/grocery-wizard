@@ -18,7 +18,8 @@ def test_saved_plan_continue_unlocks_meal_builder() -> None:
 def test_saved_plan_continue_sets_meal_count_from_loaded_recipes() -> None:
     source = ui_source()
     entry = source.split("def _render_weekly_plan_entry", 1)[1].split(
-        "def _ensure_plan_session_defaults", 1
+        "def _ensure_plan_session_defaults",
+        1,
     )[0]
     assert "loaded_recipes = load_plan_recipes" in entry
     assert "plan_meal_count = max(1, len(loaded_recipes))" in entry
@@ -28,11 +29,13 @@ def test_saved_plan_continue_sets_meal_count_from_loaded_recipes() -> None:
 def test_plan_save_collapses_rail_expand_override() -> None:
     state_source = weekly_plan_source("state.py")
     apply_fn = state_source.split("def _apply_weekly_plan_save_result", 1)[1].split(
-        "def _persist_weekly_plan_to_notion", 1
+        "def _persist_weekly_plan_to_notion",
+        1,
     )[0]
     assert "collapse_after_plan_saved_to_notion" in apply_fn
     save_controls = state_source.split("def _render_save_plan_controls", 1)[1].split(
-        "def _invalidate_stale_grocery_result", 1
+        "def _invalidate_stale_grocery_result",
+        1,
     )[0]
     assert "st.rerun()" in save_controls
 
@@ -40,7 +43,8 @@ def test_plan_save_collapses_rail_expand_override() -> None:
 def test_create_grocery_clears_rail_override_after_plan_saved() -> None:
     source = weekly_plan_source("grocery_list_ui.py")
     section = source.split('if st.button("Create grocery list"', 1)[1].split(
-        "with loading_indicator", 1
+        "with loading_indicator",
+        1,
     )[0]
     assert "clear_expanded_step_override" in section
 
@@ -66,7 +70,8 @@ def test_weekly_plan_entry_modes_in_app() -> None:
 def test_create_grocery_auto_saves_plan_if_missing() -> None:
     source = ui_source()
     section = source.split('if st.button("Create grocery list"', 1)[1].split(
-        "_start_recipe_review", 1
+        "_start_recipe_review",
+        1,
     )[0]
     assert "_ensure_weekly_plan_saved_before_grocery" in section
 
@@ -112,6 +117,7 @@ def test_dev_mode_skips_notion_rejection_increments() -> None:
     swap = source.split("def _apply_plan_swap", 1)[1].split('st.markdown("#### Your meals"', 1)[0]
     assert "stats_targets and _weekly_plan_persists_tracking_stats_to_notion()" in swap
     regen = source.split('st.button("Re-generate all meals"', 1)[1].split(
-        "_write_plan_names(plan)", 1
+        "_write_plan_names(plan)",
+        1,
     )[0]
     assert "stats_targets and _weekly_plan_persists_tracking_stats_to_notion()" in regen

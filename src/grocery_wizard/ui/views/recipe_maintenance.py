@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import streamlit as st
 
@@ -34,6 +34,9 @@ from src.grocery_wizard.ui.meal_plan_status_ui import (
     render_meal_plan_status_unavailable,
 )
 from src.grocery_wizard.ui.notion_cache import cached_query_recipes, invalidate_recipes_after_write
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def _nyt_client_if_configured() -> NYTCookingClient | None:
@@ -78,7 +81,7 @@ def _render_meal_plan_status_section(db: NotionRecipesDB, recipes: list[Recipe])
     st.markdown("### Meal plan status")
     st.caption(
         "Set **Active**, **Favorite**, **Paused**, or **Deprecated** for any recipe in Notion. "
-        "This does not change your weekly meal list — only how recipes appear in future planning."
+        "This does not change your weekly meal list — only how recipes appear in future planning.",
     )
     with st.container(border=True):
         render_meal_plan_status_unavailable(db)
@@ -116,7 +119,7 @@ def _render_open_notion_button(*, label: str, url: str, key: str, disabled: bool
 def render_recipe_maintenance() -> None:
     st.caption(
         "Housekeeping for recipes already in Notion — fill missing ingredients or metadata "
-        "from recipe links without using **Add Recipe**."
+        "from recipe links without using **Add Recipe**.",
     )
 
     db = get_db()
@@ -170,7 +173,7 @@ def render_recipe_maintenance() -> None:
         st.caption(
             "Fills empty Meal, Cuisine, and meal-appropriate filters (e.g. Dinner Category "
             "only when Meal is Dinner; Weeknight Friendly for dinners). Instructions, NYT "
-            "sync, and Showstopper are not auto-filled."
+            "sync, and Showstopper are not auto-filled.",
         )
         st.write(f"**{len(missing_metadata)}** recipe(s) with gaps in metadata columns.")
         if st.button(
@@ -202,12 +205,12 @@ def render_recipe_maintenance() -> None:
         if not image_column:
             st.info(
                 "Add a Notion **Files** column (for example **Cover image**) and optionally set "
-                "**GROCERY_WIZARD_RECIPE_IMAGE_COLUMN** in `.env`."
+                "**GROCERY_WIZARD_RECIPE_IMAGE_COLUMN** in `.env`.",
             )
         else:
             st.caption(
                 f"Recipes with a **Link** but nothing in **{image_column}**. "
-                "Images are downloaded once and stored in Notion (not hotlinked)."
+                "Images are downloaded once and stored in Notion (not hotlinked).",
             )
             st.write(f"**{len(missing_images)}** recipe(s) missing cover images.")
             dry_run = st.checkbox(
@@ -246,7 +249,7 @@ def render_recipe_maintenance() -> None:
         st.markdown("**Write ingredients in Notion**")
         st.caption(
             "Filter: **Link** is empty and **Ingredients** is empty — rows we cannot "
-            "auto-backfill; add URLs and ingredient lists by hand in Notion."
+            "auto-backfill; add URLs and ingredient lists by hand in Notion.",
         )
         if not schema.ingredients_column:
             st.info("This Notion database has no Ingredients column configured.")
@@ -272,7 +275,7 @@ def render_recipe_maintenance() -> None:
             joined = ", ".join(f"**{name}**" for name in checkbox_names)
             st.caption(
                 f"Filter: all of {joined} are unchecked. These may be missing metadata "
-                "or intentionally left off — review and check boxes only where appropriate."
+                "or intentionally left off — review and check boxes only where appropriate.",
             )
             _preview_count_line(len(possibly_missing_checkboxes))
             try:

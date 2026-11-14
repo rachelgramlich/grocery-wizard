@@ -4,17 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from src.grocery_wizard.ingredients.parsed import is_nyt_cooking_url
 from src.grocery_wizard.ingredients.sync import prepare_ingredients_for_notion
-from src.grocery_wizard.integrations.notion import (
-    ColumnInfo,
-    DatabaseSchema,
-    NotionFieldValues,
-    NotionRecipesDB,
-    Recipe,
-)
 from src.grocery_wizard.integrations.notion_io_errors import NOTION_BOUNDARY_ERRORS
 from src.grocery_wizard.recipes.add_recipe import _weeknight_column_name
 from src.grocery_wizard.recipes.classify import classify_recipe
@@ -30,6 +23,15 @@ from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
 )
 from src.grocery_wizard.recipes.scraper import ScrapeError, ingredients_to_text, scrape_recipe
 from src.grocery_wizard.recipes.weeknight import is_weeknight_friendly
+
+if TYPE_CHECKING:
+    from src.grocery_wizard.integrations.notion import (
+        ColumnInfo,
+        DatabaseSchema,
+        NotionFieldValues,
+        NotionRecipesDB,
+        Recipe,
+    )
 
 _LUNCH_DINNER_MEALS = frozenset({"Lunch", "Dinner"})
 
@@ -472,7 +474,7 @@ def run_image_backfill(
             if on_progress:
                 on_progress(
                     f"Would upload: {recipe.name} [{resolved.host}/{resolved.method}] "
-                    f"→ {resolved.image_url}"
+                    f"→ {resolved.image_url}",
                 )
             continue
 

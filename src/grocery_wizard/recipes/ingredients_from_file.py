@@ -21,7 +21,7 @@ __all__ = [
 
 import io
 import re
-from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 import fitz
 import pytesseract
@@ -35,6 +35,9 @@ from src.grocery_wizard.ingredients.normalize import (
 from src.grocery_wizard.ingredients.sync import is_directive
 from src.grocery_wizard.recipes.ocr_line_fixes import apply_ocr_line_fixes
 from src.grocery_wizard.recipes.scraper import ingredients_to_text, looks_like_ingredient_line
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 _PDF_SIG = b"%PDF-"
 _JPEG_SOI = b"\xff\xd8\xff"
@@ -151,7 +154,8 @@ def _ocr_image_bytes(data: bytes) -> str:
         image = Image.open(io.BytesIO(data))
     except OSError as exc:
         raise FileIngredientsError(
-            "Could not open image bytes. For HEIC/HEIF, install pillow-heif (included in app deps)."
+            "Could not open image bytes. For HEIC/HEIF, install pillow-heif "
+            "(included in app deps).",
         ) from exc
     if image.mode not in ("RGB", "L"):
         image = image.convert("RGB")
@@ -266,7 +270,7 @@ def _ingredient_block_from_lines(lines: list[str]) -> list[str]:
         in_block = block_start > 0
         for raw_line in source[block_start:] if in_block else source:
             line = _normalize_ocr_fraction_glitch(
-                apply_ocr_line_fixes(_normalize_ocr_leader_typos(raw_line))
+                apply_ocr_line_fixes(_normalize_ocr_leader_typos(raw_line)),
             )
             if (
                 in_block
@@ -343,12 +347,12 @@ def extract_ingredients_from_file_bytes(data: bytes, *, mime_type: str | None = 
     else:
         raise FileIngredientsError(
             f"Unsupported file type ({resolved or 'unknown'}). "
-            "Use PDF, JPEG, PNG, WebP, or HEIC/HEIF."
+            "Use PDF, JPEG, PNG, WebP, or HEIC/HEIF.",
         )
 
     if not ingredients:
         raise FileIngredientsError(
-            "No ingredient lines found. Try a clearer scan or paste ingredients manually."
+            "No ingredient lines found. Try a clearer scan or paste ingredients manually.",
         )
     return ingredients
 

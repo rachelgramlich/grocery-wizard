@@ -64,14 +64,17 @@ def test_meal_plan_status_unavailable_when_wrong_type() -> None:
 
 def test_widget_keys_stable_per_recipe_and_scope() -> None:
     assert meal_plan_status_select_key("review", "Soup") == meal_plan_status_select_key(
-        "review", "soup"
+        "review",
+        "soup",
     )
     assert meal_plan_status_select_key("review", "A") != meal_plan_status_select_key("review", "B")
     assert meal_plan_status_select_key("review", "A") != meal_plan_status_select_key(
-        "maintenance", "A"
+        "maintenance",
+        "A",
     )
     assert meal_plan_status_apply_key("review", "Soup") != meal_plan_status_select_key(
-        "review", "Soup"
+        "review",
+        "Soup",
     )
 
 

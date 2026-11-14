@@ -12,7 +12,8 @@ def test_start_recipe_review_formats_notion_storage_lines() -> None:
     assert "format_ingredients_for_review" in build_source
     app_source = ui_source()
     start_block = app_source.split("def _start_recipe_review", 1)[1].split(
-        "def _render_per_recipe_review", 1
+        "def _render_per_recipe_review",
+        1,
     )[0]
     assert "stash_recipe_review" in start_block
 
@@ -20,7 +21,8 @@ def test_start_recipe_review_formats_notion_storage_lines() -> None:
 def test_per_recipe_review_initializes_widget_keys_without_value_param() -> None:
     source = ui_source()
     review_block = source.split("def _render_per_recipe_review", 1)[1].split(
-        "def render_create_weekly_plan", 1
+        "def render_create_weekly_plan",
+        1,
     )[0]
     assert 'st.form("recipe_review_form"' not in review_block
     assert (
@@ -43,7 +45,8 @@ def test_per_recipe_review_initializes_widget_keys_without_value_param() -> None
 def test_save_recipe_review_to_notion_syncs_stash_after_cache_invalidation() -> None:
     source = weekly_plan_source("recipe_review.py")
     save_block = source.split("def _save_recipe_review_to_notion", 1)[1].split(
-        "def _render_per_recipe_review", 1
+        "def _render_per_recipe_review",
+        1,
     )[0]
     assert "invalidate_recipes_after_write()" in save_block
     assert "sync_grocery_stash_notion_generation" in save_block
@@ -53,7 +56,8 @@ def test_save_recipe_review_to_notion_syncs_stash_after_cache_invalidation() -> 
 def test_final_step_meals_and_grocery_use_separate_fingerprints() -> None:
     source = ui_source()
     result_block = source.split("def _render_grocery_result", 1)[1].split(
-        'if __name__ == "__main__"', 1
+        'if __name__ == "__main__"',
+        1,
     )[0]
     assert "meals_final_list_fingerprint" in result_block
     assert "grocery_final_list_fingerprint" in result_block
@@ -67,7 +71,8 @@ def test_final_step_meals_and_grocery_use_separate_fingerprints() -> None:
 def test_copy_buttons_read_session_state_after_text_areas() -> None:
     source = ui_source()
     result_block = source.split("def _render_grocery_result", 1)[1].split(
-        'if __name__ == "__main__"', 1
+        'if __name__ == "__main__"',
+        1,
     )[0]
     meals_idx = result_block.index('key="meals_final_list"')
     meals_copy_idx = result_block.index("meals_for_copy")
@@ -85,7 +90,8 @@ def test_copy_buttons_read_session_state_after_text_areas() -> None:
 def test_clear_grocery_result_clears_meals_and_grocery_fingerprints() -> None:
     source = ui_source()
     clear_block = source.split("def _clear_grocery_result", 1)[1].split(
-        "def _invalidate_stale_grocery_result", 1
+        "def _invalidate_stale_grocery_result",
+        1,
     )[0]
     assert "meals_final_list_fingerprint" in clear_block
     assert "grocery_final_list_fingerprint" in clear_block
@@ -95,6 +101,7 @@ def test_clear_grocery_result_clears_meals_and_grocery_fingerprints() -> None:
 def test_grocery_pre_extra_items_cleared_with_session_overrides() -> None:
     source = ui_source()
     overrides_block = source.split("def _clear_grocery_session_overrides", 1)[1].split(
-        "def _effective_recurring_items", 1
+        "def _effective_recurring_items",
+        1,
     )[0]
     assert "_bump_grocery_pre_extra_items_widget" in overrides_block

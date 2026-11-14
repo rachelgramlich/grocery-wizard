@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
-import pytest
 from ui_source import (
     notion_cache_source,
     pantry_page_source,
@@ -22,6 +22,9 @@ from src.grocery_wizard.ui.notion_cache import (
     saved_plan_for_week,
     saved_plan_recipe_names,
 )
+
+if TYPE_CHECKING:
+    import pytest
 
 _LOAD_SAVED_PLANS_UNCACHED = notion_cache._load_saved_plans_cached.__wrapped__
 
@@ -102,7 +105,8 @@ def test_meals_step_render_path_does_not_query_notion_directly() -> None:
     """Perf guard (#407): the save-replace check and plan load use the cached plan list."""
     state_source = weekly_plan_source("state.py")
     would_replace = state_source.split("def _weekly_plan_save_would_replace", 1)[1].split(
-        "\ndef ", 1
+        "\ndef ",
+        1,
     )[0]
     assert "find_plan_for_week" not in would_replace
     assert "cached_saved_plans" in would_replace

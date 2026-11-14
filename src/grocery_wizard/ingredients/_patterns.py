@@ -235,7 +235,7 @@ _JUNK_ONLY_PHRASES = frozenset(
         "stems and leaves",
         "boiling water",
         "juice",
-    }
+    },
 )
 
 # Prep-only segments like ``ribs removed`` or ``seeds removed, then minced``.
@@ -257,7 +257,7 @@ _DESCRIPTOR_WORDS = frozenset(
         "loosely",
         "firmly",
         "ripe",
-    }
+    },
 )
 
 _HIDE_AMOUNT_UNITS_RE = re.compile(
@@ -291,14 +291,14 @@ _PROTEIN_NOUNS = frozenset(
         "tuna",
         "turkey",
         "veal",
-    }
+    },
 )
 
 # Meats that may follow ``ground`` in a product name (e.g. ground turkey).
 _GROUND_MEATS = _PROTEIN_NOUNS
 
 _TOMATO_PREP_FORMS = frozenset(
-    {"diced", "crushed", "stewed", "fire-roasted", "whole", "whole peeled"}
+    {"diced", "crushed", "stewed", "fire-roasted", "whole", "whole peeled"},
 )
 
 _PRESERVED_PRODUCTS = (
@@ -449,7 +449,7 @@ _GROCERY_NOUNS = frozenset(
         "vinegar",
         "yogurt",
         "zucchini",
-    }
+    },
 )
 
 _RECIPE_TITLE_FILLER = frozenset({"sauce", "with", "w", "and", "for"})
@@ -523,7 +523,7 @@ _UNSPLIT_AND_PHRASES = frozenset(
         "ham and cheese",
         "gin and tonic",
         "rice and beans",
-    }
+    },
 )
 
 # Singular -> preferred grocery-store plural form.
@@ -556,7 +556,7 @@ _STANDALONE_INGREDIENT_WORDS = frozenset(
         "milk",
         "water",
         "oil",
-    }
+    },
 )
 
 
@@ -571,7 +571,7 @@ _STORAGE_KEEP_SEGMENTS = frozenset(
         "if needed",
         "for serving",
         "for topping",
-    }
+    },
 )
 
 # Dried fruit sold by the box or bag: a recipe's "4 dates" is not 4 boxes.

@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 import html
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import streamlit as st
 
 from src.grocery_wizard.config import load_config
-from src.grocery_wizard.integrations.notion import ColumnInfo, NotionRecipesDB
 from src.grocery_wizard.planning.meal_planner import (
     MealPlanFilters,
     build_ingredient_index,
@@ -96,6 +95,11 @@ from src.grocery_wizard.ui.weekly_plan_add import (
     clamp_prebuild_pinned_recipes,
     try_pin_recipe,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from src.grocery_wizard.integrations.notion import ColumnInfo, NotionRecipesDB
 
 
 def _meal_plan_picker_columns(db: NotionRecipesDB) -> tuple[str | None, str | None]:
@@ -293,7 +297,7 @@ def _render_prebuild_recipe_picker(
                 return
             st.caption(
                 "Pick a recipe directly or use filters, then pin. Repeat until "
-                "you have as many locked meals as you want."
+                "you have as many locked meals as you want.",
             )
             _render_direct_recipe_pick(
                 all_names,
@@ -323,7 +327,7 @@ def _render_prebuild_recipe_picker(
     if pinned:
         st.markdown("**Pinned meals**")
         st.caption(
-            f"{len(pinned)} of {max_pins} slots pinned — remove any you change your mind on."
+            f"{len(pinned)} of {max_pins} slots pinned — remove any you change your mind on.",
         )
         for index, name in enumerate(pinned):
             pin_col, remove_col = st.columns([8, 1])
@@ -490,7 +494,7 @@ def _render_dev_jump_tools(db: NotionRecipesDB, all_recipes: list) -> None:
             names = commit_dev_jump(st.session_state, db, target, names)
             if not names:
                 st.error(
-                    "No recipes in Notion to use for dev jump. Add recipes with ingredients first."
+                    "No recipes in Notion to use for dev jump. Add recipes with ingredients first.",
                 )
                 return
             st.session_state.plan_prebuild_pinned_recipes = list(names)
@@ -590,7 +594,7 @@ def _render_weekly_plan_entry() -> bool:
     )
     st.caption(
         "New plans can be saved anytime. Saved plans reload your meals; "
-        "grocery lists stay in this session."
+        "grocery lists stay in this session.",
     )
 
     config = load_config()
@@ -682,7 +686,7 @@ def _render_meal_count_input() -> int:
             step=1,
             key=PLAN_MEAL_COUNT_WIDGET_KEY,
             on_change=_on_plan_meal_count_widget_change,
-        )
+        ),
     )
     st.session_state.plan_meal_count = meal_count
     return meal_count
@@ -751,7 +755,7 @@ def _render_generate_plan_controls(
         st.markdown("#### Build meals")
     st.caption(
         "Pin meals you already know, then **Build my plan** fills the rest. "
-        "Use **Choose manually** on a slot to swap one meal."
+        "Use **Choose manually** on a slot to swap one meal.",
     )
     filter_columns = [*schema.filter_columns, *schema.checkbox_columns]
     build_filters = default_filters(schema.all_columns)
@@ -815,7 +819,10 @@ def _render_built_plan_meals(
 
     pool_index = _ingredient_index_for_filters(all_recipes, week_filters) or ingredient_index
     suggestion_pool = filter_recipes(
-        all_recipes, week_filters, schema.all_columns, ingredient_index=pool_index
+        all_recipes,
+        week_filters,
+        schema.all_columns,
+        ingredient_index=pool_index,
     )
     status_column, rejections_column = _meal_plan_picker_columns(db)
 
@@ -974,7 +981,9 @@ def _render_built_plan_meals(
                 _queue_meals_list_batch_render()
                 st.rerun()
             if fill_remaining and st.button(
-                "Fill remaining slots", key="fill_remaining_plan", width="content"
+                "Fill remaining slots",
+                key="fill_remaining_plan",
+                width="content",
             ):
                 with loading_indicator("Filling remaining meal slots…"):
                     plan = suggest_meals(

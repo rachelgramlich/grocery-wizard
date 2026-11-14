@@ -12,9 +12,10 @@ __all__ = [
 ]
 
 import json
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from src.grocery_wizard.integrations.notion.recipes import DatabaseSchema, NotionRecipesDB
+if TYPE_CHECKING:
+    from src.grocery_wizard.integrations.notion.recipes import DatabaseSchema, NotionRecipesDB
 
 _MANUAL_INGREDIENTS_VIEW_NAME = "Grocery Wizard — manual ingredients"
 _POSSIBLY_MISSING_CHECKBOXES_VIEW_NAME = "Grocery Wizard — possibly missing checkboxes"

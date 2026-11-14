@@ -441,7 +441,8 @@ def _matches_removal(line: str, removal_target: str) -> bool:
     if not normalized or not target_norm:
         return False
     if generic_pepper_blocks_match(normalized, target_norm) or generic_pepper_blocks_match(
-        target_norm, normalized
+        target_norm,
+        normalized,
     ):
         return False
     if normalized == target_norm:

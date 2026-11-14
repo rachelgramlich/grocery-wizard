@@ -7,14 +7,8 @@ import html
 import random
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Any, Final
+from typing import TYPE_CHECKING, Any, Final
 
-from src.grocery_wizard.integrations.notion import (
-    ColumnInfo,
-    DatabaseSchema,
-    NotionRecipesDB,
-    Recipe,
-)
 from src.grocery_wizard.planning.meal_planner import (
     MealPlanFilters,
     default_filters,
@@ -32,6 +26,14 @@ from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
     selection_count_column_name,
     suggestion_rejection_count,
 )
+
+if TYPE_CHECKING:
+    from src.grocery_wizard.integrations.notion import (
+        ColumnInfo,
+        DatabaseSchema,
+        NotionRecipesDB,
+        Recipe,
+    )
 
 BROWSE_PAGE_SIZE = 24
 BROWSE_EMPTY_FILTER_HTML: Final[str] = (
@@ -285,7 +287,7 @@ def render_browse_grid_html(
         tiles.append(
             f'<article class="gw-browse-tile gw-browse-tile-static" aria-label="{name}">'
             f"{render_browse_card_box_html(recipe, schema=schema)}"
-            f"</article>"
+            f"</article>",
         )
     if not tiles:
         return BROWSE_EMPTY_FILTER_HTML

@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
-
-import pytest
 
 from src.grocery_wizard.config import Config
 from src.grocery_wizard.integrations.notion import table as notion_table
@@ -16,6 +15,9 @@ from src.grocery_wizard.integrations.notion_table import (
     clear_notion_database_metadata_cache,
     write_notion_property,
 )
+
+if TYPE_CHECKING:
+    import pytest
 
 
 def _config(*, data_source_id: str | None = "configured-recipe-ds") -> Config:

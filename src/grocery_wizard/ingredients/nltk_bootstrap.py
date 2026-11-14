@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from src.grocery_wizard.paths import BUNDLED_NLTK_DATA_DIR
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 _TAGGER_RESOURCE = "taggers/averaged_perceptron_tagger_eng"
 

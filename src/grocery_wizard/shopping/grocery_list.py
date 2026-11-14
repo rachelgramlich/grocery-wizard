@@ -33,7 +33,6 @@ __all__ = [
 import difflib
 import re
 from dataclasses import dataclass
-from pathlib import Path
 from typing import TYPE_CHECKING, Final
 
 from src.grocery_wizard.ingredients.normalize import (
@@ -58,6 +57,8 @@ from src.grocery_wizard.shopping.store_aisles import (
 )
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from src.grocery_wizard.shopping.list_log import ListTrace
 
 NAME_LINK_STALE_VERIFY_MESSAGE: Final[str] = (
@@ -527,7 +528,10 @@ def _collect_ingredient_line(
             excluded_pantry.append(display_name)
         if trace is not None:
             trace.record_line(
-                recipe_name, stripped_line, outcome="skipped_pantry", item=display_name
+                recipe_name,
+                stripped_line,
+                outcome="skipped_pantry",
+                item=display_name,
             )
         return
     key = _grocery_collection_key(display_name)
@@ -540,7 +544,11 @@ def _collect_ingredient_line(
         collected[key] = (display_name, [amount])
     if trace is not None:
         trace.record_line(
-            recipe_name, stripped_line, outcome="kept", item=display_name, amount=amount
+            recipe_name,
+            stripped_line,
+            outcome="kept",
+            item=display_name,
+            amount=amount,
         )
     if recipe_name and provenance is not None:
         provenance.setdefault(key, set()).add(recipe_name)

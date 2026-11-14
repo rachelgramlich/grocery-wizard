@@ -30,7 +30,7 @@ def test_read_files_property_url_prefers_first_file() -> None:
             {
                 "type": "file",
                 "file": {"url": "https://prod-files-secure.s3.us-west-2.amazonaws.com/x.jpg"},
-            }
+            },
         ],
     }
     assert read_files_property_url(prop) == (
@@ -54,7 +54,7 @@ def test_read_files_property_url_file_upload_without_url() -> None:
                 "type": "file_upload",
                 "name": "cover.jpg",
                 "file_upload": {"id": "upload-1"},
-            }
+            },
         ],
     }
     assert read_files_property_url(prop) is None

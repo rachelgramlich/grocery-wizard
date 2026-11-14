@@ -16,8 +16,7 @@ __all__ = [
 ]
 
 from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 from src.grocery_wizard.integrations.notion.lazy_household import notion_pantry_db
 from src.grocery_wizard.shopping.pantry_matching import (
@@ -25,6 +24,9 @@ from src.grocery_wizard.shopping.pantry_matching import (
     generic_pepper_blocks_match,
     is_pantry_item,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 DEFAULT_EMPTY_PANTRY_LINES: Final[tuple[str, ...]] = (
     "# Pantry staples — one item per line.",

@@ -16,7 +16,11 @@ def test_create_feedback_issue_posts_inbox_label(monkeypatch: pytest.MonkeyPatch
     captured: dict[str, object] = {}
 
     def fake_post(
-        url: str, *, json: dict[str, object], headers: dict[str, str], timeout: int
+        url: str,
+        *,
+        json: dict[str, object],
+        headers: dict[str, str],
+        timeout: int,
     ) -> MagicMock:
         captured["url"] = url
         captured["json"] = json

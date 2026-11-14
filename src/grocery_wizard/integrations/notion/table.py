@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from notion_client import Client
 
-from src.grocery_wizard.config import Config
 from src.grocery_wizard.integrations.notion.data_source import resolve_notion_data_source_id
+
+if TYPE_CHECKING:
+    from src.grocery_wizard.config import Config
 
 __all__ = [
     "NOTION_TEXT_BLOCK_MAX_LEN",

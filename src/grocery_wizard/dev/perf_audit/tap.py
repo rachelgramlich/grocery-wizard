@@ -15,7 +15,7 @@ import notion_client.client as notion_client_module
 import requests.sessions
 
 _UUID_RE = re.compile(
-    r"[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}"
+    r"[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}",
 )
 _READ_SUFFIXES = ("/query", "/search")
 _WRITE_METHODS = frozenset({"POST", "PATCH", "PUT", "DELETE"})
@@ -140,7 +140,7 @@ class NotionTap:
             caller = caller_site()
             if write and tap.stub_writes:
                 tap.records.append(
-                    CallRecord(endpoint, 0.0, write=True, stubbed=True, caller=caller)
+                    CallRecord(endpoint, 0.0, write=True, stubbed=True, caller=caller),
                 )
                 return stub_write_response(method, path, body)
             start = time.perf_counter()
@@ -149,7 +149,7 @@ class NotionTap:
             finally:
                 elapsed = time.perf_counter() - start
                 tap.records.append(
-                    CallRecord(endpoint, elapsed, write=write, stubbed=False, caller=caller)
+                    CallRecord(endpoint, elapsed, write=write, stubbed=False, caller=caller),
                 )
                 if not write:
                     tap._read_latencies.append(elapsed)
@@ -162,7 +162,7 @@ class NotionTap:
             if method.upper() not in _SAFE_EXTERNAL_METHODS and not tap.allow_external:
                 tap.blocked_external.append(f"{method.upper()} {url}")
                 raise ExternalCallBlockedError(
-                    f"Blocked mutating external call in safe mode: {method} {url}"
+                    f"Blocked mutating external call in safe mode: {method} {url}",
                 )
             host = urlparse(url).netloc or "unknown"
             start = time.perf_counter()

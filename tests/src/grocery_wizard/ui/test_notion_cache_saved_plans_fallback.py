@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
-import pytest
-
 from src.grocery_wizard.ui import notion_cache
+
+if TYPE_CHECKING:
+    import pytest
 
 
 def test_load_saved_plans_cached_falls_back_without_recipe_names_kwarg(
@@ -19,7 +21,7 @@ def test_load_saved_plans_cached_falls_back_without_recipe_names_kwarg(
             {
                 "recipes_db": recipes_db,
                 "recipe_names_by_page_id": recipe_names_by_page_id,
-            }
+            },
         )
         if recipe_names_by_page_id is not None:
             raise TypeError("unexpected keyword argument 'recipe_names_by_page_id'")

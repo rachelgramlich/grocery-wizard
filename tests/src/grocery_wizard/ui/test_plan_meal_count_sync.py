@@ -55,10 +55,14 @@ def test_sync_plan_length_trims_extra_meals(
     cleared: list[str] = []
 
     monkeypatch.setattr(
-        plan_entry, "_invalidate_weekly_plan_save_state", lambda: cleared.append("save")
+        plan_entry,
+        "_invalidate_weekly_plan_save_state",
+        lambda: cleared.append("save"),
     )
     monkeypatch.setattr(
-        plan_entry, "_clear_grocery_session_overrides", lambda: cleared.append("overrides")
+        plan_entry,
+        "_clear_grocery_session_overrides",
+        lambda: cleared.append("overrides"),
     )
     monkeypatch.setattr(plan_entry, "_clear_grocery_result", lambda: cleared.append("result"))
 

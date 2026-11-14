@@ -54,7 +54,7 @@ def test_save_log_creates_page_with_text_json_column(mock_db_cls: MagicMock) -> 
         "Type": "select",
     }
     mock_db.property_payload.side_effect = lambda column, value: {
-        column: write_notion_property(mock_db.column_types[column], value)
+        column: write_notion_property(mock_db.column_types[column], value),
     }
     mock_db.create_page.return_value = NotionPageRow(page_id="page-text", properties={})
     mock_db_cls.return_value = mock_db
@@ -120,7 +120,7 @@ def test_persist_list_log_swallows_errors(mock_db_cls: MagicMock) -> None:
 
 def test_persist_list_log_update_path() -> None:
     with patch(
-        "src.grocery_wizard.integrations.notion.list_logs.NotionListDebugLogsDB"
+        "src.grocery_wizard.integrations.notion.list_logs.NotionListDebugLogsDB",
     ) as mock_db_cls:
         mock_db = MagicMock()
         mock_db_cls.return_value = mock_db
@@ -129,7 +129,8 @@ def test_persist_list_log_update_path() -> None:
             page_id="abc-def",
         )
     mock_db.update_log.assert_called_once_with(
-        "abc-def", {"created_at": "2026-10-30T12:00:00+00:00"}
+        "abc-def",
+        {"created_at": "2026-10-30T12:00:00+00:00"},
     )
     assert page_id == "abc-def"
     assert url == "https://www.notion.so/abcdef"

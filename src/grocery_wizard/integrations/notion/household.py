@@ -153,7 +153,7 @@ class NotionPantryDB:
                     page_id=row.page_id,
                     name=str(name).strip(),
                     section=str(section).strip() if section else None,
-                )
+                ),
             )
         return entries
 

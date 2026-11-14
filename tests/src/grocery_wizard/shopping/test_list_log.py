@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from src.grocery_wizard.shopping.list_log import (
     MAX_LIST_LOGS,
@@ -17,6 +17,9 @@ from src.grocery_wizard.shopping.list_log import (
     latest_list_log_path,
     write_list_log,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_build_list_log_tracks_sources_and_skipped() -> None:
@@ -54,7 +57,7 @@ def test_build_list_log_tracks_sources_and_skipped() -> None:
             "aisle": log["final_list"][0]["aisle"],
             "source": SOURCE_RECIPE,
             "recipes": ["Tacos"],
-        }
+        },
     ]
     skipped = {entry["line"] for entry in log["skipped"]}
     assert "2 tsp chili powder" in skipped
@@ -80,7 +83,7 @@ def test_write_list_log_prunes_old_files(tmp_path: Path) -> None:
 def test_apply_adjustments_updates_final_list() -> None:
     base = {
         "final_list": [
-            {"item": "avocado", "aisle": "Vegetables", "source": "recipe", "recipes": ["Tacos"]}
+            {"item": "avocado", "aisle": "Vegetables", "source": "recipe", "recipes": ["Tacos"]},
         ],
         "user_adjustments": {"pantry_readded": [], "removed_once": []},
     }

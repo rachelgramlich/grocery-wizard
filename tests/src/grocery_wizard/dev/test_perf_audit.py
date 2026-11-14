@@ -71,7 +71,7 @@ def test_stub_write_response_echoes_properties_in_response_shape() -> None:
         "properties": {
             "Name": {"title": [{"text": {"content": "2026-10-18_plan"}}]},
             "Week": {"date": {"start": "2026-10-18"}},
-        }
+        },
     }
     response = stub_write_response("POST", "/pages", body)
     assert response["object"] == "page"
@@ -121,7 +121,12 @@ def test_ranking_is_slowest_first_and_skips_unmeasured() -> None:
             _result("fast", warm=RunStats(wall_s=0.1)),
             _result("slow", warm=RunStats(wall_s=9.0)),
             ScenarioResult(
-                "skipped", "weekly", "x", writes=False, external=False, status="skipped"
+                "skipped",
+                "weekly",
+                "x",
+                writes=False,
+                external=False,
+                status="skipped",
             ),
         ],
     )

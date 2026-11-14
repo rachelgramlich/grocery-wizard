@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
-
-import pytest
 
 from src.grocery_wizard.integrations.notion import Recipe
 from src.grocery_wizard.ui.dev_jumps import (
@@ -18,6 +17,9 @@ from src.grocery_wizard.ui.dev_jumps import (
     resolve_dev_jump_meal_names,
     sync_dev_manual_multiselect,
 )
+
+if TYPE_CHECKING:
+    import pytest
 
 
 def test_default_dev_meal_count_is_one() -> None:

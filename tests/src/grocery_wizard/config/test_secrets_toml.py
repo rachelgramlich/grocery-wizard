@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
-
-import pytest
+from typing import TYPE_CHECKING
 
 from src.grocery_wizard.config import load_auth_gate_settings, load_config
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    import pytest
 
 
 def test_load_config_reads_flat_secrets_toml(

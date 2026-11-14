@@ -27,7 +27,7 @@ def meal_plan_tracking_column_names() -> frozenset[str]:
             DEFAULT_MEAL_PLAN_STATUS_COLUMN,
             LEGACY_REJECTION_COUNT_COLUMN,
             LEGACY_SELECTION_COUNT_COLUMN,
-        }
+        },
     )
 
 
@@ -342,7 +342,8 @@ def increment_selection_count(
             current = 0 if raw is None else int(float(raw))
             updates[selection_column] = current + 1
         if status_column is not None and meal_plan_status_is_empty(
-            recipe, status_column=status_column
+            recipe,
+            status_column=status_column,
         ):
             updates[status_column] = STATUS_ACTIVE
         if not updates:

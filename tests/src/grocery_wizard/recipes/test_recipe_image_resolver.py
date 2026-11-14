@@ -57,10 +57,10 @@ def test_resolve_tiktok_rehydration() -> None:
                 "itemInfo": {
                     "itemStruct": {
                         "video": {"cover": "https://tiktok.cdn/cover.webp"},
-                    }
-                }
-            }
-        }
+                    },
+                },
+            },
+        },
     }
     html = f'<html><script id="__UNIVERSAL_DATA_FOR_REHYDRATION__">{json.dumps(payload)}</script></html>'
     response = MagicMock(status_code=200, text=html, content=html.encode())

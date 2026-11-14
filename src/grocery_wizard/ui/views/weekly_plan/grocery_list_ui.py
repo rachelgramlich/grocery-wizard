@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import streamlit as st
 
-from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 from src.grocery_wizard.shopping.grocery_list import (
     NAME_LINK_STALE_VERIFY_MESSAGE,
     align_item_provenance_with_items,
@@ -57,6 +57,9 @@ from src.grocery_wizard.ui.views.weekly_plan.step_ui import (
     render_weekly_sub_block_anchor,
     set_expanded_step,
 )
+
+if TYPE_CHECKING:
+    from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 
 
 def _build_result_added_items(result: dict) -> list[str]:
@@ -147,7 +150,7 @@ def _render_adjust_this_week_list(result: dict) -> None:
                 help="Skip these lines on this trip only; they are not added to the pantry.",
             )
             result["run_removals"] = sorted(
-                {line.strip().lower() for line in remove_once if line.strip()}
+                {line.strip().lower() for line in remove_once if line.strip()},
             )
         else:
             st.caption("No buy-list lines to remove for this run.")
@@ -197,7 +200,7 @@ def _render_debug_log_controls(result: dict) -> None:
         )
         st.caption(
             "Each weekly list build is saved to your Notion **`[GW DEV] Debug logs`** database "
-            "(weekly grocery list traces only for now)."
+            "(weekly grocery list traces only for now).",
         )
     with st.expander("Advanced: download JSON", expanded=False):
         _render_debug_log_download(result)
@@ -238,7 +241,7 @@ def render_grocery_list_section(
     with st.expander("Pantry & Recurring Items", expanded=False):
         exclude_pantry = st.checkbox("Exclude pantry items", value=True)
         st.caption(
-            "Edit saved pantry staples and recurring defaults in the **Pantry & recurring** tab."
+            "Edit saved pantry staples and recurring defaults in the **Pantry & recurring** tab.",
         )
         recurring_text = st.text_area(
             "Recurring items for this week (one per line)",
@@ -250,7 +253,7 @@ def render_grocery_list_section(
     with st.expander("Add extra items", expanded=False):
         st.caption(
             "One-off items for this grocery run (not saved as recurring). "
-            "Enter one item per line — checklist lines like `- [ ] Flowers` are OK."
+            "Enter one item per line — checklist lines like `- [ ] Flowers` are OK.",
         )
         extra_items_text = st.text_area(
             "Extra items (one per line)",
@@ -294,14 +297,14 @@ def _render_grocery_result() -> None:
             st.warning(
                 f"Name/link mismatch for **{mismatch.recipe_name}**: "
                 f"Link points to **{mismatch.link_title}**. "
-                f"{NAME_LINK_STALE_VERIFY_MESSAGE}"
+                f"{NAME_LINK_STALE_VERIFY_MESSAGE}",
             )
 
     if missing_ingredients:
         st.warning(
             f"Skipped {len(missing_ingredients)} recipe(s) with no ingredients in Notion: "
             f"{', '.join(missing_ingredients)}. "
-            "Add ingredient lines in Notion or edit them in the review step above."
+            "Add ingredient lines in Notion or edit them in the review step above.",
         )
 
     _render_added_and_removed_summary(result)

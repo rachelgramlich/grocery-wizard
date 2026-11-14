@@ -154,7 +154,7 @@ def _scrape_instagram(url: str) -> ScrapedRecipe:
     ingredients = _caption_ingredients(caption)
     if not ingredients:
         raise ScrapeError(
-            f"No ingredient lines found in Instagram caption. {INSTAGRAM_MANUAL_HINT}"
+            f"No ingredient lines found in Instagram caption. {INSTAGRAM_MANUAL_HINT}",
         )
 
     return ScrapedRecipe(url=url, title=title, ingredients=ingredients)
@@ -446,7 +446,7 @@ def looks_like_ingredient_line(line: str, *, max_length: int = 120) -> bool:
         return False
     return bool(
         _INGREDIENT_LINE.search(stripped)
-        or re.match(r"^[\d/.\s]+(?:cup|tbsp|tsp|oz|lb|g|ml)\b", stripped, re.IGNORECASE)
+        or re.match(r"^[\d/.\s]+(?:cup|tbsp|tsp|oz|lb|g|ml)\b", stripped, re.IGNORECASE),
     )
 
 
@@ -560,7 +560,7 @@ def _extract_ingredients_from_container(container: Tag) -> list[str]:
     ingredient_items = _top_level_ingredient_items(container)
     if ingredient_items:
         texts = _clean_ingredient_texts(
-            [item.get_text(" ", strip=True) for item in ingredient_items]
+            [item.get_text(" ", strip=True) for item in ingredient_items],
         )
         if texts and looks_fragmented(texts):
             joined = _join_fragmented_lines(texts)
@@ -576,7 +576,7 @@ def _extract_ingredients_from_container(container: Tag) -> list[str]:
                 if item.get_text(strip=True)
                 and item.name != "legend"
                 and not _is_section_heading(item)
-            ]
+            ],
         )
         if texts and looks_fragmented(texts):
             joined = _join_fragmented_lines(texts)
@@ -688,7 +688,7 @@ def _is_ingredient_fragment(line: str) -> bool:
     if _UNIT_ONLY.match(stripped):
         return True
     return bool(
-        _QUANTITY_START.match(stripped) and len(words) <= 2 and not _FOOD_WORD.search(stripped)
+        _QUANTITY_START.match(stripped) and len(words) <= 2 and not _FOOD_WORD.search(stripped),
     )
 
 

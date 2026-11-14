@@ -21,7 +21,8 @@ def test_apply_run_removals_does_not_drop_unrelated_milk_lines() -> None:
 def test_output_step_shows_added_removed_and_editable_grocery_list() -> None:
     source = ui_source()
     result_block = source.split("def _render_grocery_result", 1)[1].split(
-        'if __name__ == "__main__"', 1
+        'if __name__ == "__main__"',
+        1,
     )[0]
     assert "_render_added_and_removed_summary" in result_block
     assert 'st.expander("Summary", expanded=False)' in source

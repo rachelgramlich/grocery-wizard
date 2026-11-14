@@ -5,10 +5,9 @@ from __future__ import annotations
 import statistics
 import subprocess
 import sys
-from collections.abc import Callable
 from datetime import UTC, datetime
 from fnmatch import fnmatch
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import streamlit as st
 
@@ -23,6 +22,9 @@ from src.grocery_wizard.dev.perf_audit.report import (
 from src.grocery_wizard.dev.perf_audit.scenarios import Scenario, build_scenarios
 from src.grocery_wizard.dev.perf_audit.tap import DEFAULT_WRITE_LATENCY_S, NotionTap
 from src.grocery_wizard.integrations.notion_io_errors import NOTION_BOUNDARY_ERRORS
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def select_scenarios(patterns: list[str] | None) -> list[Scenario]:
@@ -170,7 +172,7 @@ def run_audit(
         for index, scenario in enumerate(scenarios, start=1):
             say(f"[{index}/{len(scenarios)}] {scenario.id}")
             results.append(
-                run_scenario(scenario, ctx, tap, seen, reps=reps, do_cold=do_cold, profile=profile)
+                run_scenario(scenario, ctx, tap, seen, reps=reps, do_cold=do_cold, profile=profile),
             )
         latency = write_latency_s if write_latency_s is not None else DEFAULT_WRITE_LATENCY_S
         covers = {c for s in build_scenarios() for c in s.covers}

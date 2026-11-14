@@ -84,7 +84,7 @@ def export_grocery_lines_for_meal_plan(
                 "name": recipe.name,
                 "link": recipe.link,
                 "ingredients": recipe.ingredients or "",
-            }
+            },
         )
     week = {
         "recipes": rows,

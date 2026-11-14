@@ -13,12 +13,15 @@ import os
 import subprocess
 import sys
 from dataclasses import dataclass
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from src.grocery_wizard.paths import REPO_ROOT
 from tests.repo_paths import SRC_PACKAGE_ROOT
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 INTERNAL_PREFIX = "src.grocery_wizard"
 
@@ -128,7 +131,7 @@ def test_every_module_imports_in_a_fresh_interpreter() -> None:
             "        failures.append(f'{name}: {exc!r}')",
             "print('\\n'.join(failures))",
             "sys.exit(1 if failures else 0)",
-        ]
+        ],
     )
     env = {
         **os.environ,

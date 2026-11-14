@@ -21,13 +21,16 @@ def test_add_recipe_review_expanders_render_inside_entry_sections() -> None:
     assert source.count("_render_previews_for_entry(db, schema, previews,") == 3
 
     url_block = source.split("**Recipe URL**", maxsplit=1)[1].split(
-        "**Type it in myself**", maxsplit=1
+        "**Type it in myself**",
+        maxsplit=1,
     )[0]
     manual_block = source.split("**Type it in myself**", maxsplit=1)[1].split(
-        "**Sync from NYT Cooking**", maxsplit=1
+        "**Sync from NYT Cooking**",
+        maxsplit=1,
     )[0]
     nyt_block = source.split("**Sync from NYT Cooking**", maxsplit=1)[1].split(
-        "\ndef _preview_dict", maxsplit=1
+        "\ndef _preview_dict",
+        maxsplit=1,
     )[0]
 
     assert "_render_previews_for_entry(db, schema, previews, _ENTRY_PATH_URL)" in url_block
@@ -36,6 +39,7 @@ def test_add_recipe_review_expanders_render_inside_entry_sections() -> None:
     assert (
         "for index, preview in enumerate(previews):"
         not in source.split("def render_add_recipe", maxsplit=1)[1].split(
-            "\ndef _preview_dict", maxsplit=1
+            "\ndef _preview_dict",
+            maxsplit=1,
         )[0]
     )

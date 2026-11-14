@@ -51,8 +51,8 @@ def test_find_by_link_uses_notion_url_filter() -> None:
                     "Link": {"type": "url", "url": "https://example.com/soup"},
                     "Ingredients": {"type": "rich_text", "rich_text": []},
                 },
-            }
-        ]
+            },
+        ],
     }
 
     found = db.find_by_link("https://example.com/soup/?utm=share")

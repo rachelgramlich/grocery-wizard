@@ -154,7 +154,7 @@ def test_expand_ingredient_line(raw: str, expected: list[str]) -> None:
 
 def test_expand_ingredient_line_if_needed_leaves_one_line_per_ingredient() -> None:
     assert expand_ingredient_line_if_needed("chimichurri chicken frozen") == [
-        "chimichurri chicken frozen"
+        "chimichurri chicken frozen",
     ]
     assert expand_ingredient_line_if_needed("2 leeks") == ["2 leeks"]
     assert len(expand_ingredient_line_if_needed("chimichurri zucchini orzo")) >= 2
@@ -166,7 +166,7 @@ def test_expand_ingredient_line_does_not_split_color_variants() -> None:
 
 def test_expand_ingredient_line_does_not_split_qty_color_and_yellow_peppers() -> None:
     assert expand_ingredient_line("2 red and yellow bell peppers") == [
-        "2 red and yellow bell peppers"
+        "2 red and yellow bell peppers",
     ]
 
 
@@ -368,7 +368,7 @@ def test_split_recipe_title_bleed_merged_nyt_artifacts() -> None:
         "cloves garlic",
     ]
     assert split_recipe_title_bleed(
-        "1 teaspoon fine sea salt, plus more to taste granulated sugar"
+        "1 teaspoon fine sea salt, plus more to taste granulated sugar",
     ) == [
         "1 teaspoon fine sea salt, plus more to taste",
         "granulated sugar",
@@ -404,7 +404,7 @@ def test_storage_keeps_crumbled_feta_when_comma_after_feta() -> None:
 def test_storage_expands_such_as_herbs() -> None:
     assert (
         clean_ingredient_line_for_storage(
-            "1/4 cup chopped fresh herbs, such as dill, basil, mint or parsley, plus more for serving"
+            "1/4 cup chopped fresh herbs, such as dill, basil, mint or parsley, plus more for serving",
         )
         == "fresh herbs (dill, basil, mint or parsley)"
     )
@@ -427,7 +427,7 @@ def test_storage_keeps_or_alternatives_in_name() -> None:
 
 def test_prepare_merges_split_lemon_lime_juice_lines() -> None:
     prepared = prepare_ingredients_for_notion(
-        "2 tablespoons lemon\nlime\njuice\n6 large cloves garlic, finely grated"
+        "2 tablespoons lemon\nlime\njuice\n6 large cloves garlic, finely grated",
     )
     lines = [line.strip().lower() for line in prepared.splitlines()]
     assert "juice" not in lines
@@ -442,7 +442,7 @@ def test_storage_fresh_or_frozen_and_stock_sprigs() -> None:
     )
     assert (
         clean_ingredient_line_for_storage(
-            "4 1/4 cups/1 liter vegetable stock or water, plus more if needed"
+            "4 1/4 cups/1 liter vegetable stock or water, plus more if needed",
         )
         == "vegetable stock"
     )
@@ -457,7 +457,7 @@ def test_prepare_merges_unclosed_paren_and_continuation_after_split() -> None:
         "1 1/2 cups tightly packed mixed herb leaves (such as cilantro, mint\n"
         "Thai basil), torn if large\n"
         "4 ounces rice\n"
-        "vermicelli noodles"
+        "vermicelli noodles",
     )
     assert "Thai basil" not in prepared or "herb" in prepared.lower()
     assert "vermicelli" in prepared.lower()
@@ -467,7 +467,7 @@ def test_prepare_drops_box_grater_prep_line() -> None:
     prepared = prepare_ingredients_for_notion(
         "1 large tomato\n"
         "grated on the large holes of a box grater or finely chopped, juices reserved\n"
-        "1 onion"
+        "1 onion",
     )
     assert "grater" not in prepared.lower()
     assert "1 large tomato" in prepared
@@ -476,7 +476,7 @@ def test_prepare_drops_box_grater_prep_line() -> None:
 
 def test_prepare_drops_crosswise_prep_only_line() -> None:
     prepared = prepare_ingredients_for_notion(
-        "1 romaine heart\nsliced crosswise into 1/2-inch pieces\n1 can chickpeas"
+        "1 romaine heart\nsliced crosswise into 1/2-inch pieces\n1 can chickpeas",
     )
     assert "crosswise" not in prepared
     assert "1 romaine heart" in prepared
@@ -925,7 +925,7 @@ def test_filter_ingredient_key_does_not_change_grocery_normalize() -> None:
     yukon = normalize_ingredient("1 lb Yukon Gold potatoes")
     assert russet != yukon
     assert filter_ingredient_key("2 red or russet potatoes") == filter_ingredient_key(
-        "1 lb Yukon Gold potatoes"
+        "1 lb Yukon Gold potatoes",
     )
 
 
@@ -1176,6 +1176,7 @@ def test_box_style_dried_fruit_counts_are_stripped_at_storage(raw: str, stored: 
     ],
 )
 def test_grocery_list_strips_box_item_counts_and_keeps_can_counts(
-    stored: str, grocery: str
+    stored: str,
+    grocery: str,
 ) -> None:
     assert normalize_grocery_list_item(stored) == grocery

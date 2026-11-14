@@ -33,7 +33,9 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--reps", type=int, default=2, help="Warm repetitions (median is used).")
     parser.add_argument("--skip-cold", action="store_true", help="Skip the cold-cache run.")
     parser.add_argument(
-        "--profile", action="store_true", help="cProfile the first warm run of each scenario."
+        "--profile",
+        action="store_true",
+        help="cProfile the first warm run of each scenario.",
     )
     parser.add_argument(
         "--write-latency",

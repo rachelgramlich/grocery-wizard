@@ -25,13 +25,15 @@ import json
 import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from src.grocery_wizard.config import LIST_HISTORY_DIR
 from src.grocery_wizard.ingredients.sync import apply_removals, parse_ingredients_text
 from src.grocery_wizard.shopping.grocery_list import _normalized_item_key
 from src.grocery_wizard.shopping.store_aisles import aisle_label, classify_aisle
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 LIST_LOG_SCHEMA_VERSION = 1
 MAX_LIST_LOGS = 20
@@ -78,7 +80,7 @@ class ListTrace:
                 ingredient_source=ingredient_source,
                 raw_lines=raw_lines,
                 removal_directives=removals,
-            )
+            ),
         )
         remaining = list(kept)
         for raw in raw_lines:
@@ -103,7 +105,7 @@ class ListTrace:
                 "item": item,
                 "amount": amount,
                 "outcome": outcome,
-            }
+            },
         )
 
 
@@ -158,7 +160,7 @@ def _final_list_entries(
                 "aisle": aisle_label(aisle),
                 "source": source,
                 "recipes": list(recipes),
-            }
+            },
         )
     return entries
 
@@ -186,7 +188,7 @@ def build_list_log(
                 "ingredient_source": recipe.ingredient_source if recipe else None,
                 "raw_lines": list(recipe.raw_lines) if recipe else [],
                 "removal_directives": list(recipe.removal_directives) if recipe else [],
-            }
+            },
         )
     skipped = [
         {
@@ -246,7 +248,7 @@ def apply_adjustments(
                 "aisle": aisle_label(classify_aisle(line)),
                 "source": source,
                 "recipes": [],
-            }
+            },
         )
     return {
         **log,

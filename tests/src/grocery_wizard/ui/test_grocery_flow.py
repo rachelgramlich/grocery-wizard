@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
-
-import pytest
 
 from src.grocery_wizard.integrations.notion import Recipe
 from src.grocery_wizard.ui.grocery_flow import (
@@ -20,6 +19,9 @@ from src.grocery_wizard.ui.grocery_flow import (
     stash_recipe_review,
     sync_recipe_review_overrides_to_session,
 )
+
+if TYPE_CHECKING:
+    import pytest
 
 
 def _recipe(name: str, *, ingredients: str = "1 cup flour") -> Recipe:
@@ -213,7 +215,9 @@ def test_build_grocery_result_payload_reads_pantry_fresh_from_notion(
     loader = _FakePantryLoader()
     monkeypatch.setattr(notion_cache, "_load_pantry_cached", loader)
     monkeypatch.setattr(
-        grocery_flow, "load_config", lambda: MagicMock(notion_pantry_database_id="x")
+        grocery_flow,
+        "load_config",
+        lambda: MagicMock(notion_pantry_database_id="x"),
     )
 
     recipes = [_recipe("Tacos", ingredients="2 tbsp avocado oil\n1 avocado")]

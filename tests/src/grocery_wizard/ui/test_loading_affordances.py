@@ -72,7 +72,8 @@ def test_browse_recipes_shows_spinner_on_cold_notion_load() -> None:
     render_fn = browse.split("def render_browse_recipes", 1)[1].split("\ndef ", 1)[0]
     assert "_BROWSE_LOADING_MESSAGE" in render_fn
     cold_block = render_fn.split("if _recipes_warm_for_session():", 1)[1].split(
-        "applied = applied_from_dict", 1
+        "applied = applied_from_dict",
+        1,
     )[0]
     assert "loading_indicator" in cold_block
     assert "_load_browse_recipe_library" in cold_block

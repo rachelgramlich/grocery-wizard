@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from src.grocery_wizard.shopping.recurring_weekly_items import (
     append_recurring_weekly_item,
     apply_recurring_session_overrides,
     remove_recurring_weekly_item,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_apply_recurring_session_overrides_add_and_remove() -> None:

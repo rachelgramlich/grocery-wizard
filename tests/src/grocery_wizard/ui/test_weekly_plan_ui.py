@@ -28,7 +28,8 @@ def test_weekly_plan_has_per_meal_swap_buttons() -> None:
     assert (
         'width="content"'
         in source.split("def _render_slot_manual_popover", 1)[1].split(
-            "def _render_dev_jump_tools", 1
+            "def _render_dev_jump_tools",
+            1,
         )[0]
     )
     assert "gw-meal-slot-recipe" in source
@@ -63,7 +64,8 @@ def test_scratch_plan_slot_first_manual_picker() -> None:
     assert (
         "week_level_plan_filter_columns"
         not in source.split("def _render_generate_plan_controls", 1)[1].split(
-            "def _render_built_plan_meals", 1
+            "def _render_built_plan_meals",
+            1,
         )[0]
     )
     assert "Keep these recipes" not in source
@@ -75,7 +77,8 @@ def test_manual_picker_recipe_first_then_or_filter() -> None:
     """Issue #220: direct recipe pick before optional per-slot filters."""
     source = ui_source()
     manual = source.split("def _slot_manual_picker_fragment", 1)[1].split(
-        "def _render_slot_manual_popover", 1
+        "def _render_slot_manual_popover",
+        1,
     )[0]
     assert "plan_slot_direct_pick_" in manual
     assert 'st.markdown("**Or filter**")' in manual
@@ -83,7 +86,7 @@ def test_manual_picker_recipe_first_then_or_filter() -> None:
     assert "st.divider()" in manual
     assert manual.index("_render_direct_recipe_pick") < manual.index('st.markdown("**Or filter**")')
     assert manual.index("_render_filtered_recipe_picker") > manual.index(
-        'st.markdown("**Or filter**")'
+        'st.markdown("**Or filter**")',
     )
 
 
@@ -95,7 +98,7 @@ def test_meal_plan_ingredient_filter_before_checkboxes() -> None:
     assert "_ingredient_search" not in filters_source
     assert "Start typing above" not in filters_source
     assert filters_source.index("names_key = f") < filters_source.index(
-        "for column in checkbox_columns"
+        "for column in checkbox_columns",
     )
 
 
@@ -153,20 +156,21 @@ def test_dev_mode_exposes_collapsed_dev_tools_expander() -> None:
     assert '"Choose recipes manually"' in source
     assert "DEV_JUMP_BUTTON_LABEL_FINAL_LIST" in source
     dev_section = source.split('st.expander("Dev: tools"', 1)[1].split(
-        "def _render_weekly_plan_entry", 1
+        "def _render_weekly_plan_entry",
+        1,
     )[0]
     assert "DEV_JUMP_FLOW_ORDER" in dev_section
     assert "for step in DEV_JUMP_FLOW_ORDER:\n            _dev_jump_bullet(step)" in dev_section
     bullets_end = dev_section.index("all_names = sorted")
     assert dev_section.index("for step in DEV_JUMP_FLOW_ORDER") < bullets_end
     assert dev_section.index("DEV_JUMP_BUTTON_LABEL_MEALS_FILLED_AUTO") < dev_section.index(
-        "DEV_JUMP_BUTTON_LABEL_PRE_BUILD_GROCERY"
+        "DEV_JUMP_BUTTON_LABEL_PRE_BUILD_GROCERY",
     )
     assert dev_section.index("DEV_JUMP_BUTTON_LABEL_PRE_BUILD_GROCERY") < dev_section.index(
-        "DEV_JUMP_BUTTON_LABEL_PER_RECIPE_REVIEW"
+        "DEV_JUMP_BUTTON_LABEL_PER_RECIPE_REVIEW",
     )
     assert dev_section.index("DEV_JUMP_BUTTON_LABEL_PER_RECIPE_REVIEW") < dev_section.index(
-        "DEV_JUMP_BUTTON_LABEL_FINAL_LIST"
+        "DEV_JUMP_BUTTON_LABEL_FINAL_LIST",
     )
 
 
@@ -176,7 +180,8 @@ def test_post_build_collapses_generate_controls() -> None:
     assert 'st.expander("1a. Build your meal list"' not in meals_fn
     assert "PLAN_BUILDER_POPOVER_KEY" in meals_fn
     popover_fn = source.split("def _render_plan_builder_popover", 1)[1].split(
-        "def _render_slot_manual_popover", 1
+        "def _render_slot_manual_popover",
+        1,
     )[0]
     assert 'st.popover(\n        "Build meals"' in popover_fn
     assert "Change filters & rebuild" not in source
@@ -201,7 +206,8 @@ def test_weekly_tab_step_rail() -> None:
 def test_dev_mode_auto_continues_without_continue_button() -> None:
     source = ui_source()
     entry = source.split("def _render_weekly_plan_entry", 1)[1].split(
-        "def _ensure_plan_session_defaults", 1
+        "def _ensure_plan_session_defaults",
+        1,
     )[0]
     assert 'if choice == "dev":' in entry
     assert "plan_meal_count = 1" in entry
@@ -211,7 +217,8 @@ def test_dev_mode_auto_continues_without_continue_button() -> None:
 def test_weekly_plan_mode_choices_always_includes_dev() -> None:
     source = weekly_plan_source("state.py")
     choices_fn = source.split("def _weekly_plan_mode_choices", 1)[1].split(
-        "def _weekly_plan_mode", 1
+        "def _weekly_plan_mode",
+        1,
     )[0]
     assert "return _WEEKLY_PLAN_MODES" in choices_fn
     assert "dev_ui_enabled" not in choices_fn
@@ -238,7 +245,8 @@ def test_plan_meal_count_persists_separate_from_widget_key() -> None:
     """Issue #262: plan_meal_count survives tab navigation; widget key is re-seeded."""
     source = ui_source()
     sync_fn = source.split("def _sync_plan_meal_count_widget_from_persisted", 1)[1].split(
-        "\ndef ", 1
+        "\ndef ",
+        1,
     )[0]
     assert "PLAN_MEAL_COUNT_WIDGET_KEY not in st.session_state" in sync_fn
     assert "st.session_state.plan_meal_count" in sync_fn
@@ -263,11 +271,12 @@ def test_meal_count_continue_gates_meals_fragment() -> None:
     """Meal builder waits for explicit Continue after meal count (not Enter on number input)."""
     flow_source = weekly_plan_source("flow.py")
     plan_block = flow_source.split("WeeklyRailStep.PLAN_MEALS", 1)[1].split(
-        "WeeklyRailStep.GROCERY_LIST", 1
+        "WeeklyRailStep.GROCERY_LIST",
+        1,
     )[0]
     assert "_render_plan_meal_count_continue(meal_count=meal_count)" in plan_block
     assert plan_block.index("_render_plan_meal_count_continue") < plan_block.index(
-        "render_meals_section"
+        "render_meals_section",
     )
     state_source = weekly_plan_source("state.py")
     assert "PLAN_MEAL_COUNT_CONFIRMED_KEY" in state_source
@@ -294,10 +303,12 @@ def test_prebuild_recipe_picker_before_build_my_plan() -> None:
     """Issue #223: single pre-build manual expander; no pin multiselect or week filter row."""
     source = ui_source()
     generate = source.split("def _render_generate_plan_controls", 1)[1].split(
-        "def _render_built_plan_meals", 1
+        "def _render_built_plan_meals",
+        1,
     )[0]
     prebuild = source.split("def _render_prebuild_recipe_picker", 1)[1].split(
-        "def _set_plan_slot_recipe", 1
+        "def _set_plan_slot_recipe",
+        1,
     )[0]
     assert "_render_prebuild_recipe_picker" in generate
     assert "_clamp_prebuild_pinned_recipes" in source
@@ -316,7 +327,7 @@ def test_prebuild_recipe_picker_before_build_my_plan() -> None:
     assert "_render_direct_recipe_pick" in prebuild
     assert "plan_prebuild_direct_pick" in prebuild
     assert prebuild.index("_render_direct_recipe_pick") < prebuild.index(
-        "_render_filtered_recipe_picker"
+        "_render_filtered_recipe_picker",
     )
     assert (
         "plan_prebuild_pinned_recipes" in source.split("def _locked_recipes_for_plan_build", 1)[1]
@@ -326,7 +337,8 @@ def test_prebuild_recipe_picker_before_build_my_plan() -> None:
 def test_post_build_slot_manual_picker_caption() -> None:
     source = ui_source()
     slot = source.split("def _render_slot_manual_popover", 1)[1].split(
-        "def _render_dev_jump_tools", 1
+        "def _render_dev_jump_tools",
+        1,
     )[0]
     assert "Filters apply to this meal slot only." in slot
 
@@ -335,19 +347,22 @@ def test_grocery_list_extra_items_before_create_button() -> None:
     """Issue #121 / #131: Extra items in their own expander before Create grocery list."""
     source = ui_source()
     section = source.split("def render_grocery_list_section", 1)[1].split(
-        "def _render_grocery_result", 1
+        "def _render_grocery_result",
+        1,
     )[0]
 
     create_idx = section.index('if st.button("Create grocery list"')
     assert 'with st.expander("Pantry & Recurring Items"' in section
     assert 'with st.expander("Add extra items"' in section
     extras_block = section.split('with st.expander("Add extra items"', 1)[1].split(
-        'if st.button("Create grocery list"', 1
+        'if st.button("Create grocery list"',
+        1,
     )[0]
     assert "_grocery_pre_extra_items_widget_key()" in extras_block
     assert section.index('with st.expander("Add extra items"') < create_idx
     pantry_block = section.split('with st.expander("Pantry & Recurring Items"', 1)[1].split(
-        'with st.expander("Add extra items"', 1
+        'with st.expander("Add extra items"',
+        1,
     )[0]
     assert "_grocery_pre_extra_items_widget_key()" not in pantry_block
 
