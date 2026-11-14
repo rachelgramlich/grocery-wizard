@@ -8,6 +8,7 @@ from src.grocery_wizard.integrations.notion import (
     ColumnInfo,
     DatabaseSchema,
     NotionRecipesDB,
+    normalize_recipe_link,
     normalize_recipe_name,
 )
 
@@ -29,6 +30,11 @@ def _schema() -> DatabaseSchema:
 
 def test_normalize_recipe_name_strips_edges() -> None:
     assert normalize_recipe_name("  Pizza beans \xa0") == "Pizza beans"
+
+
+def test_normalize_recipe_link_strips_tracking_params_and_www() -> None:
+    url = "https://www.example.com/recipes/1-soup/?smid=share&cgs=c"
+    assert normalize_recipe_link(url) == "https://example.com/recipes/1-soup"
 
 
 def test_create_recipe_strips_name_before_write(monkeypatch) -> None:
@@ -55,7 +61,12 @@ def test_create_recipe_strips_name_before_write(monkeypatch) -> None:
     db._client.pages.create.side_effect = fake_create
     db._page_to_recipe = NotionRecipesDB._page_to_recipe.__get__(db)  # type: ignore[method-assign]
 
-    db.create_recipe({"Name": "  Pizza beans  ", "Link": "https://example.com"})
+    db.create_recipe(
+        {
+            "Name": "  Pizza beans  ",
+            "Link": "https://www.example.com/pizza/?utm=1",
+        }
+    )
 
     assert captured["parent"] == {
         "type": "data_source_id",
@@ -63,3 +74,4 @@ def test_create_recipe_strips_name_before_write(monkeypatch) -> None:
     }
     title_payload = captured["properties"]["Name"]["title"][0]["text"]["content"]
     assert title_payload == "Pizza beans"
+    assert captured["properties"]["Link"]["url"] == "https://example.com/pizza"

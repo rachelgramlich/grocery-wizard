@@ -55,7 +55,7 @@ def test_find_by_link_uses_notion_url_filter() -> None:
         ]
     }
 
-    found = db.find_by_link("https://example.com/soup/")
+    found = db.find_by_link("https://example.com/soup/?utm=share")
 
     assert found is not None
     assert found.name == "Soup"
@@ -65,6 +65,23 @@ def test_find_by_link_uses_notion_url_filter() -> None:
     assert kwargs["filter_properties"] == ["Ingredients", "Link", "Name"]
     db.query_recipes = MagicMock()  # type: ignore[method-assign]
     assert db.query_recipes.call_count == 0
+
+
+def test_find_by_link_scans_when_stored_url_has_tracking_query() -> None:
+    db = _minimal_db()
+    db._client.data_sources.query.return_value = {"results": []}
+    stored = MagicMock(
+        page_id="page-1",
+        name="Soup",
+        link="https://example.com/soup?smid=ios-share",
+        ingredients=None,
+        properties={},
+    )
+    db.query_recipes = MagicMock(return_value=[stored])  # type: ignore[method-assign]
+
+    found = db.find_by_link("https://example.com/soup/")
+
+    assert found is stored
 
 
 def test_to_notion_property_chunks_long_rich_text() -> None:
