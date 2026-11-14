@@ -4,11 +4,8 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from src.grocery_wizard.integrations.notion_household import NotionRecurringDB
-
+from src.grocery_wizard.integrations.notion.lazy_household import notion_recurring_db
 from src.grocery_wizard.shopping.line_items import parse_line_items, strip_line_item
 
 
@@ -54,16 +51,10 @@ def _write_recurring_to_file(items_path: Path, items: list[str]) -> None:
     items_path.write_text(text, encoding="utf-8")
 
 
-def _notion_recurring_db() -> NotionRecurringDB:
-    from src.grocery_wizard.integrations.notion_household import NotionRecurringDB
-
-    return NotionRecurringDB()
-
-
 def remove_recurring_weekly_item(search: str, path: Path | None = None) -> bool:
     """Remove the first recurring item whose name matches *search*."""
     if path is None:
-        return _notion_recurring_db().remove_item(search)
+        return notion_recurring_db().remove_item(search)
 
     items = load_recurring_weekly_items(path)
     if not items:
@@ -90,7 +81,7 @@ def remove_recurring_weekly_item(search: str, path: Path | None = None) -> bool:
 def append_recurring_weekly_item(name: str, path: Path | None = None) -> bool:
     """Append an item to the recurring weekly template if not already present."""
     if path is None:
-        return _notion_recurring_db().append_item(name)
+        return notion_recurring_db().append_item(name)
 
     cleaned = name.strip()
     if not cleaned:
@@ -106,13 +97,13 @@ def load_recurring_weekly_items(path: Path | None = None) -> list[str]:
     """Load recurring weekly items (Notion by default; optional file path for tests)."""
     if path is not None:
         return _load_recurring_from_file(path)
-    return _notion_recurring_db().load_items()
+    return notion_recurring_db().load_items()
 
 
 def write_recurring_weekly_items(path: Path | None, items: list[str]) -> None:
     """Persist recurring template to Notion or a file (explicit path for tests)."""
     if path is None:
-        _notion_recurring_db().replace_all(items)
+        notion_recurring_db().replace_all(items)
         return
     _write_recurring_to_file(path, items)
 

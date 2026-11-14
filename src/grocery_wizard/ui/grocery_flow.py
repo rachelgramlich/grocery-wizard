@@ -169,9 +169,7 @@ def sync_recipe_review_overrides_to_session(
 
 
 def _mark_grocery_stash_notion_generation(session_state: Any) -> None:
-    from src.grocery_wizard.ui.notion_cache import notion_cache_generation
-
-    session_state[GROCERY_STASH_NOTION_GENERATION_KEY] = notion_cache_generation()
+    session_state[GROCERY_STASH_NOTION_GENERATION_KEY] = notion_cache.notion_cache_generation()
 
 
 def sync_grocery_stash_notion_generation(session_state: Any) -> None:

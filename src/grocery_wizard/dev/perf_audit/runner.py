@@ -61,13 +61,13 @@ def _collect_meta(tap: NotionTap) -> dict[str, Any]:
     }
     try:
         from src.grocery_wizard.config import load_config
-        from src.grocery_wizard.integrations.notion_household import NotionPantryDB
+        from src.grocery_wizard.integrations.notion.lazy_household import notion_pantry_db
         from src.grocery_wizard.planning.saved_weekly_plans import list_saved_plans
         from src.grocery_wizard.ui.db_access import get_db
 
         db = get_db()
         meta["recipes"] = len(db.query_recipes())
-        meta["pantry_items"] = len(NotionPantryDB().list_entries())
+        meta["pantry_items"] = len(notion_pantry_db().list_entries())
         meta["saved_plans"] = len(list_saved_plans(recipes_db=db))
         meta["notion_recipe_db"] = load_config().notion_recipe_database_id[-6:]
     except NOTION_BOUNDARY_ERRORS as exc:

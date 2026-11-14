@@ -8,6 +8,7 @@ import re
 from collections.abc import Iterable
 
 from src.grocery_wizard.integrations.notion import NotionFieldValues
+from src.grocery_wizard.recipes.recipe_meal_plan_stats import is_meal_plan_tracking_column
 from src.grocery_wizard.recipes.weeknight import is_weeknight_friendly
 
 # Column name (lowercase) -> option -> keywords
@@ -220,8 +221,6 @@ def classify_recipe(
     """Return inferred values for each filter column (name, type, options)."""
     results: NotionFieldValues = {}
     meal_options: list[str] | None = None
-
-    from src.grocery_wizard.recipes.recipe_meal_plan_stats import is_meal_plan_tracking_column
 
     for column_name, column_type, options in filter_columns:
         if is_meal_plan_tracking_column(column_name):

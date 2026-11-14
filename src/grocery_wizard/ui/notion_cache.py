@@ -11,6 +11,10 @@ from typing import TYPE_CHECKING
 import streamlit as st
 
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
+from src.grocery_wizard.integrations.notion.lazy_household import (
+    notion_pantry_db,
+    notion_recurring_db,
+)
 from src.grocery_wizard.integrations.notion_io_errors import NOTION_BOUNDARY_ERRORS
 from src.grocery_wizard.planning.saved_weekly_plans import SavedWeeklyPlan, list_saved_plans
 from src.grocery_wizard.ui.db_access import get_db
@@ -122,17 +126,13 @@ def _recipes_from_store(db: NotionRecipesDB) -> list[Recipe]:
 @st.cache_data(show_spinner=False)
 def _load_pantry_cached(generation: int, _household_db_id: str) -> list[PantryEntry]:
     del generation
-    from src.grocery_wizard.integrations.notion_household import NotionPantryDB
-
-    return NotionPantryDB().list_entries()
+    return notion_pantry_db().list_entries()
 
 
 @st.cache_data(show_spinner=False)
 def _load_recurring_cached(generation: int) -> list[str]:
     del generation
-    from src.grocery_wizard.integrations.notion_household import NotionRecurringDB
-
-    return NotionRecurringDB().load_items()
+    return notion_recurring_db().load_items()
 
 
 @st.cache_data(show_spinner=False)
