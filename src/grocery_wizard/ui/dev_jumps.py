@@ -33,6 +33,8 @@ from src.grocery_wizard.ui.grocery_flow import (
     stash_recipe_review,
 )
 from src.grocery_wizard.ui.ids import DEV_JUMP_BLOCK_ID
+from src.grocery_wizard.ui.views.weekly_plan.state import _ack_dev_plan_meals_ready
+from src.grocery_wizard.ui.views.weekly_plan.step_ui import WeeklyRailStep, set_expanded_step
 
 DEFAULT_DEV_MEAL_COUNT = 1
 _DEV_MEAL_PICK_SEED = 142
@@ -156,8 +158,6 @@ def pick_default_recipe_names(
 
 
 def _set_dev_jump_rail_step(step_value: str) -> None:
-    from src.grocery_wizard.ui.views.weekly_plan.step_ui import WeeklyRailStep, set_expanded_step
-
     set_expanded_step(WeeklyRailStep(step_value))
 
 
@@ -197,8 +197,6 @@ def commit_dev_jump(
     cleaned = [name for name in names if name.strip()]
     if not cleaned:
         return []
-
-    from src.grocery_wizard.ui.views.weekly_plan.state import _ack_dev_plan_meals_ready
 
     clear_grocery_flow_state(session_state)
     session_state["plan_meals_text"] = "\n".join(cleaned)

@@ -39,7 +39,7 @@ from src.grocery_wizard.ingredients.parsed import (
 )
 from src.grocery_wizard.recipes.scraper import ingredients_to_text
 from src.grocery_wizard.shopping.line_items import strip_line_item
-from src.grocery_wizard.shopping.pantry import generic_pepper_blocks_match
+from src.grocery_wizard.shopping.pantry_matching import generic_pepper_blocks_match
 
 _REMOVAL_PREFIX_RE = re.compile(r"^remove\s*:?\s*(.+)$", re.IGNORECASE)
 _REMOVAL_DASH_RE = re.compile(r"^-\s+(.+)$")

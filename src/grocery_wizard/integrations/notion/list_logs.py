@@ -24,6 +24,7 @@ from typing import Any
 from src.grocery_wizard.config import Config, load_config
 from src.grocery_wizard.integrations.notion.recipes import notion_page_url
 from src.grocery_wizard.integrations.notion.table import NotionDatabase
+from src.grocery_wizard.integrations.notion_io_errors import NOTION_BOUNDARY_ERRORS
 from src.grocery_wizard.shopping.list_log import dump_list_log
 
 LIST_LOG_NAME_COLUMN = "Name"
@@ -149,6 +150,6 @@ def persist_list_log_to_notion(
             return page_id, notion_page_url(page_id)
         new_id = db.save_log(log)
         return new_id, notion_page_url(new_id)
-    except Exception:
+    except NOTION_BOUNDARY_ERRORS:
         _LOG.warning("Could not persist grocery list debug log to Notion", exc_info=True)
         return None, None

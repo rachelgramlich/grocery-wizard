@@ -11,8 +11,14 @@ from typing import TYPE_CHECKING
 import streamlit as st
 
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
+from src.grocery_wizard.integrations.notion.lazy_household import (
+    notion_pantry_db,
+    notion_recurring_db,
+)
+from src.grocery_wizard.integrations.notion_io_errors import NOTION_BOUNDARY_ERRORS
 from src.grocery_wizard.planning.saved_weekly_plans import SavedWeeklyPlan, list_saved_plans
 from src.grocery_wizard.ui.db_access import get_db
+from src.grocery_wizard.ui.ingredient_index_warm import clear_ingredient_index_warm
 
 if TYPE_CHECKING:
     from src.grocery_wizard.integrations.notion_household import PantryEntry
@@ -80,8 +86,6 @@ def invalidate_recipes_after_write(*, schema_may_change: bool = False) -> None:
 
 def invalidate_notion_cache() -> None:
     """Drop every cached Notion read (the Refresh button); recipes reload in full."""
-    from src.grocery_wizard.ui.ingredient_index_warm import clear_ingredient_index_warm
-
     st.session_state[_GENERATION_KEY] = notion_cache_generation() + 1
     invalidate_saved_plans_cache()
     get_db.clear()
@@ -111,7 +115,7 @@ def _recipes_from_store(db: NotionRecipesDB) -> list[Recipe]:
             try:
                 changed = db.query_recipes_edited_since(store.synced_at - _RECIPE_DELTA_OVERLAP)
                 store.recipes.update({recipe.page_id: recipe for recipe in changed})
-            except Exception:
+            except NOTION_BOUNDARY_ERRORS:
                 store.recipes = {recipe.page_id: recipe for recipe in db.query_recipes()}
             store.synced_at = started
             store.dirty = False
@@ -121,17 +125,13 @@ def _recipes_from_store(db: NotionRecipesDB) -> list[Recipe]:
 @st.cache_data(show_spinner=False)
 def _load_pantry_cached(generation: int, _household_db_id: str) -> list[PantryEntry]:
     del generation
-    from src.grocery_wizard.integrations.notion_household import NotionPantryDB
-
-    return NotionPantryDB().list_entries()
+    return notion_pantry_db().list_entries()
 
 
 @st.cache_data(show_spinner=False)
 def _load_recurring_cached(generation: int) -> list[str]:
     del generation
-    from src.grocery_wizard.integrations.notion_household import NotionRecurringDB
-
-    return NotionRecurringDB().load_items()
+    return notion_recurring_db().load_items()
 
 
 @st.cache_data(show_spinner=False)

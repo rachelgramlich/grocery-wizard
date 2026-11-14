@@ -56,7 +56,9 @@ Ruff is the single linting tool. The enabled rule categories are documented in `
 | `LOG` | logging call hygiene |
 | `ICN` / `TID` | import alias and layout conventions |
 
-The repo is already clean on the added `PTH`/`LOG`/`ICN`/`TID` rules; they guard new code. **`BLE`** (no blind `except Exception`) is tracked for a follow-up PR — 13 intentional broad catches remain in Notion/Streamlit boundaries.
+The repo is already clean on the added `PTH`/`LOG`/`ICN`/`TID` rules; they guard new code. **`BLE`** forbids blind `except Exception`; use `NOTION_BOUNDARY_ERRORS` from `integrations/notion_io_errors.py` at Notion/HTTP UI boundaries.
+
+Promote function-level imports to module top when import-integrity and cold-start tests stay green. Keep lazy imports only for real cycles (`ui/app.py` Notion cache clears, `weekly_plan_add` ↔ `state`, `ingredients/normalize` ↔ `parsed`, NYT sync ↔ recipes). Use `integrations/notion/lazy_household.py` for household Notion DB construction.
 
 ### Ignored rules (with rationale)
 

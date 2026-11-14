@@ -286,6 +286,7 @@ def _apply_streamlit_runtime_secrets_to_environ() -> None:
     """Inject flat keys from ``st.secrets`` (Streamlit Community Cloud Secrets)."""
     try:
         import streamlit as st
+        from streamlit.errors import StreamlitSecretNotFoundError
     except ImportError:
         return
     try:
@@ -295,7 +296,13 @@ def _apply_streamlit_runtime_secrets_to_environ() -> None:
             if key == "auth":
                 continue
             mapping[str(key)] = secrets[key]
-    except Exception:
+    except (
+        KeyError,
+        TypeError,
+        AttributeError,
+        RuntimeError,
+        StreamlitSecretNotFoundError,
+    ):
         return
     _apply_flat_secrets_mapping(mapping)
 

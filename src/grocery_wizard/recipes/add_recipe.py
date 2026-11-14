@@ -27,6 +27,7 @@ from src.grocery_wizard.recipes.scraper import (
     scrape_recipe,
 )
 from src.grocery_wizard.recipes.weeknight import DEFAULT_WEEKNIGHT_COLUMN
+from src.grocery_wizard.shopping.grocery_list import recipe_title_from_url
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,8 +62,6 @@ def ordered_recipe_field_names(schema: DatabaseSchema) -> list[str]:
 
 
 def guess_recipe_name_from_url(url: str) -> str:
-    from src.grocery_wizard.shopping.grocery_list import recipe_title_from_url
-
     title = recipe_title_from_url(url)
     return title.title() if title else ""
 

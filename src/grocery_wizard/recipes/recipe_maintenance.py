@@ -15,6 +15,7 @@ from src.grocery_wizard.integrations.notion import (
     NotionRecipesDB,
     Recipe,
 )
+from src.grocery_wizard.integrations.notion_io_errors import NOTION_BOUNDARY_ERRORS
 from src.grocery_wizard.recipes.add_recipe import _weeknight_column_name
 from src.grocery_wizard.recipes.classify import classify_recipe
 from src.grocery_wizard.recipes.recipe_image_attach import attach_recipe_cover_image
@@ -398,7 +399,7 @@ def run_metadata_backfill(
 
         try:
             updates = infer_metadata_field_values(db, recipe, nyt_client=nyt_client)
-        except Exception as exc:
+        except (ScrapeError, *NOTION_BOUNDARY_ERRORS) as exc:
             summary.failed += 1
             if on_progress:
                 on_progress(f"Failed: {recipe.name} — {exc}")
@@ -477,7 +478,7 @@ def run_image_backfill(
 
         try:
             result = attach_recipe_cover_image(db, recipe.page_id, url, dry_run=False)
-        except Exception as exc:
+        except NOTION_BOUNDARY_ERRORS as exc:
             summary.failed += 1
             if on_progress:
                 on_progress(f"Failed: {recipe.name} — {exc}")
