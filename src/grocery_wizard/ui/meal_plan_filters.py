@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import streamlit as st
 
-from src.grocery_wizard.integrations.notion import ColumnInfo, DatabaseSchema
 from src.grocery_wizard.planning.meal_planner import MealPlanFilters
 from src.grocery_wizard.recipes.weeknight import DEFAULT_WEEKNIGHT_COLUMN
+
+if TYPE_CHECKING:
+    from src.grocery_wizard.integrations.notion import ColumnInfo, DatabaseSchema
 
 
 def recipes_ingredient_cache_key(recipes: list) -> tuple[tuple[str, str], ...]:

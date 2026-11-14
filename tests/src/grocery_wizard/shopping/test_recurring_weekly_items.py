@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 from src.grocery_wizard.shopping.recurring_weekly_items import (
@@ -10,6 +10,9 @@ from src.grocery_wizard.shopping.recurring_weekly_items import (
     prompt_recurring_weekly_items,
     write_recurring_weekly_items,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_load_recurring_weekly_items_skips_comments_and_blanks(tmp_path: Path) -> None:

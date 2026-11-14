@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
-import pytest
 from ui_source import (
     app_source,
     apptest_start_app,
     feedback_component_source,
 )
+
+if TYPE_CHECKING:
+    import pytest
 
 
 def test_feedback_header_controls_render_in_app() -> None:

@@ -65,6 +65,10 @@ select = [
     "ICN",  # unconventional import aliases (import pandas as pd)
     "TID",  # tidy import restrictions (relative vs absolute)
     "BLE",  # no blind except Exception — use NOTION_BOUNDARY_ERRORS or explicit types
+    "COM",  # trailing commas (COM812)
+    "TC",   # type-checking-only imports (TCH)
+    "INP",  # implicit namespace packages (tests dirs use __init__.py)
+    "SLF",  # private member access (tests; narrow src exceptions in per-file-ignores)
 ]
 ignore = [
     "EM101",
@@ -77,10 +81,18 @@ ignore = [
     "PLR0911",
     "SIM108",
     "ANN401",
+    "COM812",  # conflicts with ruff format; formatter owns trailing commas
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["E501", "PLR2004", "ANN"]
+"tests/**/*.py" = ["E501", "PLR2004", "ANN", "SLF001"]
+"src/grocery_wizard/ui/weekly_plan_add.py" = ["SLF001"]
+"src/grocery_wizard/ui/notion_cache.py" = ["SLF001"]
+"src/grocery_wizard/ui/grocery_flow.py" = ["SLF001"]
+"src/grocery_wizard/ui/meal_plan_status_ui.py" = ["SLF001"]
+"src/grocery_wizard/dev/perf_audit/tap.py" = ["SLF001"]
+"src/grocery_wizard/integrations/notion/views.py" = ["SLF001"]
+"src/grocery_wizard/recipes/recipe_meal_plan_stats.py" = ["SLF001"]
 "src/grocery_wizard/ui/app.py" = ["E402"]
 
 [tool.ruff.lint.flake8-annotations]

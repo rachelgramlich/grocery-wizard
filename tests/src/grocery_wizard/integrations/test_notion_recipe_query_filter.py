@@ -66,7 +66,7 @@ def test_query_recipes_passes_filter_properties() -> None:
             "Weeknight",
             "Selection count",
             "Image",
-        }
+        },
     )
 
 

@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Iterator
 from contextlib import contextmanager
 from enum import StrEnum
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import streamlit as st
 
@@ -20,6 +19,9 @@ from src.grocery_wizard.ui.views.weekly_plan.state import (
     _plan_meals_step_done,
     _weekly_plan_mode,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 WEEKLY_EXPANDED_STEP_KEY = "weekly_expanded_step"
 WEEKLY_SCROLL_TARGET_KEY = "weekly_scroll_target"
@@ -289,7 +291,9 @@ def render_weekly_step_rail(*, recipe_names: list[str]) -> None:
         cols = st.columns(len(RAIL_STEP_ORDER))
         for col, step in zip(cols, RAIL_STEP_ORDER, strict=True):
             segment_state = _rail_segment_state(
-                step, recipe_names=recipe_names, expanded_step=expanded_step
+                step,
+                recipe_names=recipe_names,
+                expanded_step=expanded_step,
             )
             label = RAIL_STEP_LABELS[step]
             prefix = "✓ " if segment_state == "done" else ""

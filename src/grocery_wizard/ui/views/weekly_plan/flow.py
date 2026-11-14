@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import streamlit as st
 
-from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 from src.grocery_wizard.ui.components.loading import clear_global_loading_banner, loading_indicator
 from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.ingredient_index_warm import schedule_ingredient_index_warm
@@ -31,6 +32,9 @@ from src.grocery_wizard.ui.views.weekly_plan.step_ui import (
     weekly_plan_has_started,
     weekly_step_block,
 )
+
+if TYPE_CHECKING:
+    from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 
 _WEEKLY_RECIPES_WARM_GENERATION_KEY = "_weekly_plan_recipes_warm_generation"
 _MEAL_BUILDER_LOADING_MESSAGE = "Preparing your meal builder…"
@@ -87,7 +91,8 @@ def render_create_weekly_plan() -> None:
     render_weekly_step_rail(recipe_names=recipe_names)
 
     with weekly_step_block(
-        WeeklyRailStep.GET_STARTED, recipe_names=recipe_names
+        WeeklyRailStep.GET_STARTED,
+        recipe_names=recipe_names,
     ) as show_get_started:
         if show_get_started and not _render_weekly_plan_entry():
             return
@@ -103,7 +108,8 @@ def render_create_weekly_plan() -> None:
                 _sync_plan_length_to_meal_count(meal_count)
                 cold_recipes = not _weekly_recipes_warm_for_current_cache()
                 show_meal_builder_loading = st.session_state.pop(
-                    PLAN_MEAL_BUILDER_LOADING_KEY, False
+                    PLAN_MEAL_BUILDER_LOADING_KEY,
+                    False,
                 )
                 if show_meal_builder_loading or cold_recipes:
                     clear_global_loading_banner()

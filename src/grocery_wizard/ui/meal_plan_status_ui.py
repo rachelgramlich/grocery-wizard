@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import streamlit as st
 
-from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
     DEFAULT_MEAL_PLAN_STATUS_COLUMN,
     MEAL_PLAN_STATUS_OPTIONS,
@@ -16,6 +16,9 @@ from src.grocery_wizard.recipes.recipe_meal_plan_stats import (
 )
 from src.grocery_wizard.ui.components.loading import loading_indicator
 from src.grocery_wizard.ui.notion_cache import invalidate_recipes_after_write
+
+if TYPE_CHECKING:
+    from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 
 
 @dataclass(frozen=True)

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from src.grocery_wizard.integrations.notion import ColumnInfo, DatabaseSchema, Recipe
 from src.grocery_wizard.planning.meal_planner import (
@@ -24,6 +24,9 @@ from src.grocery_wizard.planning.meal_planner import (
     suggest_meals,
 )
 from src.grocery_wizard.ui.meal_plan_filters import ingredient_options_from_index
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def _recipe(
@@ -119,7 +122,7 @@ def test_filter_recipes_combines_columns() -> None:
             "Meal": "Dinner",
             "Protein": ["Chicken"],
             "Dinner: Weeknight Friendly": True,
-        }
+        },
     )
     result = filter_recipes(RECIPES, filters, SCHEMA_COLUMNS)
     assert [recipe.name for recipe in result] == ["Chicken Curry"]
@@ -528,7 +531,10 @@ def test_ingredient_filter_potato_variants_share_canonical_key() -> None:
         ingredient_mode="include",
     )
     matched = filter_recipes(
-        [russet_recipe, yukon_recipe], filters, SCHEMA_COLUMNS, ingredient_index=index
+        [russet_recipe, yukon_recipe],
+        filters,
+        SCHEMA_COLUMNS,
+        ingredient_index=index,
     )
     assert {recipe.name for recipe in matched} == {"Russet Hash", "Yukon Gratin"}
 

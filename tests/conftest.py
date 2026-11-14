@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 import sys
-from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
 import pytest
@@ -14,6 +14,9 @@ from tests.notion_test_env import (
     prime_notion_env_for_pytest,
 )
 from tests.repo_paths import UI_TEST_HELPERS
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # Placeholders so CI and fresh clones run without Notion secrets.
 # Shell exports and repo-root `.env` (via `prime_notion_env_for_pytest`) win over placeholders.

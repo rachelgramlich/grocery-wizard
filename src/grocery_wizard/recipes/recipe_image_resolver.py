@@ -31,7 +31,7 @@ _IMAGE_CONTENT_TYPES = frozenset(
         "image/gif",
         "image/avif",
         "image/heic",
-    }
+    },
 )
 _MAX_IMAGE_BYTES = 10 * 1024 * 1024
 

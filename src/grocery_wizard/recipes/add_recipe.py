@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import sys
-from collections.abc import Callable
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from src.grocery_wizard.ingredients.sync import prepare_ingredients_for_notion
 from src.grocery_wizard.integrations.notion import (
@@ -28,6 +28,9 @@ from src.grocery_wizard.recipes.scraper import (
 )
 from src.grocery_wizard.recipes.weeknight import DEFAULT_WEEKNIGHT_COLUMN
 from src.grocery_wizard.shopping.grocery_list import recipe_title_from_url
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 @dataclass(frozen=True, slots=True)
@@ -136,7 +139,7 @@ def preview_recipe_urls(db: NotionRecipesDB, urls: list[str]) -> list[RecipeUrlP
                     status="duplicate",
                     url=url,
                     duplicate_name=existing.name,
-                )
+                ),
             )
             continue
 
@@ -153,7 +156,7 @@ def preview_recipe_urls(db: NotionRecipesDB, urls: list[str]) -> list[RecipeUrlP
                         url=url,
                         name=guess_recipe_name_from_url(url),
                     ),
-                )
+                ),
             )
             continue
 
@@ -165,7 +168,7 @@ def preview_recipe_urls(db: NotionRecipesDB, urls: list[str]) -> list[RecipeUrlP
                     url=url,
                     error="No ingredients found on this page. Paste them below.",
                     fields=fields,
-                )
+                ),
             )
         else:
             previews.append(RecipeUrlPreview(status="ready", url=url, fields=fields))
@@ -220,7 +223,8 @@ def add_prefetched_recipes(
         }
         if include_ingredients and schema.ingredients_column:
             field_values[schema.ingredients_column] = cleaned_scraped_ingredients_text(
-                ingredients, url
+                ingredients,
+                url,
             )
 
         field_values.update(inferred)
@@ -265,7 +269,7 @@ def add_prefetched_recipes(
                 name=recipe.name,
                 url=url,
                 field_values=reviewed,
-            )
+            ),
         )
         print(f"Created: {recipe.name}")
 

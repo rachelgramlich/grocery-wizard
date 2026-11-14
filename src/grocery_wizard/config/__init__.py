@@ -177,7 +177,7 @@ class Config(BaseSettings):
     def _require_recipe_database_id(cls, value: str | None) -> str:
         if not value:
             raise ValueError(
-                "NOTION_RECIPE_DATABASE_ID is required (set in .env or Cloud Agent Secrets)"
+                "NOTION_RECIPE_DATABASE_ID is required (set in .env or Cloud Agent Secrets)",
             )
         return normalize_notion_database_id(value)
 
@@ -186,7 +186,7 @@ class Config(BaseSettings):
     def _require_pantry_database_id(cls, value: str | None) -> str:
         if not value:
             raise ValueError(
-                "NOTION_PANTRY_DATABASE_ID is required (set in .env or Cloud Agent Secrets)"
+                "NOTION_PANTRY_DATABASE_ID is required (set in .env or Cloud Agent Secrets)",
             )
         return normalize_notion_database_id(value)
 
@@ -196,7 +196,7 @@ class Config(BaseSettings):
         if not value:
             raise ValueError(
                 "NOTION_RECURRING_WEEKLY_DATABASE_ID is required "
-                "(set in .env or Cloud Agent Secrets)"
+                "(set in .env or Cloud Agent Secrets)",
             )
         return normalize_notion_database_id(value)
 
@@ -206,7 +206,7 @@ class Config(BaseSettings):
         if not value:
             raise ValueError(
                 "NOTION_WEEKLY_MEAL_PLANS_DATABASE_ID is required "
-                "(set in .env or Cloud Agent Secrets)"
+                "(set in .env or Cloud Agent Secrets)",
             )
         return normalize_notion_database_id(value)
 
@@ -217,7 +217,7 @@ class Config(BaseSettings):
             raise ValueError(
                 "NOTION_DEBUG_LOGS_DATABASE_ID is required "
                 "(legacy alias NOTION_LIST_DEBUG_LOGS_DATABASE_ID; "
-                "set in .env or Cloud Agent Secrets)"
+                "set in .env or Cloud Agent Secrets)",
             )
         return normalize_notion_database_id(value)
 
@@ -356,30 +356,30 @@ def load_config() -> Config:
             loc = error.get("loc", ())
             if "notion_api_key" in loc:
                 raise ValueError(
-                    "NOTION_API_KEY is required (set in .env or Cloud Agent Secrets)"
+                    "NOTION_API_KEY is required (set in .env or Cloud Agent Secrets)",
                 ) from exc
             if "notion_recipe_database_id" in loc:
                 raise ValueError(
-                    "NOTION_RECIPE_DATABASE_ID is required (set in .env or Cloud Agent Secrets)"
+                    "NOTION_RECIPE_DATABASE_ID is required (set in .env or Cloud Agent Secrets)",
                 ) from exc
             if "notion_pantry_database_id" in loc:
                 raise ValueError(
-                    "NOTION_PANTRY_DATABASE_ID is required (set in .env or Cloud Agent Secrets)"
+                    "NOTION_PANTRY_DATABASE_ID is required (set in .env or Cloud Agent Secrets)",
                 ) from exc
             if "notion_recurring_weekly_database_id" in loc:
                 raise ValueError(
                     "NOTION_RECURRING_WEEKLY_DATABASE_ID is required "
-                    "(set in .env or Cloud Agent Secrets)"
+                    "(set in .env or Cloud Agent Secrets)",
                 ) from exc
             if "notion_weekly_meal_plans_database_id" in loc:
                 raise ValueError(
                     "NOTION_WEEKLY_MEAL_PLANS_DATABASE_ID is required "
-                    "(set in .env or Cloud Agent Secrets)"
+                    "(set in .env or Cloud Agent Secrets)",
                 ) from exc
             if "notion_debug_logs_database_id" in loc:
                 raise ValueError(
                     "NOTION_DEBUG_LOGS_DATABASE_ID is required "
                     "(legacy alias NOTION_LIST_DEBUG_LOGS_DATABASE_ID; "
-                    "set in .env or Cloud Agent Secrets)"
+                    "set in .env or Cloud Agent Secrets)",
                 ) from exc
         raise ValueError(_format_config_validation_error(exc)) from exc

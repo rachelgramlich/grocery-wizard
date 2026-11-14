@@ -85,7 +85,7 @@ _CONDIMENT_MEAT_PREFIXES = frozenset(
         "lime",
         "miso",
         "teriyaki",
-    }
+    },
 )
 _OIL_PREFIXES = frozenset(
     {
@@ -97,7 +97,7 @@ _OIL_PREFIXES = frozenset(
         "sesame",
         "toasted",
         "vegetable",
-    }
+    },
 )
 
 _VINEGAR_PREFIXES = frozenset(
@@ -110,7 +110,7 @@ _VINEGAR_PREFIXES = frozenset(
         "sherry",
         "white",
         "wine",
-    }
+    },
 )
 
 _STOCK_PREFIXES = frozenset(
@@ -120,7 +120,7 @@ _STOCK_PREFIXES = frozenset(
         "chicken",
         "low-sodium",
         "vegetable",
-    }
+    },
 )
 
 _CREAM_PREFIXES = frozenset({"heavy", "sour", "whipped", "whole-milk"})
@@ -142,7 +142,7 @@ _BEANS_PREFIXES = frozenset(
         "pinto",
         "refried",
         "white",
-    }
+    },
 )
 
 _COUNT_UNITS = frozenset(
@@ -177,7 +177,7 @@ _COUNT_UNITS = frozenset(
         "stalks",
         "stick",
         "sticks",
-    }
+    },
 )
 
 _MERGED_LINE_FILLER = frozenset(
@@ -192,7 +192,7 @@ _MERGED_LINE_FILLER = frozenset(
         "sauce",
         "with",
         "w",
-    }
+    },
 )
 
 _TRAILING_APPENDED_INGREDIENT_RE = re.compile(
@@ -456,7 +456,7 @@ _FILTER_LEADING_NOISE = frozenset(
         "heaping",
         "roughly",
         "scant",
-    }
+    },
 )
 _FILTER_PREP_LEADING = frozenset(
     {
@@ -468,11 +468,11 @@ _FILTER_PREP_LEADING = frozenset(
         "grated",
         "lightly",
         "roughly",
-    }
+    },
 )
 _FILTER_TRAILING_NOISE = frozenset({"slice", "slices", "thick", "thin", "thickly", "thinly"})
 _FILTER_COMPOUND_TAILS = frozenset(
-    {"extract", "juice", "liqueur", "paste", "powder", "sauce", "zest"}
+    {"extract", "juice", "liqueur", "paste", "powder", "sauce", "zest"},
 )
 _FILTER_PREP_CONNECTORS = frozenset({"&", "and", "or", "optional", "to"})
 _FILTER_PREP_ONLY_EXTRA = frozenset(
@@ -489,7 +489,7 @@ _FILTER_PREP_ONLY_EXTRA = frozenset(
         "pieces",
         "wedges",
         "wide",
-    }
+    },
 )
 _FILTER_PREP_DIMENSION_RE = re.compile(
     r"\d+(?:\.\d+)?(?:/\d+)?\s*-?\s*(?:inch|inches|in)\b",
@@ -596,7 +596,7 @@ def _is_non_filterable_segment(segment: str) -> bool:
     return bool(
         words
         and not _find_grocery_noun_positions(words)
-        and all(word in _FILTER_TRAILING_NOISE | {"inch", "inches", "in"} for word in words)
+        and all(word in _FILTER_TRAILING_NOISE | {"inch", "inches", "in"} for word in words),
     )
 
 
@@ -615,7 +615,7 @@ def _is_meaningless_filter_key(key: str) -> bool:
     return bool(
         _FILTER_DIMENSION_RE.match(lowered)
         or re.match(r"^-?inch\b", lowered)
-        or lowered.startswith("inch ")
+        or lowered.startswith("inch "),
     )
 
 

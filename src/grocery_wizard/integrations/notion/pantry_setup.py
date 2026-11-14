@@ -75,7 +75,7 @@ def _merge_select_option_payloads(
                 {
                     "name": label,
                     "color": _SELECT_OPTION_COLORS[index % len(_SELECT_OPTION_COLORS)],
-                }
+                },
             )
     return payloads
 
@@ -128,7 +128,7 @@ def sync_pantry_section_store_aisles(*, dry_run: bool = False) -> PantrySectionS
     if aisle_prop is None:
         raise ValueError(
             f"Pantry database is missing the {aisle_column!r} property. "
-            "Add an Aisle column in Notion first."
+            "Add an Aisle column in Notion first.",
         )
 
     previous_type = str(aisle_prop.get("type", ""))
@@ -139,8 +139,8 @@ def sync_pantry_section_store_aisles(*, dry_run: bool = False) -> PantrySectionS
             {
                 aisle_column: {
                     "select": {"options": option_payloads},
-                }
-            }
+                },
+            },
         )
         schema_updated = True
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -19,6 +19,9 @@ from src.grocery_wizard.shopping.store_aisles import (
     sort_grocery_items,
     strip_checklist_prefix,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_parse_store_aisles_file_reads_sections_and_keywords(tmp_path: Path) -> None:
@@ -530,7 +533,8 @@ def test_pantry_aisle_for_item_prefers_notion_aisle_over_name_guess() -> None:
 def test_canonical_pantry_section_label_from_aisle_id() -> None:
     config = load_store_aisles()
     assert canonical_pantry_section_label(None, aisle_id="fruit", config=config) == aisle_label(
-        "fruit", config=config
+        "fruit",
+        config=config,
     )
 
 

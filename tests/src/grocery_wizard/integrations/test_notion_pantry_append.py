@@ -15,7 +15,7 @@ def test_append_item_creates_notion_page_with_name_and_aisle(mock_notion_db: Mag
     db_instance.property_payload.side_effect = lambda column, value: {
         column: {"title": [{"text": {"content": str(value)}}]}
         if column == "Name"
-        else {"select": {"name": str(value)}}
+        else {"select": {"name": str(value)}},
     }
     mock_notion_db.return_value = db_instance
 

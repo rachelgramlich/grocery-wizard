@@ -170,7 +170,10 @@ def _save_list_debug_log(
     extra_items_text: str,
 ) -> tuple[dict[str, Any], str | None, str | None, str | None]:
     _, final_items = compute_grocery_drafts(
-        items, [], extra_items_text, recurring_items=recurring_items
+        items,
+        [],
+        extra_items_text,
+        recurring_items=recurring_items,
     )
     log = build_list_log(
         trace,
@@ -204,7 +207,10 @@ def sync_list_debug_log_adjustments(
     if log.get("user_adjustments") == adjustments:
         return
     updated = apply_adjustments(
-        log, final_items=final_items, readd=readd, removed_once=removed_once
+        log,
+        final_items=final_items,
+        readd=readd,
+        removed_once=removed_once,
     )
     result["debug_log"] = updated
     if path:

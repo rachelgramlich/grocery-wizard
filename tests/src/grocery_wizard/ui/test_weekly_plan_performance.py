@@ -24,7 +24,8 @@ def test_meal_builder_spinner_wraps_meals_section_render() -> None:
     """Cold / Continue load keeps meal UI inside the inline spinner until ready."""
     flow_source = weekly_plan_source("flow.py")
     cold_block = flow_source.split("if show_meal_builder_loading or cold_recipes:", 1)[1].split(
-        "else:", 1
+        "else:",
+        1,
     )[0]
     assert "render_meals_section" in cold_block
     assert cold_block.index("render_meals_section") > cold_block.index("loading_indicator")
@@ -83,13 +84,14 @@ def test_plan_meals_warms_recipes_quietly_before_meal_count_continue() -> None:
     """Issue #386: no loading UI until meal-count Continue; quiet warm while picking count."""
     flow_source = weekly_plan_source("flow.py")
     plan_block = flow_source.split("WeeklyRailStep.PLAN_MEALS", 1)[1].split(
-        "WeeklyRailStep.GROCERY_LIST", 1
+        "WeeklyRailStep.GROCERY_LIST",
+        1,
     )[0]
     assert "_render_meal_count_input()" in plan_block
     assert "_warm_weekly_plan_recipes_quiet" in plan_block
     assert "schedule_ingredient_index_warm" in flow_source
     assert plan_block.index("_render_meal_count_input()") < plan_block.index(
-        "_warm_weekly_plan_recipes_quiet"
+        "_warm_weekly_plan_recipes_quiet",
     )
     assert plan_block.count("cached_query_recipes(") == 0
     assert flow_source.count("cached_query_recipes(") == 2
@@ -106,7 +108,8 @@ def test_prebuild_manual_picker_lazy_when_collapsed() -> None:
     """Issue #336: skip heavy filter widgets until Choose meals manually popover is open."""
     source = ui_source()
     prebuild = source.split("def _render_prebuild_recipe_picker", 1)[1].split(
-        "def _set_plan_slot_recipe", 1
+        "def _set_plan_slot_recipe",
+        1,
     )[0]
     assert "PLAN_PREBUILD_MANUAL_POPOVER_KEY" in prebuild
     assert "_render_filtered_recipe_picker" in prebuild
@@ -130,7 +133,8 @@ def test_meal_builder_defers_ingredient_index_until_needed() -> None:
     assert "_ingredient_index_for_filters" in meals_section
     assert "Loading your meals" not in meals_section
     filtered_picker = plan_entry.split("def _render_filtered_recipe_picker", 1)[1].split(
-        "\ndef ", 1
+        "\ndef ",
+        1,
     )[0]
     assert "_cached_plan_ingredient_index(all_recipes)" in filtered_picker
 
@@ -138,7 +142,8 @@ def test_meal_builder_defers_ingredient_index_until_needed() -> None:
 def test_get_started_does_not_prefetch_recipes() -> None:
     flow_source = weekly_plan_source("flow.py")
     get_started_path = flow_source.split("if not weekly_plan_has_started():", 1)[1].split(
-        "render_weekly_step_rail", 1
+        "render_weekly_step_rail",
+        1,
     )[0]
     assert "_warm_weekly_plan_recipes_quiet" not in get_started_path
     assert "loading_indicator" not in get_started_path
@@ -150,6 +155,7 @@ def test_long_actions_show_spinners() -> None:
     assert "Preparing ingredient review" in source
     assert "Building grocery list" in source
     refresh_fn = source.split("def _refresh_notion_cache_from_ui", 1)[1].split(
-        "def _render_notion_cache_controls", 1
+        "def _render_notion_cache_controls",
+        1,
     )[0]
     assert "Refreshing from Notion" in refresh_fn

@@ -125,7 +125,7 @@ def _render_per_recipe_review(db: NotionRecipesDB, selected: list[str]) -> None:
     st.markdown("**Review ingredients**")
     st.caption(
         "Open a recipe to edit ingredients. **Save to Notion** per recipe if you want, "
-        "then **Build final list**."
+        "then **Build final list**.",
     )
     if dev_mode:
         st.caption("Dev mode: edits apply to this list only (Notion save disabled).")
@@ -157,7 +157,7 @@ def _render_per_recipe_review(db: NotionRecipesDB, selected: list[str]) -> None:
             ):
                 st.caption(
                     "Unsaved edits — save to Notion or continue; "
-                    "the final list uses your text below."
+                    "the final list uses your text below.",
                 )
             else:
                 st.caption("Matches last saved baseline for this recipe.")
@@ -190,7 +190,7 @@ def _render_per_recipe_review(db: NotionRecipesDB, selected: list[str]) -> None:
         st.info(
             "Not yet saved to Notion: "
             + ", ".join(f"**{n}**" for n in unsaved_names)
-            + ". You can still build the list; edits below will be used even if not saved."
+            + ". You can still build the list; edits below will be used even if not saved.",
         )
 
     build_final = st.button(
@@ -238,7 +238,7 @@ def _render_per_recipe_review(db: NotionRecipesDB, selected: list[str]) -> None:
         if missing_ingredients:
             st.warning(
                 "No grocery items found — all selected recipes are missing ingredients. "
-                f"Affected recipes: {', '.join(missing_ingredients)}."
+                f"Affected recipes: {', '.join(missing_ingredients)}.",
             )
         else:
             st.warning("No grocery items found.")

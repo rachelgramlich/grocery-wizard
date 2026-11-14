@@ -6,11 +6,13 @@ import cProfile
 import io
 import pstats
 import time
-from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from src.grocery_wizard.dev.perf_audit.tap import NotionTap
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator
+
+    from src.grocery_wizard.dev.perf_audit.tap import NotionTap
 
 _PROFILE_FILTER = r"(grocery_wizard|ingredient_parser|notion_client|nltk)"
 _PROFILE_LINES = 14

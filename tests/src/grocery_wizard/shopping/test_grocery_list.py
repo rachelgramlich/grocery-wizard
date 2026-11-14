@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -23,6 +23,9 @@ from src.grocery_wizard.shopping.grocery_list import (
     recipe_title_from_url,
 )
 from src.grocery_wizard.shopping.store_aisles import classify_aisle
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def _recipe(name: str, ingredients: str) -> Recipe:
@@ -85,7 +88,7 @@ def test_build_grocery_list_excludes_pantry_by_default(pantry_file: Path) -> Non
         _recipe(
             "Test Recipe",
             "2 tbsp olive oil\n3 cloves garlic\n1 lb chicken breast",
-        )
+        ),
     ]
 
     items, excluded, _sync, _missing, _, _ = build_grocery_list(
@@ -110,7 +113,7 @@ def test_build_grocery_list_keeps_can_and_block_counts_with_package_sizes(
         _recipe(
             "Chili",
             "2 cans beans\n1 can diced tomatoes\n2 blocks feta",
-        )
+        ),
     ]
 
     items, _excluded, _sync, _missing, _, _ = build_grocery_list(
@@ -131,7 +134,7 @@ def test_build_grocery_list_keeps_sliced_on_products_sold_sliced(pantry_file: Pa
         _recipe(
             "Sandwich",
             "sliced cheese\nsliced almonds\n2 scallions\nmozzarella",
-        )
+        ),
     ]
 
     items, _excluded, _sync, _missing, _, _ = build_grocery_list(
@@ -199,7 +202,7 @@ def test_build_grocery_list_include_pantry(pantry_file: Path) -> None:
         _recipe(
             "Test Recipe",
             "2 tbsp olive oil\n3 cloves garlic\n1 lb chicken breast",
-        )
+        ),
     ]
 
     items, excluded, _sync, _missing, _, _ = build_grocery_list(
@@ -222,7 +225,7 @@ def test_build_grocery_list_store_aisle_collision_products(pantry_file: Path) ->
         _recipe(
             "Snack Bowl",
             "1 bag apple chips\n2 apples\ncauliflower rice\n1 package frozen cauliflower rice",
-        )
+        ),
     ]
 
     items, _, _, _, _, _ = build_grocery_list(
@@ -251,7 +254,7 @@ def test_build_grocery_list_splits_compound_ingredients(tmp_path: Path) -> None:
         _recipe(
             "Chana Masala",
             "Naan bread\noptional: rice, to serve\ncilantro\n1 limes",
-        )
+        ),
     ]
 
     items, excluded, _sync, _missing, _, _ = build_grocery_list(
@@ -849,7 +852,7 @@ def test_build_grocery_list_consolidates_lemon_variants(tmp_path: Path) -> None:
         _recipe(
             "Lemon Dish",
             "juice of half a lemon\n1 lemon\nzest of 1 lemon",
-        )
+        ),
     ]
 
     items, _, _, _, _, _ = build_grocery_list(
@@ -875,7 +878,7 @@ def test_build_grocery_list_issues_233_234_sheet_pan_lemon_and_fine_stems(
         _recipe(
             "Sheet-Pan Baked Feta With Broccolini, Tomatoes and Lemon",
             "1 lemons\n1 bunch broccolini",
-        )
+        ),
     ]
 
     items, _, _, _, _, _ = build_grocery_list(
@@ -901,7 +904,7 @@ def test_build_grocery_list_issue_27_quality_fixes(tmp_path: Path) -> None:
         _recipe(
             "Tacos",
             "8 corn tortillas\n1 limes\nCilantro\noyster mushrooms",
-        )
+        ),
     ]
 
     items, _, _, _, _, _ = build_grocery_list(
@@ -1211,7 +1214,7 @@ def test_format_name_link_mismatch_warning() -> None:
             recipe_name="Crispy Potato Tacos",
             link="https://cooking.nytimes.com/recipes/1026918-crispy-potato-quesadillas",
             link_title="Crispy Potato Quesadillas",
-        )
+        ),
     )
 
     assert "Crispy Potato Tacos" in warning
@@ -1237,7 +1240,7 @@ def test_format_item_provenance_lists_source_recipes() -> None:
         {
             "peas": ["Crispy Potato Quesadillas"],
             "1 lb chicken breast": ["Salad", "Soup"],
-        }
+        },
     )
 
     assert "Item sources" in text
@@ -1250,7 +1253,7 @@ def test_format_item_provenance_strips_bullet_prefixes() -> None:
         {
             "• 1 serrano": ["Tacos"],
             "- onions": ["Salad"],
-        }
+        },
     )
 
     assert "• 1 serrano" not in text
@@ -1280,7 +1283,10 @@ def test_format_meals_and_grocery_list_excludes_provenance() -> None:
     ],
 )
 def test_build_grocery_list_skips_multi_word_pantry_items(
-    tmp_path: Path, pantry_text: str, recipe_line: str, pantry_name: str
+    tmp_path: Path,
+    pantry_text: str,
+    recipe_line: str,
+    pantry_name: str,
 ) -> None:
     pantry_path = tmp_path / "pantry.txt"
     pantry_path.write_text(pantry_text, encoding="utf-8")
@@ -1288,7 +1294,10 @@ def test_build_grocery_list_skips_multi_word_pantry_items(
     db.query_recipes.return_value = [_recipe("Tacos", f"{recipe_line}\n1 avocado")]
 
     items, excluded, _, _, _, _ = build_grocery_list(
-        db, recipe_names=["Tacos"], pantry_path=pantry_path, exclude_pantry=True
+        db,
+        recipe_names=["Tacos"],
+        pantry_path=pantry_path,
+        exclude_pantry=True,
     )
 
     assert [item for item in items if pantry_name.split()[-1] in item.lower()] == []
@@ -1307,7 +1316,10 @@ def test_build_grocery_list_keeps_olive_oil_and_bay_leaves_for_new_pantry_items(
     ]
 
     items, excluded, _, _, _, _ = build_grocery_list(
-        db, recipe_names=["Soup"], pantry_path=pantry_path, exclude_pantry=True
+        db,
+        recipe_names=["Soup"],
+        pantry_path=pantry_path,
+        exclude_pantry=True,
     )
 
     lowered = [item.lower() for item in items]

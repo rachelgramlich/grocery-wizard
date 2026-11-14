@@ -3,15 +3,18 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from src.grocery_wizard.integrations.notion import Recipe
 from src.grocery_wizard.shopping.weekly_grocery_export import (
     export_grocery_lines_for_week_dict,
     recipes_from_week_dict,
 )
 from tests.repo_paths import FIXTURES_DIR
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from src.grocery_wizard.integrations.notion import Recipe
 
 GOLDEN_WEEKS_DIR = FIXTURES_DIR / "golden_grocery_weeks"
 

@@ -336,7 +336,7 @@ def _maintenance_status_act(ctx: AuditContext, at: AppTest) -> AppTest:
 
 def _external_unsupported_act(ctx: AuditContext, at: AppTest) -> AppTest:
     raise ScenarioSkipError(
-        "Calls an external service (NYT, GitHub, recipe sites); time it by hand in the browser"
+        "Calls an external service (NYT, GitHub, recipe sites); time it by hand in the browser",
     )
 
 

@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import sys
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from src.grocery_wizard.integrations.notion.lazy_household import notion_recurring_db
 from src.grocery_wizard.shopping.line_items import parse_line_items, strip_line_item
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def apply_recurring_session_overrides(

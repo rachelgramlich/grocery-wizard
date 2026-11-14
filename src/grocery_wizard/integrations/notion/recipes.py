@@ -18,18 +18,20 @@ __all__ = [
 
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from notion_client import Client
 
-from src.grocery_wizard.config import Config
 from src.grocery_wizard.integrations.notion.data_source import resolve_notion_data_source_id
 from src.grocery_wizard.integrations.notion.table import build_notion_rich_text
 from src.grocery_wizard.recipes.recipe_images import (
     read_files_property_names,
     read_files_property_url,
 )
+
+if TYPE_CHECKING:
+    from src.grocery_wizard.config import Config
 
 # Values accepted by ``create_recipe`` / ``update_recipe`` keyed by Notion column name.
 # Strings map to title/url/text/select/status; lists to multi_select; bool to checkbox;
@@ -458,9 +460,9 @@ class NotionRecipesDB:
                         "type": "file_upload",
                         "name": filename,
                         "file_upload": {"id": upload_id},
-                    }
-                ]
-            }
+                    },
+                ],
+            },
         }
         page = self._client.pages.update(page_id=page_id, properties=properties)
         return self._page_to_recipe(page)
@@ -524,7 +526,7 @@ class NotionRecipesDB:
             owner = key_owner.get(key)
             if owner != page_id:
                 skips.append(
-                    f"Skipped {before!r} → {after!r}: another recipe already uses that title."
+                    f"Skipped {before!r} → {after!r}: another recipe already uses that title.",
                 )
                 continue
             changes.append((page_id, before, after))
@@ -561,7 +563,7 @@ class NotionRecipesDB:
             owner = key_owner.get(after)
             if owner is not None and owner != recipe.page_id:
                 skips.append(
-                    f"Skipped {recipe.name!r}: canonical link {after!r} already on another recipe."
+                    f"Skipped {recipe.name!r}: canonical link {after!r} already on another recipe.",
                 )
                 continue
             key_owner.setdefault(after, recipe.page_id)

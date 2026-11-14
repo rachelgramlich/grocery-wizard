@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from src.grocery_wizard.config import load_config
 from src.grocery_wizard.integrations.notion import NotionRecipesDB, recipe_lookup_key
@@ -14,6 +14,9 @@ from src.grocery_wizard.planning.saved_weekly_plans import list_saved_plans
 from src.grocery_wizard.shopping.pantry import load_pantry
 from src.grocery_wizard.shopping.recurring_weekly_items import load_recurring_weekly_items
 from src.grocery_wizard.shopping.weekly_grocery_export import export_grocery_lines_for_meal_plan
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def _repo_golden_weeks_dir() -> Path:
@@ -99,7 +102,7 @@ def main(argv: list[str] | None = None) -> int:
                 "name": recipe.name,
                 "link": recipe.link,
                 "ingredients": recipe.ingredients or "",
-            }
+            },
         )
 
     week = {

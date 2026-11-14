@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from ui_source import ui_source
 
@@ -14,6 +14,9 @@ from src.grocery_wizard.shopping.grocery_list import (
 )
 from src.grocery_wizard.shopping.grocery_list_edits import compute_grocery_drafts
 from src.grocery_wizard.shopping.meal_recipe_links import meal_entries_with_links
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_grocery_final_list_syncs_session_state_before_keyed_text_area() -> None:

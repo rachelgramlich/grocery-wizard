@@ -75,7 +75,7 @@ def test_list_plans_uses_given_recipe_names_without_querying_recipes() -> None:
 
     def _read(row: NotionPageRow, column: str) -> object:
         return {"Name": "2026-10-11_plan", "Week start": "2026-10-11", "Recipes": ["recipe-a"]}.get(
-            column
+            column,
         )
 
     db_instance.read.side_effect = _read

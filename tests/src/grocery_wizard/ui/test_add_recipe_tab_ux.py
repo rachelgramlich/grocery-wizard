@@ -21,7 +21,8 @@ def test_add_recipe_entry_sections_ordered_url_manual_nyt() -> None:
 def test_manual_blank_recipe_uses_primary_button() -> None:
     source = ui_source()
     manual_block = source.split("**Type it in myself**", maxsplit=1)[1].split(
-        "**Sync from NYT Cooking**", maxsplit=1
+        "**Sync from NYT Cooking**",
+        maxsplit=1,
     )[0]
     assert '"Start blank recipe"' in manual_block
     assert 'type="primary"' in manual_block

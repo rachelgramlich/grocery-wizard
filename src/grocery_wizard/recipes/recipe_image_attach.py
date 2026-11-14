@@ -4,14 +4,17 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-from src.grocery_wizard.integrations.notion import NotionRecipesDB
 from src.grocery_wizard.recipes.recipe_image_resolver import (
     ImageResolveError,
     ResolvedRecipeImage,
     download_recipe_image_bytes,
     resolve_recipe_image_url,
 )
+
+if TYPE_CHECKING:
+    from src.grocery_wizard.integrations.notion import NotionRecipesDB
 
 logger = logging.getLogger(__name__)
 

@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import streamlit as st
 
 from src.grocery_wizard.ingredients.sync import prepare_ingredients_for_notion
-from src.grocery_wizard.integrations.notion import (
-    DatabaseSchema,
-    NotionFieldValues,
-    NotionRecipesDB,
-)
 from src.grocery_wizard.recipes.add_recipe import (
     RecipeUrlPreview,
     base_recipe_field_values,
@@ -22,6 +19,13 @@ from src.grocery_wizard.ui.db_access import get_db
 from src.grocery_wizard.ui.ids import BLOCK_ADD_MANUAL, BLOCK_ADD_NYT, BLOCK_ADD_URL
 from src.grocery_wizard.ui.notion_cache import invalidate_recipes_after_write
 from src.grocery_wizard.ui.nyt_sync import render_nyt_sync_controls
+
+if TYPE_CHECKING:
+    from src.grocery_wizard.integrations.notion import (
+        DatabaseSchema,
+        NotionFieldValues,
+        NotionRecipesDB,
+    )
 
 _ENTRY_PATH_URL = BLOCK_ADD_URL.removeprefix("add.")
 _ENTRY_PATH_MANUAL = BLOCK_ADD_MANUAL.removeprefix("add.")
@@ -74,7 +78,7 @@ def render_add_recipe() -> None:
                         fields=base_recipe_field_values(schema),
                     ),
                     entry_path=_ENTRY_PATH_MANUAL,
-                )
+                ),
             ]
             previews = st.session_state["preview_recipes"]
         _render_previews_for_entry(db, schema, previews, _ENTRY_PATH_MANUAL)

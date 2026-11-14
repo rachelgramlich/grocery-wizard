@@ -4,7 +4,10 @@ from __future__ import annotations
 
 __all__ = ["confirm_no_default", "confirm_yes_default", "parse_yes_no"]
 
-from collections.abc import Callable
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def parse_yes_no(answer: str, *, default_yes: bool) -> bool:

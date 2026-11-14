@@ -65,7 +65,9 @@ def test_fit_feedback_text_truncates_large_debug_json() -> None:
         timestamp="2026-01-01T00:00:00+00:00",
     )
     body = _issue_body_for_text(
-        text=fitted, surface="weekly", timestamp="2026-01-01T00:00:00+00:00"
+        text=fitted,
+        surface="weekly",
+        timestamp="2026-01-01T00:00:00+00:00",
     )
     assert len(body) <= MAX_FEEDBACK_BODY_CHARS
     assert "truncated to fit GitHub issue size limits" in fitted

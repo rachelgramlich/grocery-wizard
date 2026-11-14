@@ -22,9 +22,8 @@ __all__ = [
 
 import random
 from enum import StrEnum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 from src.grocery_wizard.ui.grocery_flow import (
     GROCERY_STASH_NOTION_GENERATION_KEY,
     clear_grocery_session_overrides,
@@ -35,6 +34,9 @@ from src.grocery_wizard.ui.grocery_flow import (
 from src.grocery_wizard.ui.ids import DEV_JUMP_BLOCK_ID
 from src.grocery_wizard.ui.views.weekly_plan.state import _ack_dev_plan_meals_ready
 from src.grocery_wizard.ui.views.weekly_plan.step_ui import WeeklyRailStep, set_expanded_step
+
+if TYPE_CHECKING:
+    from src.grocery_wizard.integrations.notion import NotionRecipesDB, Recipe
 
 DEFAULT_DEV_MEAL_COUNT = 1
 _DEV_MEAL_PICK_SEED = 142

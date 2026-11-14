@@ -34,11 +34,11 @@ def render_unmatched_plan_recipes_help(
     if context == "meals":
         st.markdown(
             "These meals are on your plan, but the app cannot load ingredients from Notion "
-            "until the title matches a recipe row exactly (after trimming spaces)."
+            "until the title matches a recipe row exactly (after trimming spaces).",
         )
     else:
         st.markdown(
-            "Ingredient review will be **blank** for these meals until Notion matches your plan."
+            "Ingredient review will be **blank** for these meals until Notion matches your plan.",
         )
     with st.expander("How to fix", expanded=True):
         st.markdown(
@@ -49,5 +49,5 @@ def render_unmatched_plan_recipes_help(
             "4. Return here — ingredients should populate in per-recipe review.\n"
             "\n"
             "If you renamed the recipe in Notion, update the meal on your plan to the new "
-            "title (swap the meal slot or rebuild the plan)."
+            "title (swap the meal slot or rebuild the plan).",
         )

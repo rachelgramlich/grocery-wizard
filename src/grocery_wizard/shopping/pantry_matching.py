@@ -81,7 +81,7 @@ _NOT_DAIRY_BUTTER_PHRASES = frozenset(
         "sunflower butter",
         "cookie butter",
         "butter lettuce",
-    }
+    },
 )
 
 
@@ -194,7 +194,8 @@ def _matches_pantry_search(search: str, item: str) -> bool:
     if lowered_search == lowered_item:
         return True
     if generic_pepper_blocks_match(lowered_item, lowered_search) or generic_pepper_blocks_match(
-        lowered_search, lowered_item
+        lowered_search,
+        lowered_item,
     ):
         return False
     if lowered_item.startswith(lowered_search):
@@ -203,5 +204,6 @@ def _matches_pantry_search(search: str, item: str) -> bool:
     search_words = lowered_search.split()
     item_words = lowered_item.split()
     return _contains_word_phrase(search_words, item_words) or _contains_word_phrase(
-        item_words, search_words
+        item_words,
+        search_words,
     )

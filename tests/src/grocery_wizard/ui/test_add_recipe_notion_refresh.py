@@ -12,7 +12,8 @@ def test_add_recipe_ingredients_text_area_uses_session_state_not_value_kwarg() -
     """Keyed text_area must not pass value= so reruns keep edited lines (e.g. after Refresh)."""
     source = add_recipe_page_source()
     ingredients_block = source.split("schema.ingredients_column:", 1)[1].split(
-        "schema.instructions_column:", 1
+        "schema.instructions_column:",
+        1,
     )[0]
     assert "if widget_key not in st.session_state:" in ingredients_block
     assert "st.session_state[widget_key] = value or" in ingredients_block

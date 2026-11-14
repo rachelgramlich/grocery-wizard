@@ -71,7 +71,7 @@ def test_ocr_pipe_at_cups_golden_brown_sugar_is_two_cups() -> None:
             "| @cups (packed) golden brown sugar",
             "10 Oram Bue",
             "1 cup sugar",
-        ]
+        ],
     )
     assert lines == ["2 cups (packed) golden brown sugar", "1 cup sugar"]
 

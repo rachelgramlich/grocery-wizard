@@ -57,7 +57,7 @@ def _column_type_errors(
             (
                 f"{database_label}: missing property {name!r} (found: {found}). "
                 "Rename or restore the column to match production."
-            )
+            ),
         ]
     actual = column_types[name]
     if actual not in expected_types:
@@ -78,7 +78,7 @@ def collect_recipes_schema_errors(
             column_types={n: c.type for n, c in schema.all_columns.items()},
             name=schema.name_column,
             expected_types=("title",),
-        )
+        ),
     )
     errors.extend(
         _column_type_errors(
@@ -86,12 +86,12 @@ def collect_recipes_schema_errors(
             column_types={n: c.type for n, c in schema.all_columns.items()},
             name=schema.link_column,
             expected_types=("url",),
-        )
+        ),
     )
     if not schema.ingredients_column:
         errors.append(
             f"{database_label}: missing Ingredients text column. "
-            "Add Ingredients (rich_text) or set GROCERY_WIZARD_INGREDIENTS_COLUMN."
+            "Add Ingredients (rich_text) or set GROCERY_WIZARD_INGREDIENTS_COLUMN.",
         )
     elif schema.ingredients_column:
         errors.extend(
@@ -100,7 +100,7 @@ def collect_recipes_schema_errors(
                 column_types={n: c.type for n, c in schema.all_columns.items()},
                 name=schema.ingredients_column,
                 expected_types=("rich_text", "text"),
-            )
+            ),
         )
     return errors
 
@@ -117,7 +117,7 @@ def collect_pantry_schema_errors(
             column_types=column_types,
             name=PANTRY_NAME_COLUMN,
             expected_types=("title",),
-        )
+        ),
     )
     try:
         aisle_column = resolve_pantry_aisle_column(column_types)
@@ -130,7 +130,7 @@ def collect_pantry_schema_errors(
                 column_types=column_types,
                 name=aisle_column,
                 expected_types=("select",),
-            )
+            ),
         )
     return errors
 
@@ -165,7 +165,7 @@ def collect_weekly_plans_schema_errors(
                 column_types=column_types,
                 name=name,
                 expected_types=expected,
-            )
+            ),
         )
     return errors
 
@@ -220,13 +220,13 @@ def verify_recipe_query_smoke(
     if not recipes:
         report.notes.append(
             f"{database_label}: database is empty; recipe query smoke skipped "
-            "(seed CI recipes for stronger checks)."
+            "(seed CI recipes for stronger checks).",
         )
         return
     parseable = [recipe for recipe in recipes if recipe.name.strip()]
     if not parseable:
         report.errors.append(
-            f"{database_label}: {len(recipes)} page(s) returned but none had a readable name."
+            f"{database_label}: {len(recipes)} page(s) returned but none had a readable name.",
         )
 
 

@@ -31,7 +31,7 @@ def enforce_access_gate(config: Config | None = None) -> None:
     if not allowlist:
         st.error(
             "App auth is misconfigured: set GROCERY_WIZARD_AUTH_EMAIL_ALLOWLIST "
-            "when GROCERY_WIZARD_REQUIRE_AUTH is true."
+            "when GROCERY_WIZARD_REQUIRE_AUTH is true.",
         )
         st.stop()
 

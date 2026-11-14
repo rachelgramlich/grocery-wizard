@@ -39,5 +39,7 @@ UI string-regression tests should use helpers in `tests/src/grocery_wizard/ui/ui
 | `NOTION_BOUNDARY_ERRORS` | `integrations/notion_io_errors.py` (allowed `except` tuple at API boundaries) |
 | Notion household DB factories | `integrations/notion/lazy_household.py` (`notion_pantry_db`, `notion_recurring_db`, `notion_weekly_plans_db`) |
 | Pantry name / staple matching | `shopping/pantry_matching.py` (grocery exclusion + Notion pantry search; no file I/O) |
+| `UI_STATIC_DIR` / `RECIPES_DATA_DIR` | `paths.py` |
+| NYT → recipe stack (lazy) | `integrations/nyt_recipe_bridge.py` |
 
 See also: [`repo-layout.md`](repo-layout.md), [`CONTRIBUTING.md`](../../CONTRIBUTING.md).

@@ -30,7 +30,7 @@ def check_grocery_list_invariants(lines: list[str]) -> list[GroceryInvariantViol
                 GroceryInvariantViolation(
                     code="duplicate_key",
                     message=f"Duplicate item key {key!r}: {keys[key]!r} and {line!r}",
-                )
+                ),
             )
         else:
             keys[key] = line
@@ -43,7 +43,7 @@ def check_grocery_list_invariants(lines: list[str]) -> list[GroceryInvariantViol
                     code="not_idempotent",
                     message=f"Line is not idempotent under normalize_grocery_list_item: "
                     f"{line!r} → {again!r}",
-                )
+                ),
             )
 
     sorted_copy = sort_grocery_items(list(cleaned))
@@ -52,7 +52,7 @@ def check_grocery_list_invariants(lines: list[str]) -> list[GroceryInvariantViol
             GroceryInvariantViolation(
                 code="not_aisle_sorted",
                 message="List is not in store-aisle order (sort_grocery_items differs)",
-            )
+            ),
         )
 
     violations.extend(

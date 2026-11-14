@@ -70,7 +70,7 @@ def test_create_recipe_strips_name_before_write(monkeypatch) -> None:
         {
             "Name": "  Pizza beans  ",
             "Link": "https://www.example.com/pizza/?utm=1",
-        }
+        },
     )
 
     assert captured["parent"] == {

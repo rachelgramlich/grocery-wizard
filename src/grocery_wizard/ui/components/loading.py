@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterator
 from contextlib import contextmanager
+from typing import TYPE_CHECKING
 
 import streamlit as st
 from streamlit.runtime.scriptrunner_utils.script_run_context import (
     ThreadState,
     get_script_run_ctx,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator
 
 _BANNER_PLACEHOLDER_KEY = "gw_loading_banner_placeholder"
 

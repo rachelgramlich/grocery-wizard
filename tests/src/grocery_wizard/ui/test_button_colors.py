@@ -43,7 +43,7 @@ _BUTTON_WIDGETS = frozenset(
         "pills",
         "segmented_control",
         "feedback",
-    }
+    },
 )
 _ALLOWED_TYPES = frozenset(_APPROVED)
 
@@ -74,7 +74,9 @@ class ButtonDom:
         app = Element("div", ("stApp",), {"data-testid": "stApp"})
         block = app.child("div", attrs={"data-testid": "stVerticalBlock"})
         root = block.child(
-            "div", classes=(self.root_class,), attrs={"data-testid": self.root_testid}
+            "div",
+            classes=(self.root_class,),
+            attrs={"data-testid": self.root_testid},
         )
         control = root.child(self.control_tag, attrs={"data-testid": self.control_testid})
         markdown = control.child("div", attrs={"data-testid": "stMarkdownContainer"})
@@ -91,7 +93,13 @@ def _variants() -> list[ButtonDom]:
     for kind in ("primary", "secondary"):
         variants += [
             ButtonDom(
-                "button", kind, kind, "stButton", "stButton", "button", f"stBaseButton-{kind}"
+                "button",
+                kind,
+                kind,
+                "stButton",
+                "stButton",
+                "button",
+                f"stBaseButton-{kind}",
             ),
             ButtonDom(
                 "form_submit_button",
@@ -126,7 +134,7 @@ def _variants() -> list[ButtonDom]:
         ButtonDom(
             "popover", "secondary", "secondary", "stPopover", "stPopover", "button",
             "stPopoverButton",
-        )
+        ),
     )  # fmt: skip
     return variants
 
@@ -142,7 +150,8 @@ def stylesheet() -> Stylesheet:
 
 @pytest.mark.parametrize("variant", _BUTTON_DOM_VARIANTS, ids=lambda v: v.id)
 def test_button_renders_with_approved_color_combo(
-    stylesheet: Stylesheet, variant: ButtonDom
+    stylesheet: Stylesheet,
+    variant: ButtonDom,
 ) -> None:
     expected_fg, expected_bg = (c.lower() for c in _APPROVED[variant.expected_kind])
     control, *labels = variant.label_elements()
@@ -158,7 +167,8 @@ def test_button_renders_with_approved_color_combo(
 
     for element in (control, *labels):
         text = stylesheet.computed(element, "-webkit-text-fill-color") or stylesheet.computed(
-            element, "color"
+            element,
+            "color",
         )
         assert text is not None, f"{variant.id}: no label color for {element.path()}"
         assert text == expected_fg, (

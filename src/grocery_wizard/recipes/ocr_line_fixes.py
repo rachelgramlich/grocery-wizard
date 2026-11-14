@@ -5,15 +5,16 @@ from __future__ import annotations
 import json
 import re
 from functools import lru_cache
-from pathlib import Path
 from typing import Any
+
+from src.grocery_wizard.paths import RECIPES_DATA_DIR
 
 _OCR_FIXES_FILENAME = "ocr_line_fixes.json"
 
 
 @lru_cache(maxsize=1)
 def _compiled_ocr_line_fixes() -> tuple[tuple[re.Pattern[str], str], ...]:
-    path = Path(__file__).resolve().parent / "data" / _OCR_FIXES_FILENAME
+    path = RECIPES_DATA_DIR / _OCR_FIXES_FILENAME
     raw = path.read_text(encoding="utf-8")
     data: Any = json.loads(raw)
     if not isinstance(data, list):

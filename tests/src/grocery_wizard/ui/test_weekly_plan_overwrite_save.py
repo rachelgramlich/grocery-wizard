@@ -62,7 +62,8 @@ def fake_streamlit(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
 
 
 def test_replace_button_saves_to_notion_without_second_click(
-    monkeypatch: pytest.MonkeyPatch, fake_streamlit: SimpleNamespace
+    monkeypatch: pytest.MonkeyPatch,
+    fake_streamlit: SimpleNamespace,
 ) -> None:
     saved_calls: list[list[str]] = []
 
@@ -75,7 +76,9 @@ def test_replace_button_saves_to_notion_without_second_click(
 
     with pytest.raises(_RerunError):
         state._render_weekly_plan_overwrite_prompt(
-            NEW_NAMES, OLD, confirm_button_key="weekly_plan_confirm_overwrite_save"
+            NEW_NAMES,
+            OLD,
+            confirm_button_key="weekly_plan_confirm_overwrite_save",
         )
 
     assert saved_calls == [NEW_NAMES]
@@ -84,7 +87,8 @@ def test_replace_button_saves_to_notion_without_second_click(
 
 
 def test_create_grocery_queues_prompt_instead_of_saving(
-    monkeypatch: pytest.MonkeyPatch, fake_streamlit: SimpleNamespace
+    monkeypatch: pytest.MonkeyPatch,
+    fake_streamlit: SimpleNamespace,
 ) -> None:
     monkeypatch.setattr(
         state,

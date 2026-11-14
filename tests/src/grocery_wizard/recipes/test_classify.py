@@ -95,7 +95,10 @@ def test_meal_lunch_is_sandwich_only() -> None:
 def test_meal_salad_is_snack_side_not_dinner() -> None:
     assert (
         classify_column(
-            "Meal", "Corn Salad With Mango and Halloumi", [], allowed_options=MEAL_OPTIONS
+            "Meal",
+            "Corn Salad With Mango and Halloumi",
+            [],
+            allowed_options=MEAL_OPTIONS,
         )
         == "Snack/Side"
     )
@@ -108,7 +111,10 @@ def test_meal_dessert_for_baking() -> None:
     )
     assert (
         classify_column(
-            "Meal", "Salted Chocolate Chunk Shortbread Cookies", [], allowed_options=MEAL_OPTIONS
+            "Meal",
+            "Salted Chocolate Chunk Shortbread Cookies",
+            [],
+            allowed_options=MEAL_OPTIONS,
         )
         == "Dessert"
     )

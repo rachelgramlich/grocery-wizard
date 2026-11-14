@@ -58,7 +58,7 @@ def test_add_append_when_plan_has_room(fake_streamlit: _FakeSession) -> None:
             "plan_meals_text": "Salad",
             "plan_meal_count": load_config().default_meals,
             "plan_slot_origins": ["manual"],
-        }
+        },
     )
     result = add_recipe_to_week_from_browse(fake_streamlit, "Tacos")
     assert result.outcome == WeeklyPlanAddOutcome.ADDED
@@ -74,7 +74,7 @@ def test_try_append_plan_full_without_replace(fake_streamlit: _FakeSession) -> N
             "plan_meals_text": "\n".join(names),
             "plan_meal_count": default_meals,
             "plan_slot_origins": ["suggested"] * default_meals,
-        }
+        },
     )
     result = try_append_to_built_plan(fake_streamlit, "Extra", meal_count=default_meals)
     assert result.outcome == WeeklyPlanAddOutcome.PLAN_FULL
