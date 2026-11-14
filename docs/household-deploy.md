@@ -145,6 +145,8 @@ List inbox issues: `gh issue list --label user-feedback-inbox --state open --rep
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
+| Deploy log **`WARN: More than one requirements file`** (`uv.lock` + `pyproject.toml`) | Streamlit Cloud still detects Poetry-style `pyproject.toml` even when **`uv.lock` wins** | Harmless; deps install from **`uv.lock`**. No repo change required unless Cloud ever picks the wrong file (put a single lockfile next to `app.py`). |
+| Deploy log **`[nltk_data] Downloading … averaged_perceptron_tagger_eng`** after startup | Ingredient parsing needs NLTK; older builds downloaded on first parse | **`resources/nltk_data/`** on `main` — bundled tagger, no runtime download on reboot. |
 | Google “doesn't comply with OAuth 2.0 policy” / redirect | Prod URI not registered | Add `https://….streamlit.app/oauth2callback` in Google **and** Cloud `[auth].redirect_uri` |
 | `StreamlitMissingAuthlibError` | Missing `streamlit[auth]` deps | `uv sync` / `just setup` on `main` (see #359) |
 | Feedback `GITHUB_FEEDBACK_TOKEN` | Missing or revoked token | Update Cloud Secrets; prefer fine-grained PAT (phase 4) |
